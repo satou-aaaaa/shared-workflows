@@ -1,0 +1,32 @@
+name: Labels (共通部品)
+
+# 自動化が使う共通ラベルを、無ければ作り、あれば色と説明を揃える（Claude は使わない）。
+# extra に「名前|色|説明」を1行に1つ書くと、そのリポジトリだけのラベルも揃える。
+on:
+  workflow_call:
+    inputs:
+      extra:
+        description: '追加のラベル（1行に「名前|色(16進6桁)|説明」）'
+        type: string
+        default: ''
+
+jobs:
+  labels:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: ラベルを揃える
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXTRA: ${{ inputs.extra }}
+        run: |
+          set -euo pipefail
+          common='ci-failure|B60205|main の CI 失敗（自動）
+          自動マージしない|BFD4F2|Auto merge の対象から外す
+          needs-decision|FBCA04|satou さんの判断待ち
+          dependencies|0366D6|依存の更新'
+          printf '%s\n%s\n' "$common" "$EXTRA" | sed 's/^ *//' | while IFS='|' read -r name color desc; do
+            [ -n "$name" ] || continue
+            gh label create "$name" --color "$color" --description "$desc" --force -R "$GITHUB_REPOSITORY"
+            echo "- $name" >> "$GITHUB_STEP_SUMMARY"
+          done

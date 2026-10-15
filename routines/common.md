@@ -20,6 +20,7 @@ satou-aaaaa の Claude ルーティン（定期実行）すべてに当てはま
 - list_triggers は enabled=true・limit 20〜30 で呼び、name・last_run・next_run_at だけを見る。プロンプト全文は読まない
   （詳しく見る必要があるものだけ get_trigger）。同じ一覧を1回の実行で何度も読まない。
 - list_sessions は件数を絞る。list_events（全履歴）は読まない。
+- 各リポジトリの開いたままの PR と CI 失敗 Issue は、まず shared-workflows のラベル「週次まとめ」の Issue（毎週月曜の朝に自動で作られる）を読む。リポジトリを1つずつ見に行くのは、それより新しい動きを確かめるときだけ。
 - サブエージェントは同時に最大2つ、model は haiku。
 
 ## Claude が要らない作業は CI へ

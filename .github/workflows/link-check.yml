@@ -1,0 +1,39 @@
+name: Link check (共通部品)
+
+# リポジトリの HTML のリンク切れを調べる（Claude は使わない）。外部サイトへのリンクも確かめ、
+# 一時的な揺れで失敗しないよう3回まで試す。失敗すると呼び出し元の ci-failure-issue.yml が Issue を立てる。
+# 結果の一覧は Actions の Summary に出る。
+on:
+  workflow_call:
+    inputs:
+      files:
+        description: '調べるファイル（空白区切りの glob）'
+        type: string
+        default: '*.html'
+      exclude:
+        description: '調べないURLの正規表現（空白区切り）'
+        type: string
+        default: ''
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: 調べる引数を組み立てる
+        id: args
+        env:
+          FILES: ${{ inputs.files }}
+          EXCLUDE: ${{ inputs.exclude }}
+        run: |
+          a="--no-progress --max-retries 3 --retry-wait-time 10 --timeout 30 --accept 200..=299,403,429 --root-dir $GITHUB_WORKSPACE"
+          for e in $EXCLUDE; do a="$a --exclude $e"; done
+          # glob は lychee 側で広げるので、そのまま渡す
+          for f in $FILES; do a="$a '$f'"; done
+          echo "args=$a" >> "$GITHUB_OUTPUT"
+      - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: ${{ steps.args.outputs.args }}
+          fail: true
+          jobSummary: true
