@@ -36,6 +36,8 @@ jobs:
           npx -y lighthouse@12.8.2 "$url" --quiet --output=json --output-path=lh.json \
             --only-categories=performance,accessibility,best-practices,seo \
             --chrome-flags="--headless=new --no-sandbox"
+          # node -e の中身は JavaScript なので、わざと一重引用符で囲んでいる
+          # shellcheck disable=SC2016
           node -e '
             const r = require("./lh.json"), base = JSON.parse(process.env.BASELINE), margin = JSON.parse(process.env.MARGIN);
             let bad = 0, out = ["| 項目 | 今回 | 基準 | 下限 |", "|---|---|---|---|"];
