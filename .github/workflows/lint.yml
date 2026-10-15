@@ -1,0 +1,25 @@
+name: Lint
+
+# 共通部品とひな形のワークフローを actionlint で検査する。ここが壊れると全リポジトリの CI が止まるので、
+# main に入れる前に必ず通す。
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+      - name: actionlint
+        run: |
+          set -euo pipefail
+          curl -sSL -o al.tgz https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz
+          tar xzf al.tgz actionlint
+          ./actionlint -color .github/workflows/*.yml
+          (cd template && ../actionlint -color .github/workflows/*.yml)

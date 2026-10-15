@@ -1,0 +1,49 @@
+name: Lighthouse (共通部品)
+
+# 公開中のページの速さ・使いやすさ（Lighthouse の点数）を測る。Claude は使わない。
+# 基準（baseline）から決めた幅（margin）より下がったら失敗にし、
+# 呼び出し元の ci-failure-issue.yml がラベル ci-failure の Issue を立てる（次に成功すれば閉じる）。
+# 速さ（performance）は測るたびに揺れるので幅を広くしておく。点数が良くなって定着したら baseline を上げてよい。
+on:
+  workflow_call:
+    inputs:
+      baseline:
+        description: '基準の点数（JSON）。例 {"performance": 73, "accessibility": 100, "best-practices": 100, "seo": 100}'
+        type: string
+        required: true
+      margin:
+        description: '基準から何点まで下がってよいか（JSON）'
+        type: string
+        default: '{"performance": 20, "accessibility": 10, "best-practices": 10, "seo": 10}'
+
+jobs:
+  measure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: 公開URLを測る
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASELINE: ${{ inputs.baseline }}
+          MARGIN: ${{ inputs.margin }}
+        run: |
+          set -euo pipefail
+          url=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .html_url 2>/dev/null || true)
+          if [ -z "$url" ]; then echo "Pages が有効になっていないので、何もせずに終わります" | tee -a "$GITHUB_STEP_SUMMARY"; exit 0; fi
+          npx -y lighthouse@12.8.2 "$url" --quiet --output=json --output-path=lh.json \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --chrome-flags="--headless=new --no-sandbox"
+          node -e '
+            const r = require("./lh.json"), base = JSON.parse(process.env.BASELINE), margin = JSON.parse(process.env.MARGIN);
+            let bad = 0, out = ["| 項目 | 今回 | 基準 | 下限 |", "|---|---|---|---|"];
+            for (const [k, b] of Object.entries(base)) {
+              const s = Math.round((r.categories[k]?.score ?? 0) * 100), min = b - (margin[k] ?? 10);
+              out.push(`| ${k} | ${s} | ${b} | ${min} |${s < min ? " ❌" : ""}`);
+              if (s < min) { bad = 1; console.log(`::error title=Lighthouse の点数が下がりました::${k} が ${s} 点（下限 ${min} 点）`); }
+            }
+            require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY, `測ったURL: ${r.finalDisplayedUrl}\n\n` + out.join("\n") + "\n");
+            process.exit(bad);
+          '
