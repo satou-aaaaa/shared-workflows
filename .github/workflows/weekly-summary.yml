@@ -1,0 +1,63 @@
+name: Weekly summary
+
+# 毎週月曜の朝、satou-aaaaa の各リポジトリの「開いたままのPR・CI失敗Issue・Dependabot の更新待ち」を
+# このリポジトリの Issue 1件にまとめる（Claude は使わない）。前の週のまとめは閉じる。
+# 監督・巡回のルーティンは、リポジトリを1つずつ見に行く代わりにこの Issue を読む（Claude の利用枠の節約）。
+on:
+  schedule:
+    # 毎週月曜 06:17 JST（= 日曜 21:17 UTC）
+    - cron: "17 21 * * 0"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+env:
+  REPOS: sandbox last-tell tenbin dungeon-boardgame carcassonne-research shared-workflows
+
+jobs:
+  summary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: まとめを作って Issue にする
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          now=$(date -u +%s)
+          day=$(TZ=Asia/Tokyo date +%Y-%m-%d)
+          body="$RUNNER_TEMP/body.md"
+          {
+            echo "${day} 時点（自動）。各リポジトリの開いたままの PR（古い順）と、ラベル ci-failure の Issue です。"
+            echo
+          } > "$body"
+          total=0
+          for r in $REPOS; do
+            prs=$(gh api "repos/$OWNER/$r/pulls?state=open&sort=created&direction=asc&per_page=50" \
+              --jq ".[] | \"\(.number)\t\(.draft)\t\(.user.login)\t\(.created_at)\t\(.title)\"" || true)
+            fails=$(gh api "repos/$OWNER/$r/issues?state=open&labels=ci-failure&per_page=20" \
+              --jq '.[] | "\(.number)\t\(.title)"' || true)
+            if [ -z "$prs" ] && [ -z "$fails" ]; then echo "- **$r**: 何もありません" >> "$body"; continue; fi
+            echo "### $r" >> "$body"
+            while IFS=$'\t' read -r n draft user created title; do
+              [ -n "$n" ] || continue
+              age=$(( (now - $(date -u -d "$created" +%s)) / 86400 ))
+              tag=""; [ "$draft" = true ] && tag="（下書き）"
+              [ "$user" = "dependabot[bot]" ] && tag="${tag}（Dependabot）"
+              echo "- PR [#$n](https://github.com/$OWNER/$r/pull/$n) ${title}${tag} — ${age}日前" >> "$body"
+              total=$((total+1))
+            done <<< "$prs"
+            while IFS=$'\t' read -r n title; do
+              [ -n "$n" ] || continue
+              echo "- ❌ [#$n](https://github.com/$OWNER/$r/issues/$n) ${title}" >> "$body"
+              total=$((total+1))
+            done <<< "$fails"
+            echo >> "$body"
+          done
+          gh label create 週次まとめ --color 0E8A16 --description "Weekly summary が作る週1のまとめ（自動）" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
+          for old in $(gh issue list -R "$GITHUB_REPOSITORY" --label 週次まとめ --state open --json number --jq '.[].number'); do
+            gh issue close "$old" -R "$GITHUB_REPOSITORY" --reason completed --comment "新しいまとめを作ったので閉じます（自動）"
+          done
+          gh issue create -R "$GITHUB_REPOSITORY" --label 週次まとめ --title "週次まとめ ${day}（気にするもの ${total} 件）" --body-file "$body"

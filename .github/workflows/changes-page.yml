@@ -1,0 +1,86 @@
+name: Changes page (共通部品)
+
+# 遊ぶ人向けの「更新情報」ページを、マージされたプルリクエストの題から作り直す（Claude は使わない）。
+# - ignore_paths の正規表現に当てはまるファイルだけを変えた PR（検査・CI・道具だけの変更）と、bot の PR は載せない
+# - 題が chore: / ci: / build: で始まる PR も載せない
+# - 中身が変わったら main にコミットし、dispatch に書いたワークフローか Pages の公開を起こす
+#   （GITHUB_TOKEN のコミットはワークフローを起こさないので、ここで起こす）
+# ページを作るスクリプトはこのリポジトリの scripts/make-changes.mjs。
+on:
+  workflow_call:
+    inputs:
+      app_name:
+        description: 'ページの見出しに出すアプリ名'
+        type: string
+        required: true
+      out:
+        description: '書き出すファイル'
+        type: string
+        default: 'changes.html'
+      ignore_paths:
+        description: 'この正規表現（grep -E）に当てはまるファイルだけを変えた PR は載せない'
+        type: string
+        default: '^(\.github/|qa/|tools/|scripts/|README|CLAUDE)'
+      dispatch:
+        description: 'コミット後に main で起こすワークフローのファイル名（空白区切り）'
+        type: string
+        default: ''
+      pages_build:
+        description: 'コミット後に GitHub Pages の公開（ブランチから公開する設定のとき）を起こす'
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    concurrency:
+      group: changes-page
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: satou-aaaaa/shared-workflows
+          ref: main
+          path: .shared
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: 更新情報を作る
+        env:
+          GH_TOKEN: ${{ github.token }}
+          R: ${{ github.repository }}
+          APP: ${{ inputs.app_name }}
+          OUT: ${{ inputs.out }}
+          IGNORE: ${{ inputs.ignore_paths }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$R/pulls?state=closed&base=main&per_page=60" > "$RUNNER_TEMP/prs.json"
+          : > "$RUNNER_TEMP/app.txt"
+          for n in $(jq -r '.[] | select(.merged_at) | .number' "$RUNNER_TEMP/prs.json"); do
+            if gh api "repos/$R/pulls/$n/files?per_page=100" --jq '.[].filename' | grep -qvE "$IGNORE"; then
+              echo "$n" >> "$RUNNER_TEMP/app.txt"
+            fi
+          done
+          node .shared/scripts/make-changes.mjs "$RUNNER_TEMP/prs.json" "$APP" "$RUNNER_TEMP/app.txt" > "$OUT"
+          rm -rf .shared
+      - name: 変わっていればコミットして公開を起こす
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OUT: ${{ inputs.out }}
+          DISPATCH: ${{ inputs.dispatch }}
+          PAGES_BUILD: ${{ inputs.pages_build }}
+        run: |
+          if git diff --quiet -- "$OUT" && git ls-files --error-unmatch "$OUT" >/dev/null 2>&1; then echo "変更なし"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$OUT"
+          git commit -m "更新情報を作り直す（自動）"
+          git push origin HEAD:main
+          for wf in $DISPATCH; do gh workflow run "$wf" -R "$GITHUB_REPOSITORY" --ref main; done
+          if [ "$PAGES_BUILD" = true ]; then
+            gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" --jq .status || echo "::warning::公開を起こせませんでした（main への次の push で公開されます）"
+          fi
