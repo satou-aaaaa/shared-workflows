@@ -55,6 +55,10 @@ jobs:
           info=$(gh api "repos/$REPO/pulls/$pr")
           if [ "$(jq -r .draft <<<"$info")" = true ]; then echo "#$pr は下書きなのでマージしません"; exit 0; fi
           if jq -e '.labels[].name | select(. == "自動マージしない")' <<<"$info" >/dev/null; then echo "#$pr は「自動マージしない」"; exit 0; fi
+          # 成績表（scorecard.yml）が「自動マージ停止」を出しているあいだはマージしない（壊れた割合が高い週）
+          brake=$(gh api "repos/satou-aaaaa/shared-workflows/issues?labels=%E8%87%AA%E5%8B%95%E3%83%9E%E3%83%BC%E3%82%B8%E5%81%9C%E6%AD%A2&state=open" \
+            --jq ".[] | select(.title == \"自動マージ停止: ${REPO#*/}\") | .html_url" 2>/dev/null | head -1 || true)
+          if [ -n "$brake" ]; then echo "自動マージを止めている週なのでマージしません（$brake）"; exit 0; fi
           files=$(gh api --paginate "repos/$REPO/pulls/$pr/files" --jq '.[].filename')
           if echo "$files" | grep -q '^\.github/'; then echo "#$pr は .github/ を変えるので手でマージ"; exit 0; fi
           if [ -n "$REQUIRE_PATHS" ] && ! echo "$files" | grep -qE "$REQUIRE_PATHS"; then echo "#$pr は対象のファイルを変えないので手でマージ"; exit 0; fi

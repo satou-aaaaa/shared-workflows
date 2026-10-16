@@ -7,6 +7,7 @@
 | ファイル | ルーティン | 実行 |
 | --- | --- | --- |
 | [common.md](common.md) | すべてのルーティンの共通のきまり | — |
+| [autonomy.md](autonomy.md) | 任せる範囲の表（聞かずにやってよいこと・聞くこと・ブレーキ） | — |
 | [supervisor.md](supervisor.md) | 監督エージェントの巡回 | 6時間ごと（:41） |
 | [repo-patrol.md](repo-patrol.md) | 全リポジトリ・全プロジェクト巡回と改善提案 | 毎日 22:38 JST |
 | [routine-review.md](routine-review.md) | ルーティンとスキルの定期見直し | 週1（土曜 9:53 JST） |
