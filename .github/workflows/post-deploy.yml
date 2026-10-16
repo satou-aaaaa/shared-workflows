@@ -1,0 +1,137 @@
+name: Post-deploy check (共通部品)
+
+# 公開（GitHub Pages）が終わったら、公開されたページをブラウザで開いて壊れていないかを見る（Claude は使わない）。
+# - 壊れていなければ、その版をタグ last-good（最後に正常だった版）として覚える
+# - 壊れていたら（404・開いたときの JavaScript エラー）、main を last-good の中身に戻す PR を作ってすぐマージし、公開し直す。
+#   直す作業は担当エージェントが別の PR で行う（このジョブは失敗で終わり、呼び出し元の ci-failure-issue.yml が Issue を立てる）
+# - 5xx・つながらないときは GitHub Pages 側の障害のことが多いので、差し戻さずに失敗だけ知らせる
+# - .github/ は戻さない（GITHUB_TOKEN では変えられないため。ワークフローの変更は手でマージしている）
+# - 確認しているあいだに main が先に進んでいたら、何もしない（新しい方の公開で確かめる）
+# 考え方: 壊れた公開は「直すより先に戻す」（Google SRE、DORA の「復旧までの時間」）。
+# スクリプトはこのリポジトリの scripts/smoke.mjs。
+on:
+  workflow_call:
+    inputs:
+      paths:
+        description: 'トップページのほかに開いてみるページ（公開URLからの相対パス、空白区切り。.html だけ見る）'
+        type: string
+        default: ''
+      dispatch:
+        description: '差し戻した後に main で起こすワークフローのファイル名（空白区切り）。例 "pages.yml"'
+        type: string
+        default: ''
+      pages_build:
+        description: '差し戻した後に GitHub Pages の公開（ブランチから公開する設定のとき）を起こす'
+        type: boolean
+        default: false
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    concurrency:
+      group: post-deploy
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      R: ${{ github.repository }}
+      SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: satou-aaaaa/shared-workflows
+          ref: main
+          path: .shared
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: 公開されたページを開いてみる（3回まで）
+        id: smoke
+        env:
+          PATHS: ${{ inputs.paths }}
+        run: |
+          set -euo pipefail
+          base=$(gh api "repos/$R/pages" --jq .html_url 2>/dev/null || true)
+          if [ -z "$base" ]; then echo "Pages が有効になっていないので終わります" | tee -a "$GITHUB_STEP_SUMMARY"; echo "result=skip" >> "$GITHUB_OUTPUT"; exit 0; fi
+          (cd .shared && npm i --no-save --no-audit --no-fund playwright-core@1.56.1 >/dev/null)
+          export CHROME_PATH
+          CHROME_PATH=$(command -v google-chrome || command -v chromium)
+          result=unreachable
+          for i in 1 2 3; do
+            # 公開直後は CDN が古い版を返すことがあるので、少し待ってから見る
+            sleep $((i * 40))
+            # shellcheck disable=SC2086
+            out=$(node .shared/scripts/smoke.mjs "${base%/}/" "$SHA" $PATHS || echo '{"result":"unreachable","pages":[]}')
+            result=$(jq -r .result <<<"$out")
+            echo "$i 回目: $out"
+            [ "$result" = ok ] && break
+          done
+          {
+            echo "公開URL: $base（版 ${SHA:0:7}）"
+            echo
+            jq -r '.pages[] | "- \(.path): HTTP \(.status) \(if (.errors|length)>0 then "エラー: " + (.errors|join(" / ")) else "" end)"' <<<"$out"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "result=$result" >> "$GITHUB_OUTPUT"
+      - name: 正常なら last-good として覚える
+        if: steps.smoke.outputs.result == 'ok'
+        run: |
+          gh api -X PATCH "repos/$R/git/refs/tags/last-good" -f sha="$SHA" -F force=true --jq .object.sha 2>/dev/null \
+            || gh api -X POST "repos/$R/git/refs" -f ref=refs/tags/last-good -f sha="$SHA" --jq .object.sha
+      - name: 壊れていたら last-good に戻す
+        if: steps.smoke.outputs.result == 'broken'
+        env:
+          DISPATCH: ${{ inputs.dispatch }}
+          PAGES_BUILD: ${{ inputs.pages_build }}
+        run: |
+          set -euo pipefail
+          head=$(git rev-parse origin/main)
+          if [ "$head" != "$SHA" ]; then
+            echo "main が先に進んでいる（${head:0:7}）ので、そちらの公開で確かめます" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git fetch -q origin "refs/tags/last-good:refs/tags/last-good" 2>/dev/null || true
+          good=$(git rev-parse -q --verify "refs/tags/last-good^{commit}" || true)
+          if [ -z "$good" ]; then
+            echo "::error title=公開後の確認で壊れていました::まだ正常だった版（last-good）が無いので、差し戻さずに知らせます"
+            exit 1
+          fi
+          git diff --binary "$good" "$head" -- . ':(exclude).github' > "$RUNNER_TEMP/back.diff"
+          if [ ! -s "$RUNNER_TEMP/back.diff" ]; then
+            echo "::error title=公開後の確認で壊れていました::last-good（${good:0:7}）と中身が同じなので、コード以外（公開設定など）の問題です"
+            exit 1
+          fi
+          br="auto-revert/${SHA:0:7}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -q -b "$br" "$head"
+          git apply -R --index "$RUNNER_TEMP/back.diff"
+          git commit -q -m "差し戻し: 公開後の確認で壊れていたので ${good:0:7} の状態に戻す（自動）"
+          git push -q origin "$br"
+          {
+            echo "公開後の確認（Post-deploy check）で、版 ${SHA:0:7} のページが壊れていたため、最後に正常だった版 ${good:0:7} の中身に戻します（.github/ は除く）。"
+            echo
+            echo "戻した変更:"
+            git log --format='- %h %s' "$good..$head"
+            echo
+            echo "確認の結果: $GITHUB_SERVER_URL/$R/actions/runs/$GITHUB_RUN_ID"
+            echo
+            echo "担当エージェントへ: 原因を直して、元の変更を新しい PR で出し直してください。"
+          } > "$RUNNER_TEMP/body.md"
+          url=$(gh pr create -R "$R" --base main --head "$br" --title "差し戻し: 公開後の確認で壊れていた ${SHA:0:7}（自動）" --body-file "$RUNNER_TEMP/body.md")
+          gh pr merge "$url" -R "$R" --squash --delete-branch
+          for wf in $DISPATCH; do gh workflow run "$wf" -R "$R" --ref main; done
+          if [ "$PAGES_BUILD" = true ]; then
+            gh api -X POST "repos/$R/pages/builds" --jq .status || echo "::warning::公開を起こせませんでした"
+          fi
+          echo "::error title=公開後の確認で壊れていたので差し戻しました::$url"
+          echo "差し戻しの PR: $url" >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+      - name: つながらないときは知らせるだけ
+        if: steps.smoke.outputs.result == 'unreachable'
+        run: |
+          echo "::error title=公開ページにつながりません::GitHub Pages 側の障害の可能性があるので、差し戻していません"
+          exit 1

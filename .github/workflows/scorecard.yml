@@ -1,0 +1,87 @@
+name: Scorecard
+
+# 毎週月曜の朝、エージェントの1週間の成績表をこのリポジトリの Issue 1件にまとめる（Claude は使わない）。
+# DORA の指標にならい、マージした数・壊れた割合（変更失敗率）・直るまでの時間をリポジトリごとに数える。
+# - 壊れた数 = 差し戻し PR（題が「差し戻し」で始まる）＋ その週に立った ci-failure Issue
+#   （外の都合で落ちやすい Site watch・Lighthouse・Link check・Law watch は数えない）
+# - 壊れた割合が BRAKE_RATE を超え、マージが BRAKE_MIN 件以上あったリポジトリには
+#   ラベル「自動マージ停止」の Issue を立てる（エラーバジェットの考え方。Google SRE の Error Budget Policy）。
+#   開いているあいだ、共通部品の自動マージ（automerge.yml）はそのリポジトリでマージしない。
+#   エージェントは直す PR を優先する（routines/autonomy.md）。翌週に割合が戻れば自動で閉じる。
+# 監督・見直しのルーティンは、ここに書かれた数字を読むだけにする。
+on:
+  schedule:
+    # 毎週月曜 06:07 JST（= 日曜 21:07 UTC）。Weekly summary の少し前
+    - cron: "7 21 * * 0"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+env:
+  REPOS: sandbox last-tell tenbin dungeon-boardgame carcassonne-research shared-workflows
+  EXTERNAL: 'Site watch|Lighthouse|Link check|Law watch'
+  BRAKE_RATE: '30'
+  BRAKE_MIN: '4'
+
+jobs:
+  scorecard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: 成績表を作って Issue にする
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          since=$(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%SZ)
+          day=$(TZ=Asia/Tokyo date +%Y-%m-%d)
+          body="$RUNNER_TEMP/body.md"
+          gh label create 成績表 --color 5319E7 --description "Scorecard が作る週1の成績表（自動）" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
+          gh label create 自動マージ停止 --color B60205 --description "壊れた割合が高いので自動マージを止めている（Scorecard が自動で開け閉めする）" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
+          {
+            echo "${day} までの7日間（自動）。壊れた割合が ${BRAKE_RATE}% を超え、マージが ${BRAKE_MIN} 件以上のリポジトリは自動マージを止めます。"
+            echo
+            echo "| リポジトリ | マージ | 差し戻し | CI失敗 | 壊れた割合 | 直るまで（平均） |"
+            echo "| --- | ---: | ---: | ---: | ---: | ---: |"
+          } > "$body"
+          brakes=""
+          for r in $REPOS; do
+            prs=$(gh api --paginate "repos/$OWNER/$r/pulls?state=closed&base=main&sort=updated&direction=desc&per_page=100" \
+              --jq ".[] | select(.merged_at != null and .merged_at >= \"$since\") | [.user.login, .title] | @tsv" || true)
+            merged=$(grep -vc $'^dependabot\[bot\]\t' <<<"$prs" || true)
+            [ -n "$prs" ] || merged=0
+            reverts=$(cut -f2 <<<"$prs" | grep -c '^差し戻し' || true)
+            fails=$(gh api "repos/$OWNER/$r/issues?labels=ci-failure&state=all&since=$since&per_page=100" \
+              --jq ".[] | select(.created_at >= \"$since\") | .title" | grep -vcE "$EXTERNAL" || true)
+            mttr=$(gh api "repos/$OWNER/$r/issues?labels=ci-failure&state=closed&since=$since&per_page=100" \
+              --jq "[.[] | select(.closed_at >= \"$since\") | select(.title | test(\"$EXTERNAL\") | not) | ((.closed_at|fromdate) - (.created_at|fromdate))] | if length>0 then (add/length/3600*10|round/10|tostring) + \" 時間\" else \"—\" end" || echo "—")
+            bad=$((reverts + fails))
+            if [ "$merged" -gt 0 ]; then rate=$((bad * 100 / merged)); rtxt="${rate}%"; else rate=0; rtxt="—"; fi
+            echo "| $r | $merged | $reverts | $fails | $rtxt | $mttr |" >> "$body"
+            open=$(gh issue list -R "$GITHUB_REPOSITORY" --label 自動マージ停止 --state open --search "in:title $r" --json number,title \
+              --jq ".[] | select(.title == \"自動マージ停止: $r\") | .number" | head -1)
+            if [ "$merged" -ge "$BRAKE_MIN" ] && [ "$rate" -gt "$BRAKE_RATE" ]; then
+              brakes="$brakes $r"
+              if [ -z "$open" ]; then
+                printf '%s\n\n%s\n\n%s\n' \
+                  "${day} までの7日間で、${r} はマージ ${merged} 件のうち ${bad} 件が壊れました（${rtxt}）。" \
+                  "この Issue が開いているあいだ、自動マージ（automerge.yml）は ${r} でマージしません。担当エージェントは新しい機能より、壊れた原因を直す PR を先に出してください（routines/autonomy.md）。" \
+                  "翌週の成績表で割合が ${BRAKE_RATE}% 以下に戻れば自動で閉じます。急ぎで外すときは、satou さんかエージェントがこの Issue を閉じてください。" \
+                  | gh issue create -R "$GITHUB_REPOSITORY" --label 自動マージ停止 --title "自動マージ停止: $r" --body-file -
+              fi
+            elif [ -n "$open" ]; then
+              gh issue close "$open" -R "$GITHUB_REPOSITORY" --reason completed --comment "壊れた割合が戻った（${rtxt}）ので、自動マージを再開します（自動）"
+            fi
+          done
+          {
+            echo
+            if [ -n "$brakes" ]; then echo "**自動マージを止めたリポジトリ:**$brakes"; else echo "自動マージを止めたリポジトリはありません。"; fi
+            echo
+            echo "数え方: マージは main に入った PR（Dependabot を除く）。CI失敗は外の都合で落ちやすいもの（${EXTERNAL}）を除く。"
+          } >> "$body"
+          for old in $(gh issue list -R "$GITHUB_REPOSITORY" --label 成績表 --state open --json number --jq '.[].number'); do
+            gh issue close "$old" -R "$GITHUB_REPOSITORY" --reason completed --comment "新しい成績表を作ったので閉じます（自動）"
+          done
+          gh issue create -R "$GITHUB_REPOSITORY" --label 成績表 --title "成績表 ${day}" --body-file "$body"
