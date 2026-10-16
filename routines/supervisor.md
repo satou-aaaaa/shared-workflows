@@ -9,7 +9,7 @@ list_triggers で last_run が前回以降に失敗したもの（利用上限�
 
 0. **節約モード**のときは、手順4の c（satou さん本人に回すもの）の確認だけにし、手順3（CI）と手順5（追加の仕事）は飛ばす（手順7の再実行は①だけ行ってよい）。
 1. list_triggers で、有効なルーティンの last_run が FAILED／成功以外が続いているもの、予定時刻を過ぎても動いていないものを探す（利用上限による失敗は手順7の対象。報告はしない）。
-2. list_sessions は limit=30（アーカイブ以外・直近7日）。status_bucket が BLOCKED／failed、または post_turn_summary.needs_action があるものを探す。あわせて list_thread_sessions と list_project_prs でこのプロジェクト内のスレッドとPRも見る。
+2. list_sessions は limit=30（アーカイブ以外・直近7日）。status_bucket が BLOCKED／failed、または post_turn_summary.needs_action があるものを探す。許可・確認のプロンプト待ちで止まっているセッション（無人のルーティンを含む）は c として状況ページの needs_satou に載せ、その手順書に確認の出ない方法を足すよう担当に伝える。あわせて list_thread_sessions と list_project_prs でこのプロジェクト内のスレッドとPRも見る。
 3. **CI**（supervisor-ci-fix）: open な ci-failure Issue があれば、リポジトリ担当（last-tell・carcassonne-research は担当セッション、sandbox は Issue/PR定期対応が拾う、dungeon-boardgame は「ダンジョンボドゲ issue 自動対応」のセッション、tenbin は修正スレッドか、いなければ Issue 起票）に原因調査と修正PR（CI緑でマージまで）を send_message で指示する。PR の CI が赤のものは pulls?state=open と commits/<branch>/check-runs で見て、3時間以上新しい push が無い・作成者が終わっているものを担当に修正指示。同じ失敗の指示は2回まで、それでも直らなければ c として報告。actions/runs を毎回探す手順は使わない。sandbox の Agent cycle（定期実行）の失敗は対象外。「CI失敗: Site watch（main）」（公開ページの死活監視）はコードではなく公開設定の問題のことが多い。担当に原因を調べさせ、Pages の設定変更が要るなら c にする。
 4. 見つけたものを分ける。
    - a. エージェントだけで進められるもの（一時的なエラー、CI の再実行で済む等）: そのセッションに send_message で「何が止まっているか・次の一手」を短く伝えて再開させる（同じ件は2回まで）。
@@ -29,5 +29,7 @@ list_triggers で last_run が前回以降に失敗したもの（利用上限�
    この巡回で見つけた satou さん本人に回すもの（c）と、各スレッドの「satouさんにお願い：」で未対応のものを足し、済んだもの（API や画面で確かめられたもの）を「済んだもの」へ移し、最終更新日時を書き換える。
    小さく編集し、10秒後に読み戻して上書きされていないか確かめる。カレンダーとメールは朝のタスク整理の担当なので書かない（既にある予定の行は、過ぎたものを消すだけ）。転職の TODO（tenshoku/）は触らない。
    変化が無ければ書かない。TODO の更新だけでは reply しない。
+   あわせて「エージェントの約束」欄（`common.md` の「対応漏れを防ぐ」）を見て、期限を過ぎた約束はその担当スレッドに send_message で催促する（同じ約束は2回まで、3回目は c）。
+   satou さんの未完了の項目のうち追加から7日以上たったものは、1件ずつ ask_decision のカード（やる・やめる・後で）で一度だけ聞き、答えに合わせて TODO を直す（同じ項目は2回聞かない）。
 
 **守ること**: 監督は自分でコードやリポジトリを書き換えない（Issue の起票は可）。QA/CI を飛ばす・無効化する、リポジトリ設定・シークレット・他のルーティンの変更はしない（手順7の fire_trigger による再実行と、手順7c の切り替えだけは例外）。マージと本番は担当エージェントに任されているので、監督から止めたり代行したりしない。
