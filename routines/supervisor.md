@@ -22,8 +22,8 @@ list_triggers で last_run が前回以降に失敗したもの（利用上限�
 7b. **差し戻しと自動マージ停止**: open な ci-failure Issue が「Post-deploy check」のもの、または題が「差し戻し」で始まる PR が前回以降にマージされていれば、手順3と同じ担当に「公開後に壊れたので自動で前の版に戻した。原因を直して、元の変更を新しい PR で出し直してほしい（差し戻し PR の本文に戻した変更の一覧がある）」と send_message で伝える（a として扱い、satou さんには報告しない）。
    shared-workflows にラベル「自動マージ停止」の Issue が開いていれば、そのリポジトリの担当に「今週は直す PR を優先し、新しい機能の PR はマージしない（autonomy.md のブレーキ）」と1回だけ伝える。2週続けて開いたままなら c としてカードで知らせる。
    日本時間の月曜 9:41 の回は、shared-workflows のラベル「成績表」の最新 Issue を読み、状況ページの note に「成績表: マージ N・壊れた割合 M%（最も高いリポジトリ）」の1行を書く。
-7c. **作り直したルーティンの切り替え**（2026-10-16 satou さん承認）: list_triggers に、旧ルーティン（カルカソンヌ毎日の改善サイクル trig_01AEAFRnqbfZeHEyyiLv3ZK6・Issue/PR定期対応 trig_01N5uNouNhSxCJSKUQ4gmp8q・運用エージェント trig_01Exb6paG3Em3S2gb8AJcnVp）がまだあるかを見る。
-   旧ルーティンが消えていて、名前が同じで「（新）」の付いた無効のルーティンがあれば、update_trigger で enabled=true にし、名前の「（新）」を外す（旧が停止中だったカルカソンヌ毎日の改善サイクルは有効にしない）。切り替えたら supervisor-decision-log に1行。
+7c. **作り直したルーティンの切り替え**（2026-10-16 satou さん承認）: list_triggers に、旧ルーティン（運用エージェント trig_01Exb6paG3Em3S2gb8AJcnVp・Issue/PR定期対応 trig_01N5uNouNhSxCJSKUQ4gmp8q・カルカソンヌ毎日の改善サイクル trig_01AEAFRnqbfZeHEyyiLv3ZK6）がまだあるかを見る。どれもエージェントからは直せない作り方なので、satou さんが消すのを待つ。
+   旧の運用エージェントが消えていたら、無効のまま置いてある「リポジトリ運用エージェント（クラウド・1サイクル）（新）」を update_trigger で enabled=true にし、名前の「（新）」を外す。「Issue/PR定期対応 (kensetsu-kyoka-toolkit)（新）」は旧が無効だったので無効のまま名前の「（新）」だけ外す。カルカソンヌ毎日の改善サイクルは CI（selfplay.yml）に移ったので作り直していない。切り替えたら supervisor-decision-log に1行。
 8. **状況まとめページの更新**（毎回の巡回の最後）: ArtifactData（url https://claude.ai/artifact/RudgLH14WFAY9ToCjNW8my）で collection "status"・doc_id "latest" を get して version を読み、update する（if_version に読んだ version。weekly など自分が書かないフィールドは触らない）。フィールド: updated_at（ISO）、note（短い一言、無ければ空）、needs_satou [{text,url}]、ci_failures [{repo,title,url}]、prs [{repo,number,title,state,ci,url}]、routines [{name,last_status,last_run,next_run}]（list_triggers ですでに読んだ情報から）。早めに終える回でも、すでに読んだ情報だけで書く。
 9. **satou さんの TODO の更新**（日本時間 9:41 の回だけ。2026-10-16 satou さん承認。「連絡のチェックとTODO最新化」の自動化）: /mnt/project-files/notes/todo.md を直前に読み直し、
    この巡回で見つけた satou さん本人に回すもの（c）と、各スレッドの「satouさんにお願い：」で未対応のものを足し、済んだもの（API や画面で確かめられたもの）を「済んだもの」へ移し、最終更新日時を書き換える。
