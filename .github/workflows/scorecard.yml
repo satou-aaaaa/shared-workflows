@@ -56,7 +56,7 @@ jobs:
             fails=$(gh api "repos/$OWNER/$r/issues?labels=ci-failure&state=all&since=$since&per_page=100" \
               --jq ".[] | select(.created_at >= \"$since\") | .title" | grep -vcE "$EXTERNAL" || true)
             mttr=$(gh api "repos/$OWNER/$r/issues?labels=ci-failure&state=closed&since=$since&per_page=100" \
-              --jq "[.[] | select(.closed_at >= \"$since\") | ((.closed_at|fromdate) - (.created_at|fromdate))] | if length>0 then (add/length/3600*10|round/10|tostring) + \" 時間\" else \"—\" end" || echo "—")
+              --jq "[.[] | select(.closed_at >= \"$since\") | select(.title | test(\"$EXTERNAL\") | not) | ((.closed_at|fromdate) - (.created_at|fromdate))] | if length>0 then (add/length/3600*10|round/10|tostring) + \" 時間\" else \"—\" end" || echo "—")
             bad=$((reverts + fails))
             if [ "$merged" -gt 0 ]; then rate=$((bad * 100 / merged)); rtxt="${rate}%"; else rate=0; rtxt="—"; fi
             echo "| $r | $merged | $reverts | $fails | $rtxt | $mttr |" >> "$body"
