@@ -1,0 +1,39 @@
+name: CI time report
+
+# 毎週、satou-aaaaa の各リポジトリの CI の実行時間を集計し、このリポジトリの Issue 1件（ラベル「CI時間」）にする（Claude は使わない）。
+# ルーティン「CI の時間短縮」（routines/ci-speedup.md）はこの Issue を読んで、どこを速くするかを決める。前の週の Issue は閉じる。
+# kotlin-csv は他の人のものなので対象外。
+on:
+  schedule:
+    # 毎週木曜 05:29 JST（= 水曜 20:29 UTC）
+    - cron: "29 20 * * 3"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  REPOS: last-tell tenbin carcassonne-research sandbox shared-workflows
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: 集計して Issue にする
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          day=$(TZ=Asia/Tokyo date +%Y-%m-%d)
+          body="$RUNNER_TEMP/body.md"
+          node scripts/ci-time.mjs > "$body"
+          total=$(grep -oE '合計 \*\*[0-9.]+ 分' "$body" | grep -oE '[0-9.]+' | head -1)
+          gh label create CI時間 --color 1D76DB --description "CI time report が作る週1の CI 実行時間（自動）" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
+          for old in $(gh issue list -R "$GITHUB_REPOSITORY" --label CI時間 --state open --json number --jq '.[].number'); do
+            gh issue close "$old" -R "$GITHUB_REPOSITORY" --reason completed --comment "新しい集計を作ったので閉じます（自動）"
+          done
+          gh issue create -R "$GITHUB_REPOSITORY" --label CI時間 --title "CI時間 ${day}（直近7日 ${total} 分）" --body-file "$body"

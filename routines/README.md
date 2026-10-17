@@ -11,6 +11,7 @@
 | [supervisor.md](supervisor.md) | 監督エージェントの巡回 | 6時間ごと（:41） |
 | [repo-patrol.md](repo-patrol.md) | 全リポジトリ・全プロジェクト巡回と改善提案 | 毎日 22:38 JST |
 | [routine-review.md](routine-review.md) | ルーティンとスキルの定期見直し | 週1（土曜 9:53 JST） |
+| [ci-speedup.md](ci-speedup.md) | CI の時間短縮（集計は CI time report が木曜 05:29 JST に Issue「CI時間」へ） | 週1（木曜 10:26 JST） |
 | [dungeon-issue.md](dungeon-issue.md) | ダンジョンボドゲ issue 自動対応 | 3時間ごと（:54） |
 
 sandbox のルーティン（Issue/PR定期対応・運用エージェント・新規Issueの提案）の手順は satou-aaaaa/sandbox の `docs/routines/` にあり、共通のきまりはここの `common.md` を使う。
