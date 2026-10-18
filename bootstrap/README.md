@@ -25,7 +25,7 @@ satou-aaaaa の「アプリを自律的に開発するエージェントと、�
 ### 1. GitHub（リポジトリと守り）
 
 1. ★ satou さんが GitHub でリポジトリを作り、Claude の GitHub アプリの対象に加える（https://github.com/apps/claude/installations/select_target ）。
-2. 各リポジトリに [template/](../template/) の呼び出し側ワークフロー・`dependabot.yml`・`.gemini/`・`CLAUDE.md` を入れる。手順は [routines/onboarding.md](../routines/onboarding.md) の 2。
+2. 各リポジトリに [template/](../template/) の呼び出し側ワークフロー・`dependabot.yml`・`.gemini/`・`AGENTS.md`（AI 共通の指示）と `CLAUDE.md`（`@AGENTS.md` の1行）を入れる。手順は [routines/onboarding.md](../routines/onboarding.md) の 2。
 3. ★ satou さんの画面操作: Pages・main の Ruleset（このリポジトリは PR 必須・必須チェック actionlint、他は削除と force push の禁止）・fork PR の Actions 承認・Push protection・Gemini Code Assist のアプリ。一覧は onboarding.md の 5。
 4. このリポジトリの共通の一覧（`scorecard.yml`・`weekly-summary.yml`・`ci-time-report.yml` の `REPOS`、README の一覧）に全リポジトリを入れる（onboarding.md の 3）。
 

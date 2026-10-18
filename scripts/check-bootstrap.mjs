@@ -12,7 +12,7 @@ const errors = [];
 const read = (p) => readFileSync(p, 'utf8');
 
 // 1. ルーティンの手順書
-const notRoutines = new Set(['README.md', 'common.md', 'autonomy.md', 'catalog.md', 'agent-practices.md', 'project-practices.md', 'onboarding.md', 'pr.md']);
+const notRoutines = new Set(['README.md', 'common.md', 'autonomy.md', 'catalog.md', 'agent-practices.md', 'project-practices.md', 'onboarding.md', 'pr.md', 'STYLE.md', 'tool-map.md', 'without-claude.md']);
 const routinesDoc = read('bootstrap/routines.md');
 for (const f of readdirSync('routines')) {
   if (!f.endsWith('.md') || notRoutines.has(f)) continue;
