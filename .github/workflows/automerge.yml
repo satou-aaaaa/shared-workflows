@@ -7,6 +7,7 @@ name: Auto merge (共通部品)
 #   （.github/ を変える PR は GITHUB_TOKEN ではマージできない。workflows 権限が無いため）
 # - require_paths を指定したときは、その正規表現に当てはまるファイルを1つも変えない PR もマージしない
 # - 検査した時のコミットから新しいコミットが積まれていたら、マージしない（新しい方の検査を待つ）
+# - 成績表の「自動マージ停止」Issue が開いているとき、直近24時間に公開後の差し戻しが2回あったときもマージしない
 # GITHUB_TOKEN でマージしたときは main への push で他のワークフローが動かないので、
 # dispatch に書いたワークフローと Pages の公開をここから起こす。
 on:
@@ -59,6 +60,11 @@ jobs:
           brake=$(gh api "repos/satou-aaaaa/shared-workflows/issues?labels=%E8%87%AA%E5%8B%95%E3%83%9E%E3%83%BC%E3%82%B8%E5%81%9C%E6%AD%A2&state=open" \
             --jq ".[] | select(.title == \"自動マージ停止: ${REPO#*/}\") | .html_url" 2>/dev/null | head -1 || true)
           if [ -n "$brake" ]; then echo "自動マージを止めている週なのでマージしません（$brake）"; exit 0; fi
+          # すぐ効くブレーキ: 直近24時間に公開後の自動差し戻し（post-deploy.yml、題が「差し戻し:」）が2回あったらマージしない
+          since=$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)
+          reverts=$(gh api "repos/$REPO/pulls?state=closed&sort=updated&direction=desc&per_page=50" \
+            --jq "[.[] | select(.merged_at != null and .merged_at >= \"$since\" and (.title | startswith(\"差し戻し:\")))] | length")
+          if [ "${reverts:-0}" -ge 2 ]; then echo "直近24時間に差し戻しが ${reverts} 回あったので、自動ではマージしません（原因を直す PR は担当がマージする）"; exit 0; fi
           files=$(gh api --paginate "repos/$REPO/pulls/$pr/files" --jq '.[].filename')
           if echo "$files" | grep -q '^\.github/'; then echo "#$pr は .github/ を変えるので手でマージ"; exit 0; fi
           if [ -n "$REQUIRE_PATHS" ] && ! echo "$files" | grep -qE "$REQUIRE_PATHS"; then echo "#$pr は対象のファイルを変えないので手でマージ"; exit 0; fi

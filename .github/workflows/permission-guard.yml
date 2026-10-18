@@ -1,0 +1,34 @@
+name: Permission guard
+
+# 「任せる範囲の表」（routines/autonomy.md）と全体のきまり（routines/common.md）を変える PR は、
+# satou さんがカードか会話で「はい」と答えたものだけ入れる（2026-10-18 satou さん承認）。
+# エージェントが自分に任せる範囲を自分で広げないため、ラベル「satou承認」が無ければ落とす。
+# 考え方: 自律の度合いを上げる判断は人が持つ（Feng ほか「Levels of Autonomy for AI Agents」 https://arxiv.org/abs/2506.12469 ）
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: 権限の表を変えていればラベルを確かめる
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          set -euo pipefail
+          files=$(gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[].filename')
+          if ! grep -qxE 'routines/(autonomy|common)\.md' <<<"$files"; then echo "権限の表は変えていません"; exit 0; fi
+          if jq -e 'index("satou承認")' <<<"$LABELS" >/dev/null; then
+            echo "routines/autonomy.md か common.md を変えています。ラベル「satou承認」があるので通します" | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error::routines/autonomy.md か common.md を変える PR には、satou さんの「はい」をもらってからラベル「satou承認」を付けてください（common.md「権限の表を変えるとき」）"
+            exit 1
+          fi
