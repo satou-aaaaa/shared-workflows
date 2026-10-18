@@ -59,3 +59,4 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | 単体HTMLアプリの画面点検 | スキル law-app-ui-check |
 | LAST TELL の演出の提案 | スキル last-tell-proposal-demo |
 | 聞くか聞かないかの判断 | [autonomy.md](autonomy.md) |
+| Claude が使えないときの運転（週1の確認・ほかの AI で動かす） | [without-claude.md](without-claude.md)・[tool-map.md](tool-map.md)・`scripts/next-actions.mjs` |

@@ -37,3 +37,17 @@ jobs:
           persist-credentials: false
       - name: zizmor
         run: pipx run zizmor==1.31.1 --offline --config zizmor.yml --min-severity medium .github/workflows template/.github/workflows
+
+  # 手順書が routines/STYLE.md の形か、AGENTS.md（AI 共通の指示）があるかを調べる。
+  # Claude が使えないときも、ほかの AI や人が同じ手順書で動けるようにするため。
+  routines:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: routines
+        run: |
+          node scripts/check-routines.mjs
+          node --check scripts/next-actions.mjs
