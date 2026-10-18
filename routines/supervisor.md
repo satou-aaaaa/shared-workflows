@@ -39,7 +39,9 @@ list_triggers で last_run が前回以降に失敗したもの（利用上限�
    - from_todo が無いカード（satou さんがボードで足したもの）: todo.md の合う欄に1行足し、カードに from_todo: true を書く。
    - todo.md の未完了の項目でカードが無いもの: カードを足す。fields は title・owner（satou さん向け "you"、エージェントの約束 "agent"）・lane（「すぐやること」「satouさんにお願い」は "now"、ただし now が3枚以上なら "next"。設定画面・Issue の答え待ちは "next"、「時間があるとき」は "later"、「エージェントの約束」は "agent"）・due（期限があれば YYYY-MM-DD）・note（短い補足）・link（https の URL があれば）・order・from_todo: true。doc_id は英小文字・数字・ハイフンの短い名前。
    - todo.md で済んだもの（`[x]` か「済んだもの」欄）なのにカードが "done" でないもの: lane "done"、done_at に今の時刻。
-   - lane "done" で done_at が30日より前のカードは消す。ボードで消されたカードは todo.md から消さない（手順9の7日カードで聞く）。
+   - lane "done" で done_at が30日より前のカードは消す。ボードで「消す」を押したカード（deleted: true）は、todo.md の同じ項目を「済んだもの」へ「（ボードで取り消し）」付きで移し、30日たったら delete する。deleted のカードは足し直さない。
+   - todo.md とボードで食い違うとき（済み・未済みが逆など）は、カードの updated と todo.md の最終更新のうち新しい方に合わせる。
+   - 依頼カード（request: true）はエージェントが作らない。ボードの「頼む」・ボタンだけが作り、source: "board" と by（satou さんの id）が付く。
    依頼カード（request: true）で、受けたスレッドの進み具合が分かれば progress に1行（「PR を出した」「satou さんの答え待ち」など）を書き、スレッドが終わったら lane "done"・done_at にする。
    カレンダーの予定の行と転職の TODO（tenshoku/）はボードに載せない。変化が無ければ書かない。ボードの同期だけでは reply しない。
 
