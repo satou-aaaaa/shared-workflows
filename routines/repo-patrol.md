@@ -12,8 +12,7 @@ A. **新しい対象の自動検出**（毎回。軽い比較だけ）: チー�
    (3) 監督スレッドの担当セッション（「監督エージェントの巡回」trigger の persistent_session_id）に send_message で「新しいリポジトリ／プロジェクト <名前・chan/リポジトリ・担当セッション> を巡回対象に加えた。監督の点検対象にも加えてほしい」と1回だけ伝え、
    (4) 今回の巡回で初回の読み取りを行い、reply の先頭に「新規対象：…」と1行書く。
    新しいリポジトリが satou-aaaaa のもの（フォークでない）で、CI の共通部品（shared-workflows の `template/`）や main の保護が入っていなければ、提案で止めず、
-   このプロジェクトのコーディネーター（mcp__hearthbot__get_channel_session_id）に send_message で「<リポジトリ> の初期設定スレッドを始めてほしい：template/ の呼び出し側ワークフロー・dependabot.yml・CLAUDE.md を入れる PR（CI 緑でマージ）と、
-   main の Ruleset・Push protection・fork PR の Actions 承認を他のリポジトリと同じにする」と1回だけ頼む（2026-10-16 satou さん承認）。他の人のリポジトリには何もしない。
+   このプロジェクトのコーディネーター（mcp__hearthbot__get_channel_session_id）に send_message で「<リポジトリ> の受け入れスレッドを始めてほしい：shared-workflows の `routines/onboarding.md` の手順どおりに」と1回だけ頼む（2026-10-16 satou さん承認。手順は 2026-10-18 に onboarding.md へまとめた）。他の人のリポジトリには何もしない。
    個人情報中心のプロジェクト（転職など）は中身を読まず、ルーティンの失敗・滞留・重複・CI で済む作業という運用面だけを見る。
 1. 動きのあるリポジトリだけ git clone --depth 1（既にあれば pull）。チームメモリ repo-patrol を読み、前回までの提案と渡し先を確認する。
 2. 動きのあったリポジトリだけを巡回する。前回渡した提案がまだ手つかず（Issue が開いたまま動きが無い、担当から反応が無い）のリポジトリには新しい提案を足さない。各リポジトリで、オープン／最近クローズの Issue・PR と重複しない、根拠（file:line・実行結果）のある改善提案を最大3件にまとめる。読み取りのみ。コードの変更・PR作成・マージはしない（担当エージェントの仕事）。

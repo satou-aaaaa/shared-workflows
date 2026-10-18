@@ -51,4 +51,6 @@ jobs:
 
 ## 新しいリポジトリを作ったら
 
+手順の全体（特定・初期設定・共通の一覧への追加・satou さんにお願いする設定）は [routines/onboarding.md](routines/onboarding.md)。ひな形の埋め方の要点は次のとおり。
+
 `template/` の中身をコピーし、`ci-failure-issue.yml` の見張るワークフロー名、`site-watch.yml` の `paths`、`lighthouse.yml` の `baseline`（最初に手で1回動かして測る）、`dependabot.yml` の対象、`CLAUDE.md` の `<>` を埋める。
