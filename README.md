@@ -6,7 +6,7 @@ satou-aaaaa の各リポジトリ（last-tell・tenbin・carcassonne-research・
 | 場所 | 中身 |
 | --- | --- |
 | [.github/workflows/](.github/workflows/) | 再利用できるワークフロー（共通部品） |
-| [template/](template/) | 新しいリポジトリにそのままコピーする呼び出し側のワークフロー・Dependabot・CLAUDE.md のひな形 |
+| [template/](template/) | 新しいリポジトリにそのままコピーする呼び出し側のワークフロー・Dependabot・CLAUDE.md・Gemini のレビュー設定（`.gemini/`）のひな形 |
 | [routines/](routines/) | Claude ルーティンの共通のきまりと手順書 |
 
 ## 共通部品
@@ -51,4 +51,4 @@ jobs:
 
 ## 新しいリポジトリを作ったら
 
-`template/` の中身をコピーし、`ci-failure-issue.yml` の見張るワークフロー名、`site-watch.yml` の `paths`、`lighthouse.yml` の `baseline`（最初に手で1回動かして測る）、`dependabot.yml` の対象、`CLAUDE.md` の `<>` を埋める。
+`template/` の中身をコピーし、`ci-failure-issue.yml` の見張るワークフロー名、`site-watch.yml` の `paths`、`lighthouse.yml` の `baseline`（最初に手で1回動かして測る）、`dependabot.yml` の対象、`CLAUDE.md` の `<>` を埋める。`.gemini/styleguide.md` にはそのリポジトリだけの注意点を1〜2行足す（Gemini のアプリは satou さんの画面でリポジトリを選ぶ）。
