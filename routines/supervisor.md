@@ -30,5 +30,13 @@ list_triggers で last_run が前回以降に失敗したもの（利用上限�
    変化が無ければ書かない。TODO の更新だけでは reply しない。
    あわせて「エージェントの約束」欄（`common.md` の「対応漏れを防ぐ」）を見て、期限を過ぎた約束はその担当スレッドに send_message で催促する（同じ約束は2回まで、3回目は c）。
    satou さんの未完了の項目のうち追加から7日以上たったものは、1件ずつ ask_decision のカード（やる・やめる・後で）で一度だけ聞き、答えに合わせて TODO を直す（同じ項目は2回聞かない）。
+9b. **TODO ボードの同期**（日本時間 9:41 の回だけ、手順9のあと。2026-10-18 satou さんがカードで採用）: satou さんは TODO をカンバンのボード https://claude.ai/artifact/8yUssaEaqLxjiQhkFtHqbZ で見る。todo.md が正、ボードはその見え方。
+   ArtifactData の list（collection "cards"、limit 1000）で全カードを読み、todo.md と突き合わせて次だけを1回の batch で書く（既にあるカードには読んだ version を if_version に付ける）。
+   - ボードで lane が "done" なのに todo.md で `[ ]` のもの: satou さんがボードで済みにしたので、todo.md を `[x]` にする（手順9と同じく小さく編集して読み戻す）。
+   - from_todo が無いカード（satou さんがボードで足したもの）: todo.md の合う欄に1行足し、カードに from_todo: true を書く。
+   - todo.md の未完了の項目でカードが無いもの: カードを足す。fields は title・owner（satou さん向け "you"、エージェントの約束 "agent"）・lane（「すぐやること」「satouさんにお願い」は "now"、ただし now が3枚以上なら "next"。設定画面・Issue の答え待ちは "next"、「時間があるとき」は "later"、「エージェントの約束」は "agent"）・due（期限があれば YYYY-MM-DD）・note（短い補足）・link（https の URL があれば）・order・from_todo: true。doc_id は英小文字・数字・ハイフンの短い名前。
+   - todo.md で済んだもの（`[x]` か「済んだもの」欄）なのにカードが "done" でないもの: lane "done"、done_at に今の時刻。
+   - lane "done" で done_at が30日より前のカードは消す。ボードで消されたカードは todo.md から消さない（手順9の7日カードで聞く）。
+   カレンダーの予定の行と転職の TODO（tenshoku/）はボードに載せない。変化が無ければ書かない。ボードの同期だけでは reply しない。
 
 **守ること**: 監督は自分でコードやリポジトリを書き換えない（Issue の起票は可）。QA/CI を飛ばす・無効化する、リポジトリ設定・シークレット・他のルーティンの変更はしない（手順7の fire_trigger による再実行だけは例外）。マージと本番は担当エージェントに任されているので、監督から止めたり代行したりしない。
