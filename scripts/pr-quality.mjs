@@ -7,6 +7,8 @@
 // - 何度も落ちる検査: 同じ検査（失敗の注記の題、無ければジョブ名）が 3つ以上の別々の PR で落ちたもの。
 //   PR の中身と関係なく落ちる「不安定な検査」の候補（Google Testing Blog「Flaky Tests at Google and How We Mitigate Them」）。
 //   ここは閉じた PR も含めて数える（検査だけの PR でも落ちるため）。
+// - PR の大きさ: 変更行（足した行＋消した行。lockfile・sw.js・changes.html・docs/ の作り直しページなど生成物は除く）の中央値と、
+//   LARGE 行を超えた PR の「最初の CI で赤」の割合。大きい変更ほど危ない（DORA 2024・Google「Small CLs」）ので、分けるべきかの目安にする。
 // FLAKY_OUT を渡すと、リポジトリごとの候補を JSON で書く（成績表が Issue「不安定な検査: <repo>」の開け閉めに使う）。
 
 import { execFileSync } from "node:child_process";
@@ -16,6 +18,9 @@ const owner = process.env.OWNER || "satou-aaaaa";
 const repos = (process.env.REPOS || "").split(/\s+/).filter(Boolean);
 const days = Number(process.env.DAYS || 7);
 const MIN_PRS = 3;
+const LARGE = Number(process.env.LARGE || 400);
+// 生成物（手で書かない・作り直しのコマンドで作るもの）。大きさに数えない
+const GENERATED = /(^|\/)(package-lock\.json|pnpm-lock\.yaml|yarn\.lock|uv\.lock|poetry\.lock|sw\.js|changes\.html)$|^docs\/(?!index\.html$)[^/]+\.html$|\.min\.(js|css)$/;
 const since = Date.now() - days * 86400e3;
 
 function api(path) {
@@ -63,6 +68,29 @@ function failedChecks(repo, run) {
   return keys;
 }
 
+// PR の変更行（生成物を除く）。読めなければ null
+function prSize(repo, pr) {
+  let total = 0;
+  for (let page = 1; page <= 3; page++) {
+    let files;
+    try {
+      files = api(`repos/${owner}/${repo}/pulls/${pr.number}/files?per_page=100&page=${page}`);
+    } catch {
+      return null;
+    }
+    for (const f of files) if (!GENERATED.test(f.filename)) total += (f.additions || 0) + (f.deletions || 0);
+    if (files.length < 100) break;
+  }
+  return total;
+}
+
+const median = (a) => {
+  if (!a.length) return null;
+  const s = [...a].sort((x, y) => x - y);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2);
+};
+
 const rows = [];
 const flaky = {};
 for (const repo of repos) {
@@ -75,7 +103,8 @@ for (const repo of repos) {
   }
   prs = prs.filter((p) => Date.parse(p.closed_at) >= since && p.user.login !== "dependabot[bot]");
   const byCheck = new Map(); // 検査 → PR 番号の集合
-  let merged = 0, firstRed = 0, redRuns = 0;
+  let merged = 0, firstRed = 0, redRuns = 0, large = 0, largeRed = 0;
+  const sizes = [];
   for (const pr of prs) {
     let runs;
     try {
@@ -88,7 +117,16 @@ for (const repo of repos) {
       // ワークフローごとの最初の実行のどれかが失敗なら「最初の CI で赤」
       const first = new Map();
       for (const r of runs) if (!first.has(r.name)) first.set(r.name, r);
-      if ([...first.values()].some((r) => r.conclusion === "failure")) firstRed++;
+      const red = [...first.values()].some((r) => r.conclusion === "failure");
+      if (red) firstRed++;
+      const size = prSize(repo, pr);
+      if (size !== null) {
+        sizes.push(size);
+        if (size > LARGE) {
+          large++;
+          if (red) largeRed++;
+        }
+      }
       redRuns += runs.filter((r) => r.conclusion === "failure").length;
     }
     for (const r of runs.filter((x) => x.conclusion === "failure" && Date.parse(x.created_at) >= since)) {
@@ -104,20 +142,22 @@ for (const repo of repos) {
     .map(([check, s]) => ({ check, prs: [...s].sort((a, b) => a - b) }));
   const named = cand.filter((c) => !c.check.endsWith(JOB_ONLY));
   if (named.length) flaky[repo] = named;
-  rows.push({ repo, merged, firstRed, redRuns, cand });
+  rows.push({ repo, merged, firstRed, redRuns, cand, med: median(sizes), large, largeRed });
 }
 
 const out = [];
 out.push("## PR の質（最初の CI で通ったか）", "");
 out.push(`直近${days}日にマージされた PR（Dependabot を除く）。「最初の CI で赤」が多いほど、push の前の確かめが足りないか、検査が不安定です。`, "");
-out.push("| リポジトリ | マージ | 最初の CI で赤 | 割合 | 赤の回数（再実行を含む） |", "| --- | ---: | ---: | ---: | ---: |");
+out.push(`変更行は生成物を除いた足した行＋消した行。${LARGE} 行を超える PR が多く、その赤の割合が高ければ、PR を分ける（routines/pr.md「PR は小さく」）。`, "");
+out.push(`| リポジトリ | マージ | 最初の CI で赤 | 割合 | 赤の回数（再実行を含む） | 変更行の中央値 | ${LARGE} 行超（うち最初が赤） |`, "| --- | ---: | ---: | ---: | ---: | ---: | ---: |");
 for (const r of rows) {
   if (r.error) {
-    out.push(`| ${r.repo} | 読めず | — | — | — |`);
+    out.push(`| ${r.repo} | 読めず | — | — | — | — | — |`);
     continue;
   }
   const rate = r.merged ? `${Math.round((r.firstRed * 100) / r.merged)}%` : "—";
-  out.push(`| ${r.repo} | ${r.merged} | ${r.firstRed} | ${rate} | ${r.redRuns} |`);
+  const med = r.med === null ? "—" : r.med;
+  out.push(`| ${r.repo} | ${r.merged} | ${r.firstRed} | ${rate} | ${r.redRuns} | ${med} | ${r.large}（${r.largeRed}） |`);
 }
 out.push("", `## 何度も落ちる検査（${MIN_PRS}つ以上の別々の PR で落ちたもの）`, "");
 const any = rows.filter((r) => r.cand && r.cand.length);
