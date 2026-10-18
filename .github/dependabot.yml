@@ -1,0 +1,11 @@
+# 共通部品が使う Actions（checkout・setup-node など）の SHA 固定を月1回まとめて新しくする。
+# 全リポジトリがこの部品を @main で呼ぶので、ここを新しくすれば全部に効く。
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      actions:
+        patterns: ["*"]

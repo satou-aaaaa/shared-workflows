@@ -16,6 +16,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: actionlint
         run: |
           set -euo pipefail
@@ -23,3 +25,15 @@ jobs:
           tar xzf al.tgz actionlint
           ./actionlint -color .github/workflows/*.yml
           (cd template && ../actionlint -color .github/workflows/*.yml)
+
+  # ワークフローの安全性（なりすまし・資格情報の残り・危ないトリガーなど）を zizmor で調べる。
+  # 決まりとして許しているもの（自分の部品を @main で呼ぶ など）は zizmor.yml に理由つきで書く。
+  zizmor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: zizmor
+        run: pipx run zizmor==1.31.1 --offline --config zizmor.yml --min-severity medium .github/workflows template/.github/workflows
