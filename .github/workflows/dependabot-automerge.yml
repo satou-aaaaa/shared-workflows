@@ -9,7 +9,8 @@ on:
 
 jobs:
   automerge:
-    if: github.actor == 'dependabot[bot]'
+    # PR を作った人で判定する（github.actor は再実行した人に変わり、なりすませるため）
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

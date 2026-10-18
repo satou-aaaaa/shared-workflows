@@ -1,0 +1,19 @@
+# zizmor（ワークフローの安全性の検査）の設定。Lint の zizmor ジョブが読む。
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        # 共通部品は @main で呼ぶ決まり（書けるのは satou-aaaaa だけ、main は Ruleset で守っている）
+        "satou-aaaaa/*": any
+        "*": hash-pin
+  dangerous-triggers:
+    # workflow_run は「CI 失敗 Issue」と「公開後の確認」に要る。どちらも PR のコードを実行しない
+    ignore:
+      - ci-failure-issue.yml
+      - post-deploy.yml
+      - automerge.yml
+  artipacked:
+    # この2つは作ったページや戻しの PR を push するので、資格情報を残す必要がある
+    ignore:
+      - changes-page.yml:41
+      - post-deploy.yml:40

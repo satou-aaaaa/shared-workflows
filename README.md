@@ -44,7 +44,7 @@ jobs:
       paths: index.html sw.js manifest.webmanifest
 ```
 
-- 呼び出し側は `@main` を指す。ここを直すと次の実行から全リポジトリに効くので、変更は PR で出し、Lint（actionlint）が通ってからマージする。
+- 呼び出し側は `@main` を指す。ここを直すと次の実行から全リポジトリに効くので、変更は PR で出し、Lint（actionlint と、ワークフローの安全性を調べる zizmor。許している指摘は `zizmor.yml`）が通ってからマージする。Actions の SHA 固定は Dependabot が月1回まとめて新しくする。
 - 権限（`permissions:`）は呼び出し側で与える。共通部品はその範囲でしか動けない。
 - 全リポジトリが公開なので、Actions の利用料はかからない。
 - 書き込めるのは satou さんとそのエージェントだけ（main は Ruleset で PR 必須・Lint 必須）。外部の人の PR はマージしない。
