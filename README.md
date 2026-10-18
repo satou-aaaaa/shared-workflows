@@ -9,6 +9,7 @@ satou-aaaaa の各リポジトリ（last-tell・tenbin・carcassonne-research・
 | [template/](template/) | 新しいリポジトリにそのままコピーする呼び出し側のワークフロー・Dependabot・AGENTS.md（AI 共通の指示）と CLAUDE.md のひな形 |
 | [routines/](routines/) | Claude ルーティンの共通のきまりと手順書（書き方は STYLE.md。Claude が使えないときは without-claude.md） |
 | [AGENTS.md](AGENTS.md) | AI エージェント共通の指示（Claude・Codex・Gemini・Copilot などが読む。CLAUDE.md はこれを取り込むだけ） |
+| [bootstrap/](bootstrap/) | AI プロジェクト一式（ルーティン・チェック機構・プロジェクト指示・メモリ・スキル）を立ち上げ直す手順とひな形 |
 
 ## 共通部品
 

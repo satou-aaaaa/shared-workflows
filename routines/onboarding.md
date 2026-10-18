@@ -31,6 +31,7 @@
 - `README.md` 冒頭のリポジトリ一覧
 - `routines/supervisor.md` の CI を見るリポジトリと、その担当（専任のルーティンが無ければ「修正スレッドか Issue 起票」）
 - `routines/repo-patrol.md` 手順3の渡し先（専任のルーティンが無ければ tenbin と同じ「Issue 起票→コーディネーターに修正スレッドを頼む」）
+- `routines/project-practices.md` の「プロジェクトごとの状況」に1行（分野・今の流れの置き場所）。分野が表に無ければ、要点を調べて「分野ごとの要点」にも足す（個人情報を扱うプロジェクトは除く）
 - Lint（actionlint）が緑ならマージする。
 
 ## 4. 記録と連絡
