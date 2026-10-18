@@ -1,13 +1,15 @@
 # shared-workflows
 
-satou-aaaaa の各リポジトリ（last-tell・tenbin・carcassonne-research・sandbox・dungeon-boardgame）で共通に使う部品。
+satou-aaaaa の各リポジトリ（last-tell・tenbin・carcassonne-research・sandbox・dungeon-boardgame・naitei-no-michi）で共通に使う部品。
 同じ処理をリポジトリごとにコピーせず、ここを1か所直せば全部に効くようにするためのもの。Claude は使わない（GitHub Actions だけで動く）。
 
 | 場所 | 中身 |
 | --- | --- |
 | [.github/workflows/](.github/workflows/) | 再利用できるワークフロー（共通部品） |
-| [template/](template/) | 新しいリポジトリにそのままコピーする呼び出し側のワークフロー・Dependabot・CLAUDE.md・Gemini のレビュー設定（`.gemini/`）のひな形 |
-| [routines/](routines/) | Claude ルーティンの共通のきまりと手順書 |
+| [template/](template/) | 新しいリポジトリにそのままコピーする呼び出し側のワークフロー・Dependabot・AGENTS.md（AI 共通の指示）と CLAUDE.md・CodeRabbit のレビュー設定（`.coderabbit.yaml`）のひな形 |
+| [routines/](routines/) | Claude ルーティンの共通のきまりと手順書（書き方は STYLE.md。Claude が使えないときは without-claude.md） |
+| [AGENTS.md](AGENTS.md) | AI エージェント共通の指示（Claude・Codex・Gemini・Copilot などが読む。CLAUDE.md はこれを取り込むだけ） |
+| [bootstrap/](bootstrap/) | AI プロジェクト一式（ルーティン・チェック機構・プロジェクト指示・メモリ・スキル）を立ち上げ直す手順とひな形 |
 
 ## 共通部品
 
@@ -44,11 +46,13 @@ jobs:
       paths: index.html sw.js manifest.webmanifest
 ```
 
-- 呼び出し側は `@main` を指す。ここを直すと次の実行から全リポジトリに効くので、変更は PR で出し、Lint（actionlint）が通ってからマージする。
+- 呼び出し側は `@main` を指す。ここを直すと次の実行から全リポジトリに効くので、変更は PR で出し、Lint（actionlint と、ワークフローの安全性を調べる zizmor。許している指摘は `zizmor.yml`）が通ってからマージする。Actions の SHA 固定は Dependabot が月1回まとめて新しくする。
 - 権限（`permissions:`）は呼び出し側で与える。共通部品はその範囲でしか動けない。
 - 全リポジトリが公開なので、Actions の利用料はかからない。
 - 書き込めるのは satou さんとそのエージェントだけ（main は Ruleset で PR 必須・Lint 必須）。外部の人の PR はマージしない。
 
 ## 新しいリポジトリを作ったら
 
-`template/` の中身をコピーし、`ci-failure-issue.yml` の見張るワークフロー名、`site-watch.yml` の `paths`、`lighthouse.yml` の `baseline`（最初に手で1回動かして測る）、`dependabot.yml` の対象、`CLAUDE.md` の `<>` を埋める。`.gemini/styleguide.md` にはそのリポジトリだけの注意点を1〜2行足す（Gemini のアプリは satou さんの画面でリポジトリを選ぶ）。
+手順の全体（特定・初期設定・共通の一覧への追加・satou さんにお願いする設定）は [routines/onboarding.md](routines/onboarding.md)。ひな形の埋め方の要点は次のとおり。
+
+`template/` の中身をコピーし、`ci-failure-issue.yml` の見張るワークフロー名、`site-watch.yml` の `paths`、`lighthouse.yml` の `baseline`（最初に手で1回動かして測る）、`dependabot.yml` の対象、`AGENTS.md` の `<>` を埋める（`CLAUDE.md` は `@AGENTS.md` の1行のまま）。`.coderabbit.yaml` の `path_instructions` にはそのリポジトリだけの注意点を1〜2行足し、`path_filters` に生成物を `!` 付きで書く（CodeRabbit のアプリは satou さんの画面でリポジトリを選ぶ）。

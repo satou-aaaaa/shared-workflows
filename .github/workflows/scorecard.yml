@@ -23,7 +23,7 @@ permissions:
   issues: write
 
 env:
-  REPOS: sandbox last-tell tenbin dungeon-boardgame carcassonne-research shared-workflows
+  REPOS: sandbox last-tell tenbin dungeon-boardgame naitei-no-michi carcassonne-research shared-workflows
   EXTERNAL: 'Site watch|Lighthouse|Link check|Law watch'
   BRAKE_RATE: '30'
   BRAKE_MIN: '4'
@@ -34,6 +34,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: 成績表を作って Issue にする
         env:
           GH_TOKEN: ${{ github.token }}
