@@ -21,3 +21,5 @@
 | 知らない人からの変更を入れない | 2026-10-15「知らない人に変更されたらまずい」 | — |
 | 他の人のリポジトリは何もしない | 2026-10-16 | kotlin-csv はフォーク |
 | common.md を短くし、経緯をこのファイルへ | 2026-10-18 カード「全部進める」（開発フローの問題点 6） | 渡す文脈は意味の濃いものをできるだけ少なく（Anthropic「Effective context engineering for AI agents」 https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents ） |
+| まず守ること・テストと検査を守る・流し直しの記録・確かめ役は目的を見る・共有メモリに書くもの・CodeQL | 2026-10-18 カード「全部入れる」（開発フローの問題点 8〜17） | テストを通った修正の約11%が誤り（Wang ほか ICSE 2026 https://arxiv.org/abs/2503.15223 ）、エージェントはテストに合わせてごまかす（ImpossibleBench ICLR 2026 https://arxiv.org/abs/2510.20270 ）、流し直しは応急処置（Luo ほか FSE 2014）、長い指示は真ん中が読まれない（Liu ほか TACL 2024 https://aclanthology.org/2024.tacl-1.9/ ）、確かめ役が浅い（Cemri ほか NeurIPS 2025 https://arxiv.org/abs/2503.13657 ）、記憶の汚染（AgentPoison NeurIPS 2024 https://arxiv.org/abs/2407.12784 ）、AI のコードの約4割に脆弱性（Pearce ほか 2022 https://arxiv.org/abs/2108.09293 ） |
+| tenbin の判例の確認で書き手の文章でなく一次資料を見る | 同上 | LLM は自分の出力をひいきする（Panickssery ほか NeurIPS 2024）、判例の作り話（Dahl ほか 2024 https://arxiv.org/abs/2401.01301 ） |

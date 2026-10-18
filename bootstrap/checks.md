@@ -22,6 +22,7 @@
 | Lint（このリポジトリ） | ワークフローの書き間違い（actionlint）・危ない書き方（zizmor）・立ち上げ手順の抜け（bootstrap） | `.github/workflows/lint.yml`・`zizmor.yml`・`scripts/check-bootstrap.mjs` | ★ main の Ruleset で actionlint を必須に |
 | Selftest（このリポジトリ） | 共通部品を PR の段階で実際に動かす（秘密の検査・公開後の確認のスクリプトが「正常」と「壊れている」を見分けられるか） | `selftest.yml` | なし |
 | Permission guard（このリポジトリ） | `routines/autonomy.md`・`common.md` を変える PR にラベル「satou承認」が無い | `permission-guard.yml` | ラベル「satou承認」 |
+| CodeQL | AI が書いたコードの脆弱性（無料、公開リポジトリ） | `codeql.yml` | 呼び出し側の `languages` |
 | Secret scan | PR と main への push に入った秘密（gitleaks） | `secret-scan.yml` | 呼び出し側を入れる、★ Push protection |
 | Gemini のレビュー（2人目の目） | 正しさ・要件の見落とし | 各リポジトリの `.gemini/`、common.md「Gemini のレビュー」 | `template/.gemini/` を入れる、★ Gemini Code Assist のアプリ |
 | /code-review（新しい文脈のレビュー） | Gemini が付かない PR・判定ロジック・3ファイル以上の変更の見落とし | common.md「エージェントの使い方」 | なし |

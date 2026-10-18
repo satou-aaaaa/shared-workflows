@@ -1,0 +1,31 @@
+name: CodeQL (共通部品)
+
+# AI が書いたコードの脆弱性（XSS・入力の検査漏れなど）を CodeQL で調べる（Claude は使わない。公開リポジトリは無料）。
+# 見つかったものは Security タブの Code scanning に出て、PR では注釈が付く。
+# 考え方: AI が作ったプログラムの約4割に脆弱性があった（Pearce ほか「Asleep at the Keyboard?」IEEE S&P 2022 https://arxiv.org/abs/2108.09293 ）。
+#   秘密の検査（gitleaks）とワークフローの検査（zizmor）では見つからない種類なので、別に調べる。
+on:
+  workflow_call:
+    inputs:
+      languages:
+        description: '調べる言語（カンマ区切り）。例 "javascript-typescript,actions"、"python,actions"'
+        type: string
+        required: true
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          languages: ${{ inputs.languages }}
+          build-mode: none
+      - uses: github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
