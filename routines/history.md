@@ -17,7 +17,7 @@
 | 対応漏れを防ぐ | 2026-10-16「対応漏れが起こらないようにしたい」、カード「全部反映」 | 10/15〜16 に7件の漏れ。調査は共有フォルダ notes/omission-prevention-2026-10-16.md |
 | CI が赤のとき | 2026-10-18 エージェントの性能向上 | last-tell の同じ WebKit の検査が別々の PR 6本で落ちた |
 | エージェントの使い方 | 2026-10-18「エージェントを利用するベストプラクティスを調べ、導入する」 | 出典は agent-practices.md |
-| Gemini のレビュー | 2026-10-18 承認（カード「5つ全部」） | 作る役と確かめる役を分ける |
+| 2人目のレビュー（Gemini → CodeRabbit） | 2026-10-18 承認（カード「5つ全部」）。Gemini Code Assist の個人向けが終わったので CodeRabbit に替えた（#17） | 作る役と確かめる役を分ける |
 | 知らない人からの変更を入れない | 2026-10-15「知らない人に変更されたらまずい」 | — |
 | 他の人のリポジトリは何もしない | 2026-10-16 | kotlin-csv はフォーク |
 | common.md を短くし、経緯をこのファイルへ | 2026-10-18 カード「全部進める」（開発フローの問題点 6） | 渡す文脈は意味の濃いものをできるだけ少なく（Anthropic「Effective context engineering for AI agents」 https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents ） |

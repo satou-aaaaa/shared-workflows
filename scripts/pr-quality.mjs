@@ -35,6 +35,10 @@ function prRuns(repo, pr) {
   return j.workflow_runs
     .filter((r) => ["pull_request", "pull_request_target"].includes(r.event) && r.status === "completed")
     .filter((r) => r.conclusion !== "cancelled" && r.conclusion !== "skipped")
+    // 同じブランチ名を前の PR でも使っていることがある（エージェントはブランチを使い回す）。
+    // この PR が開く前と閉じた後の実行は、この PR のものではないので数えない
+    .filter((r) => Date.parse(r.created_at) >= Date.parse(pr.created_at))
+    .filter((r) => !pr.closed_at || Date.parse(r.created_at) <= Date.parse(pr.closed_at))
     .sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
 }
 

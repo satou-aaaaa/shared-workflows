@@ -8,6 +8,9 @@
 | --- | --- | --- |
 | [common.md](common.md) | すべてのルーティンの共通のきまり | — |
 | [autonomy.md](autonomy.md) | 任せる範囲の表（聞かずにやってよいこと・聞くこと・ブレーキ） | — |
+| [STYLE.md](STYLE.md) | 手順書の書き方（どの AI でも人でも同じ結果になる形） | — |
+| [tool-map.md](tool-map.md) | Claude 専用の道具の置き換え表（ほかの AI・人が手順書を使うとき） | — |
+| [without-claude.md](without-claude.md) | Claude が使えないときの運転マニュアル（止まるもの・週1の確認・ほかの AI・戻ったとき） | 使えないとき |
 | [pr.md](pr.md) | PR の手順（push 前・PR・CI・コンフリクト・マージ・公開の確認）。全リポジトリ共通 | — |
 | [../bootstrap/](../bootstrap/README.md) | 全部を立ち上げ直す手順（ルーティンの定義・チェック機構・プロジェクト指示・メモリ・スキル） | — |
 | [catalog.md](catalog.md) | 繰り返しの作業すべての一覧（ほかの場所にある手順書・CI・スキルも含む） | — |

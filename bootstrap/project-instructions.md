@@ -18,12 +18,12 @@ claude.ai のプロジェクト設定の「プロジェクト指示」に貼る�
 - Claude の呼び名（このプロジェクトでは「ドラえもん」）、TODO の置き場所、担当スレッドの ID。立ち上げ直すと変わるか、satou さんの好みで変わるもの。
 - 書き方は [memory.md](memory.md)。
 
-## 各リポジトリの CLAUDE.md との分け方
+## 各リポジトリの AGENTS.md との分け方
 
 | 置き場所 | 書くこと |
 | --- | --- |
 | プロジェクト指示 | どのスレッドにも毎回効かせたい、短い決まり（上の3行） |
 | shared-workflows `routines/common.md`・`autonomy.md` | 全体の運用の決まり（お金・聞き方・PR・CI・レビュー） |
-| 各リポジトリの `CLAUDE.md` | そのリポジトリだけの決まり（push 前の確認・公開・生成物）。ひな形は [template/CLAUDE.md](../template/CLAUDE.md) |
+| 各リポジトリの `AGENTS.md` | そのリポジトリだけの決まり（push 前の確認・公開・生成物）。どの AI も読む。`CLAUDE.md` は `@AGENTS.md` の1行だけ。ひな形は [template/AGENTS.md](../template/AGENTS.md) |
 | プロジェクトメモリ | ID・担当・その時点の状態・satou さんの好み |
 | スキル | 決まった手順の作業（PR の手順・公開前の確認など）。控えは [skills/](skills/) |
