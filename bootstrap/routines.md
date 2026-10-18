@@ -59,7 +59,8 @@
 
 | ルーティン | 手順書 | cron | 備考 |
 | --- | --- | --- | --- |
-| 週1の開発レポート | このプロジェクトの共有フォルダ `dev-report/README.md` | `CRON_TZ=Asia/Tokyo 13 7 * * 1` | 共有フォルダに控えが無い（README「まだ立ち上げ直せないもの」）。レポートの Artifact を作り直したら URL をプロンプトに入れる |
+| 週1の開発レポート | このプロジェクトの共有フォルダ `dev-report/README.md` | `CRON_TZ=Asia/Tokyo 13 7 * * 1` | 共有フォルダの控えは satou-aaaaa/ops-backup（非公開）の `projects/agent-ops/files/`。レポートの Artifact を作り直したら URL をプロンプトに入れる |
+| ops-backup 書き出し（週1・日曜朝） | satou-aaaaa/ops-backup（非公開）`README.md`「書き出し」 | `CRON_TZ=Asia/Tokyo 17 9 * * 0` | 業務代行エージェント作りのスレッドから作る |
 | 週次の研究進捗まとめ（カルカソンヌ） | プロンプト内: 「satou-aaaaa/carcassonne-research の過去1週間のコミットと PR の状態を確認し、AI の強さの変化と、初心者向け解説に使える発見を日本語で短くまとめてプロジェクトに投稿してください。」 | `CRON_TZ=Asia/Tokyo 45 20 * * 0` | モデル claude-haiku-5-5 |
 | 個人の作業（朝のタスク整理・転職・連載・動画など） | 各プロジェクトの共有フォルダかプロンプト内 | — | 公開リポジトリには置かない |
 

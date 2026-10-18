@@ -41,7 +41,7 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
 ### C. 戻ってきたら
 
 1. Issue「Claude 停止中」を Claude のスレッドに渡し、止まっていたあいだに起きたことを読ませる。
-2. ルーティンが全部有効か `list_triggers` で確かめる（止まっていた・消えていたら、作り直しの手順で作り直す）。
+2. ルーティンが全部有効か `list_triggers` で確かめる（無効になっていたら有効に戻す。消えていたら satou-aaaaa/ops-backup の README「作り直し」で戻す）。
 3. 止まっていたあいだの約束（Issue に期限を書いたもの）を共有フォルダの `notes/todo.md` に戻す。
 4. Issue「Claude 停止中」を閉じる。
 
@@ -54,7 +54,7 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
 | sandbox の agent-cycle・agent-on-ready（Actions の中で Claude を使う） | Issue の自動処理 | 止まる（ほかに影響しない） |
 | CodeRabbit のレビュー | PR へのレビュー | **続く**（CodeRabbit の GitHub アプリ） |
 | 判断が要るルーティン | 監督・巡回・見直し・CI の時間短縮・ダンジョン issue・sandbox の Issue 対応 | 止まる。B の週1の確認で代える。ほかの AI で手順書を回してもよい |
-| 個人の作業のルーティン | 朝のタスク整理・転職・連載・動画など | 止まる。手順は各プロジェクトの共有フォルダかプロンプトの中にしかない（控えの置き場所ができたらそこから戻す） |
+| 個人の作業のルーティン | 朝のタスク整理・転職・連載・動画など | 止まる。プロンプトの全文は satou-aaaaa/ops-backup（非公開）の `routines/triggers.json` にある。ほかの AI に渡せば動かせるものもある |
 
 ## ほかの AI で動かす
 

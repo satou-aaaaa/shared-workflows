@@ -28,6 +28,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | sandbox 運用エージェント | satou-aaaaa/sandbox `docs/routines/ops-agent.md` | 平日 2:07 JST |
 | sandbox 新規Issueの提案 | satou-aaaaa/sandbox `docs/routines/weekly-issue-proposal.md` | 水曜 8:47 JST |
 | 週1の開発レポート | このプロジェクトの共有フォルダ `dev-report/README.md` | 月曜 7:13 JST |
+| claude.ai の中身の控え（全ルーティンの定義・自作スキルと、業務代行エージェント作りのプロジェクトの指示・メモリ・共有フォルダだけ。ほかのプロジェクトの分は無い） | satou-aaaaa/ops-backup（非公開）`README.md` | 日曜 9:17 JST |
 | LAST TELL 毎日の改善提案 | プロンプト内（短い。LAST TELL プロジェクト） | 毎日（send_later で自分を入れ直す） |
 | カルカソンヌ 週次の研究進捗まとめ | プロンプト内（短い。カルカソンヌ プロジェクト） | 日曜 20:45 JST |
 | 個人の作業（朝のタスク整理・転職・動画・連載など） | 各プロジェクトの共有フォルダかプロンプト内 | — |
