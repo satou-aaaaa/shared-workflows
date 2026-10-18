@@ -13,7 +13,7 @@ permissions:
   issues: write
 
 env:
-  REPOS: sandbox last-tell tenbin dungeon-boardgame carcassonne-research shared-workflows
+  REPOS: sandbox last-tell tenbin dungeon-boardgame naitei-no-michi carcassonne-research shared-workflows
 
 jobs:
   summary:
