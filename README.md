@@ -8,6 +8,7 @@ satou-aaaaa の各リポジトリ（last-tell・tenbin・carcassonne-research・
 | [.github/workflows/](.github/workflows/) | 再利用できるワークフロー（共通部品） |
 | [template/](template/) | 新しいリポジトリにそのままコピーする呼び出し側のワークフロー・Dependabot・CLAUDE.md のひな形 |
 | [routines/](routines/) | Claude ルーティンの共通のきまりと手順書 |
+| [bootstrap/](bootstrap/) | AI プロジェクト一式（ルーティン・チェック機構・プロジェクト指示・メモリ・スキル）を立ち上げ直す手順とひな形 |
 
 ## 共通部品
 

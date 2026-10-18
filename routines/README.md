@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | [common.md](common.md) | すべてのルーティンの共通のきまり | — |
 | [autonomy.md](autonomy.md) | 任せる範囲の表（聞かずにやってよいこと・聞くこと・ブレーキ） | — |
+| [../bootstrap/](../bootstrap/README.md) | 全部を立ち上げ直す手順（ルーティンの定義・チェック機構・プロジェクト指示・メモリ・スキル） | — |
 | [catalog.md](catalog.md) | 繰り返しの作業すべての一覧（ほかの場所にある手順書・CI・スキルも含む） | — |
 | [agent-practices.md](agent-practices.md) | エージェント利用のベストプラクティスの台帳（取り入れたもの・出典・見直しの記録） | — |
 | [supervisor.md](supervisor.md) | 監督エージェントの巡回 | 6時間ごと（:41） |
