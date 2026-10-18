@@ -26,6 +26,17 @@ jobs:
           ./actionlint -color .github/workflows/*.yml
           (cd template && ../actionlint -color .github/workflows/*.yml)
 
+  # 立ち上げ直しの手順書（bootstrap/）に、ルーティンの手順書・共通部品の抜けや内部 ID の混入が無いかを調べる。
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: bootstrap
+        run: node scripts/check-bootstrap.mjs
+
   # ワークフローの安全性（なりすまし・資格情報の残り・危ないトリガーなど）を zizmor で調べる。
   # 決まりとして許しているもの（自分の部品を @main で呼ぶ など）は zizmor.yml に理由つきで書く。
   zizmor:
