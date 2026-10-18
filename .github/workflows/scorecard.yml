@@ -8,6 +8,9 @@ name: Scorecard
 #   ラベル「自動マージ停止」の Issue を立てる（エラーバジェットの考え方。Google SRE の Error Budget Policy）。
 #   開いているあいだ、共通部品の自動マージ（automerge.yml）はそのリポジトリでマージしない。
 #   エージェントは直す PR を優先する（routines/autonomy.md）。翌週に割合が戻れば自動で閉じる。
+# - あわせて scripts/pr-quality.mjs で PR の質（最初の CI で赤だった割合）と、3つ以上の PR で落ちた検査を数える。
+#   落ちた検査が見つかったリポジトリには Issue「不安定な検査: <repo>」（ラベル「不安定な検査」）を開け、出なくなった週に閉じる。
+#   担当エージェントは再実行で済ませず、検査の不安定さの原因を直す（routines/common.md「CI が赤のとき」）。
 # 監督・見直しのルーティンは、ここに書かれた数字を読むだけにする。
 on:
   schedule:
@@ -16,6 +19,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  contents: read
   issues: write
 
 env:
@@ -27,8 +31,9 @@ env:
 jobs:
   scorecard:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: 成績表を作って Issue にする
         env:
           GH_TOKEN: ${{ github.token }}
@@ -80,7 +85,30 @@ jobs:
             if [ -n "$brakes" ]; then echo "**自動マージを止めたリポジトリ:**$brakes"; else echo "自動マージを止めたリポジトリはありません。"; fi
             echo
             echo "数え方: マージは main に入った PR（Dependabot を除く）。CI失敗は外の都合で落ちやすいもの（${EXTERNAL}）を除く。"
+            echo
           } >> "$body"
+          flaky="$RUNNER_TEMP/flaky.json"
+          # PR の質。読めないときも成績表は出す
+          REPOS="$REPOS" FLAKY_OUT="$flaky" node scripts/pr-quality.mjs >> "$body" || { echo "（PR の質は今回読めませんでした）" >> "$body"; echo '{}' > "$flaky"; }
+          gh label create 不安定な検査 --color FBCA04 --description "3つ以上の PR で同じ検査が落ちた（Scorecard が自動で開け閉めする）" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
+          for r in $REPOS; do
+            open=$(gh issue list -R "$GITHUB_REPOSITORY" --label 不安定な検査 --state open --search "in:title $r" --json number,title \
+              --jq ".[] | select(.title == \"不安定な検査: $r\") | .number" | head -1)
+            list=$(jq -r --arg r "$r" --arg o "$OWNER" '.[$r] // [] | .[] | "- \(.check)（\(.prs | length) PR: \(.prs | map("https://github.com/\($o)/\($r)/pull/\(.)") | join(" "))）"' "$flaky")
+            if [ -n "$list" ]; then
+              text=$(printf '%s\n\n%s\n\n%s\n' \
+                "${day} までの7日間で、${r} の次の検査が3つ以上の別々の PR で落ちました。PR の中身と関係なく落ちる「不安定な検査」の候補です（自動）。" \
+                "$list" \
+                "担当エージェントは、再実行で済ませず、どれか1つの原因を調べて直す PR を出してください（routines/common.md「CI が赤のとき」）。本当に壊れていたものなら、その旨をコメントして閉じてかまいません。翌週の成績表で出なくなれば自動で閉じます。")
+              if [ -z "$open" ]; then
+                gh issue create -R "$GITHUB_REPOSITORY" --label 不安定な検査 --title "不安定な検査: $r" --body "$text"
+              else
+                gh issue comment "$open" -R "$GITHUB_REPOSITORY" --body "$text"
+              fi
+            elif [ -n "$open" ]; then
+              gh issue close "$open" -R "$GITHUB_REPOSITORY" --reason completed --comment "今週は3つ以上の PR で落ちた検査がなかったので閉じます（自動）"
+            fi
+          done
           for old in $(gh issue list -R "$GITHUB_REPOSITORY" --label 成績表 --state open --json number --jq '.[].number'); do
             gh issue close "$old" -R "$GITHUB_REPOSITORY" --reason completed --comment "新しい成績表を作ったので閉じます（自動）"
           done
