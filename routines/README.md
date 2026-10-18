@@ -8,9 +8,10 @@
 | --- | --- | --- |
 | [common.md](common.md) | すべてのルーティンの共通のきまり | — |
 | [autonomy.md](autonomy.md) | 任せる範囲の表（聞かずにやってよいこと・聞くこと・ブレーキ） | — |
+| [agent-practices.md](agent-practices.md) | エージェント利用のベストプラクティスの台帳（取り入れたもの・出典・見直しの記録） | — |
 | [supervisor.md](supervisor.md) | 監督エージェントの巡回 | 6時間ごと（:41） |
 | [repo-patrol.md](repo-patrol.md) | 全リポジトリ・全プロジェクト巡回と改善提案 | 毎日 22:38 JST |
-| [routine-review.md](routine-review.md) | ルーティンとスキルの定期見直し | 週1（土曜 9:53 JST） |
+| [routine-review.md](routine-review.md) | ルーティンとスキルの定期見直し（エージェント利用のベストプラクティスの調べ直しを含む） | 週1（土曜 9:53 JST） |
 | [ci-speedup.md](ci-speedup.md) | CI の時間短縮（集計は CI time report が木曜 05:29 JST に Issue「CI時間」へ） | 週1（木曜 10:26 JST） |
 | [dungeon-issue.md](dungeon-issue.md) | ダンジョンボドゲ issue 自動対応 | 3時間ごと（:54） |
 
