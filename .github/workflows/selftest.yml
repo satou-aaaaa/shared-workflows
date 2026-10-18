@@ -39,8 +39,11 @@ jobs:
           export CHROME_PATH
           CHROME_PATH=$(command -v google-chrome || command -v chromium)
           base=https://satou-aaaaa.github.io/naitei-no-michi/
-          ok=$(node scripts/smoke.mjs "$base" selftest | jq -r .result)
-          bad=$(node scripts/smoke.mjs "$base" selftest no-such-page-selftest.html | jq -r .result)
+          okj=$(node scripts/smoke.mjs "$base" selftest)
+          badj=$(node scripts/smoke.mjs "$base" selftest no-such-page-selftest.html)
+          printf '%s\n%s\n' "$okj" "$badj"
+          ok=$(jq -r .result <<<"$okj")
+          bad=$(jq -r .result <<<"$badj")
           echo "正常なページ: $ok / 無いページ: $bad" | tee -a "$GITHUB_STEP_SUMMARY"
           # 正常なページは ok（Pages の障害で unreachable のときは見分けの検査ができないので通す）
           case "$ok" in ok|unreachable) ;; *) echo "::error::正常なページを $ok と判定しました"; exit 1 ;; esac
