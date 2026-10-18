@@ -52,6 +52,7 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
 | CI の共通部品（GitHub Actions） | CI 失敗 Issue・死活監視・Lighthouse・リンク切れ・秘密の混入検査・自動マージ・公開後の確認と自動の差し戻し・成績表・週次まとめ・CI時間・ブランチ片付け | **続く**（Claude を使わない） |
 | リポジトリ独自の CI | カルカソンヌ自己対戦・LAST TELL 自動対戦・sandbox のバックアップや法令の見張り | **続く** |
 | sandbox の agent-cycle・agent-on-ready（Actions の中で Claude を使う） | Issue の自動処理 | 止まる（ほかに影響しない） |
+| CodeRabbit のレビュー | PR へのレビュー | **続く**（CodeRabbit の GitHub アプリ） |
 | 判断が要るルーティン | 監督・巡回・見直し・CI の時間短縮・ダンジョン issue・sandbox の Issue 対応 | 止まる。B の週1の確認で代える。ほかの AI で手順書を回してもよい |
 | 個人の作業のルーティン | 朝のタスク整理・転職・連載・動画など | 止まる。手順は各プロジェクトの共有フォルダかプロンプトの中にしかない（控えの置き場所ができたらそこから戻す） |
 
@@ -61,6 +62,7 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
 
 | AI | 使い方の入口 | 注意 |
 | --- | --- | --- |
+| CodeRabbit（GitHub アプリ） | PR に自動でレビューが付く | 公開リポジトリは Open source プランで無料（[プラン表](https://docs.coderabbit.ai/management/plans)） |
 | Gemini Code Assist（GitHub アプリ） | PR に自動でレビューが付く | 個人向けの無料版は 2026-07-17 に終了していて、今は反応しない（[Google の案内](https://developers.google.com/gemini-code-assist/docs/deprecations/consumer-code-review)） |
 | Gemini CLI / Antigravity CLI | 手元でリポジトリを開いて動かす | 無料枠の条件が 2026-06 に変わった。使う前に公式の料金ページで、今も無料か確かめる |
 | OpenAI Codex | 手元か ChatGPT から | 無料で使えるかはその時点の公式ページで確かめる |

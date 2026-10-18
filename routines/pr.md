@@ -28,7 +28,7 @@ satou-aaaaa の各リポジトリで、PR を作る・CI を通す・コンフ�
 ## 3. CI とレビュー
 
 - CI が赤のときは common.md の「CI が赤のとき」。ローカルで同じ検査を再現してから直す。テストのスキップ・無効化・削除、空コミット、閉じて開き直すことで通さない。
-- Gemini のレビューは common.md の「Gemini のレビュー」。push から10分たっても付かなければ待たずに進めてよい。
+- CodeRabbit のレビューは common.md の「CodeRabbit のレビュー」。push から10分たっても付かなければ待たずに進めてよい。
 - main の CI 失敗は各リポジトリの Actions がラベル `ci-failure` の Issue にする（次に成功すると自動で閉じる）。
 
 ## 4. コンフリクトを直す
