@@ -10,7 +10,7 @@
 
 | 仕組み | 見つけるもの | どこ | 立ち上げで要るもの |
 | --- | --- | --- | --- |
-| push 前の確認 | 自分の変更で壊れた検査 | 各リポジトリの `CLAUDE.md`「push する前の確認」、スキル pr-flow | `template/CLAUDE.md` を埋める、スキルを保存（[skills/](skills/)） |
+| push 前の確認 | 自分の変更で壊れた検査 | [pr.md](../routines/pr.md)、各リポジトリの `CLAUDE.md`「push する前の確認」、スキル pr-flow | `template/CLAUDE.md` を埋める、スキルを保存（[skills/](skills/)） |
 | 確かめてから「できた」と言う・2回でだめなら仕切り直す | 確かめていない完了報告、同じ失敗の繰り返し | [common.md](../routines/common.md)「エージェントの使い方」「CI が赤のとき」 | なし（common.md を読めばよい） |
 | 秘密の混入の検知（手元） | API キー・トークン | sandbox の `hooks/check-secrets.mjs` など各リポジトリ | リポジトリごと |
 

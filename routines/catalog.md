@@ -52,10 +52,11 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 
 | 作業 | 手順書 |
 | --- | --- |
-| PR を作る・CI を通す・マージする | 共通スキル「PR の手順」（pr-flow）。リポジトリに `.claude/skills/steward/` があればそちら（今は carcassonne-research） |
+| PR を作る・CI を通す・コンフリクトを直す・マージする・公開を確かめる | [pr.md](pr.md)（共通スキル「PR の手順」もこれを読む）。リポジトリだけの決まりは各 `CLAUDE.md` と `.claude/skills/steward/`（今は carcassonne-research） |
 | CI が赤のとき・Gemini のレビュー | [common.md](common.md) の「CI が赤のとき」「Gemini のレビュー」 |
 | LAST TELL の更新（index.html の作り直し・公開） | last-tell `README.md`、スキル last-tell-release-check |
 | tenbin の作り直し・論文問題の追加 | tenbin `CLAUDE.md`、スキル add-ronbun-questions |
 | 単体HTMLアプリの画面点検 | スキル law-app-ui-check |
 | LAST TELL の演出の提案 | スキル last-tell-proposal-demo |
 | 聞くか聞かないかの判断 | [autonomy.md](autonomy.md) |
+| 各プロジェクトの進め方の見直し（分野のベストプラクティス） | [project-practices.md](project-practices.md)（土曜の見直しの F が1プロジェクトずつ） |
