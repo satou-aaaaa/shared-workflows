@@ -11,7 +11,7 @@ const notices = [];
 const read = (p) => readFileSync(p, 'utf8');
 
 // 一覧・決まり・書き方のファイルは手順書ではない
-const notProcedures = new Set(['README.md', 'common.md', 'autonomy.md', 'catalog.md', 'agent-practices.md', 'STYLE.md', 'tool-map.md', 'project-practices.md']);
+const notProcedures = new Set(['README.md', 'common.md', 'autonomy.md', 'catalog.md', 'agent-practices.md', 'STYLE.md', 'tool-map.md', 'project-practices.md', 'history.md']);
 const required = ['## 目的', '## 使う道具', '## 手順', '## 完了条件', '## やってはいけないこと'];
 
 for (const f of readdirSync('routines').sort()) {

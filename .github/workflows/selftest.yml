@@ -1,0 +1,50 @@
+name: Selftest
+
+# 共通部品を、main に入れる前にこのリポジトリの中で実際に動かしてみる（Claude は使わない）。
+# 各リポジトリは共通部品を @main で呼ぶので、壊れた部品がマージされると全リポジトリの CI が同時に止まる。
+# Lint（書き方の検査）だけでは見つからない「動かすと壊れる」を、ここで先に見つける。
+# - 書き込みをしない部品（秘密の検査）をそのまま呼ぶ
+# - 公開後の確認のスクリプト（smoke.mjs）を、正常なページと存在しないページの両方に当て、結果の見分けが合っているかを見る
+# 考え方: 全体に出す前に一部で試す（Google SRE Workbook「Canarying Releases」 https://sre.google/workbook/canarying-releases/ ）
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - 'scripts/**'
+      - 'template/**'
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    uses: ./.github/workflows/secret-scan.yml
+
+  smoke-script:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: スクリプトの文法
+        run: for f in scripts/*.mjs; do node --check "$f"; done
+      - name: 公開後の確認が「正常」と「壊れている」を見分けられるか
+        run: |
+          set -euo pipefail
+          npm i --no-save --no-audit --no-fund playwright-core@1.56.1 >/dev/null
+          export CHROME_PATH
+          CHROME_PATH=$(command -v google-chrome || command -v chromium)
+          base=https://satou-aaaaa.github.io/tenbin/
+          okj=$(node scripts/smoke.mjs "$base" selftest)
+          badj=$(node scripts/smoke.mjs "$base" selftest no-such-page-selftest.html)
+          printf '%s\n%s\n' "$okj" "$badj"
+          ok=$(jq -r .result <<<"$okj")
+          bad=$(jq -r .result <<<"$badj")
+          echo "正常なページ: $ok / 無いページ: $bad" | tee -a "$GITHUB_STEP_SUMMARY"
+          # 正常なページは ok（Pages の障害で unreachable のときは見分けの検査ができないので通す）
+          case "$ok" in ok|unreachable) ;; *) echo "::error::正常なページを $ok と判定しました"; exit 1 ;; esac
+          if [ "$ok" = ok ] && [ "$bad" != broken ]; then echo "::error::無いページを $bad と判定しました（broken のはず）"; exit 1; fi

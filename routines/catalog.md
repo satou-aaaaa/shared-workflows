@@ -42,8 +42,9 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | 週次まとめ Issue（開いた PR・CI 失敗） | このリポジトリ `weekly-summary.yml` | 月曜の朝 |
 | CI時間 Issue | このリポジトリ `ci-time-report.yml` | 木曜 05:29 JST |
 | 成績表 Issue | このリポジトリ `scorecard.yml` | 月曜 06:07 JST |
-| 死活監視・Lighthouse・リンク切れ・ブランチ片付け・ラベル | 各リポジトリの `.github/workflows/`（中身はこのリポジトリの共通部品） | 毎日〜週1 |
+| 死活監視・Lighthouse・リンク切れ・ブランチ片付け・ラベル・CodeQL | 各リポジトリの `.github/workflows/`（中身はこのリポジトリの共通部品） | 毎日〜週1 |
 | CI 失敗 Issue・自動マージ・更新情報・公開後の確認 | 同上 | PR・push のたび |
+| 共通部品の試運転・権限の表の見張り | このリポジトリ `selftest.yml`・`permission-guard.yml` | PR のたび |
 | カルカソンヌ自己対戦 | carcassonne-research `selfplay.yml` | 6時間ごと |
 | LAST TELL 自動対戦 | last-tell `playthrough.yml` | 毎日 3:00 JST |
 | sandbox のバックアップ・法令の見張り・夜間検査・ミューテーション | sandbox `backup.yml`・`law-watch.yml`・`nightly.yml`・`weekly-mutation.yml` | 定期 |

@@ -20,11 +20,14 @@
 | --- | --- | --- | --- |
 | 各リポジトリの QA・テスト | 動かない・止まる・見た目の崩れ | 各リポジトリの CI（`qa/` など） | onboarding.md の 2 |
 | Lint（このリポジトリ） | ワークフローの書き間違い（actionlint）・危ない書き方（zizmor）・立ち上げ手順の抜け（bootstrap） | `.github/workflows/lint.yml`・`zizmor.yml`・`scripts/check-bootstrap.mjs` | ★ main の Ruleset で actionlint を必須に |
+| Selftest（このリポジトリ） | 共通部品を PR の段階で実際に動かす（秘密の検査・公開後の確認のスクリプトが「正常」と「壊れている」を見分けられるか） | `selftest.yml` | なし |
+| Permission guard（このリポジトリ） | `routines/autonomy.md`・`common.md` を変える PR にラベル「satou承認」が無い | `permission-guard.yml` | ラベル「satou承認」 |
+| CodeQL | AI が書いたコードの脆弱性（無料、公開リポジトリ） | `codeql.yml` | 呼び出し側の `languages` |
 | Secret scan | PR と main への push に入った秘密（gitleaks） | `secret-scan.yml` | 呼び出し側を入れる、★ Push protection |
 | CodeRabbit のレビュー（2人目の目） | 正しさ・要件の見落とし | 各リポジトリの `.coderabbit.yaml`、common.md「CodeRabbit のレビュー」 | `template/.coderabbit.yaml` を入れる、★ CodeRabbit のアプリ |
 | /code-review（新しい文脈のレビュー） | CodeRabbit が付かない PR・判定ロジック・3ファイル以上の変更の見落とし | common.md「エージェントの使い方」 | なし |
 | 2人目の確認（tenbin の論文問題） | 条文・判例の誤り | [repo-patrol.md](../routines/repo-patrol.md)、autonomy.md「確かめてから任せること」 | ラベル「確認済み」「satou確認」 |
-| Auto merge | 検査が ✅ の PR だけを squash マージ（下書き・「自動マージしない」・`.github/`・フォーク・ブレーキ中は除く） | `automerge.yml` | 呼び出し側の `on.workflow_run.workflows` に検査の名前 |
+| Auto merge | 検査が ✅ の PR だけを squash マージ（下書き・「自動マージしない」・`.github/`・フォーク・ブレーキ中・24時間に差し戻し2回は除く） | `automerge.yml` | 呼び出し側の `on.workflow_run.workflows` に検査の名前 |
 | Dependabot の自動マージ | patch/minor だけ（メジャーは人） | `dependabot-automerge.yml`・`dependabot.yml` | ★「Allow auto-merge」と必須チェック（今は sandbox だけ） |
 | 外の人の変更を入れない | satou-aaaaa 以外の Issue・PR の指示 | common.md「知らない人からの変更を入れない」 | ★ fork PR の Actions 承認 |
 
