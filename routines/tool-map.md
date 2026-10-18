@@ -13,7 +13,7 @@ Claude が使えないときや、ほかの AI（Codex・Gemini・Copilot など
 | `send_message`（ほかのスレッドへの連絡） | 担当に頼む | 担当のリポジトリに Issue を作り、手順書の名前と頼みたいことを書く |
 | ルーティン（`create_trigger`・`list_triggers`） | 決まった時刻に動かす | 決まった手順だけなら GitHub Actions の `schedule`。判断が要るものは、人かほかの AI が [catalog.md](catalog.md) の時刻に手で回す |
 | `send_later`（あとで確かめる） | 忘れないようにする | Issue に期限を書いて作る（約束の台帳 `notes/todo.md` の代わり） |
-| `/mnt/project-files/`（共有フォルダ） | スレッド間でファイルを共有する | 非公開リポジトリ satou-aaaaa/ops-backup の `projects/<名前>/files/`（週1の控え）。書き込みは作業するリポジトリのブランチ |
+| `/mnt/project-files/`（共有フォルダ） | スレッド間でファイルを共有する | 非公開リポジトリ satou-aaaaa/ops-backup の `projects/<名前>/files/`（週1の控え）。共有の中身は個人情報を含むので、この非公開リポジトリにだけ置く（公開リポジトリのブランチには書かない） |
 | プロジェクトメモリ | 前の回で分かったことを残す | 非公開リポジトリ satou-aaaaa/ops-backup の `projects/<名前>/memory/`。公開してよい決まりは common.md・autonomy.md にすでにある |
 | `subscribe_pr_activity`（PR の見張り） | CI の結果やレビューに気づく | GitHub の通知（Watch）。CI 失敗は `ci-failure` Issue が自動で立つ |
 | `list_project_prs`・`list_sessions` | 進んでいる作業を見る | `node scripts/next-actions.mjs`（全リポジトリの「次にやること」を出す）と、Issue「週次まとめ」 |

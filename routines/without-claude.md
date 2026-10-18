@@ -41,7 +41,7 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
 ### C. 戻ってきたら
 
 1. Issue「Claude 停止中」を Claude のスレッドに渡し、止まっていたあいだに起きたことを読ませる。
-2. ルーティンが全部有効か `list_triggers` で確かめる（消えていたら satou-aaaaa/ops-backup の README「作り直し」で戻す）。
+2. ルーティンが全部有効か `list_triggers` で確かめる（無効になっていたら有効に戻す。消えていたら satou-aaaaa/ops-backup の README「作り直し」で戻す）。
 3. 止まっていたあいだの約束（Issue に期限を書いたもの）を共有フォルダの `notes/todo.md` に戻す。
 4. Issue「Claude 停止中」を閉じる。
 
