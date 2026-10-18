@@ -38,7 +38,7 @@ jobs:
           npm i --no-save --no-audit --no-fund playwright-core@1.56.1 >/dev/null
           export CHROME_PATH
           CHROME_PATH=$(command -v google-chrome || command -v chromium)
-          base=https://satou-aaaaa.github.io/naitei-no-michi/
+          base=https://satou-aaaaa.github.io/tenbin/
           okj=$(node scripts/smoke.mjs "$base" selftest)
           badj=$(node scripts/smoke.mjs "$base" selftest no-such-page-selftest.html)
           printf '%s\n%s\n' "$okj" "$badj"
