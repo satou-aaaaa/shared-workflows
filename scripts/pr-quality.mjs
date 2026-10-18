@@ -71,7 +71,7 @@ function failedChecks(repo, run) {
 // PR の変更行（生成物を除く）。読めなければ null
 function prSize(repo, pr) {
   let total = 0;
-  for (let page = 1; page <= 3; page++) {
+  for (let page = 1; ; page++) {
     let files;
     try {
       files = api(`repos/${owner}/${repo}/pulls/${pr.number}/files?per_page=100&page=${page}`);
@@ -84,6 +84,7 @@ function prSize(repo, pr) {
   return total;
 }
 
+// 数の並びの中央値（空なら null）
 const median = (a) => {
   if (!a.length) return null;
   const s = [...a].sort((x, y) => x - y);
