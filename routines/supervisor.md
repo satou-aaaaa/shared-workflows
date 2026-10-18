@@ -21,7 +21,8 @@ list_triggers で last_run が前回以降に失敗したもの（利用上限�
 7. **利用上限で落ちたルーティンの再実行**（satou さん 2026-10-15 承認。新しいルーティンは作らない）: last_run が USAGE_LIMIT_REACHED で失敗していて、その失敗が直近24時間以内、かつ next_run_at が12時間以上先のもののうち、守る順番 ①（本日のタスク整理・連載の予約切れチェック）と ②（開発: ダンジョンボドゲ issue 自動対応・Issue/PR定期対応・新規Issue提案など）だけを fire_trigger で1回だけ再実行する。③監督・④提案/巡回は再実行しない。同じ失敗に対して2回はしない（再実行したら supervisor-decision-log に1行）。再実行も上限で落ちたら次の予定を待つ。節約モード中でも①だけは再実行してよい。
 7b. **差し戻しと自動マージ停止**: open な ci-failure Issue が「Post-deploy check」のもの、または題が「差し戻し」で始まる PR が前回以降にマージされていれば、手順3と同じ担当に「公開後に壊れたので自動で前の版に戻した。原因を直して、元の変更を新しい PR で出し直してほしい（差し戻し PR の本文に戻した変更の一覧がある）」と send_message で伝える（a として扱い、satou さんには報告しない）。
    shared-workflows にラベル「自動マージ停止」の Issue が開いていれば、そのリポジトリの担当に「今週は直す PR を優先し、新しい機能の PR はマージしない（autonomy.md のブレーキ）」と1回だけ伝える。2週続けて開いたままなら c としてカードで知らせる。
-   日本時間の月曜 9:41 の回は、shared-workflows のラベル「成績表」の最新 Issue を読み、状況ページの note に「成績表: マージ N・壊れた割合 M%（最も高いリポジトリ）」の1行を書く。
+   日本時間の月曜 9:41 の回は、shared-workflows のラベル「成績表」の最新 Issue を読み、状況ページの note に「成績表: マージ N・壊れた割合 M%・最初の CI で赤 K%（最も高いリポジトリ）」の1行を書く。
+   shared-workflows にラベル「不安定な検査」の Issue（題「不安定な検査: <リポジトリ>」）が開いていれば、手順3と同じ担当に Issue の URL を付けて「再実行で済ませず、どれか1つの検査の原因を直す PR を出してほしい」と1回だけ伝える（a として扱う）。2週続けて開いたままなら、もう1回だけ伝える。
 8. **状況まとめページの更新**（毎回の巡回の最後）: ArtifactData（url https://claude.ai/artifact/RudgLH14WFAY9ToCjNW8my）で collection "status"・doc_id "latest" を get して version を読み、update する（if_version に読んだ version。weekly など自分が書かないフィールドは触らない）。フィールド: updated_at（ISO）、note（短い一言、無ければ空）、needs_satou [{text,url}]、ci_failures [{repo,title,url}]、prs [{repo,number,title,state,ci,url}]、routines [{name,last_status,last_run,next_run}]（list_triggers ですでに読んだ情報から）。早めに終える回でも、すでに読んだ情報だけで書く。
 9. **satou さんの TODO の更新**（日本時間 9:41 の回だけ。2026-10-16 satou さん承認。「連絡のチェックとTODO最新化」の自動化）: /mnt/project-files/notes/todo.md を直前に読み直し、
    この巡回で見つけた satou さん本人に回すもの（c）と、各スレッドの「satouさんにお願い：」で未対応のものを足し、済んだもの（API や画面で確かめられたもの）を「済んだもの」へ移し、最終更新日時を書き換える。
