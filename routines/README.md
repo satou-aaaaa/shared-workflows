@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | [common.md](common.md) | すべてのルーティンの共通のきまり | — |
 | [autonomy.md](autonomy.md) | 任せる範囲の表（聞かずにやってよいこと・聞くこと・ブレーキ） | — |
+| [pr.md](pr.md) | PR の手順（push 前・PR・CI・コンフリクト・マージ・公開の確認）。全リポジトリ共通 | — |
 | [catalog.md](catalog.md) | 繰り返しの作業すべての一覧（ほかの場所にある手順書・CI・スキルも含む） | — |
 | [agent-practices.md](agent-practices.md) | エージェント利用のベストプラクティスの台帳（取り入れたもの・出典・見直しの記録） | — |
 | [supervisor.md](supervisor.md) | 監督エージェントの巡回 | 6時間ごと（:41） |
