@@ -21,8 +21,8 @@
 | 各リポジトリの QA・テスト | 動かない・止まる・見た目の崩れ | 各リポジトリの CI（`qa/` など） | onboarding.md の 2 |
 | Lint（このリポジトリ） | ワークフローの書き間違い（actionlint）・危ない書き方（zizmor）・立ち上げ手順の抜け（bootstrap） | `.github/workflows/lint.yml`・`zizmor.yml`・`scripts/check-bootstrap.mjs` | ★ main の Ruleset で actionlint を必須に |
 | Secret scan | PR と main への push に入った秘密（gitleaks） | `secret-scan.yml` | 呼び出し側を入れる、★ Push protection |
-| Gemini のレビュー（2人目の目） | 正しさ・要件の見落とし | 各リポジトリの `.gemini/`、common.md「Gemini のレビュー」 | `template/.gemini/` を入れる、★ Gemini Code Assist のアプリ |
-| /code-review（新しい文脈のレビュー） | Gemini が付かない PR・判定ロジック・3ファイル以上の変更の見落とし | common.md「エージェントの使い方」 | なし |
+| CodeRabbit のレビュー（2人目の目） | 正しさ・要件の見落とし | 各リポジトリの `.coderabbit.yaml`、common.md「CodeRabbit のレビュー」 | `template/.coderabbit.yaml` を入れる、★ CodeRabbit のアプリ |
+| /code-review（新しい文脈のレビュー） | CodeRabbit が付かない PR・判定ロジック・3ファイル以上の変更の見落とし | common.md「エージェントの使い方」 | なし |
 | 2人目の確認（tenbin の論文問題） | 条文・判例の誤り | [repo-patrol.md](../routines/repo-patrol.md)、autonomy.md「確かめてから任せること」 | ラベル「確認済み」「satou確認」 |
 | Auto merge | 検査が ✅ の PR だけを squash マージ（下書き・「自動マージしない」・`.github/`・フォーク・ブレーキ中は除く） | `automerge.yml` | 呼び出し側の `on.workflow_run.workflows` に検査の名前 |
 | Dependabot の自動マージ | patch/minor だけ（メジャーは人） | `dependabot-automerge.yml`・`dependabot.yml` | ★「Allow auto-merge」と必須チェック（今は sandbox だけ） |
@@ -60,7 +60,7 @@
 
 ## 立ち上がったかの確かめ方
 
-1. 各リポジトリで、下書き PR を1本出して QA・Secret scan・Gemini のレビューが付くのを見る（付かなければアプリの対象を確かめる）。
+1. 各リポジトリで、下書き PR を1本出して QA・Secret scan・CodeRabbit のレビューが付くのを見る（付かなければアプリの対象を確かめる）。
 2. 検査が ✅ になった PR が Auto merge でマージされ、公開後に Post-deploy check が緑になり、タグ last-good ができる。
 3. このリポジトリで Weekly summary・Scorecard・CI time report を workflow_dispatch で1回ずつ動かし、Issue ができる（Scorecard の手動実行は自動判定で止められることがある。そのときは月曜の定期実行を待つ）。
 4. 監督のルーティンを1回動かし、状況ページに各ルーティンの最後の実行が出る。
