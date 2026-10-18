@@ -62,7 +62,8 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
 
 | AI | 使い方の入口 | 注意 |
 | --- | --- | --- |
-| CodeRabbit（GitHub アプリ） | PR に自動でレビューが付く | 公開リポジトリは Open source プランで無料。個人向けの Gemini Code Assist は 2026-07-17 に終了 |
+| CodeRabbit（GitHub アプリ） | PR に自動でレビューが付く | 公開リポジトリは Open source プランで無料（[プラン表](https://docs.coderabbit.ai/management/plans)） |
+| Gemini Code Assist（GitHub アプリ） | PR に自動でレビューが付く | 個人向けの無料版は 2026-07-17 に終了していて、今は反応しない（[Google の案内](https://developers.google.com/gemini-code-assist/docs/deprecations/consumer-code-review)） |
 | Gemini CLI / Antigravity CLI | 手元でリポジトリを開いて動かす | 無料枠の条件が 2026-06 に変わった。使う前に公式の料金ページで、今も無料か確かめる |
 | OpenAI Codex | 手元か ChatGPT から | 無料で使えるかはその時点の公式ページで確かめる |
 | GitHub Copilot のコーディングエージェント | Issue に割り当てる | 無料プランで使えるか、その時点の公式ページで確かめる |
