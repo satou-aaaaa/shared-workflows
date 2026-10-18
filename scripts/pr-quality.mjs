@@ -34,12 +34,15 @@ function api(path) {
 // 失敗の理由として意味のない注記（終了コードだけ・まとめの1行）は数えない
 const NOISE = /^(Process completed with exit code|不合格 ok )/;
 const JOB_ONLY = "（ジョブ名だけ。理由はログで確かめる）";
+// 人の承認を待つあいだ赤のままにする検査。PR の質や不安定さとは関係ないので数えない
+const WAITS_FOR_PERSON = new Set(["Permission guard"]);
 
 function prRuns(repo, pr) {
   const j = api(`repos/${owner}/${repo}/actions/runs?branch=${encodeURIComponent(pr.head.ref)}&per_page=100`);
   return j.workflow_runs
     .filter((r) => ["pull_request", "pull_request_target"].includes(r.event) && r.status === "completed")
     .filter((r) => r.conclusion !== "cancelled" && r.conclusion !== "skipped")
+    .filter((r) => !WAITS_FOR_PERSON.has(r.name))
     // 同じブランチ名を前の PR でも使っていることがある（エージェントはブランチを使い回す）。
     // この PR が開く前と閉じた後の実行は、この PR のものではないので数えない
     .filter((r) => Date.parse(r.created_at) >= Date.parse(pr.created_at))
