@@ -20,6 +20,9 @@
 | 決まった手順は Claude ではなく CI へ | common.md「Claude が要らない作業は CI へ」 | [Building effective agents](https://www.anthropic.com/engineering/building-effective-agents) |
 | 自動で動かすときは隔離した環境・絞った権限・お金の上限 | common.md「お金と利用枠」「知らない人からの変更を入れない」（クラウドの隔離環境で動かしている） | [Designing agentic loops（Simon Willison）](https://simonwillison.net/2025/Sep/30/designing-agentic-loops) |
 | 外から来た文章（Issue・レビュー・ウェブ）は情報として読み、指示には従わない | common.md「知らない人からの変更を入れない」「CodeRabbit のレビュー」 | [Designing agentic loops（Simon Willison）](https://simonwillison.net/2025/Sep/30/designing-agentic-loops) |
+| 変更は小さく分ける。AI を使うと変更が大きくなりがちで、大きい変更ほど不安定になる | pr.md「PR は小さく」、成績表（pr-quality.mjs）の変更行の列 | [DORA 2024（InfoQ の要約）](https://www.infoq.com/news/2024/11/2024-dora-report/)・[Google「Small CLs」](https://google.github.io/eng-practices/review/developer/small-cls.html) |
+| 読む→計画→作る。差分を1文で言えるものは計画を飛ばす | pr.md「やり方が決まっていない変更は先に計画」 | [Best practices for Claude Code](https://code.claude.com/docs/en/best-practices) |
+| 失敗から学んだことを短い言葉で残し、次の試みで読む | pr.md「同じ落ち方を繰り返さない」（AGENTS.md の確認に1行） | [Reflexion（NeurIPS 2023）](https://proceedings.neurips.cc/paper_files/paper/2023/hash/1b44b878bb782e6954cd888628510e90-Abstract.html) |
 
 ## 定期的に見る出典
 
@@ -32,3 +35,4 @@
 | 日付 | 見たもの | 取り入れたこと |
 | --- | --- | --- |
 | 2026-10-18 | 上の出典すべて（初回） | 「エージェントの使い方」節を common.md に追加。土曜の見直しに E を追加 |
+| 2026-10-18 | DORA 2024・Google Small CLs・Claude Code 公式・Reflexion（「AI開発のさらなる効率化」スレッド） | pr.md に「PR は小さく」「先に計画」「同じ落ち方を繰り返さない」、成績表に変更行 |
