@@ -40,10 +40,19 @@ jobs:
             fi
             exit 0
           fi
+          # 古いコミットの実行（再実行など）のときは、今の main を回すよう書き添える。
+          # 再実行は同じコミットで回るので、もう直った失敗でも赤のままになる（last-tell #71、2026-10-19）
+          head=$(gh api "repos/${GH_REPO}/commits/HEAD" --jq .sha 2>/dev/null || echo "")
+          stale=""
+          if [ -n "$head" ] && [ "$head" != "$SHA" ]; then
+            stale="
+
+          ⚠️ このコミットは今の main の先頭（${head:0:7}）ではありません。再実行は同じ古いコミットで回るので、直ったかどうかは今の main で回して確かめる（Actions の「Run workflow」で main を選ぶ）。"
+          fi
           body="main で「${WF_NAME}」が ${CONCLUSION} になりました（きっかけ: ${EVENT}、コミット ${SHA:0:7}）。
           実行: ${RUN_URL}
 
-          同じワークフローが次に成功すると、この Issue は自動で閉じます。"
+          同じワークフローが次に成功すると、この Issue は自動で閉じます。${stale}"
           if [ -n "$num" ]; then
             gh issue comment "$num" --body "$body"
           else
