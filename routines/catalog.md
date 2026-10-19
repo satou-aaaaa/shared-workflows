@@ -40,7 +40,8 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 
 | 作業 | 置き場所 | 実行 |
 | --- | --- | --- |
-| 週次まとめ Issue（開いた PR・CI 失敗） | このリポジトリ `weekly-summary.yml` | 月曜の朝 |
+| 週次まとめ Issue（開いた PR・CI 失敗・次にやること） | このリポジトリ `weekly-summary.yml` | 月曜の朝 |
+| 控えの見張り（毎朝の書き出しが止まったら Issue。Claude が止まった合図） | satou-aaaaa/ops-backup（非公開）`watch.yml` | 毎日 12:23 JST |
 | CI時間 Issue | このリポジトリ `ci-time-report.yml` | 木曜 05:29 JST |
 | 成績表 Issue | このリポジトリ `scorecard.yml` | 月曜 06:07 JST |
 | 死活監視・Lighthouse・リンク切れ・ブランチ片付け・ラベル・CodeQL | 各リポジトリの `.github/workflows/`（中身はこのリポジトリの共通部品） | 毎日〜週1 |
