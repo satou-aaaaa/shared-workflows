@@ -61,6 +61,7 @@
 | --- | --- | --- | --- |
 | 週1の開発レポート | このプロジェクトの共有フォルダ `dev-report/README.md` | `CRON_TZ=Asia/Tokyo 13 7 * * 1` | 共有フォルダの控えは satou-aaaaa/ops-backup（非公開）の `projects/agent-ops/files/`。レポートの Artifact を作り直したら URL をプロンプトに入れる |
 | ops-backup 書き出し（毎日・9:17） | satou-aaaaa/ops-backup（非公開）`README.md`「書き出し」 | `CRON_TZ=Asia/Tokyo 17 9 * * *` | 業務代行エージェント作りのスレッドから作る |
+| ops-backup 書き出し（ほかのプロジェクト・週1） | satou-aaaaa/ops-backup（非公開）`README.md`「ほかのプロジェクト」 | 日曜 9:23〜10:05 JST（時刻とフォルダ名はそこの表） | 外のプロジェクトからは作れない。各プロジェクトのチャットで README の1行を頼んで作る |
 | 週次の研究進捗まとめ（カルカソンヌ） | プロンプト内: 「satou-aaaaa/carcassonne-research の過去1週間のコミットと PR の状態を確認し、AI の強さの変化と、初心者向け解説に使える発見を日本語で短くまとめてプロジェクトに投稿してください。」 | `CRON_TZ=Asia/Tokyo 45 20 * * 0` | モデル claude-haiku-5-5 |
 | 個人の作業（朝のタスク整理・転職・連載・動画など） | 各プロジェクトの共有フォルダかプロンプト内 | — | 公開リポジトリには置かない |
 
