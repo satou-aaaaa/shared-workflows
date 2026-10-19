@@ -13,9 +13,16 @@ session_env() { if [ -n "${CLAUDE_ENV_FILE:-}" ]; then echo "export $1" >> "$CLA
 
 # --- Node.js（版は .nvmrc。nvm・fnm・mise・Volta などはこのファイルを読む）---
 want=$(tr -dc '0-9' < .nvmrc)
-command -v node >/dev/null || fail "Node.js $want が要る（https://nodejs.org/ か、nvm・fnm で .nvmrc の版を入れる）"
-have=$(node -p 'process.versions.node.split(".")[0]')
-[ "$have" -ge "$want" ] || fail "Node.js $want 以上が要る（今は $have）"
+node_ok() { command -v node >/dev/null && [ "$(node -p 'process.versions.node.split(".")[0]')" -ge "$want" ]; }
+if ! node_ok; then
+  # 版が足りず nvm があれば、.nvmrc の版を入れる（Claude Code のクラウドは /opt/nvm にある）
+  NVM_DIR=${NVM_DIR:-$HOME/.nvm}; [ -s "$NVM_DIR/nvm.sh" ] || NVM_DIR=/opt/nvm
+  if [ -s "$NVM_DIR/nvm.sh" ]; then
+    set +u; export NVM_DIR; . "$NVM_DIR/nvm.sh"; nvm install "$want" >/dev/null; set -u
+    session_env "PATH=\"$(dirname "$(command -v node)"):\$PATH\""
+  fi
+fi
+node_ok || fail "Node.js $want 以上が要る（今は $(node -v 2>/dev/null || echo なし)。https://nodejs.org/ か、nvm・fnm で .nvmrc の版を入れる）"
 
 # npm の依存を入れる。node_modules が lock より新しければ飛ばす（何度実行しても速い）
 npm_deps() {
