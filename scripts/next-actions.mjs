@@ -5,7 +5,7 @@
 // 見るもの: 自動マージ停止の Issue・main の CI 失敗 Issue・CI が赤の PR・3日以上動きの無い PR・needs-decision の Issue。
 const OWNER = process.env.OWNER || 'satou-aaaaa';
 // weekly-summary.yml・scorecard.yml の REPOS と同じ並び（リポジトリを足したらここにも足す）
-const REPOS = (process.env.REPOS || 'sandbox last-tell tenbin dungeon-boardgame naitei-no-michi carcassonne-research shared-workflows').split(/\s+/).filter(Boolean);
+const REPOS = (process.env.REPOS || 'sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban carcassonne-research shared-workflows').split(/\s+/).filter(Boolean);
 const STALE_DAYS = 3;
 const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || '';
 

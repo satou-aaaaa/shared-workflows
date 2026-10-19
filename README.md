@@ -1,6 +1,6 @@
 # shared-workflows
 
-satou-aaaaa の各リポジトリ（last-tell・tenbin・carcassonne-research・sandbox・dungeon-boardgame・naitei-no-michi）で共通に使う部品。
+satou-aaaaa の各リポジトリ（last-tell・tenbin・carcassonne-research・sandbox・dungeon-boardgame・naitei-no-michi・local-kanban）で共通に使う部品。
 同じ処理をリポジトリごとにコピーせず、ここを1か所直せば全部に効くようにするためのもの。Claude は使わない（GitHub Actions だけで動く）。
 
 | 場所 | 中身 |

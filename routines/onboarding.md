@@ -21,6 +21,7 @@
 
 1. `template/.github/workflows/` をコピーし、設定値だけを合わせる。
    - QA: リポジトリにある自動プレイ・テストのスクリプトを `qa/` に置き、CI で回す（回数・乱数の種・`qa-report/report.md` の書き出し・失敗で終了コード 1）。ブラウザを使うなら Playwright の版を `qa/package.json` で固定し、`npx playwright install --with-deps chromium`。
+   - 検査のスクリプトが無いアプリは、Playwright で見本データ（作り話）を読ませて、表示・保存・エラーを見る QA を作る。外の API は `page.route` で差し替え、本物の鍵やデータは使わない（手本は local-kanban の `qa/run.mjs`）。
    - `ci-failure-issue.yml` の見張る名前、`site-watch.yml` の `paths`、`changes.yml` の `app_name` と `ignore_paths`、`lighthouse.yml` の `baseline`（公開前は template の値。公開後に1回測って置き換える）。
 2. `template/.github/dependabot.yml`（npm の directory は `/qa`）、`template/.coderabbit.yaml`（`path_filters` と `path_instructions` をそのリポジトリに合わせる）、`.nojekyll`（Pages をブランチから公開するとき）、`template/AGENTS.md` の `<>` を埋め、`template/CLAUDE.md`（`@AGENTS.md` の1行）と `template/.gemini/settings.json` もそのまま入れる。README の手順も新しい置き場所に合わせる。
 3. 手元で QA を回して ✅ を確かめ、`actionlint` を通す。下書き PR → CI 緑 → ドラフトを外して squash マージ（`.github/` を変える PR はエージェントがマージしてよい。common.md）。

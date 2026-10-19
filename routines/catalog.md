@@ -58,6 +58,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | CI が赤のとき・CodeRabbit のレビュー | [common.md](common.md) の「CI が赤のとき」「CodeRabbit のレビュー」 |
 | LAST TELL の更新（index.html の作り直し・公開） | last-tell `README.md`、スキル last-tell-release-check |
 | tenbin の作り直し・論文問題の追加 | tenbin `CLAUDE.md`、スキル add-ronbun-questions |
+| カンバン（local-kanban）を直す | local-kanban `AGENTS.md`（データ側の `local-board/kanban.html` もそろえる） |
 | 単体HTMLアプリの画面点検 | スキル law-app-ui-check |
 | LAST TELL の演出の提案 | スキル last-tell-proposal-demo |
 | 聞くか聞かないかの判断 | [autonomy.md](autonomy.md) |
