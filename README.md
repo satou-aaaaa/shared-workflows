@@ -24,6 +24,7 @@ satou-aaaaa の各リポジトリ（last-tell・tenbin・carcassonne-research・
 | `link-check.yml` | HTML のリンク切れを調べる（外部リンクも、3回まで試す） | `files`・`exclude` |
 | `secret-scan.yml` | PR と main への push で、API キーなどの混入を gitleaks で調べる | — |
 | `labels.yml` | 自動化が使う共通ラベル（ci-failure・自動マージしない・needs-decision・dependencies）を揃える | `extra` |
+| `setup-check.yml` | 準備の1コマンド（`scripts/setup.sh`）がまっさらな環境で通るかを確かめる（版は `.nvmrc`・`.python-version`） | — |
 | `changes-page.yml` | マージされた PR の題から遊ぶ人向けの更新情報ページを作り、公開を起こす | `app_name`・`ignore_paths`・`dispatch`・`pages_build` |
 
 このリポジトリだけで動くもの: `weekly-summary.yml`（毎週月曜の朝、全リポジトリの開いたままの PR と CI 失敗 Issue を、ラベル「週次まとめ」の Issue 1件にまとめる。監督・巡回はこれを読む）。`ci-time-report.yml`（毎週木曜の朝、全リポジトリの CI の実行時間を集計し、ラベル「CI時間」の Issue 1件にする。ルーティン「CI の時間短縮」はこれを読む。集計は `scripts/ci-time.mjs`）。

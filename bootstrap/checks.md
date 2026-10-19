@@ -11,6 +11,7 @@
 | 仕組み | 見つけるもの | どこ | 立ち上げで要るもの |
 | --- | --- | --- | --- |
 | push 前の確認 | 自分の変更で壊れた検査 | [pr.md](../routines/pr.md)、各リポジトリの `AGENTS.md`「push する前の確認」、スキル pr-flow | `template/AGENTS.md` を埋める、スキルを保存（[skills/](skills/)） |
+| 準備の1コマンド | 人・ほかの AI・クラウドセッションが同じ手順で動かせない（準備の手順の古び） | 各リポジトリの `scripts/setup.sh`・`.claude/settings.json`（SessionStart フック）・`setup-check.yml`（PR と月1） | `template/scripts/setup.sh`・`template/.claude/settings.json`・呼び出し側を入れる |
 | 確かめてから「できた」と言う・2回でだめなら仕切り直す | 確かめていない完了報告、同じ失敗の繰り返し | [common.md](../routines/common.md)「エージェントの使い方」「CI が赤のとき」 | なし（common.md を読めばよい） |
 | 秘密の混入の検知（手元） | API キー・トークン | sandbox の `hooks/check-secrets.mjs` など各リポジトリ | リポジトリごと |
 
