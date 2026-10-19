@@ -10,6 +10,9 @@ name: Auto merge (共通部品)
 # - 成績表の「自動マージ停止」Issue が開いているとき、直近24時間に公開後の差し戻しが2回あったときもマージしない
 # GITHUB_TOKEN でマージしたときは main への push で他のワークフローが動かないので、
 # dispatch に書いたワークフローと Pages の公開をここから起こす。
+# 同じ理由で main の検査（このマージのきっかけになった QA など）も main では動かず、
+# 一度 main で赤になった「CI失敗」Issue が閉じなくなる（last-tell #71、2026-10-19）。
+# そのため recheck_main（既定 true）で、きっかけの検査を main でもう一度起こす。
 on:
   workflow_call:
     inputs:
@@ -29,6 +32,10 @@ on:
         description: 'マージ後にブランチを消す'
         type: boolean
         default: false
+      recheck_main:
+        description: 'マージ後に、きっかけの検査（QA など）を main で回し直す（workflow_dispatch が要る）'
+        type: boolean
+        default: true
 
 jobs:
   merge:
@@ -82,6 +89,15 @@ jobs:
           if [ "$PAGES_BUILD" = true ]; then
             gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" --jq .status || echo "::warning::公開を起こせませんでした（main への次の push で公開されます）"
           fi
+      - name: main で検査を回し直す
+        if: steps.merge.outputs.merged == 'true' && inputs.recheck_main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WF_PATH: ${{ github.event.workflow_run.path }}
+        run: |
+          wf=$(basename "$WF_PATH")
+          gh workflow run "$wf" -R "$GITHUB_REPOSITORY" --ref main \
+            || echo "::warning::$wf を main で起こせませんでした（on: に workflow_dispatch があるか確かめる）"
       - name: 使い終わったブランチを消す
         if: steps.merge.outputs.merged == 'true' && inputs.delete_branch
         env:
