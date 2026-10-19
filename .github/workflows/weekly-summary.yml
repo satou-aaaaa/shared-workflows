@@ -22,10 +22,13 @@ jobs:
     timeout-minutes: 5
     steps:
       # 「次にやること」（scripts/next-actions.mjs）を一緒に載せるため。Claude が止まっていても、この Issue のメールで次の一手が分かる
+      # incidents/ は再発防止の点検（残っている対策・同じ種類の繰り返し）に使う
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          sparse-checkout: scripts
+          sparse-checkout: |
+            scripts
+            incidents
       - name: まとめを作って Issue にする
         env:
           GH_TOKEN: ${{ github.token }}
