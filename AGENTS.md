@@ -20,6 +20,7 @@ node scripts/check-routines.mjs    # 手順書の書き方・AGENTS.md の有無
 - ルーティンの手順の正は `routines/`（全体のきまりは `routines/common.md`）。新しい繰り返しの作業は `routines/catalog.md` に1行足す。
 - ルーティン・CI の部品・スキルを足したら、同じ PR で bootstrap/ にも1行足す（Lint の bootstrap 検査が見る）。
 - 手順書は `routines/STYLE.md` の形で書く（性能の低い AI や人でも同じ結果になるように）。
+- 問題を直したら `incidents/` に記録し、同じ種類が二度と起きない仕組みも入れる（`routines/common.md`「問題が起きたら」。Lint の incidents 検査が形を見る）。
 - 公開リポジトリなので、個人情報を扱う作業の手順・名前は置かない。
 
 ## Claude 以外の AI・人が作業するとき

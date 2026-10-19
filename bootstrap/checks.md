@@ -19,7 +19,7 @@
 | 仕組み | 見つけるもの | どこ | 立ち上げで要るもの |
 | --- | --- | --- | --- |
 | 各リポジトリの QA・テスト | 動かない・止まる・見た目の崩れ | 各リポジトリの CI（`qa/` など） | onboarding.md の 2 |
-| Lint（このリポジトリ） | ワークフローの書き間違い（actionlint）・危ない書き方（zizmor）・立ち上げ手順の抜け（bootstrap） | `.github/workflows/lint.yml`・`zizmor.yml`・`scripts/check-bootstrap.mjs` | ★ main の Ruleset で actionlint を必須に |
+| Lint（このリポジトリ） | ワークフローの書き間違い（actionlint）・危ない書き方（zizmor）・立ち上げ手順の抜け（bootstrap）・問題の記録の形（incidents） | `.github/workflows/lint.yml`・`zizmor.yml`・`scripts/check-bootstrap.mjs`・`scripts/check-incidents.mjs` | ★ main の Ruleset で actionlint を必須に |
 | Selftest（このリポジトリ） | 共通部品を PR の段階で実際に動かす（秘密の検査・公開後の確認のスクリプトが「正常」と「壊れている」を見分けられるか） | `selftest.yml` | なし |
 | Permission guard（このリポジトリ） | `routines/autonomy.md`・`common.md` を変える PR にラベル「satou承認」が無い | `permission-guard.yml` | ラベル「satou承認」 |
 | CodeQL | AI が書いたコードの脆弱性（無料、公開リポジトリ） | `codeql.yml` | 呼び出し側の `languages` |
@@ -54,6 +54,7 @@
 | 監督の巡回（6時間ごと） | 失敗・止まったルーティンとスレッド、赤い PR、許可待ち、期限切れの約束。担当に直させ、satou さん本人のものだけ知らせる。状況ページを更新 | [supervisor.md](../routines/supervisor.md) | ルーティン（[routines.md](routines.md)）、状況ページの Artifact |
 | 全リポジトリ・全プロジェクト巡回（毎日） | 改善の種、新しいリポジトリ・プロジェクト | [repo-patrol.md](../routines/repo-patrol.md) | ルーティン、渡し先をメモリに |
 | ルーティンとスキルの見直し（週1） | 手順書と実際のルーティンのずれ、採用されない提案係、古くなったベストプラクティス、対応漏れ | [routine-review.md](../routines/routine-review.md)、[agent-practices.md](../routines/agent-practices.md) | ルーティン |
+| 再発防止の記録と点検 | 直しただけで終わった問題、残った対策、同じ種類の繰り返し（30日に2件以上） | common.md「問題が起きたら」、[incidents/](../incidents/README.md)、`scripts/check-incidents.mjs`（Lint）、`scripts/next-actions.mjs`（週次まとめ）、routine-review.md の 8b、スキル saihatsu-boushi | なし（incidents/ はこのリポジトリにある） |
 | 約束の台帳 | 「あとで確かめる」のまま忘れた作業（監督が期限切れを催促） | common.md「対応漏れを防ぐ」、共有フォルダ `notes/todo.md` | 共有フォルダに todo.md |
 | 節約モード | 利用上限での失敗が続く（提案・巡回を最小にする） | common.md「お金と利用枠」 | なし |
 

@@ -51,6 +51,7 @@ jobs:
 
   # 手順書が routines/STYLE.md の形か、AGENTS.md（AI 共通の指示）があるかを調べる。
   # Claude が使えないときも、ほかの AI や人が同じ手順書で動けるようにするため。
+  # あわせて、起きた問題の記録（incidents/）が直しただけで終わっていないか（防ぐ・見つける対策があるか）を調べる。
   routines:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -61,4 +62,5 @@ jobs:
       - name: routines
         run: |
           node scripts/check-routines.mjs
+          node scripts/check-incidents.mjs
           node --check scripts/next-actions.mjs
