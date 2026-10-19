@@ -20,7 +20,7 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
 1. shared-workflows に Issue「Claude 停止中（YYYY-MM-DD から）」を作る。ここに気づいたこと・やったことを書いていく。
 2. 下の「止まるものと続くもの」の表を見て、止まるものを確かめる。
 3. お金のかかる代わり（有料プラン・有料 API）は使わない（common.md「お金と利用枠」）。
-4. satou さんのボード（カンバン）は止まる。TODO と「答える確認」は satou-aaaaa/ops-backup（非公開）の `board/BOARD.md` で見て、答えや新しい TODO は ops-backup の Issue「Claude 停止中」に書く（個人のことが入るので、公開リポジトリの Issue には書かない）。
+4. satou さんのボード（カンバン）は止まる。TODO と「答える確認」は satou-aaaaa/ops-backup（非公開）の `board/BOARD.md` で見て、答えや新しい TODO は、ops-backup にも Issue「Claude 停止中（YYYY-MM-DD から）」を作ってそこに書く（個人のことが入るので、公開リポジトリの Issue には書かない）。
 
 ### B. 週1回（satou さんが15分、またはほかの AI）
 
@@ -37,14 +37,14 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
    | 何もない | 何もしない |
 
 3. 公開ページを1回ずつ開いて、動くか見る（死活監視が毎日見ているので、見られない週は飛ばしてよい）。
-4. Issue「Claude 停止中」に「YYYY-MM-DD 確認、対応 N 件」と1行書く。
+4. shared-workflows の Issue「Claude 停止中」に「YYYY-MM-DD 確認、対応 N 件」と1行書く。
 
 ### C. 戻ってきたら
 
-1. Issue「Claude 停止中」を Claude のスレッドに渡し、止まっていたあいだに起きたことを読ませる。
+1. shared-workflows と ops-backup の Issue「Claude 停止中」を Claude のスレッドに渡し、止まっていたあいだに起きたことを読ませる。
 2. ルーティンが全部有効か `list_triggers` で確かめる（無効になっていたら有効に戻す。消えていたら satou-aaaaa/ops-backup の README「作り直し」で戻す）。
-3. 止まっていたあいだの約束（Issue に期限を書いたもの）と、ops-backup の Issue に書いた確認の答え・TODO を共有フォルダの `notes/todo.md` とボードに戻す。
-4. Issue「Claude 停止中」を閉じる。
+3. 止まっていたあいだの約束（Issue に期限を書いたもの）と、ops-backup の Issue に書いた確認の答え・TODO を、まず共有フォルダの `notes/todo.md` に戻す（todo.md が正）。ボードへは手で足さず、いつもの同期（ボードを受け持つスレッドか監督の巡回）に任せる。
+4. shared-workflows と ops-backup の Issue「Claude 停止中」を閉じる。
 
 ## 止まるものと続くもの
 
