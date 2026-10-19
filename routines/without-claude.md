@@ -17,6 +17,8 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
 
 ### A. 使えなくなったと気づいたら（1回だけ）
 
+気づき方（どれも Claude を使わない）: satou-aaaaa/ops-backup（非公開）の見張り `Watch backup` が、毎朝の書き出しが止まると Issue「控えが止まっている（Claude 停止の疑い）」を作る（GitHub からメールが届く）。ほかに、claude.ai が開けない・ルーティンの返事が来ない、でも気づける。
+
 1. shared-workflows に Issue「Claude 停止中（YYYY-MM-DD から）」を作る。ここに気づいたこと・やったことを書いていく。
 2. 下の「止まるものと続くもの」の表を見て、止まるものを確かめる。
 3. お金のかかる代わり（有料プラン・有料 API）は使わない（common.md「お金と利用枠」）。
@@ -24,7 +26,7 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
 
 ### B. 週1回（satou さんが15分、またはほかの AI）
 
-1. `node scripts/next-actions.mjs` を実行する（GitHub にログインした `gh` があれば `GH_TOKEN=$(gh auth token) node scripts/next-actions.mjs`）。
+1. 月曜の朝に届く Issue「週次まとめ」の「次にやること」を読む（`scripts/next-actions.mjs` の結果を Actions が載せている）。手元で出すときは `node scripts/next-actions.mjs`（GitHub にログインした `gh` があれば `GH_TOKEN=$(gh auth token) node scripts/next-actions.mjs`）。
 2. 出た行を上から順に、次の分岐表で対応する。
 
    | 出た行 | すること |
@@ -46,6 +48,13 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
 3. 止まっていたあいだの約束（Issue に期限を書いたもの）と、ops-backup の Issue に書いた確認の答え・TODO を、まず共有フォルダの `notes/todo.md` に戻す（todo.md が正）。ボードへは手で足さず、いつもの同期（ボードを受け持つスレッドか監督の巡回）に任せる。
 4. shared-workflows と ops-backup の Issue「Claude 停止中」を閉じる。
 
+### D. 練習（3か月に1回。1・4・7・10月の最初の土曜。satou さんが15分）
+
+Claude に任せきりだと、いざというときの動かし方を忘れる（下の出典の「自動化の皮肉」）。ops-backup の復旧の練習（`RESTORE.md` の最後）と同じ日に行う。
+
+1. Claude を使わずに B を1回やる（週次まとめの Issue を読み、1件だけ自分か ほかの AI で片付ける）。
+2. 分かりにくかった所・道具が足りなかった所を、shared-workflows の Issue に1行ずつ書く。次の Claude の見直しがこの手順書を直す。
+
 ## 止まるものと続くもの
 
 | 種類 | 例 | Claude が止まると |
@@ -53,6 +62,7 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
 | CI の共通部品（GitHub Actions） | CI 失敗 Issue・死活監視・Lighthouse・リンク切れ・秘密の混入検査・自動マージ・公開後の確認と自動の差し戻し・成績表・週次まとめ・CI時間・ブランチ片付け | **続く**（Claude を使わない） |
 | リポジトリ独自の CI | カルカソンヌ自己対戦・LAST TELL 自動対戦・sandbox のバックアップや法令の見張り | **続く** |
 | sandbox の agent-cycle・agent-on-ready（Actions の中で Claude を使う） | Issue の自動処理 | 止まる（ほかに影響しない） |
+| 控えの見張り（ops-backup の `Watch backup`） | 書き出しが止まったら Issue とメール | **続く**（Claude を使わない。止まったことを知らせる側） |
 | CodeRabbit のレビュー | PR へのレビュー | **続く**（CodeRabbit の GitHub アプリ） |
 | 判断が要るルーティン | 監督・巡回・見直し・CI の時間短縮・ダンジョン issue・sandbox の Issue 対応 | 止まる。B の週1の確認で代える。ほかの AI で手順書を回してもよい |
 | satou さんのボード（カンバン。claude.ai の Artifact） | TODO・依頼・答える確認・todo.md との同期・2時間おきの見回り | 止まる。最後の写しは ops-backup の `board/BOARD.md`（毎日書き出し）。作り直し方はそこの `RESTORE.md` の手順 6 |
@@ -77,6 +87,7 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
 - A: Issue「Claude 停止中」がある。
 - B: その週の行が Issue に1行ある。`next-actions.mjs` の出力で、自動マージ停止と main の CI 失敗に手が打たれている（直した・待つと決めた）。
 - C: ルーティンが全部有効で、Issue「Claude 停止中」が閉じている。
+- D: Issue に練習の結果が1行以上ある。
 
 ## やってはいけないこと
 
@@ -89,4 +100,6 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
 
 - AGENTS.md は Codex・Gemini・Copilot・Cursor などが読む共通の指示ファイル。2025-12 に Linux Foundation（Agentic AI Foundation）に寄贈された。[OpenAI](https://openai.com/blog/agentic-ai-foundation)・[GitHub Changelog](https://github.blog/changelog/2025-08-28-copilot-coding-agent-now-supports-agents-md-custom-instructions)・[Gemini CLI](https://geminicli.com/docs/cli/gemini-md/)
 - 無料枠は変わりやすい（Gemini CLI は 2026-06-18 に無料の個人向けの扱いが変わった）。[Gemini CLI: Quotas and pricing](https://geminicli.com/docs/resources/quota-and-pricing/)・[cubic](https://www.cubic.dev/blog/gemini-cli-vs-claude-code)
+- 自動化が進むほど、人は手で動かす機会を失い、いざというときに動かせなくなる（Bainbridge「Ironies of Automation」1983。AI での読み直し: [ufried.com](https://ufried.com/blog/ironies_of_ai_1/)）。だから D の練習を置く。
+- 1社の AI に頼り切らないために、状態は自分のもの（git・GitHub の Issue）に置き、決まった作業は AI を使わない CI に任せ、抜け方を決めて試しておく（[TechTarget: AI のベンダーロックインを避ける](https://www.techtarget.com/searchenterpriseai/tip/Best-practices-to-avoid-AI-vendor-lock-in)・[advisori: 抜けるときの費用](https://www.advisori.de/en/blog/how-to-avoid-ai-vendor-lock-in-enterprise-guide)）。
 - 手順書は訓練で回して直す。[OneUptime: Game Day](https://oneuptime.com/blog/post/2026-08-06-on-call-runbook-game-day-validation/markdown)

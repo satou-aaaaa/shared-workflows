@@ -10,6 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  contents: read
   issues: write
 
 env:
@@ -20,6 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      # 「次にやること」（scripts/next-actions.mjs）を一緒に載せるため。Claude が止まっていても、この Issue のメールで次の一手が分かる
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts
       - name: まとめを作って Issue にする
         env:
           GH_TOKEN: ${{ github.token }}
@@ -56,6 +62,13 @@ jobs:
             done <<< "$fails"
             echo >> "$body"
           done
+          {
+            echo "### 次にやること（急ぐ順。Claude が止まっているときは routines/without-claude.md の B の表で対応する）"
+            echo
+            echo '```'
+            GITHUB_TOKEN="$GH_TOKEN" REPOS="$REPOS" node scripts/next-actions.mjs || echo "（次にやることを出せなかった）"
+            echo '```'
+          } >> "$body"
           gh label create 週次まとめ --color 0E8A16 --description "Weekly summary が作る週1のまとめ（自動）" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
           for old in $(gh issue list -R "$GITHUB_REPOSITORY" --label 週次まとめ --state open --json number --jq '.[].number'); do
             gh issue close "$old" -R "$GITHUB_REPOSITORY" --reason completed --comment "新しいまとめを作ったので閉じます（自動）"
