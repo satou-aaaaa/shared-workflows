@@ -42,7 +42,7 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
 ### C. 戻ってきたら
 
 1. shared-workflows と ops-backup の Issue「Claude 停止中」を Claude のスレッドに渡し、止まっていたあいだに起きたことを読ませる。
-2. ルーティンが全部有効か `list_triggers` で確かめる（無効になっていたら有効に戻す。消えていたら satou-aaaaa/ops-backup の README「作り直し」で戻す）。
+2. ルーティンが全部有効か `list_triggers` で確かめる（無効になっていたら有効に戻す。消えていたら satou-aaaaa/ops-backup の `RESTORE.md`（復旧の手順書）の手順 5 で戻す）。
 3. 止まっていたあいだの約束（Issue に期限を書いたもの）と、ops-backup の Issue に書いた確認の答え・TODO を、まず共有フォルダの `notes/todo.md` に戻す（todo.md が正）。ボードへは手で足さず、いつもの同期（ボードを受け持つスレッドか監督の巡回）に任せる。
 4. shared-workflows と ops-backup の Issue「Claude 停止中」を閉じる。
 
@@ -55,7 +55,7 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
 | sandbox の agent-cycle・agent-on-ready（Actions の中で Claude を使う） | Issue の自動処理 | 止まる（ほかに影響しない） |
 | CodeRabbit のレビュー | PR へのレビュー | **続く**（CodeRabbit の GitHub アプリ） |
 | 判断が要るルーティン | 監督・巡回・見直し・CI の時間短縮・ダンジョン issue・sandbox の Issue 対応 | 止まる。B の週1の確認で代える。ほかの AI で手順書を回してもよい |
-| satou さんのボード（カンバン。claude.ai の Artifact） | TODO・依頼・答える確認・todo.md との同期・2時間おきの見回り | 止まる。最後の写しは ops-backup の `board/BOARD.md`（毎日書き出し）。作り直し方はそこの README「作り直し」 |
+| satou さんのボード（カンバン。claude.ai の Artifact） | TODO・依頼・答える確認・todo.md との同期・2時間おきの見回り | 止まる。最後の写しは ops-backup の `board/BOARD.md`（毎日書き出し）。作り直し方はそこの `RESTORE.md` の手順 6 |
 | 個人の作業のルーティン | 朝のタスク整理・転職・連載・動画など | 止まる。プロンプトの全文は satou-aaaaa/ops-backup（非公開）の `routines/triggers.json` にある。ほかの AI に渡せば動かせるものもある |
 
 ## ほかの AI で動かす
