@@ -20,7 +20,7 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
 1. shared-workflows に Issue「Claude 停止中（YYYY-MM-DD から）」を作る。ここに気づいたこと・やったことを書いていく。
 2. 下の「止まるものと続くもの」の表を見て、止まるものを確かめる。
 3. お金のかかる代わり（有料プラン・有料 API）は使わない（common.md「お金と利用枠」）。
-4. satou さんのボード（カンバン）は止まる。代わりに satou-aaaaa/ops-backup（非公開）の **ローカル版ボード**（`local-board/kanban.html` を Chrome で開く）で TODO・答える確認を続ける。手順は ops-backup の `local-board/README.md`、ほかの AI に直させるときは `local-board/AGENTS.md` を読ませる。ローカル版が使えないときは `board/BOARD.md` を読み、答えや新しい TODO は ops-backup の Issue「Claude 停止中（YYYY-MM-DD から）」に書く（個人のことが入るので、公開リポジトリの Issue には書かない）。
+4. satou さんのボード（カンバン）は止まる。代わりに **ローカル版ボード**（PC・スマホにインストールしたカンバン https://satou-aaaaa.github.io/local-kanban/ 。データは satou-aaaaa/ops-backup（非公開）の `local-board/cards.json`）で TODO・答える確認を続ける。手順は ops-backup の `local-board/README.md`、ほかの AI に直させるときは `local-board/AGENTS.md` を読ませる。ローカル版が使えないときは `board/BOARD.md` を読み、答えや新しい TODO は ops-backup の Issue「Claude 停止中（YYYY-MM-DD から）」に書く（個人のことが入るので、公開リポジトリの Issue には書かない）。
 
 ### B. 週1回（satou さんが15分、またはほかの AI）
 
@@ -55,7 +55,7 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
 | sandbox の agent-cycle・agent-on-ready（Actions の中で Claude を使う） | Issue の自動処理 | 止まる（ほかに影響しない） |
 | CodeRabbit のレビュー | PR へのレビュー | **続く**（CodeRabbit の GitHub アプリ） |
 | 判断が要るルーティン | 監督・巡回・見直し・CI の時間短縮・ダンジョン issue・sandbox の Issue 対応 | 止まる。B の週1の確認で代える。ほかの AI で手順書を回してもよい |
-| satou さんのボード（カンバン。claude.ai の Artifact） | TODO・依頼・答える確認・todo.md との同期・2時間おきの見回り | 止まる。ops-backup の `local-board/kanban.html`（ローカル版ボード）で続け、戻ったら取り込む（`local-board/README.md`）。最後の写しは `board/BOARD.md`（毎日書き出し）。作り直し方はそこの README「作り直し」 |
+| satou さんのボード（カンバン。claude.ai の Artifact） | TODO・依頼・答える確認・todo.md との同期・2時間おきの見回り | 止まる。ローカル版ボード（local-kanban の PWA。データは ops-backup の `local-board/`）で続け、戻ったら取り込む（`local-board/README.md`）。最後の写しは `board/BOARD.md`（毎日書き出し）。作り直し方はそこの README「作り直し」 |
 | 個人の作業のルーティン | 朝のタスク整理・転職・連載・動画など | 止まる。プロンプトの全文は satou-aaaaa/ops-backup（非公開）の `routines/triggers.json` にある。ほかの AI に渡せば動かせるものもある |
 
 ## ほかの AI で動かす
