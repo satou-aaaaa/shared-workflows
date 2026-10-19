@@ -18,13 +18,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      # 手元と同じ準備の1コマンドで actionlint を入れる（版は scripts/setup.sh にだけ書く。準備の手順が古びたらここで気づく）
+      - name: 準備（scripts/setup.sh）
+        run: bash scripts/setup.sh
       - name: actionlint
         run: |
           set -euo pipefail
-          curl -sSL -o al.tgz https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz
-          tar xzf al.tgz actionlint
-          ./actionlint -color .github/workflows/*.yml
-          (cd template && ../actionlint -color .github/workflows/*.yml)
+          .tools/bin/actionlint -color .github/workflows/*.yml
+          (cd template && ../.tools/bin/actionlint -color .github/workflows/*.yml)
 
   # 立ち上げ直しの手順書（bootstrap/）に、ルーティンの手順書・共通部品の抜けや内部 ID の混入が無いかを調べる。
   bootstrap:

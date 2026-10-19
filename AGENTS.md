@@ -6,10 +6,8 @@ satou-aaaaa の各リポジトリが `@main` で呼ぶ CI の共通部品・ひ�
 ## push する前の確認
 
 ```bash
-actionlint .github/workflows/*.yml && (cd template && actionlint .github/workflows/*.yml)
-pipx run zizmor==1.31.1 --offline --config zizmor.yml --min-severity medium .github/workflows template/.github/workflows
-node scripts/check-bootstrap.mjs   # 立ち上げ手順（bootstrap/）の抜け・内部 ID の混入
-node scripts/check-routines.mjs    # 手順書の書き方・AGENTS.md の有無
+bash scripts/setup.sh   # 最初に一度。actionlint を .tools/bin に入れる（Node.js 22 と、uv か pipx が要る）
+bash scripts/check.sh   # actionlint・zizmor・立ち上げ手順（bootstrap/）の抜け・手順書の書き方。CI の Lint と同じ
 ```
 
 ## 決まり

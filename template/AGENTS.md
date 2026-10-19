@@ -4,6 +4,14 @@
 
 <リポジトリの一言説明>
 
+## 準備（最初に一度）
+
+```bash
+bash scripts/setup.sh   # 依存を入れる。版は .nvmrc・.python-version。何度実行してもよい（Windows は Git Bash で）
+```
+
+Claude Code のクラウドセッションでは `.claude/settings.json` のフックが自動で実行する。
+
 ## push する前の確認
 
 ```bash
