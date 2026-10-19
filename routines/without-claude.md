@@ -53,7 +53,8 @@ Claude（claude.ai のスレッドとルーティン）が急に使えなくな�
 Claude に任せきりだと、いざというときの動かし方を忘れる（下の出典の「自動化の皮肉」）。ops-backup の復旧の練習（`RESTORE.md` の最後）と同じ日に行う。
 
 1. Claude を使わずに B を1回やる（週次まとめの Issue を読み、1件だけ自分か ほかの AI で片付ける）。
-2. 分かりにくかった所・道具が足りなかった所を、shared-workflows の Issue に1行ずつ書く。次の Claude の見直しがこの手順書を直す。
+2. ローカル版ボードを1回動かす: ops-backup の `local-board/kanban.html` を Chrome で開き、ops-backup のフォルダを選んで、カードを1枚「済み」にする。`local-board/cards.json` ができたのを確かめたら、GitHub Desktop で Discard changes（練習なのでコミットしない）。手順は ops-backup の `local-board/README.md` の 1・2。
+3. 分かりにくかった所・道具が足りなかった所を、shared-workflows の Issue に1行ずつ書く。次の Claude の見直しがこの手順書を直す。
 
 ## 止まるものと続くもの
 
