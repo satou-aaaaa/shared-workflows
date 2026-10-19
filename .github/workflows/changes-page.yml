@@ -20,7 +20,7 @@ on:
       ignore_paths:
         description: 'この正規表現（grep -E）に当てはまるファイルだけを変えた PR は載せない'
         type: string
-        default: '^(\.github/|qa/|tools/|scripts/|README|CLAUDE)'
+        default: '^(\.github/|\.claude/|\.gemini/|\.coderabbit|\.nvmrc|\.python-version|qa/|tools/|scripts/|README|CLAUDE|AGENTS)'
       dispatch:
         description: 'コミット後に main で起こすワークフローのファイル名（空白区切り）'
         type: string
