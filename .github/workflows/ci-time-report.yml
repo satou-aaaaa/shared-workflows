@@ -14,7 +14,7 @@ permissions:
   issues: write
 
 env:
-  REPOS: last-tell tenbin carcassonne-research sandbox shared-workflows
+  REPOS: last-tell tenbin carcassonne-research sandbox local-kanban shared-workflows
 
 jobs:
   report:

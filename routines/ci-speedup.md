@@ -1,7 +1,7 @@
 # CI の時間短縮（週1・木曜朝）
 
 先に `common.md` と `autonomy.md` を読むこと。（satou さんの依頼 2026-10-17「CIの実行時間を減らすための改善活動も定期的に行うようにしてください」）
-対象は last-tell・tenbin・carcassonne-research・sandbox・shared-workflows。kotlin-csv は他の人のものなので見ない。
+対象は last-tell・tenbin・carcassonne-research・sandbox・local-kanban・shared-workflows。kotlin-csv は他の人のものなので見ない。
 取り消せて、お金がかからず、検査の強さを落とさない改善は、聞かずに PR → CI 緑 → マージまで進め、結果だけ報告する。
 
 ## 考え方（調べた要点と出典）
