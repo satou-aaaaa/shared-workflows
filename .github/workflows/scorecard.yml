@@ -23,7 +23,7 @@ permissions:
   issues: write
 
 env:
-  REPOS: sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban carcassonne-research shared-workflows
+  REPOS: sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban articles carcassonne-research shared-workflows
   EXTERNAL: 'Site watch|Lighthouse|Link check|Law watch'
   BRAKE_RATE: '30'
   BRAKE_MIN: '4'
