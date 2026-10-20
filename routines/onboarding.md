@@ -41,9 +41,17 @@
 - チームメモリ repo-patrol の既知リポジトリ・既知プロジェクトに1行（名前・chan id・担当セッション・渡し先）。分からない項目は「未確認」と書く。
 - 監督スレッドの担当セッション（「監督エージェントの巡回」trigger の persistent_session_id）に send_message で1回だけ知らせる。
 
-## 5. satou さんにお願いすること（最後に1回、リンク付きで）
+## 5. 設定画面の操作（Claude が satou さんの Chrome で行う）
 
-この環境からはリポジトリの設定を書き込めない（Pages・Ruleset・Actions の設定の書き込みはプロキシで 403）。次を /mnt/project-files/notes/todo.md に書き、スレッドの返信の先頭にも「satouさんにお願い：」で並べる。
+この環境の API からはリポジトリの設定を書き込めない（Pages・Ruleset・Actions の設定の書き込みはプロキシで 403）。
+Claude in Chrome（`mcp__claude-in-chrome__*`）が使えるときは、下の 1〜4 を Claude が satou さんの Chrome で行う（2026-10-20 satou さん「リスクが少なく、繰り返し行なっているため」、追記も同日 satou さん承認）。
+
+- Chrome が2つ以上つながっていたら（`list_connected_browsers`）、どちらを使うかをカードで聞く。片方に出した画面は satou さんから見えないことがある。
+- GitHub が「Confirm access」（パスキー）を出したら、そこだけ satou さんに押してもらう（本人確認は Claude がしない）。一度通ると、しばらくは聞かれない。
+- 入れた後に API で確かめる（`/repos/<owner>/<repo>/rulesets/<id>` の rules が deletion と non_fast_forward、conditions が `~DEFAULT_BRANCH`）。
+- Push protection は公開リポジトリでは最初から On のことが多い。`…/settings/security_analysis` で見て、Off のときだけ入れる。CodeRabbit は「All repositories」なら何もしない。
+
+Chrome が使えないときは、次を /mnt/project-files/notes/todo.md に書き、スレッドの返信の先頭にも「satouさんにお願い：」で並べる。
 
 1. Pages: `https://github.com/satou-aaaaa/<repo>/settings/pages` → Deploy from a branch → main / (root)
 2. main のルールセット: `…/settings/rules` → New branch ruleset → Include default branch →「Restrict deletions」「Block force pushes」だけ ON（ほかのリポジトリと同じ）
