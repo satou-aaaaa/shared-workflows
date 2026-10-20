@@ -56,3 +56,8 @@
   `git config --add remote.origin.fetch +refs/heads/<branch>:refs/remotes/origin/<branch>` → `git fetch` で直る。
 - 自分が作った PR には自分をレビュアーに指名できない（エラーになるが、担当者の設定だけでよい）。
 - `*.github.io` はこの環境から開けない。公開の確認は Post-deploy check と Site watch に任せる。
+
+## つまずいたところ（2026-10-20 articles）
+
+- アプリが GitHub の API で main に直接書くリポジトリ（articles はメモアプリが記事を書く）では、main の守りを「削除と force push の禁止」だけにする（PR 必須にすると書き出しが止まる）。
+  Post-deploy check も入れない（last-good に戻すと、アプリが書いたデータまで消える）。公開ワークフローは QA が赤でも止めず、CI 失敗 Issue で知らせる。
