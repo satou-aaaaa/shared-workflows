@@ -22,5 +22,5 @@
 ## 対策
 - [x] 直す: 今の main（v0.96.4）で QA を手で回し、#71 を閉じた。#78（通しで遊ぶ）は 10/18 から2回続けて ✅ なので閉じた
 - [x] 防ぐ: automerge にマージ後の `recheck_main`（既定 true）を足し、きっかけの検査を main でも回す（このPR。last-tell・naitei-no-michi・local-kanban に呼び出し側の変更なしで効く）
-- [x] 防ぐ: last-tell の playthrough.yml が、✅ のときに開いている「通しで遊ぶ検査が ❌」を閉じるようにした（last-tell の PR）
+- [x] 防ぐ: last-tell の `.github/workflows/playthrough.yml` が、✅ のときに開いている「通しで遊ぶ検査が ❌」を閉じるようにした（last-tell の PR）
 - [x] 見つける: ci-failure-issue が、古いコミットの実行（再実行など）で赤になったときは「今の main の先頭ではない、main で回して確かめる」と Issue に書き添える（このPR）
