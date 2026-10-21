@@ -10,4 +10,5 @@ if command -v uvx >/dev/null; then z=(uvx zizmor==1.31.1); else z=(pipx run zizm
 "${z[@]}" --offline --config zizmor.yml --min-severity medium .github/workflows template/.github/workflows
 node scripts/check-bootstrap.mjs
 node scripts/check-routines.mjs
+node scripts/check-incidents.mjs
 echo "✓ 確認が通った"
