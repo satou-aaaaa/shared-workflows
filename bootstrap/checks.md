@@ -48,6 +48,7 @@
 | 仕組み | 見つけるもの | どこ | 立ち上げで要るもの |
 | --- | --- | --- | --- |
 | 週次まとめ Issue | 開いたままの PR・CI 失敗・Dependabot の更新待ち（監督・巡回が最初に読む） | `weekly-summary.yml`（月曜 06:17 JST） | `REPOS` に全リポジトリ |
+| ひな形からのずれ | 全リポジトリにあるはずのファイル・AGENTS.md の節・共通部品の呼び出し・@main 以外や無い部品の呼び出し（新しい部品の配り忘れ） | `scripts/drift-check.mjs`（週次まとめの節）。ずれてよいものは `scripts/drift-allow.json` に理由つき | `REPOS` に全リポジトリ |
 | 成績表 Issue とブレーキ | マージ数・壊れた割合・直るまでの時間。壊れた割合 30% 超・4件以上で「自動マージ停止: <repo>」Issue → Auto merge が止まる | `scorecard.yml`（月曜 06:07 JST）、autonomy.md「ブレーキ」 | `REPOS`、ラベル「成績表」「自動マージ停止」（Labels で揃う） |
 | 不安定な検査 Issue | 3つ以上の別々の PR で落ちた検査 → 「不安定な検査: <repo>」（自動で開閉）→ 監督が担当へ1回渡す | `scripts/pr-quality.mjs`（成績表の中で動く）、supervisor.md 7b | 同上 |
 | CI時間 Issue | CI の実行時間（遅い検査） | `ci-time-report.yml`（木曜 05:29 JST）、ルーティン CI の時間短縮 | `REPOS` |
