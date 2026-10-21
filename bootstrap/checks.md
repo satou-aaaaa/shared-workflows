@@ -59,7 +59,7 @@
 | 約束の台帳 | 「あとで確かめる」のまま忘れた作業（監督が期限切れを催促） | common.md「対応漏れを防ぐ」、共有フォルダ `notes/todo.md` | 共有フォルダに todo.md |
 | 節約モード | 利用上限での失敗が続く（提案・巡回を最小にする） | common.md「お金と利用枠」 | なし |
 
-チェックではない共通部品: `changes-page.yml`（マージした PR の題から遊ぶ人向けの更新情報ページを作る。呼び出し側の `app_name`・`ignore_paths`）。
+チェックではない共通部品: `changes-page.yml`（マージした PR の題から遊ぶ人向けの更新情報ページを作る。呼び出し側の `app_name`・`ignore_paths`）、`fetch-page.yml`（クラウドから開けないページを Actions から読む。このリポジトリで workflow_dispatch。[known-limits.md](../routines/known-limits.md)）。
 
 ★ は satou さん本人の画面操作（onboarding.md の 5）。
 
