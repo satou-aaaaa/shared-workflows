@@ -67,5 +67,9 @@ jobs:
           export CHROME_PATH
           CHROME_PATH=$(command -v google-chrome || command -v chromium)
           node scripts/ui-check.mjs scripts/fixtures/ui/config.json
-          if node scripts/ui-check.mjs scripts/fixtures/ui/config-bad.json; then echo "::error::ボタンを足した・はみ出した画面を通してしまった"; exit 1; fi
+          # 落ちたことだけでなく、基準違反（終了コード 1 と ::error::）で落ちたことを見る。スクリプトが壊れて落ちたのを「見分けた」と数えない
+          rc=0
+          out=$(node scripts/ui-check.mjs scripts/fixtures/ui/config-bad.json 2>&1) || rc=$?
+          printf '%s\n' "$out"
+          if [ "$rc" -ne 1 ] || ! grep -q '::error::' <<<"$out"; then echo "::error::ボタンを足した・はみ出した画面を基準違反として見分けられなかった（終了コード $rc）"; exit 1; fi
           echo "見分けられた" | tee -a "$GITHUB_STEP_SUMMARY"

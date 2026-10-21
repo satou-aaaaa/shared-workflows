@@ -29,6 +29,15 @@ jobs:
           ref: main
           path: .shared
           persist-credentials: false
+      # 基準ブランチの設定の有無（PR で設定を消して検査を外すのを止める）
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: github.event_name == 'pull_request'
+        with:
+          ref: ${{ github.base_ref }}
+          path: .base
+          sparse-checkout: ${{ inputs.config }}
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
@@ -37,7 +46,10 @@ jobs:
           CONFIG: ${{ inputs.config }}
         run: |
           set -euo pipefail
-          if [ ! -f "$CONFIG" ]; then echo "設定ファイル $CONFIG が無いので数えません" | tee -a "$GITHUB_STEP_SUMMARY"; exit 0; fi
+          if [ ! -f "$CONFIG" ]; then
+            if [ -f ".base/$CONFIG" ]; then echo "::error::基準ブランチにある設定ファイル $CONFIG が、この PR で消えています（検査を外すときは PR 本文に理由を書き、呼び出し側も外す）" | tee -a "$GITHUB_STEP_SUMMARY"; exit 1; fi
+            echo "設定ファイル $CONFIG が無いので数えません" | tee -a "$GITHUB_STEP_SUMMARY"; exit 0
+          fi
           (cd .shared && npm i --no-save --no-audit --no-fund playwright-core@1.56.1 >/dev/null)
           export CHROME_PATH
           CHROME_PATH=$(command -v google-chrome || command -v chromium)

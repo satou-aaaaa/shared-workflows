@@ -38,6 +38,12 @@ const widths = cfg.widths || [390, 1366];
 const screens = cfg.screens || [{ name: 'top', path: 'index.html' }];
 const basePath = cfg.baseline ? resolve(cfg.baseline) : '';
 const baseline = basePath && existsSync(basePath) ? JSON.parse(readFileSync(basePath, 'utf8')) : null;
+// 壊れた基準（null・数の欠け）で「基準が無い」扱いや比べられないまま通らないように止める
+if (basePath && existsSync(basePath) && !update) {
+  const ok = baseline && typeof baseline === 'object' && !Array.isArray(baseline)
+    && Object.values(baseline).every((v) => v && ['first', 'tiny', 'small'].every((k) => Number.isFinite(v[k])));
+  if (!ok) { console.error(`基準ファイルの形が正しくありません: ${cfg.baseline}`); process.exit(2); }
+}
 
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.webmanifest': 'application/manifest+json' };
 const server = createServer((req, res) => {
@@ -53,10 +59,11 @@ const origin = `http://127.0.0.1:${server.address().port}/`;
 
 // ページの中で数える（scope があればその中だけ、無ければ閉じたダイアログの外）
 function measure(scopeSel) {
-  const scope = (scopeSel && document.querySelector(scopeSel)) || document.body;
+  const scope = scopeSel ? document.querySelector(scopeSel) : document.body;
+  if (!scope) throw new Error(`scope が見つからない（開く操作が効いていない）: ${scopeSel}`);
   const vis = (e) => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && !e.closest('dialog:not([open])') && !(e.closest('details:not([open])') && !e.closest('summary'));
   const ctrls = [...scope.querySelectorAll('button,summary,select,input:not([type=hidden]),textarea,a[href],[role=button]')].filter(vis);
-  const named = (e) => e.getAttribute('aria-label') || e.getAttribute('title') || e.getAttribute('aria-labelledby') || (e.labels && e.labels.length) || e.closest('label');
+  const named = (e) => e.getAttribute('aria-label') || e.getAttribute('title') || e.getAttribute('aria-labelledby') || (e.labels && e.labels.length) || e.closest('label') || e.querySelector('img[alt]:not([alt=""])');
   const unnamed = ctrls.filter((e) => /^(BUTTON|SUMMARY)$/.test(e.tagName) || e.getAttribute('role') === 'button')
     .filter((e) => !/[\p{L}\p{N}]/u.test(e.textContent || '') && !named(e))
     .map((e) => e.outerHTML.slice(0, 60));
@@ -87,7 +94,9 @@ try {
       const ctx = await browser.newContext({ viewport: { width: w, height: w <= 500 ? 844 : 768 }, serviceWorkers: 'block' });
       const page = await ctx.newPage();
       page.on('pageerror', (e) => errors.push(`${key}: ${String(e.message || e).slice(0, 200)}`));
-      await page.goto(new URL(s.path, origin).href, { waitUntil: 'load' });
+      const res = await page.goto(new URL(s.path, origin).href, { waitUntil: 'load' });
+      // 404 の空の画面は数が 0 になり「悪くなっていない」で通ってしまうので止める
+      if (!res || !res.ok()) throw new Error(`${key}: ${s.path} が ${res ? res.status() : '応答なし'}`);
       await page.waitForTimeout(300);
       for (const sel of s.click || []) {
         await page.click(sel, { timeout: 5000 });
@@ -97,10 +106,15 @@ try {
       await ctx.close();
     }
   }
+} catch (e) {
+  // 検査そのものが動かなかったときは 2（基準違反の 1 と分ける）
+  console.error(`::error::検査を最後まで動かせませんでした: ${String(e.message || e).slice(0, 300)}`);
+  process.exitCode = 2;
 } finally {
   await browser.close();
   server.close();
 }
+if (process.exitCode === 2) process.exit(2);
 
 const fails = [];
 const rows = [];
