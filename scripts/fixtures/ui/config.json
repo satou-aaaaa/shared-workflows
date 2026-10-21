@@ -1,0 +1,9 @@
+{
+  "root": "scripts/fixtures/ui",
+  "widths": [390, 1366],
+  "screens": [
+    { "name": "top", "path": "index.html" },
+    { "name": "detail", "path": "index.html", "click": ["#open"], "scope": "dialog[open]" }
+  ],
+  "baseline": "scripts/fixtures/ui/baseline.json"
+}

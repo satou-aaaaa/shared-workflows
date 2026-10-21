@@ -61,7 +61,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | LAST TELL の更新（index.html の作り直し・公開） | last-tell `README.md`、スキル last-tell-release-check |
 | tenbin の作り直し・論文問題の追加 | tenbin `CLAUDE.md`、スキル add-ronbun-questions |
 | カンバン（local-kanban）を直す | local-kanban `AGENTS.md`（データ側の `local-board/kanban.html` もそろえる） |
-| 単体HTMLアプリの画面点検 | スキル law-app-ui-check |
+| 単体HTMLアプリの画面点検 | スキル law-app-ui-check。数で見る部分は共通部品 `ui-check.yml`（PR のたび） |
 | LAST TELL の演出の提案 | スキル last-tell-proposal-demo |
 | 聞くか聞かないかの判断 | [autonomy.md](autonomy.md) |
 | できないと分かっている操作の回り道（クラウドから開けないページは `fetch-page.yml`） | [known-limits.md](known-limits.md) |

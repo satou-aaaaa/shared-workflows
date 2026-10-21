@@ -1,0 +1,56 @@
+name: UI check (共通部品)
+
+# PR の画面の使いやすさを数え、基準より悪くなっていないかを見る（Claude は使わない）。
+# 押せる部品の数・24px 未満の押す所・12px 未満の字・名前の無いボタン・横のはみ出しを、画面×幅ごとに数える。
+# 中身は scripts/ui-check.mjs。呼ぶ側は設定ファイル（既定 qa/ui-check.json）と基準ファイルを置く。書き方は template/.github/workflows/ui-check.yml。
+# 基準を上げるのは、ボタンを足すと決めて同じ画面で別のものを減らせないときだけ。上げた理由を PR 本文に書く。
+on:
+  workflow_call:
+    inputs:
+      config:
+        description: "設定ファイル（呼ぶ側のリポジトリの一番上から）"
+        type: string
+        default: qa/ui-check.json
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: satou-aaaaa/shared-workflows
+          ref: main
+          path: .shared
+          persist-credentials: false
+      # 基準ブランチの設定の有無（PR で設定を消して検査を外すのを止める）
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: github.event_name == 'pull_request'
+        with:
+          ref: ${{ github.base_ref }}
+          path: .base
+          sparse-checkout: ${{ inputs.config }}
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: 画面を数えて基準と比べる
+        env:
+          CONFIG: ${{ inputs.config }}
+        run: |
+          set -euo pipefail
+          if [ ! -f "$CONFIG" ]; then
+            if [ -f ".base/$CONFIG" ]; then echo "::error::基準ブランチにある設定ファイル $CONFIG が、この PR で消えています（検査を外すときは PR 本文に理由を書き、呼び出し側も外す）" | tee -a "$GITHUB_STEP_SUMMARY"; exit 1; fi
+            echo "設定ファイル $CONFIG が無いので数えません" | tee -a "$GITHUB_STEP_SUMMARY"; exit 0
+          fi
+          (cd .shared && npm i --no-save --no-audit --no-fund playwright-core@1.56.1 >/dev/null)
+          export CHROME_PATH
+          CHROME_PATH=$(command -v google-chrome || command -v chromium)
+          node .shared/scripts/ui-check.mjs "$CONFIG"
