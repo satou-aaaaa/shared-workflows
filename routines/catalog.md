@@ -64,5 +64,8 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | 単体HTMLアプリの画面点検 | スキル law-app-ui-check |
 | LAST TELL の演出の提案 | スキル last-tell-proposal-demo |
 | 聞くか聞かないかの判断 | [autonomy.md](autonomy.md) |
+| できないと分かっている操作の回り道（クラウドから開けないページは `fetch-page.yml`） | [known-limits.md](known-limits.md) |
+| 定期の見回りを作る前に、イベントで受けられないか見る | [events.md](events.md) |
+| 作業を並列に分ける・合わせる | [parallel.md](parallel.md) |
 | Claude が使えないときの運転（週1の確認・ほかの AI で動かす） | [without-claude.md](without-claude.md)・[tool-map.md](tool-map.md)・`scripts/next-actions.mjs` |
 | 各プロジェクトの進め方の見直し（分野のベストプラクティス） | [project-practices.md](project-practices.md)（土曜の見直しの F が1プロジェクトずつ） |
