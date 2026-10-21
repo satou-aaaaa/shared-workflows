@@ -54,7 +54,8 @@ async function source(r) {
   if (LOCAL_ROOT) {
     const dir = join(LOCAL_ROOT, r);
     if (!existsSync(join(dir, '.git'))) return null;
-    const list = execFileSync('git', ['-C', dir, 'ls-files'], { encoding: 'utf8' }).split('\n').filter(Boolean);
+    // 追跡していても作業ツリーで消したものは「無い」と数える
+    const list = execFileSync('git', ['-C', dir, 'ls-files'], { encoding: 'utf8' }).split('\n').filter((p) => p && existsSync(join(dir, p)));
     return { paths: new Set(list), read: async (p) => readFileSync(join(dir, p), 'utf8') };
   }
   const repo = await api(`repos/${OWNER}/${r}`);
@@ -91,7 +92,9 @@ for (const r of REPOS) {
     for (const p of paths) {
       if (!/^\.github\/workflows\/[^/]+\.ya?ml$/.test(p)) continue;
       const text = await src.read(p);
-      for (const m of text.matchAll(/uses:\s*satou-aaaaa\/shared-workflows\/\.github\/workflows\/([\w.-]+?)\.ya?ml@([^\s#]+)/g)) {
+      // コメントの行は数えない。値の引用符（' "）は外して読む
+      const live = text.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
+      for (const m of live.matchAll(/^\s*(?:-\s*)?uses:\s*["']?satou-aaaaa\/shared-workflows\/\.github\/workflows\/([\w.-]+?)\.ya?ml@([^\s#"']+)["']?/gm)) {
         called.add(m[1]);
         if (m[2] !== 'main') flag(`ref:${m[1]}`, `${p} が ${m[1]} を @${m[2]} で呼んでいる（共通部品は @main）`);
         if (reusable.size && !reusable.has(m[1])) out.push(`${p} が、もう無い部品 ${m[1]} を呼んでいる（CI が止まる）`);

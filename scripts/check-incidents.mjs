@@ -56,8 +56,8 @@ for (const f of readdirSync(dir).sort()) {
   for (const a of actions) {
     const m = a.match(/^- \[( |x)\] (直す|防ぐ|見つける|弱める): \S/);
     if (!m) { errors.push(`${p}: 対策「${a.slice(0, 30)}…」は「- [x] 防ぐ: …」の形にする`); continue; }
-    // 証拠: #12・owner/repo#12・v31・18版・`path`・[名前](リンク)・この PR・手順10
-    if (m[1] === 'x' && /^(防ぐ|見つける)$/.test(m[2]) && !/#\d+|\bv\d+|\d+版|`[^`]+`|\]\([^)]+\)|この ?PR|の PR|手順 ?\d+/.test(a)) errors.push(`${p}: 済んだ対策「${a.slice(0, 30)}…」に証拠が無い（PR の番号・版・\`ファイル\`・リンク・手順の番号のどれかを書く）`);
+    // 証拠: #12・owner/repo#12・v31・18版・`path`・[名前](リンク)・この PR・手順10（「〇〇の PR」だけは番号が無いので数えない）
+    if (m[1] === 'x' && /^(防ぐ|見つける)$/.test(m[2]) && !/#\d+|\bv\d+|\d+版|`[^`]+`|\]\([^)]+\)|この ?PR|手順 ?\d+/.test(a)) errors.push(`${p}: 済んだ対策「${a.slice(0, 30)}…」に証拠が無い（PR の番号・版・\`ファイル\`・リンク・手順の番号のどれかを書く）`);
     if (m[1] === ' ' && !(/担当: /.test(a) && /期限: \d{4}-\d{2}-\d{2}/.test(a))) errors.push(`${p}: 済んでいない対策には「担当: 」と「期限: YYYY-MM-DD」を書く（${a.slice(0, 30)}…）`);
   }
   if (actions.length && !actions.some((a) => /\] (防ぐ|見つける):/.test(a))) errors.push(`${p}: 「防ぐ:」か「見つける:」の対策が無い（直しただけで終わらせない）`);
