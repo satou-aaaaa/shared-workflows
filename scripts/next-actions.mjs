@@ -34,7 +34,7 @@ for (const r of REPOS) {
   try {
     const fails = await api(`repos/${OWNER}/${r}/issues?state=open&labels=ci-failure&per_page=20`);
     for (const i of fails) {
-      // 週1の定期実行は次の回まで成功で閉じないので、日数を出して止まったものを目立たせる（2026-10-22 Law watch が4週落ち続けた件）
+      // 週1の定期実行は次の回まで成功で閉じないので、日数を出して止まったものを目立たせる（2026-10-22 Law watch が3週落ち続けた件）
       const days = Math.floor((now - Date.parse(i.created_at)) / 86400000);
       if (days >= STALE_DAYS) add(1, `${days}日直されていない CI 失敗（main）[${r}] ${i.title} → 担当に渡っていない。監督が直すスレッドを立てる ${i.html_url}`);
       else add(2, `CI 失敗（main）[${r}] ${i.title} → ログを見て直す ${i.html_url}`);

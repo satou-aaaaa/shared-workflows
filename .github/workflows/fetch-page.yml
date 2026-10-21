@@ -39,8 +39,13 @@ jobs:
               sys.exit(1)
           PY
           mkdir -p page
-          code=$(curl -sS -L --max-time 60 --max-filesize 5000000 -A "Mozilla/5.0 (fetch-page; satou-aaaaa/shared-workflows)" -o page/raw -w '%{http_code}' -- "$URL")
+          # 転送（3xx）は追わない。転送先が ALLOWED_HOSTS の外かもしれないため。転送先を出すので、許すならその URL で起こし直す
+          code=$(curl -sS --max-time 60 --max-filesize 5000000 -A "Mozilla/5.0 (fetch-page; satou-aaaaa/shared-workflows)" -o page/raw -D page/headers -w '%{http_code}' -- "$URL")
           echo "HTTP $code"
+          if [ "$code" -ge 300 ] && [ "$code" -lt 400 ]; then
+            echo "::error::転送されました（HTTP $code）。転送先: $(grep -i '^location:' page/headers | head -1 | cut -d' ' -f2- | tr -d '\r')。その URL が許してよいものなら、それで起こし直してください"
+            exit 1
+          fi
           python3 - <<'PY'
           import html, re
           raw = open("page/raw", "rb").read().decode("utf-8", "replace")
@@ -52,7 +57,7 @@ jobs:
           print("----- 本文（先頭 20000 字。全文は成果物 page の text.txt）-----")
           print(text[:20000])
           PY
-          [ "$code" -lt 400 ] || { echo "::error::HTTP $code"; exit 1; }
+          [ "$code" -lt 300 ] || { echo "::error::HTTP $code"; exit 1; }
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:

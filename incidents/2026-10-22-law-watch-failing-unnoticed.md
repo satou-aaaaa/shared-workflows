@@ -1,4 +1,4 @@
-# sandbox の法令の見張り（Law watch）が4週続けて落ち、法令の版の更新が知らされなかった
+# sandbox の法令の見張り（Law watch）が3週続けて落ち、法令の版の更新が知らされなかった
 
 - 種類: 見回りの見落とし
 - 場所: satou-aaaaa/sandbox の Law watch（毎週月曜）・監督の巡回
@@ -20,4 +20,4 @@
 - [x] 直す: `gh-upsert-issue.sh` に実行の印を付けた（sandbox #297）
 - [x] 防ぐ: sandbox の `test/workflowScripts.test.js` が、ワークフローが直接呼ぶ `scripts/*.sh` の印を見る。直す前の版で落ちることを確かめた（sandbox #297）
 - [x] 見つける: `scripts/next-actions.mjs` が、3日以上開いたままの ci-failure Issue をいちばん上に「直されていない」として出す。監督の手順（supervisor.md 手順3）に、3日以上手つかずなら担当の回を待たずに直すスレッドを立てる、を足した
-- [x] 防ぐ: 実行の印の壁と回り道を `routines/known-limits.md` に書いた
+- [x] 弱める: 実行の印の壁と回り道を `routines/known-limits.md` に書いた
