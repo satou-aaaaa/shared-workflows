@@ -10,6 +10,7 @@ permissions:
   contents: write
   pull-requests: write
   pages: write
+  actions: write   # dispatch: でワークフローを起こすのに要る（無いと 403。articles #4、2026-10-21）
 
 jobs:
   merge:
