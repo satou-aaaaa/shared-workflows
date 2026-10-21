@@ -34,6 +34,8 @@ if (!configPath) {
 const update = flags.includes('--update-baseline');
 const cfg = JSON.parse(readFileSync(configPath, 'utf8'));
 const root = resolve(cfg.root || '.');
+// 配る範囲はリポジトリの中だけ（PR の設定で root を / などにして、ランナーのファイルを画面から読ませない）
+if (root !== process.cwd() && !root.startsWith(process.cwd() + sep)) { console.error(`root はリポジトリの中にしてください: ${cfg.root}`); process.exit(2); }
 const widths = cfg.widths || [390, 1366];
 const screens = cfg.screens || [{ name: 'top', path: 'index.html' }];
 const basePath = cfg.baseline ? resolve(cfg.baseline) : '';
