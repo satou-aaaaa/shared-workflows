@@ -5,6 +5,7 @@ name: Selftest
 # Lint（書き方の検査）だけでは見つからない「動かすと壊れる」を、ここで先に見つける。
 # - 書き込みをしない部品（秘密の検査）をそのまま呼ぶ
 # - 公開後の確認のスクリプト（smoke.mjs）を、正常なページと存在しないページの両方に当て、結果の見分けが合っているかを見る
+# - 画面の検査（ui-check.mjs）を、基準どおりの見本と、ボタンを足した・はみ出した見本に当てる
 # 考え方: 全体に出す前に一部で試す（Google SRE Workbook「Canarying Releases」 https://sre.google/workbook/canarying-releases/ ）
 on:
   pull_request:
@@ -48,3 +49,23 @@ jobs:
           # 正常なページは ok（Pages の障害で unreachable のときは見分けの検査ができないので通す）
           case "$ok" in ok|unreachable) ;; *) echo "::error::正常なページを $ok と判定しました"; exit 1 ;; esac
           if [ "$ok" = ok ] && [ "$bad" != broken ]; then echo "::error::無いページを $bad と判定しました（broken のはず）"; exit 1; fi
+
+  ui-check-script:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: 画面の検査が「基準どおり」と「悪くなった」を見分けられるか
+        run: |
+          set -euo pipefail
+          npm i --no-save --no-audit --no-fund playwright-core@1.56.1 >/dev/null
+          export CHROME_PATH
+          CHROME_PATH=$(command -v google-chrome || command -v chromium)
+          node scripts/ui-check.mjs scripts/fixtures/ui/config.json
+          if node scripts/ui-check.mjs scripts/fixtures/ui/config-bad.json; then echo "::error::ボタンを足した・はみ出した画面を通してしまった"; exit 1; fi
+          echo "見分けられた" | tee -a "$GITHUB_STEP_SUMMARY"

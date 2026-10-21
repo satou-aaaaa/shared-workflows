@@ -23,6 +23,7 @@
 | Lint（このリポジトリ） | ワークフローの書き間違い（actionlint）・危ない書き方（zizmor）・立ち上げ手順の抜け（bootstrap）・問題の記録の形（incidents） | `.github/workflows/lint.yml`・`zizmor.yml`・`scripts/check-bootstrap.mjs`・`scripts/check-incidents.mjs` | ★ main の Ruleset で actionlint を必須に |
 | Selftest（このリポジトリ） | 共通部品を PR の段階で実際に動かす（秘密の検査・公開後の確認のスクリプトが「正常」と「壊れている」を見分けられるか） | `selftest.yml` | なし |
 | Permission guard（このリポジトリ） | `routines/autonomy.md`・`common.md` を変える PR にラベル「satou承認」が無い | `permission-guard.yml` | ラベル「satou承認」 |
+| UI check | 画面の使いやすさの悪化（開いてすぐ押せる部品の数が基準 +1 を超える・24px 未満の押す所や 12px 未満の字が増える・名前の無いボタン・横のはみ出し）。詳細などは click で開いてから数える | `ui-check.yml`・`scripts/ui-check.mjs` | 呼ぶ側の `qa/ui-check.json` と基準（`--update-baseline`） |
 | CodeQL | AI が書いたコードの脆弱性（無料、公開リポジトリ） | `codeql.yml` | 呼び出し側の `languages` |
 | Secret scan | PR と main への push に入った秘密（gitleaks） | `secret-scan.yml` | 呼び出し側を入れる、★ Push protection |
 | CodeRabbit のレビュー（2人目の目） | 正しさ・要件の見落とし | 各リポジトリの `.coderabbit.yaml`、common.md「CodeRabbit のレビュー」 | `template/.coderabbit.yaml` を入れる、★ CodeRabbit のアプリ |

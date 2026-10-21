@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ui-check の見本</title>
+<style>body{font:16px sans-serif;margin:16px}button{min-width:44px;min-height:44px}</style></head>
+<body>
+<h1>見本</h1>
+<p>ui-check の試運転に使う画面。<a href="#x">文の中のリンク</a>は数えない。</p>
+<button id="open">詳しく</button> <button aria-label="閉じる">×</button>
+<dialog id="d"><p>詳細</p><button>保存</button><button>やめる</button></dialog>
+<script>document.getElementById('open').onclick=()=>document.getElementById('d').showModal();
+if(location.search.includes('bad')){const b=document.body;for(let i=0;i<3;i++){const x=document.createElement('button');x.textContent='足した'+i;b.append(x)}
+const t=document.createElement('button');t.textContent='?';t.style.cssText='min-width:0;min-height:0;width:16px;height:16px;padding:0';b.append(t);
+const n=document.createElement('button');n.textContent='✕';b.append(n);
+const w=document.createElement('div');w.style.width='2000px';w.textContent='はみ出し';b.append(w)}</script>
+</body></html>
