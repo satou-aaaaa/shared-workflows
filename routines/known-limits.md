@@ -11,7 +11,7 @@
 
 | 壁（症状） | 原因 | 回り道 | 確かめた日 |
 | --- | --- | --- | --- |
-| `laws.e-gov.go.jp` がクラウドのセッションから 403 | e-Gov 側がクラウドの IP を拒む。許可ドメインに足しても直らない | GitHub Actions からは読める（sandbox の Law watch は取得失敗 0 件）。このリポジトリの `fetch-page.yml` を workflow_dispatch で起こし、ログか成果物で中身を読む。急ぎなら satou さんの PC のフォルダ（device_bash）で | 2026-10-21 |
+| `laws.e-gov.go.jp` がクラウドのセッションからも GitHub Actions からも 403（「ただいまシステムメンテナンス中です」の画面） | e-Gov 側が海外のサーバー（クラウド・Actions）を拒んでいるとみられる。日本の家の回線からは同じ時刻に開けた。Actions からは 10/19 までは読めていたので、時間帯や時期で変わるかもしれない。許可ドメインに足しても直らない | satou さんの PC で読む（Remote Control のセッション、または PC のフォルダ＋device_bash）。sandbox の Law watch の e-Gov の行が「取得失敗」になるのはこのため（10/21 の回で 19 件） | 2026-10-22 |
 | `docs.github.com` を WebFetch すると `ENOTFOUND` | クラウドの名前解決で引けない | WebSearch の要約で要点をとり、出典にその URL を書く。全文が要るときは `fetch-page.yml` | 2026-10-22 |
 | `*.github.io`（公開ページ）がクラウドから開けない | 同上 | 公開の確認は Post-deploy check と Site watch に任せる（`onboarding.md`） | 2026-10-18 |
 | 許可ドメインを足したのに届かない | 環境の設定は、そのあとに始まったスレッドにだけ効く | 新しいスレッドで試す（コーディネーターに頼む） | 2026-10-21 |

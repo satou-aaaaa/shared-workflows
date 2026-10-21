@@ -1,6 +1,7 @@
 name: Fetch page
 
-# クラウドのセッションから開けないページ（e-Gov など、クラウドの IP を拒むサイト）を、GitHub Actions から読む（Claude は使わない）。
+# クラウドのセッションから開けないページ（docs.github.com など、クラウドで名前を引けないサイト）を、GitHub Actions から読む（Claude は使わない）。
+# e-Gov は Actions からも 403（海外のサーバーを拒む）。e-Gov は satou さんの PC で読む（routines/known-limits.md）。
 # エージェントは workflow_dispatch で url を渡して起こし、ジョブのログ（本文の先頭）か成果物「page」（全文）を読む。
 # 読めるのは下の ALLOWED_HOSTS に当たる https のページだけ（何でも読める踏み台にしないため）。足すときは理由を1行添える。
 # 使い方は routines/known-limits.md。
@@ -16,7 +17,7 @@ permissions:
   contents: read
 
 env:
-  # laws.e-gov.go.jp: クラウドから 403（2026-10-21）。go.jp: 官公庁の公式情報（法令の根拠を確かめる）。docs.github.com: クラウドから名前を引けない（2026-10-22）
+  # laws.e-gov.go.jp: Actions からも 403 だが、拒まなくなったか確かめるために残す。go.jp: 官公庁の公式情報（法令の根拠を確かめる）。docs.github.com: クラウドから名前を引けない（2026-10-22）
   ALLOWED_HOSTS: "laws.e-gov.go.jp .go.jp docs.github.com"
 
 jobs:
