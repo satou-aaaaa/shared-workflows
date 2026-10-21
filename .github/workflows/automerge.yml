@@ -85,7 +85,18 @@ jobs:
           DISPATCH: ${{ inputs.dispatch }}
           PAGES_BUILD: ${{ inputs.pages_build }}
         run: |
-          for wf in $DISPATCH; do gh workflow run "$wf" -R "$GITHUB_REPOSITORY" --ref main; done
+          for wf in $DISPATCH; do
+            if ! out=$(gh workflow run "$wf" -R "$GITHUB_REPOSITORY" --ref main 2>&1); then
+              echo "$out"
+              # 権限が無いと 403。warning だと誰も気づかないので赤にする（articles #4、2026-10-21）
+              if grep -qiE '403|not accessible' <<<"$out"; then
+                echo "::error::$wf を起こせませんでした。呼び出し側の permissions に actions: write を足す"
+              else
+                echo "::error::$wf を起こせませんでした（on: に workflow_dispatch があるか確かめる）"
+              fi
+              exit 1
+            fi
+          done
           if [ "$PAGES_BUILD" = true ]; then
             gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" --jq .status || echo "::warning::公開を起こせませんでした（main への次の push で公開されます）"
           fi
@@ -96,8 +107,15 @@ jobs:
           WF_PATH: ${{ github.event.workflow_run.path }}
         run: |
           wf=$(basename "$WF_PATH")
-          gh workflow run "$wf" -R "$GITHUB_REPOSITORY" --ref main \
-            || echo "::warning::$wf を main で起こせませんでした（on: に workflow_dispatch があるか確かめる）"
+          if ! out=$(gh workflow run "$wf" -R "$GITHUB_REPOSITORY" --ref main 2>&1); then
+            echo "$out"
+            # 権限が無いと 403。warning のままでは気づけなかった（local-kanban・naitei-no-michi、2026-10-21）
+            if grep -qiE '403|not accessible' <<<"$out"; then
+              echo "::error::$wf を main で起こせませんでした。呼び出し側の permissions に actions: write を足す"
+              exit 1
+            fi
+            echo "::warning::$wf を main で起こせませんでした（on: に workflow_dispatch があるか確かめる）"
+          fi
       - name: 使い終わったブランチを消す
         if: steps.merge.outputs.merged == 'true' && inputs.delete_branch
         env:
