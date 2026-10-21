@@ -23,7 +23,7 @@
 // ブラウザは playwright-core と、ランナーに入っている Chrome（CHROME_PATH）を使う。
 import { chromium } from 'playwright-core';
 import { createServer } from 'node:http';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, realpathSync } from 'node:fs';
 import { resolve, extname, normalize, sep } from 'node:path';
 
 const [configPath, ...flags] = process.argv.slice(2);
@@ -33,9 +33,10 @@ if (!configPath) {
 }
 const update = flags.includes('--update-baseline');
 const cfg = JSON.parse(readFileSync(configPath, 'utf8'));
-const root = resolve(cfg.root || '.');
+const root = existsSync(resolve(cfg.root || '.')) ? realpathSync(resolve(cfg.root || '.')) : resolve(cfg.root || '.');
 // 配る範囲はリポジトリの中だけ（PR の設定で root を / などにして、ランナーのファイルを画面から読ませない）
-if (root !== process.cwd() && !root.startsWith(process.cwd() + sep)) { console.error(`root はリポジトリの中にしてください: ${cfg.root}`); process.exit(2); }
+const cwd = realpathSync(process.cwd());
+if (root !== cwd && !root.startsWith(cwd + sep)) { console.error(`root はリポジトリの中にしてください: ${cfg.root}`); process.exit(2); }
 const widths = cfg.widths || [390, 1366];
 const screens = cfg.screens || [{ name: 'top', path: 'index.html' }];
 const basePath = cfg.baseline ? resolve(cfg.baseline) : '';
@@ -53,8 +54,11 @@ const server = createServer((req, res) => {
   if (p.endsWith('/')) p += 'index.html';
   const f = normalize(resolve(root, '.' + p));
   if (!f.startsWith(root + sep) || !existsSync(f)) { res.writeHead(404); return res.end(); }
+  // シンボリックリンクでリポジトリの外を指すものは配らない（実際の置き場で比べる）
+  const real = realpathSync(f);
+  if (!real.startsWith(root + sep)) { res.writeHead(404); return res.end(); }
   res.writeHead(200, { 'Content-Type': TYPES[extname(f)] || 'application/octet-stream' });
-  res.end(readFileSync(f));
+  res.end(readFileSync(real));
 }).listen(0, '127.0.0.1');
 await new Promise((r) => server.once('listening', r));
 const origin = `http://127.0.0.1:${server.address().port}/`;
@@ -65,7 +69,7 @@ function measure(scopeSel) {
   if (!scope) throw new Error(`scope が見つからない（開く操作が効いていない）: ${scopeSel}`);
   const vis = (e) => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && !e.closest('dialog:not([open])') && !(e.closest('details:not([open])') && !e.closest('summary'));
   const ctrls = [...scope.querySelectorAll('button,summary,select,input:not([type=hidden]),textarea,a[href],[role=button]')].filter(vis);
-  const named = (e) => e.getAttribute('aria-label') || e.getAttribute('title') || e.getAttribute('aria-labelledby') || (e.labels && e.labels.length) || e.closest('label') || e.querySelector('img[alt]:not([alt=""])');
+  const named = (e) => e.getAttribute('aria-label') || e.getAttribute('title') || e.getAttribute('aria-labelledby') || (e.labels && e.labels.length) || e.closest('label') || e.querySelector('img[alt]:not([alt=""]):not([aria-hidden="true"])');
   const unnamed = ctrls.filter((e) => /^(BUTTON|SUMMARY)$/.test(e.tagName) || e.getAttribute('role') === 'button')
     .filter((e) => !/[\p{L}\p{N}]/u.test(e.textContent || '') && !named(e))
     .map((e) => e.outerHTML.slice(0, 60));
