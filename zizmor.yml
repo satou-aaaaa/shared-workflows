@@ -8,8 +8,10 @@ rules:
         "*": hash-pin
   dangerous-triggers:
     # workflow_run は「CI 失敗 Issue」と「公開後の確認」に要る。どちらも PR のコードを実行しない
+    # watch-failures.yml は このリポジトリ自身の main の失敗を ci-failure-issue.yml に渡すだけ（コードを checkout しない）
     ignore:
       - ci-failure-issue.yml
+      - watch-failures.yml
       - post-deploy.yml
       - automerge.yml
   artipacked:
