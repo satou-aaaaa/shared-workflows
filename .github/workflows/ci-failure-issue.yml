@@ -11,8 +11,10 @@ on:
 
 jobs:
   report:
+    # フォークの「main」という名前のブランチの PR を、このリポジトリの main と取り違えない
     if: >-
       github.event.workflow_run.head_branch == github.event.repository.default_branch &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
       contains(fromJSON('["failure","success","timed_out"]'), github.event.workflow_run.conclusion)
     runs-on: ubuntu-latest
     timeout-minutes: 5
