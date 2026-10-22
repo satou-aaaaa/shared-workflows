@@ -1,0 +1,17 @@
+name: Watch failures
+
+# このリポジトリ自身の定期のワークフローが main で失敗したら ci-failure の Issue を立て、次に成功したら閉じる（Claude は使わない）。
+# 中身は同じリポジトリの共通部品 ci-failure-issue.yml（各リポジトリが呼んでいるものと同じ）。
+# 2026-10-22: CI time report が一時的なエラーで落ちても、どこにも知らせが出なかったので足した（incidents/2026-10-22-ci-time-report-failed-silently.md）。
+on:
+  workflow_run:
+    workflows: ["Weekly summary", "CI time report", "Scorecard", "Lint"]
+    types: [completed]
+
+permissions:
+  issues: write
+  actions: read
+
+jobs:
+  report:
+    uses: ./.github/workflows/ci-failure-issue.yml
