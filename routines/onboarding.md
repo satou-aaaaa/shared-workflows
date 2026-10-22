@@ -76,7 +76,8 @@ satou-aaaaa は GitHub の無料プラン。非公開リポジトリでは次が
 - main の Ruleset・ブランチ保護（Pro から）→ 守りは無し。AGENTS.md に「変更は PR で」を書く
 - Push protection・Secret scanning（非公開の個人リポジトリは対象外）→ `secret-scan.yml`（gitleaks）を入れる
 - Pages（Pro から）→ `site-watch`・`lighthouse`・`link-check`・`post-deploy` は入れない。`automerge.yml` は `pages_build: false`
-- CodeQL（コードスキャンは非公開だと有料）・CodeRabbit（非公開は有料）・Dependabot auto-merge（必須チェックが要る）も入れない
+- CodeQL（コードスキャンは非公開だと有料）・Dependabot auto-merge（必須チェックが要る）も入れない
+- CodeRabbit は非公開でもレビューが付いた（2026-10-22、アプリが「All repositories」）。`.coderabbit.yaml` は無くても既定の設定で動く
 - fork PR: 非公開では「フォークからの PR でワークフローを動かす」が最初から Off。API（actions/permissions）はプロキシで読めないので、Chrome が使えるときだけ `…/settings/actions` で Off を確かめる
 - Actions は月の無料枠がある（Windows は2倍で数える。使い切ると止まり、支払い方法があれば課金）。重い検査を増やさない
 - `weekly-summary.yml`・`scorecard.yml`・`ci-time-report.yml` の `REPOS` には入れない（shared-workflows の GITHUB_TOKEN では非公開リポジトリを読めない）
