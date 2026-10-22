@@ -69,3 +69,14 @@ Chrome が使えないときは、次を /mnt/project-files/notes/todo.md に書
 
 - アプリが GitHub の API で main に直接書くリポジトリ（articles はメモアプリが記事を書く）では、main の守りを「削除と force push の禁止」だけにする（PR 必須にすると書き出しが止まる）。
   Post-deploy check も入れない（last-good に戻すと、アプリが書いたデータまで消える）。公開ワークフローは QA が赤でも止めず、CI 失敗 Issue で知らせる。
+
+## つまずいたところ（2026-10-22 last-tell-godot：非公開リポジトリ）
+
+satou-aaaaa は GitHub の無料プラン。非公開リポジトリでは次が使えない（GitHub Docs の gated-features。API でも「Upgrade to GitHub Pro」の 403）。お金のかかる切り替えはしないので、入れずに報告だけする。
+- main の Ruleset・ブランチ保護（Pro から）→ 守りは無し。AGENTS.md に「変更は PR で」を書く
+- Push protection・Secret scanning（非公開の個人リポジトリは対象外）→ `secret-scan.yml`（gitleaks）を入れる
+- Pages（Pro から）→ `site-watch`・`lighthouse`・`link-check`・`post-deploy` は入れない。`automerge.yml` は `pages_build: false`
+- CodeQL（コードスキャンは非公開だと有料）・CodeRabbit（非公開は有料）・Dependabot auto-merge（必須チェックが要る）も入れない
+- fork PR: 非公開では「フォークからの PR でワークフローを動かす」が最初から Off。API（actions/permissions）はプロキシで読めないので、Chrome が使えるときだけ `…/settings/actions` で Off を確かめる
+- Actions は月の無料枠がある（Windows は2倍で数える。使い切ると止まり、支払い方法があれば課金）。重い検査を増やさない
+- `weekly-summary.yml`・`scorecard.yml`・`ci-time-report.yml` の `REPOS` には入れない（shared-workflows の GITHUB_TOKEN では非公開リポジトリを読めない）

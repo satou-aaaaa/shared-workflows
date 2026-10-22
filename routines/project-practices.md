@@ -33,6 +33,7 @@
 | プロジェクト | 分野 | 今の流れの置き場所 | 取り入れたこと | 次に試すこと |
 | --- | --- | --- | --- | --- |
 | last-tell（LAST TELL） | ゲーム開発 | last-tell `CLAUDE.md`・`README.md`、スキル last-tell-release-check・last-tell-proposal-demo | 自動対戦（毎日）・画面の QA・テスターの報告欄（Issues） | 体験目標を短く書き、毎日の改善提案と自動対戦の結果をそれに照らす。テスターの声を「症状」で集計する |
+| last-tell-godot（LAST TELL Godot 版） | ゲーム開発 | last-tell-godot `AGENTS.md`・`README.md` | qa.yml（Web 版との照合・画面・重さ、Linux と Windows） | Web 版と同じ結果になることを自動の照合で確かめてから入れる |
 | naitei-no-michi（内定への道） | ゲーム開発（ノベル） | naitei-no-michi `CLAUDE.md` | 全エンディングに届くかの自動プレイ（QA） | 体験目標（どんな気持ちで終わってほしいか）を書く。遊んだ人の感想の受け口を作るか決める |
 | dungeon-boardgame（ダンジョンボドゲ） | ゲーム開発（ボードゲーム） | [dungeon-issue.md](dungeon-issue.md) | satou さんの Issue に自動で対応 | 体験目標と、試遊のたびに見る点を書く |
 | local-kanban（カンバン） | 業務ツール | local-kanban `AGENTS.md`・`README.md` | 見本データでの自動検査（QA）・satou さん自身が毎日使う | 実際の使い方（スマホでの追加・済み・確認への答え）で詰まった所を Issue にする |

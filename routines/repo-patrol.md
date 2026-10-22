@@ -19,6 +19,7 @@ A. **新しい対象の自動検出**（毎回。軽い比較だけ）: チー�
    渡す改善案のうち取り消せて、お金がかからず、satou さんの方針と食い違わない改善案は、担当に「satou さんの確認は要らない。導入まで進めて結果だけ報告」と書いて渡す（2026-10-16 satou さん。autonomy.md）。
 3. **渡し方**（担当は手順0で読んだ一覧で確かめ、変わっていればメモリを更新）:
    - last-tell: LAST TELL（ポーカーアプリ）プロジェクトの「毎日の改善提案」担当セッション（その trigger の persistent_session_id）に send_message。
+   - last-tell-godot（LAST TELL の Godot 版。非公開。2026-10-22 追加）: last-tell と同じ担当セッションに send_message。
    - carcassonne-research: カルカソンヌ プロジェクトの担当セッション（チームメモリ repo-patrol に記載。自己対戦は 2026-10-14 に CI の selfplay.yml へ移り、元のルーティンは無効なので有効な一覧には出ない）に send_message。
    - sandbox: 週1の新規Issue提案係が担当するので巡回しない。
    - dungeon-boardgame: Issue を起票すれば「ダンジョンボドゲ issue 自動対応（3時間ごと）」の担当が拾う（追加の連絡は不要）。
