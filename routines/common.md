@@ -28,7 +28,8 @@ satou-aaaaa の Claude ルーティンとスレッドのエージェントすべ
 - list_triggers は enabled=true・limit 20〜30 で、name・last_run・next_run_at だけを見る（詳しく見るものだけ get_trigger）。
 - list_sessions は件数を絞る。list_events（全履歴）は読まない。
 - 開いた PR と CI 失敗は、まず shared-workflows のラベル「週次まとめ」の Issue を読む。それより新しい動きだけ各リポジトリで確かめる。
-- サブエージェントは同時に最大2つ、model は haiku。
+- 調べもの（広く読む・要約）のサブエージェントは同時に最大2つ、model は haiku。実装を並列で進めるときは [parallel.md](parallel.md)（触るファイルが重ならないものだけ分ける。2026-10-22 satou さん「そろえる」）。
+- 試す前に [known-limits.md](known-limits.md)（つまずき台帳）を見る。書いてある壁なら再実行せず回り道へ。定期の見回りを作る前に [events.md](events.md)（受信の早見表）を見る。
 
 ## 先にベストプラクティスと専門家の意見を調べる
 
