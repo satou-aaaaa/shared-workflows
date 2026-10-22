@@ -5,6 +5,7 @@ name: Auto merge (共通部品)
 # - 対象は、このリポジトリの中のブランチから出したプルリクエストだけ（よその人のフォークからのものは手でマージ）
 # - 下書きのもの、ラベル「自動マージしない」が付いたもの、.github/ を変えるものはマージしない（手でマージ）
 #   （.github/ を変える PR は GITHUB_TOKEN ではマージできない。workflows 権限が無いため）
+# - require_checks に書いた検査（check run の名前）が同じコミットで ✅ でなければマージしない（例: Secret scan の "scan / scan"）
 # - require_paths を指定したときは、その正規表現に当てはまるファイルを1つも変えない PR もマージしない
 # - 検査した時のコミットから新しいコミットが積まれていたら、マージしない（新しい方の検査を待つ）
 # - 成績表の「自動マージ停止」Issue が開いているとき、直近24時間に公開後の差し戻しが2回あったときもマージしない
@@ -16,6 +17,10 @@ name: Auto merge (共通部品)
 on:
   workflow_call:
     inputs:
+      require_checks:
+        description: '同じコミットで成功していなければマージしない check run の名前（改行区切り）。例 "scan / scan"'
+        type: string
+        default: ''
       require_paths:
         description: 'この正規表現（grep -E）に当てはまるファイルを変える PR だけマージする。空ならすべて'
         type: string
@@ -57,6 +62,7 @@ jobs:
           SHA: ${{ github.event.workflow_run.head_sha }}
           BRANCH: ${{ github.event.workflow_run.head_branch }}
           REQUIRE_PATHS: ${{ inputs.require_paths }}
+          REQUIRE_CHECKS: ${{ inputs.require_checks }}
         run: |
           pr=$(gh api "repos/$REPO/pulls?state=open&head=${REPO%%/*}:$BRANCH" --jq '.[0].number // empty')
           if [ -z "$pr" ]; then echo "開いているプルリクエストがありません"; exit 0; fi
@@ -75,6 +81,11 @@ jobs:
           files=$(gh api --paginate "repos/$REPO/pulls/$pr/files" --jq '.[].filename')
           if echo "$files" | grep -q '^\.github/'; then echo "#$pr は .github/ を変えるので手でマージ"; exit 0; fi
           if [ -n "$REQUIRE_PATHS" ] && ! echo "$files" | grep -qE "$REQUIRE_PATHS"; then echo "#$pr は対象のファイルを変えないので手でマージ"; exit 0; fi
+          while IFS= read -r c; do
+            [ -n "$c" ] || continue
+            st=$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100" --jq "[.check_runs[] | select(.name == \"$c\")] | sort_by(.started_at) | last | (.conclusion // .status // \"なし\")")
+            if [ "$st" != success ]; then echo "#$pr は「$c」が ${st:-なし} なのでマージしません（通ったら手でマージ）"; exit 0; fi
+          done <<<"$REQUIRE_CHECKS"
           if [ "$(jq -r .head.sha <<<"$info")" != "$SHA" ]; then echo "#$pr に新しいコミットがあるので、その検査を待ちます"; exit 0; fi
           gh api -X PUT "repos/$REPO/pulls/$pr/merge" -f merge_method=squash -f sha="$SHA" --jq .message
           echo "merged=true" >> "$GITHUB_OUTPUT"
