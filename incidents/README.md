@@ -82,6 +82,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 | 2026-10-22 | 公開・CI | [CI の時間の週1集計が GitHub の一時的なエラーで落ち、どこにも知らせが出なかった](2026-10-22-ci-time-report-failed-silently.md) | 対策済み |
 | 2026-10-22 | 見回りの見落とし | [sandbox の法令の見張り（Law watch）が3週続けて落ち、法令の版の更新が知らされなかった](2026-10-22-law-watch-failing-unnoticed.md) | 対策済み |
 | 2026-10-22 | 表示 | [ボードの詳細画面に「AI に頼む」のボタンを足し、UI/UX の点検で増えすぎを見逃した](2026-10-22-board-buttons-added-unchecked.md) | 一部対策済み |
+| 2026-10-22 | 公開・CI | [自動マージが Secret scan の結果を見ず、QA が通ればマージできた](2026-10-22-automerge-ignores-secret-scan.md) | 一部対策済み |
 | 2026-10-21 | 手順の抜け | [同期の仕組みを「定期の巡回」だけで考え、イベントを受け取る形を出していなかった](2026-10-21-alternatives-not-proposed.md) | 対策済み |
 | 2026-10-21 | 権限・設定 | [自動マージのあと公開や main の検査を起こせず、黙って止まっていた](2026-10-21-automerge-dispatch-403.md) | 対策済み |
 | 2026-10-20 | 検査の見逃し | [ボードのカードの詳細を開くと、閉じられなくなった](2026-10-20-board-detail-not-closing.md) | 対策済み |
