@@ -79,6 +79,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-10-23 | 公開・CI | [非公開リポジトリの Actions 無料枠を使い切り、CI と自動マージが止まった](2026-10-23-actions-minutes-ran-out.md) | 対策中 |
 | 2026-10-22 | 公開・CI | [CI の時間の週1集計が GitHub の一時的なエラーで落ち、どこにも知らせが出なかった](2026-10-22-ci-time-report-failed-silently.md) | 対策済み |
 | 2026-10-22 | 見回りの見落とし | [sandbox の法令の見張り（Law watch）が3週続けて落ち、法令の版の更新が知らされなかった](2026-10-22-law-watch-failing-unnoticed.md) | 対策済み |
 | 2026-10-22 | 表示 | [ボードの詳細画面に「AI に頼む」のボタンを足し、UI/UX の点検で増えすぎを見逃した](2026-10-22-board-buttons-added-unchecked.md) | 一部対策済み |

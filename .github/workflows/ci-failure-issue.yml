@@ -8,6 +8,11 @@ name: CI failure issue (共通部品)
 # どのワークフローを見張るかは、呼び出し元の on.workflow_run.workflows に書く。
 on:
   workflow_call:
+    inputs:
+      runner:
+        description: 'どの機械で回すか（runs-on に渡す JSON）。例 ["self-hosted","lt-linux"]。既定は GitHub の機械。非公開リポジトリで無料枠を使い切ったとき、自前ランナーで回すため'
+        type: string
+        default: '"ubuntu-latest"'
 
 jobs:
   report:
@@ -16,7 +21,7 @@ jobs:
       github.event.workflow_run.head_branch == github.event.repository.default_branch &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
       contains(fromJSON('["failure","success","timed_out"]'), github.event.workflow_run.conclusion)
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.runner) }}
     timeout-minutes: 5
     concurrency:
       group: ci-failure-issue-${{ github.event.workflow_run.name }}
