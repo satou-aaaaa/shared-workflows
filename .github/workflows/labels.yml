@@ -23,6 +23,7 @@ jobs:
           set -euo pipefail
           common='ci-failure|B60205|main の CI 失敗（自動）
           自動マージしない|BFD4F2|Auto merge の対象から外す
+          手でマージ|D4C5F9|検査は緑。.github/ を変えるので手でマージする（Auto merge が付ける）
           needs-decision|FBCA04|satou さんの判断待ち
           dependencies|0366D6|依存の更新'
           printf '%s\n%s\n' "$common" "$EXTRA" | sed 's/^ *//' | while IFS='|' read -r name color desc; do

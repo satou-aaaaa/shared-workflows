@@ -51,6 +51,7 @@ satou-aaaaa の各リポジトリで、PR を作る・CI を通す・コンフ�
 - satou さんは PR のマージを Claude に任せている（2026-10-10）。CI が緑で、コンフリクトが無く、未解決のレビューが無ければ、下書きを解除して squash マージする。タイトルは PR のタイトルのまま。
 - 自動マージ（共通部品 `automerge.yml`）が入っているリポジトリ（last-tell・naitei-no-michi・dungeon-boardgame・local-kanban）は、QA が ✅ になると自動でマージされる。
   `.github/` を変える PR、ラベル「自動マージしない」の PR、QA が回らない PR は自動マージされないので、CI が緑なのを確かめてから手でマージする（2026-10-16 satou さん）。
+  手でマージが要る PR を出したら、PR を出した担当がマージまで持つ。subscribe_pr_activity で見張り、緑になったらその場でマージする。自分が終わる前に、自分の出した PR が開いたまま残っていないかを `pulls?state=open` で確かめ、残すなら理由を PR に書く（Auto merge は .github/ を変える PR にラベル「手でマージ」を付ける。2026-10-24 同じ種類で2件止まった。`incidents/2026-10-24-github-pr-left-unmerged-again.md`）。
 - Dependabot の patch/minor は `dependabot-automerge.yml`（sandbox）がマージを予約するので、手で重ねて扱わない。メジャー更新は CI が検証しない道具に効くことがあるので、その道具を小さく動かして確かめてからマージする。
 - shared-workflows は次の実行から全リポジトリに効く。必ず PR で出し、Lint（actionlint）が通ってからマージする（main は Ruleset で PR 必須）。
 - shared-workflows に「自動マージ停止: <リポジトリ>」の Issue が開いているあいだは、直す PR だけをマージする（autonomy.md のブレーキ）。
