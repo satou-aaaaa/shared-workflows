@@ -23,5 +23,5 @@
 - [x] 直す: 直す PR をマージし、今の main で selfplay を回した（carcassonne-research #69）
 - [x] 防ぐ: carcassonne-research の `tests/test_workflows.py` が、ワークフローと scripts/*.sh の `git push` が main を指していたら落とす。直す前の版で落ちることを確かめた（carcassonne-research #70）
 - [x] 見つける: 共通部品 `ci-failure-issue.yml` が、Issue を閉じる PR（`Closes #N` など）が開いたままなら、その番号と最後の動きを失敗の知らせに書き添える（この PR）
-- [x] 見つける: 監督の手順（supervisor.md 手順3）に、知らせに直す PR があれば修正を出し直さずマージに回す、を足した（この PR）
+- [x] 見つける: 監督の手順（supervisor.md 手順3）に、知らせに直す PR があれば修正を出し直さず、担当にマージを頼む、を足した（この PR）
 - [x] 見つける: carcassonne-research の `Stale check`（週1）が、3日動きの無い PR を知らせる（carcassonne-research #69）

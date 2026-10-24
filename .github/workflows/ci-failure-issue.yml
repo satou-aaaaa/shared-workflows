@@ -62,7 +62,7 @@ jobs:
           if [ -n "$num" ]; then
             # PR も issues の一覧に入る（issues: write だけで読める。呼び出し元に pull-requests の権限を足さなくてよい）
             prs=$(gh api "repos/${GH_REPO}/issues?state=open&per_page=100" --paginate \
-              --jq ".[] | select(.pull_request != null) | select((.body // \"\") | test(\"(?i)\\\\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\\\\s+#${num}\\\\b\")) | \"#\\(.number)（最後の動き \\(.updated_at[:10])）\"" \
+              --jq ".[] | select(.pull_request != null) | select((.body // \"\") | test(\"(?i)\\\\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\\\\s*:?\\\\s*#${num}\\\\b\")) | \"#\\(.number)（最後の動き \\(.updated_at[:10])）\"" \
               2>/dev/null | paste -sd ' ' - || true)
             if [ -n "$prs" ]; then
               waiting="
