@@ -56,7 +56,8 @@ Chrome が使えないときは、次を /mnt/project-files/notes/todo.md に書
 1. Pages: `https://github.com/satou-aaaaa/<repo>/settings/pages` → Deploy from a branch → main / (root)
 2. main のルールセット: `…/settings/rules` → New branch ruleset → Include default branch →「Restrict deletions」「Block force pushes」だけ ON（ほかのリポジトリと同じ）
 3. fork PR の承認: `…/settings/actions` →「Require approval for all external contributors」
-4. CodeRabbit のアプリの対象にそのリポジトリを加える（https://github.com/apps/coderabbitai → Configure。公開リポジトリなら無料）
+4. CI が自分で PR を作るリポジトリ（main が PR 必須で、定期実行の生成物を `merge_via_pr.sh` などで入れるもの）だけ: `…/settings/actions` → Workflow permissions →「Allow GitHub Actions to create and approve pull requests」に ✓ → Save（切れていると `GitHub Actions is not permitted to create or approve pull requests` で落ちる。2026-10-24 carcassonne-research）
+5. CodeRabbit のアプリの対象にそのリポジトリを加える（https://github.com/apps/coderabbitai → Configure。公開リポジトリなら無料）
 
 ## つまずいたところ（2026-10-18）
 
