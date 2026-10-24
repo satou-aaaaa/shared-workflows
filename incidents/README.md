@@ -79,6 +79,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-10-24 | 公開・CI | [last-tell の main の QA が、進んでいた WebKit の自動対戦（第5章）を「止まった」として ❌ にした](2026-10-24-webkit-fuzz-false-stall.md) | 対策済み |
 | 2026-10-24 | 見回りの見落とし | [last-tell の QA ❌ を直す PR が、検査は緑のまま2日マージされなかった](2026-10-24-github-pr-left-unmerged-again.md) | 対策済み |
 | 2026-10-24 | 見回りの見落とし | [local-kanban の Link check が「リンク0件」で初回から落ち、Issue が3日だれにも直されなかった](2026-10-24-link-check-no-links.md) | 対策済み |
 | 2026-10-24 | 見回りの見落とし | [selfplay が main へ直接 push して断られ、直す PR も2日マージされず失敗が続いた](2026-10-24-fix-pr-left-unmerged.md) | 対策済み |
