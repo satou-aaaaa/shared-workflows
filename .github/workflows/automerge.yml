@@ -4,6 +4,7 @@ name: Auto merge (共通部品)
 # そのプルリクエストを自動で squash マージする。
 # - 対象は、このリポジトリの中のブランチから出したプルリクエストだけ（よその人のフォークからのものは手でマージ）
 # - 下書きのもの、ラベル「自動マージしない」が付いたもの、.github/ を変えるものはマージしない（手でマージ）
+#   .github/ を変えるものには、ラベル「手でマージ」と一言を付けて、マージ待ちだと分かるようにする
 #   （.github/ を変える PR は GITHUB_TOKEN ではマージできない。workflows 権限が無いため）
 # - require_checks に書いた検査（check run の名前）が同じコミットで ✅ でなければマージしない（例: Secret scan の "scan / scan"）
 # - require_paths を指定したときは、その正規表現に当てはまるファイルを1つも変えない PR もマージしない
@@ -83,7 +84,17 @@ jobs:
             --jq "[.[] | select(.merged_at != null and .merged_at >= \"$since\" and (.title | startswith(\"差し戻し:\")))] | length")
           if [ "${reverts:-0}" -ge 2 ]; then echo "直近24時間に差し戻しが ${reverts} 回あったので、自動ではマージしません（原因を直す PR は担当がマージする）"; exit 0; fi
           files=$(gh api --paginate "repos/$REPO/pulls/$pr/files" --jq '.[].filename')
-          if echo "$files" | grep -q '^\.github/'; then echo "#$pr は .github/ を変えるので手でマージ"; exit 0; fi
+          if echo "$files" | grep -q '^\.github/'; then
+            echo "#$pr は .github/ を変えるので手でマージ"
+            # 黙って止まると、検査が緑のまま何日もマージされない（last-tell #150・carcassonne-research #69、2026-10-24）。
+            # ラベル「手でマージ」を付け、PR に一度だけ書く。監督の巡回がこのラベルで拾ってマージに回す
+            if ! jq -e '.labels[].name | select(. == "手でマージ")' <<<"$info" >/dev/null; then
+              gh api -X POST "repos/$REPO/issues/$pr/labels" -f 'labels[]=手でマージ' >/dev/null \
+                && gh api -X POST "repos/$REPO/issues/$pr/comments" -f body="🔧 検査は ✅ です。.github/ を変えるので自動マージできません（GITHUB_TOKEN には workflows 権限が無い）。PR を出した担当が手でマージしてください。ラベル「手でマージ」で監督の巡回も拾います。" >/dev/null \
+                || echo "::warning::#$pr にラベル「手でマージ」を付けられませんでした（呼び出し側の permissions に pull-requests: write が要る）"
+            fi
+            exit 0
+          fi
           if [ -n "$REQUIRE_PATHS" ] && ! echo "$files" | grep -qE "$REQUIRE_PATHS"; then echo "#$pr は対象のファイルを変えないので手でマージ"; exit 0; fi
           while IFS= read -r c; do
             [ -n "$c" ] || continue
