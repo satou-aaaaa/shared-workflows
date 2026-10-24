@@ -74,6 +74,28 @@ jobs:
           info=$(gh api "repos/$REPO/pulls/$pr")
           if [ "$(jq -r .draft <<<"$info")" = true ]; then echo "#$pr は下書きなのでマージしません"; exit 0; fi
           if jq -e '.labels[].name | select(. == "自動マージしない")' <<<"$info" >/dev/null; then echo "#$pr は「自動マージしない」"; exit 0; fi
+          files=$(gh api --paginate "repos/$REPO/pulls/$pr/files" --jq '.[].filename')
+          manual=''
+          if echo "$files" | grep -q '^\.github/'; then manual=1; fi
+          if [ -z "$manual" ] && [ -n "$REQUIRE_PATHS" ] && ! echo "$files" | grep -qE "$REQUIRE_PATHS"; then echo "#$pr は対象のファイルを変えないので手でマージ"; exit 0; fi
+          while IFS= read -r c; do
+            [ -n "$c" ] || continue
+            st=$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100" --jq "[.check_runs[] | select(.name == \"$c\")] | sort_by(.started_at) | last | (.conclusion // .status // \"なし\")")
+            if [ "$st" != success ]; then echo "#$pr は「$c」が ${st:-なし} なのでマージしません（通ったら手でマージ）"; exit 0; fi
+          done <<<"$REQUIRE_CHECKS"
+          if [ "$(jq -r .head.sha <<<"$info")" != "$SHA" ]; then echo "#$pr に新しいコミットがあるので、その検査を待ちます"; exit 0; fi
+          if [ -n "$manual" ]; then
+            echo "#$pr は .github/ を変えるので手でマージ"
+            # 黙って止まると、検査が緑のまま何日もマージされない（last-tell #150・carcassonne-research #69、2026-10-24）。
+            # 今のコミットで必須の検査も通ったときだけ、ラベル「手でマージ」を付け、PR に一度だけ書く。監督の巡回がこのラベルで拾ってマージに回す。
+            # 「自動マージ停止」のブレーキ中も付ける（人がマージを決めるため。ブレーキはこの下で自動マージだけを止める）
+            if ! jq -e '.labels[].name | select(. == "手でマージ")' <<<"$info" >/dev/null; then
+              gh api -X POST "repos/$REPO/issues/$pr/labels" -f 'labels[]=手でマージ' >/dev/null \
+                && gh api -X POST "repos/$REPO/issues/$pr/comments" -f body="🔧 検査は ✅ です。.github/ を変えるので自動マージできません（GITHUB_TOKEN には workflows 権限が無い）。PR を出した担当が手でマージしてください。ラベル「手でマージ」で監督の巡回も拾います。" >/dev/null \
+                || echo "::warning::#$pr にラベル「手でマージ」を付けられませんでした（呼び出し側の permissions に pull-requests: write が要る）"
+            fi
+            exit 0
+          fi
           # 成績表（scorecard.yml）が「自動マージ停止」を出しているあいだはマージしない（壊れた割合が高い週）
           brake=$(gh api "repos/satou-aaaaa/shared-workflows/issues?labels=%E8%87%AA%E5%8B%95%E3%83%9E%E3%83%BC%E3%82%B8%E5%81%9C%E6%AD%A2&state=open" \
             --jq ".[] | select(.title == \"自動マージ停止: ${REPO#*/}\") | .html_url" 2>/dev/null | head -1 || true)
@@ -83,25 +105,6 @@ jobs:
           reverts=$(gh api "repos/$REPO/pulls?state=closed&sort=updated&direction=desc&per_page=50" \
             --jq "[.[] | select(.merged_at != null and .merged_at >= \"$since\" and (.title | startswith(\"差し戻し:\")))] | length")
           if [ "${reverts:-0}" -ge 2 ]; then echo "直近24時間に差し戻しが ${reverts} 回あったので、自動ではマージしません（原因を直す PR は担当がマージする）"; exit 0; fi
-          files=$(gh api --paginate "repos/$REPO/pulls/$pr/files" --jq '.[].filename')
-          if echo "$files" | grep -q '^\.github/'; then
-            echo "#$pr は .github/ を変えるので手でマージ"
-            # 黙って止まると、検査が緑のまま何日もマージされない（last-tell #150・carcassonne-research #69、2026-10-24）。
-            # ラベル「手でマージ」を付け、PR に一度だけ書く。監督の巡回がこのラベルで拾ってマージに回す
-            if ! jq -e '.labels[].name | select(. == "手でマージ")' <<<"$info" >/dev/null; then
-              gh api -X POST "repos/$REPO/issues/$pr/labels" -f 'labels[]=手でマージ' >/dev/null \
-                && gh api -X POST "repos/$REPO/issues/$pr/comments" -f body="🔧 検査は ✅ です。.github/ を変えるので自動マージできません（GITHUB_TOKEN には workflows 権限が無い）。PR を出した担当が手でマージしてください。ラベル「手でマージ」で監督の巡回も拾います。" >/dev/null \
-                || echo "::warning::#$pr にラベル「手でマージ」を付けられませんでした（呼び出し側の permissions に pull-requests: write が要る）"
-            fi
-            exit 0
-          fi
-          if [ -n "$REQUIRE_PATHS" ] && ! echo "$files" | grep -qE "$REQUIRE_PATHS"; then echo "#$pr は対象のファイルを変えないので手でマージ"; exit 0; fi
-          while IFS= read -r c; do
-            [ -n "$c" ] || continue
-            st=$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100" --jq "[.check_runs[] | select(.name == \"$c\")] | sort_by(.started_at) | last | (.conclusion // .status // \"なし\")")
-            if [ "$st" != success ]; then echo "#$pr は「$c」が ${st:-なし} なのでマージしません（通ったら手でマージ）"; exit 0; fi
-          done <<<"$REQUIRE_CHECKS"
-          if [ "$(jq -r .head.sha <<<"$info")" != "$SHA" ]; then echo "#$pr に新しいコミットがあるので、その検査を待ちます"; exit 0; fi
           gh api -X PUT "repos/$REPO/pulls/$pr/merge" -f merge_method=squash -f sha="$SHA" --jq .message
           echo "merged=true" >> "$GITHUB_OUTPUT"
       - name: 公開などを起こす
