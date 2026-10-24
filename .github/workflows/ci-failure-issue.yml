@@ -56,10 +56,24 @@ jobs:
 
           ⚠️ このコミットは今の main の先頭（${head:0:7}）ではありません。再実行は同じ古いコミットで回るので、直ったかどうかは今の main で回して確かめる（Actions の「Run workflow」で main を選ぶ）。"
           fi
+          # この Issue を直す PR が開いたままなら書き添える。直す PR ができても、マージされずに失敗が続くことがある
+          # （carcassonne-research #66・#69、2026-10-22〜24。.github/ を変える PR は自動マージが拾わない）
+          waiting=""
+          if [ -n "$num" ]; then
+            # PR も issues の一覧に入る（issues: write だけで読める。呼び出し元に pull-requests の権限を足さなくてよい）
+            prs=$(gh api "repos/${GH_REPO}/issues?state=open&per_page=100" --paginate \
+              --jq ".[] | select(.pull_request != null) | select((.body // \"\") | test(\"(?i)\\\\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\\\\s*:?\\\\s*#${num}\\\\b\")) | \"#\\(.number)（最後の動き \\(.updated_at[:10])）\"" \
+              2>/dev/null | paste -sd ' ' - || true)
+            if [ -n "$prs" ]; then
+              waiting="
+
+          🔧 この Issue を直す PR ${prs} が開いたままです。新しく直すより先に、その PR を CI が緑ならマージする（赤なら直す）。"
+            fi
+          fi
           body="main で「${WF_NAME}」が ${CONCLUSION} になりました（きっかけ: ${EVENT}、コミット ${SHA:0:7}）。
           実行: ${RUN_URL}
 
-          同じワークフローが次に成功すると、この Issue は自動で閉じます。${stale}"
+          同じワークフローが次に成功すると、この Issue は自動で閉じます。${stale}${waiting}"
           if [ -n "$num" ]; then
             gh issue comment "$num" --body "$body"
           else
