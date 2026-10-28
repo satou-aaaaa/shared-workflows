@@ -41,7 +41,7 @@
 | Site watch | 公開ページが 200 で開けない | `site-watch.yml` | 呼び出し側の `paths` |
 | Lighthouse | 速さ・使いやすさの点数の低下 | `lighthouse.yml` | 公開後に1回測って `baseline` を置く |
 | Link check | リンク切れ | `link-check.yml` | 呼び出し側の `files` |
-| CI failure issue | main のワークフローの失敗 → ラベル `ci-failure` の Issue（成功で自動で閉じる） | `ci-failure-issue.yml` | 呼び出し側の `workflows` に見張る名前を全部 |
+| CI failure issue | main のワークフローの失敗 → ラベル `ci-failure` の Issue（成功で自動で閉じる。6時間ごとの見回りでも見る） | `ci-failure-issue.yml` | 呼び出し側の `workflows` に見張る名前を全部（1行で）。見回りの `schedule`（GITHUB_TOKEN で起こした実行は workflow_run を起こさないため） |
 
 ## 4. 定期（全体を見る）
 
