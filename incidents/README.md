@@ -79,6 +79,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-10-29 | 手順の抜け | [カンバンのアプリ版が、10/25 から古いカードを読み続けていた](2026-10-29-kanban-app-stale-cards.md) | 対策済み |
 | 2026-10-28 | 見回りの見落とし | [sandbox の Weekly mutation が初回から4週続けて2時間の上限で止まり、だれも気づかなかった](2026-10-28-timeout-cancelled-unwatched.md) | 対策済み |
 | 2026-10-28 | 公開・CI | [carcassonne-research の「CI失敗: AI content」が、直ったあとも2日閉じなかった](2026-10-28-dispatched-run-not-watched.md) | 対策済み |
 | 2026-10-28 | 公開・CI | [carcassonne-research の selfplay が、もう main に入っていた差し替えを PR にしようとして失敗した](2026-10-28-queued-run-empty-pr.md) | 対策済み |
