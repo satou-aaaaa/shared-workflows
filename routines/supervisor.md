@@ -3,7 +3,7 @@
 先に `common.md` を読むこと。
 
 **早めに終える**: 最初に、前回の巡回（約6時間前）以降の変化だけを確かめる。
-list_triggers で last_run が前回以降に失敗したもの（利用上限による失敗は除く）、各リポジトリ（last-tell・carcassonne-research・sandbox・dungeon-boardgame・tenbin・naitei-no-michi・local-kanban・articles・last-tell-godot）の open な ci-failure Issue（`https://api.github.com/repos/satou-aaaaa/<repo>/issues?labels=ci-failure&state=open`。「GitHub access ... not enabled」と返る場合は add_repo で接続するか、確認できていないと書く。「失敗なし」と言わない）、list_project_prs の更新、確認待ちの返信、ラベル「手でマージ」の開いた PR（手順3。変化が無くても毎回見る）。
+list_triggers で last_run が前回以降に失敗したもの（利用上限による失敗は除く）、各リポジトリ（last-tell・carcassonne-research・sandbox・dungeon-boardgame・tenbin・naitei-no-michi・local-kanban・articles・last-tell-godot。security-toolkit は CI が無いので見ない）の open な ci-failure Issue（`https://api.github.com/repos/satou-aaaaa/<repo>/issues?labels=ci-failure&state=open`。「GitHub access ... not enabled」と返る場合は add_repo で接続するか、確認できていないと書く。「失敗なし」と言わない）、list_project_prs の更新、確認待ちの返信、ラベル「手でマージ」の開いた PR（手順3。変化が無くても毎回見る）。
 どれも無ければ、手順8（状況ページ）と、日本時間 9:41 の回は手順9（TODO）を済ませてから update_status を1行更新するだけで終える（メモリの読み込みも詳しい調査もしない）。
 **ただし日本時間 9:41 の回は、変化が無くても手順2を全件で行う**（日付で絞らず、返事待ち・止まったものを探す）。変化だけを見る回は、止まったまま動かないものを必ず見落とすため（incidents/2026-10-19-patrol-missed-stale.md）。
 何かあるときだけ、チームメモリの supervisor-agent-rules・supervisor-extra-duties・supervisor-ci-fix・efficiency-rules・supervisor-scope-additions を読み、以下の手順で点検する。
