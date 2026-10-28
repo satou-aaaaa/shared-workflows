@@ -2,7 +2,7 @@
 # 開発の準備を1コマンドで行う。人も、どの AI も同じ手順で動かせるようにするためのもの。何度実行してもよい。
 #   使い方: bash scripts/setup.sh   （Windows は Git Bash で）
 # Claude Code のクラウドセッションでは .claude/settings.json の SessionStart フックが自動で呼ぶ。
-# 入れるもの: actionlint（.tools/bin に。CI の Lint もこれで入れる）。zizmor は scripts/check.sh が uvx か pipx でその都度動かす。
+# 入れるもの: actionlint（.tools/bin に。CI の Lint もこれで入れる）。shellcheck は入っているかだけ確かめる。zizmor は scripts/check.sh が uvx か pipx でその都度動かす。
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -33,6 +33,9 @@ if [ "$(.tools/bin/actionlint -version 2>/dev/null | head -1)" != "$ver" ]; then
   fi
 fi
 session_env "PATH=\"$PWD/.tools/bin:\$PATH\""
+
+# shellcheck（actionlint は shellcheck が無いと run: の中を黙って調べない。CI の機械には入っているので、無いと手元だけ通って CI で落ちる。shared-workflows #83）
+command -v shellcheck >/dev/null || fail "shellcheck が要る（apt install shellcheck・brew install shellcheck・pipx install shellcheck-py のどれか）"
 
 # zizmor は uvx か pipx で動かす
 command -v uvx >/dev/null || command -v pipx >/dev/null || fail "uv（https://docs.astral.sh/uv/ ）か pipx が要る（zizmor を動かすため）"

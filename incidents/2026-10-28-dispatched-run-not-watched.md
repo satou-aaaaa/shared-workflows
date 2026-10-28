@@ -23,5 +23,6 @@
 - [x] 直す: コツ集の言い切りを「勝敗の差が一番大きいのは都市」にし、順位の入れ替わりで止めないテストを足した（carcassonne-research #91）
 - [x] 防ぐ: 共通部品 `ci-failure-issue.yml` に見回り（呼び出し元の schedule で、見張る名前ごとに main の最新の実行を見て Issue を立てる・閉じる）を足した（この PR）。ひな形にも6時間ごとの schedule を入れた
 - [x] 防ぐ: carcassonne-research に「ほかのワークフローが起こすワークフローは見張りに入り、見回りがある」テストを足した（carcassonne-research #91）
+- [x] 防ぐ: この PR の初回で、手元に shellcheck が無く actionlint が run: を調べないまま通り、CI で落ちた。`scripts/check.sh` と `scripts/setup.sh` が shellcheck の無い環境を止める
 - [x] 見つける: `scripts/drift-check.mjs` が ci-failure-issue の呼び出しに schedule が無いリポジトリを週次まとめに出す（この PR）
 - [x] 防ぐ: ほかのリポジトリの呼び出しにも schedule を足す（last-tell #155・articles #6・local-kanban #79・naitei-no-michi #11・tenbin #25・sandbox #309）

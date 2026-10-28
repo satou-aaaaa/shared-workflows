@@ -39,10 +39,10 @@ jobs:
           GH_REPO: ${{ github.repository }}
           EVENT_NAME: ${{ github.event_name }}
           WF_NAME: ${{ github.event.workflow_run.name }}
-          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           RUN_URL: ${{ github.event.workflow_run.html_url }}
           SHA: ${{ github.event.workflow_run.head_sha }}
-          EVENT: ${{ github.event.workflow_run.event }}
+          RUN_EVENT: ${{ github.event.workflow_run.event }}
           CALLER_REF: ${{ github.workflow_ref }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
@@ -101,7 +101,7 @@ jobs:
           }
 
           if [ "$EVENT_NAME" = "workflow_run" ]; then
-            report "$WF_NAME" "$CONCLUSION" "$RUN_URL" "$SHA" "$EVENT"
+            report "$WF_NAME" "$RUN_CONCLUSION" "$RUN_URL" "$SHA" "$RUN_EVENT"
             exit 0
           fi
 
