@@ -55,7 +55,7 @@
 | このリポジトリの定期実行の失敗 | 週次まとめ・CI時間・成績表・Lint が main で落ちた → ci-failure の Issue（次に成功したら閉じる） | `watch-failures.yml`（中身は `ci-failure-issue.yml`） | なし |
 | Labels | 自動化が使うラベルの抜け | `labels.yml` | 呼び出し側を入れて1回動かす |
 | Branch cleanup | 使い終わったブランチ | `branch-cleanup.yml` | `keep`（last-tell は qa-results・source-backup） |
-| 監督の巡回（6時間ごと） | 失敗・止まったルーティンとスレッド、赤い PR、許可待ち、期限切れの約束。担当に直させ、satou さん本人のものだけ知らせる。状況ページを更新 | [supervisor.md](../routines/supervisor.md) | ルーティン（[routines.md](routines.md)）、状況ページの Artifact |
+| 監督の巡回（見回りの中で1日2回） | 失敗・止まったルーティンとスレッド、赤い PR、許可待ち、期限切れの約束。担当に直させ、satou さん本人のものだけ知らせる。状況ページを更新 | [supervisor.md](../routines/supervisor.md) | ルーティン（[routines.md](routines.md)）、状況ページの Artifact |
 | 全リポジトリ・全プロジェクト巡回（毎日） | 改善の種、新しいリポジトリ・プロジェクト | [repo-patrol.md](../routines/repo-patrol.md) | ルーティン、渡し先をメモリに |
 | ルーティンとスキルの見直し（週1） | 手順書と実際のルーティンのずれ、採用されない提案係、古くなったベストプラクティス、対応漏れ | [routine-review.md](../routines/routine-review.md)、[agent-practices.md](../routines/agent-practices.md) | ルーティン |
 | 再発防止の記録と点検 | 直しただけで終わった問題、残った対策、同じ種類の繰り返し（30日に2件以上） | common.md「問題が起きたら」、[incidents/](../incidents/README.md)、`scripts/check-incidents.mjs`（Lint）、`scripts/next-actions.mjs`（週次まとめ）、routine-review.md の 8b、スキル saihatsu-boushi | なし（incidents/ はこのリポジトリにある） |

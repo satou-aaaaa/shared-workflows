@@ -29,7 +29,7 @@
 
 | 作る順 | ルーティン | 手順書 | cron | スレッド | モデル |
 | --- | --- | --- | --- | --- | --- |
-| 1 | 監督エージェントの巡回（6時間ごと） | [supervisor.md](../routines/supervisor.md) | `41 */6 * * *` | 業務代行エージェント作り | 既定 |
+| 1 | 監督エージェントの巡回（見回りの中で1日2回） | [supervisor.md](../routines/supervisor.md) | 単独の定期実行は作らない。見回りの 8:07・20:07 JST の回が行う（共有フォルダ `board/patrol.md` 手順14。2026-10-28 satou さんがトークン節約で選択） | 業務代行エージェント作り | 既定 |
 | 2 | 全リポジトリ・全プロジェクト巡回と改善提案（毎日・22:38） | [repo-patrol.md](../routines/repo-patrol.md) | `CRON_TZ=Asia/Tokyo 38 22 * * *` | 全リポジトリ巡回と改善提案 | 既定 |
 | 3 | ルーティンとスキルの定期見直し（週1・土曜朝） | [routine-review.md](../routines/routine-review.md) | `CRON_TZ=Asia/Tokyo 53 9 * * 6` | ルーティンの改善提案 | 既定 |
 | 4 | CI の時間短縮（週1・木曜朝） | [ci-speedup.md](../routines/ci-speedup.md) | `CRON_TZ=Asia/Tokyo 26 10 * * 4` | CI時間短縮の定期改善 | 既定 |
