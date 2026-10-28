@@ -15,6 +15,8 @@ on:
 permissions:
   issues: write
   actions: read
+  # ジョブの時間切れ（timeout-minutes）を見分けるため、注記を読む（非公開リポジトリで要る）
+  checks: read
 
 jobs:
   report:
