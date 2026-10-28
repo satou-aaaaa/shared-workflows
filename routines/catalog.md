@@ -12,7 +12,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 
 | 作業 | 手順書 | 実行 |
 | --- | --- | --- |
-| 監督の巡回 | [supervisor.md](supervisor.md) | 6時間ごと（:41） |
+| 監督の巡回 | [supervisor.md](supervisor.md) | 見回りの中で1日2回（8:07・20:07 JST。2026-10-28 から） |
 | 全リポジトリ・全プロジェクト巡回 | [repo-patrol.md](repo-patrol.md) | 毎日 22:38 JST |
 | ルーティンとスキルの定期見直し | [routine-review.md](routine-review.md) | 土曜 9:53 JST |
 | CI の時間短縮 | [ci-speedup.md](ci-speedup.md) | 木曜 10:26 JST |

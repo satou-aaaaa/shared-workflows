@@ -1,8 +1,10 @@
-# 監督エージェントの巡回（6時間ごと）
+# 監督エージェントの巡回（1日2回）
+
+2026-10-28 から単独の定期実行は無く、見回り（共有フォルダ `board/patrol.md` 手順14）の 8:07・20:07 JST の回がこの手順を行う（satou さんがトークン節約で選択）。
 
 先に `common.md` を読むこと。
 
-**早めに終える**: 最初に、前回の巡回（約6時間前）以降の変化だけを確かめる。
+**早めに終える**: 最初に、前回の巡回（約12時間前）以降の変化だけを確かめる。
 list_triggers で last_run が前回以降に失敗したもの（利用上限による失敗は除く）、各リポジトリ（last-tell・carcassonne-research・sandbox・dungeon-boardgame・tenbin・naitei-no-michi・local-kanban・articles・last-tell-godot。security-toolkit は CI が無いので見ない）の open な ci-failure Issue（`https://api.github.com/repos/satou-aaaaa/<repo>/issues?labels=ci-failure&state=open`。「GitHub access ... not enabled」と返る場合は add_repo で接続するか、確認できていないと書く。「失敗なし」と言わない）、list_project_prs の更新、確認待ちの返信、ラベル「手でマージ」の開いた PR（手順3。変化が無くても毎回見る）。
 どれも無ければ、手順8（状況ページ）と、日本時間 9:41 の回は手順9（TODO）を済ませてから update_status を1行更新するだけで終える（メモリの読み込みも詳しい調査もしない）。
 **ただし日本時間 9:41 の回は、変化が無くても手順2を全件で行う**（日付で絞らず、返事待ち・止まったものを探す）。変化だけを見る回は、止まったまま動かないものを必ず見落とすため（incidents/2026-10-19-patrol-missed-stale.md）。
@@ -19,7 +21,7 @@ list_triggers で last_run が前回以降に失敗したもの（利用上限�
 5. **追加の仕事**（supervisor-extra-duties）: 重複したPR・作業があれば担当に1本にまとめるよう伝える。CI緑のまま3日以上マージされないPRは担当にマージか取り下げを促す（同じPRで2回まで）。完了／アイドルで7日以上動きが無く needs_action も無いセッションは archive_session する（判断待ちのものとルーティンの持続セッションは触らない）。Claude を使わずに CI で済む定型作業をエージェントが Claude で繰り返していたら、担当に CI へ移すよう伝える（同じ件は2回まで）。
 5b. **再発防止**（common.md「問題が起きたら」）: 巡回で問題（CI 失敗の原因・止まったルーティン・見落とし・連絡の行き違い）を見つけたら、直す担当に「直したら shared-workflows の incidents/ に記録し、防ぐか見つける仕組みも入れてほしい」と一緒に伝える。監督自身の手順の穴なら、監督が記録とこの手順書の修正 PR を出す。
 6. c に新しいものがあるとき、または CI の修正を担当が終えたときだけ、このスレッドに reply で1件1行（どのエージェントか・何で止まっていたか／何を直したか・satou さんにしてほしいこと）。c のうち選べる形のものは文章ではなく ask_decision のカードで出す（`common.md` の「satou さんへの連絡」）。それ以外で何も無ければ update_status だけ更新して no_reply_needed。
-   日本時間の日曜 9:41 の回だけ、その週の代理判断（supervisor-decision-log）と各エージェントの主な成果を5行以内で reply し、ログの古い分を要約する（この回は早めに終えず通常の点検を行う）。同じ本文を状況ページ（手順8と同じ ArtifactData、collection "status"・doc_id "latest"）の `weekly` 配列に1件足す: {week: "2026-10-19 の週" のような見出し, text: reply と同じ本文}。古い順に並べ、12件を超えたら古いものから消す。
+   日本時間の日曜 8:07 の回だけ、その週の代理判断（supervisor-decision-log）と各エージェントの主な成果を5行以内で reply し、ログの古い分を要約する（この回は早めに終えず通常の点検を行う）。同じ本文を状況ページ（手順8と同じ ArtifactData、collection "status"・doc_id "latest"）の `weekly` 配列に1件足す: {week: "2026-10-19 の週" のような見出し, text: reply と同じ本文}。古い順に並べ、12件を超えたら古いものから消す。
 7. **利用上限で落ちたルーティンの再実行**（satou さん 2026-10-15 承認。新しいルーティンは作らない）: last_run が USAGE_LIMIT_REACHED で失敗していて、その失敗が直近24時間以内、かつ next_run_at が12時間以上先のもののうち、守る順番 ①（本日のタスク整理・連載の予約切れチェック）と ②（開発: ダンジョンボドゲ issue 自動対応・Issue/PR定期対応・新規Issue提案など）だけを fire_trigger で1回だけ再実行する。③監督・④提案/巡回は再実行しない。同じ失敗に対して2回はしない（再実行したら supervisor-decision-log に1行）。再実行も上限で落ちたら次の予定を待つ。節約モード中でも①だけは再実行してよい。
 7b. **差し戻しと自動マージ停止**: open な ci-failure Issue が「Post-deploy check」のもの、または題が「差し戻し」で始まる PR が前回以降にマージされていれば、手順3と同じ担当に「公開後に壊れたので自動で前の版に戻した。原因を直して、元の変更を新しい PR で出し直してほしい（差し戻し PR の本文に戻した変更の一覧がある）」と send_message で伝える（a として扱い、satou さんには報告しない）。
    shared-workflows にラベル「自動マージ停止」の Issue が開いていれば、そのリポジトリの担当に「今週は直す PR を優先し、新しい機能の PR はマージしない（autonomy.md のブレーキ）」と1回だけ伝える。2週続けて開いたままなら c としてカードで知らせる。
