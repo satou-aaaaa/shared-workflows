@@ -82,3 +82,10 @@ satou-aaaaa は GitHub の無料プラン。非公開リポジトリでは次が
 - fork PR: 非公開では「フォークからの PR でワークフローを動かす」が最初から Off。API（actions/permissions）はプロキシで読めないので、Chrome が使えるときだけ `…/settings/actions` で Off を確かめる
 - Actions は月の無料枠がある（Windows は2倍で数える。使い切ると止まり、支払い方法があれば課金）。重い検査を増やさない
 - `weekly-summary.yml`・`scorecard.yml`・`ci-time-report.yml` の `REPOS` には入れない（shared-workflows の GITHUB_TOKEN では非公開リポジトリを読めない）
+
+## つまずいたところ（2026-10-28 security-toolkit：CI を置かない非公開リポジトリ）
+
+持ち主が「非公開の Actions は無料枠を超えると有料なので CI を置かない」と決めたリポジトリでは、上の非公開の節に加えて次のようにする。
+- `.github/workflows/` の部品は1つも入れない（Secret scan も含む。1回1分でも、2026-10-23 に使い切った月の枠を他の非公開リポジトリと分け合うため。`incidents/2026-10-23-actions-minutes-ran-out.md`）。
+- 代わりに、秘密の混入の検査を手元の確認コマンドに入れる：`scripts/setup.sh` で gitleaks を secret-scan.yml と同じ版・チェックサムで `.tools/bin` に入れ、確認コマンドの最後で `gitleaks dir --redact .` を回す（`.tools/` は .gitignore）。テストの作り物の値が引っかかったら行末に `gitleaks:allow`。わざと鍵の形の値を置いて、確認コマンドが失敗することを1回確かめる。
+- CI が無いので、確認コマンドが通れば PR をエージェントがマージする（AGENTS.md に書く）。監督の ci-failure の巡回対象にも入れない。

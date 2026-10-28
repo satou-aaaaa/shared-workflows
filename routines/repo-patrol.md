@@ -20,6 +20,7 @@ A. **新しい対象の自動検出**（毎回。軽い比較だけ）: チー�
 3. **渡し方**（担当は手順0で読んだ一覧で確かめ、変わっていればメモリを更新）:
    - last-tell: LAST TELL（ポーカーアプリ）プロジェクトの「毎日の改善提案」担当セッション（その trigger の persistent_session_id）に send_message。
    - last-tell-godot（LAST TELL の Godot 版。非公開。2026-10-22 追加）: last-tell と同じ担当セッションに send_message。
+   - security-toolkit（防御用の資料とツール。非公開。CI を置かない。2026-10-28 追加）: 専任のルーティンは無い。naitei-no-michi と同じく Issue を起票し、コーディネーターに修正スレッドの開始を頼む（1回の巡回で最大1件）。攻撃用のツール・手順を足す提案はしない。
    - carcassonne-research: カルカソンヌ プロジェクトの担当セッション（チームメモリ repo-patrol に記載。自己対戦は 2026-10-14 に CI の selfplay.yml へ移り、元のルーティンは無効なので有効な一覧には出ない）に send_message。
    - sandbox: 週1の新規Issue提案係が担当するので巡回しない。
    - dungeon-boardgame: Issue を起票すれば「ダンジョンボドゲ issue 自動対応（3時間ごと）」の担当が拾う（追加の連絡は不要）。
