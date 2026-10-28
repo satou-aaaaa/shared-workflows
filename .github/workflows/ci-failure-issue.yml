@@ -11,6 +11,12 @@ name: CI failure issue (共通部品)
 # 同じように Issue を立てる・閉じる。GITHUB_TOKEN で起こした実行（自動マージが起こす Pages・selfplay が起こす AI content など）は
 # workflow_run を起こさない（GitHub の仕様）ので、見回りが無いと失敗に気づけず、成功しても Issue が閉じない
 # （carcassonne-research #83、2026-10-26〜28）。見張る名前は呼び出し元のファイルの workflows: の行から読む。
+#
+# 時間切れ: ジョブの timeout-minutes に当たった実行は、実行全体の結論が timed_out ではなく cancelled になる。
+# cancelled の実行は、ジョブの注記（check run annotations）に「exceeded the maximum execution time」があれば
+# timed_out として知らせる。手で止めた・concurrency で取り消された実行は今までどおり数えない
+# （sandbox の Weekly mutation が4週続けて2時間で止まっていたのに Issue にならなかった、2026-10-28）。
+# 注記は公開リポジトリなら権限なしで読める。非公開リポジトリは呼び出し元に checks: read が要る（無いと数えない・警告を出す）。
 on:
   workflow_call:
     inputs:
@@ -26,11 +32,13 @@ jobs:
       github.event_name != 'workflow_run' || (
       github.event.workflow_run.head_branch == github.event.repository.default_branch &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
-      contains(fromJSON('["failure","success","timed_out"]'), github.event.workflow_run.conclusion))
+      contains(fromJSON('["failure","success","timed_out","cancelled"]'), github.event.workflow_run.conclusion))
     runs-on: ${{ fromJSON(inputs.runner) }}
     timeout-minutes: 5
     concurrency:
-      group: ci-failure-issue-${{ github.event.workflow_run.name || 'sweep' }}
+      # cancelled の実行は別の組にする。同じ組で待てるのは1つだけなので、ただの cancelled が
+      # 待っている失敗の知らせを押しのけないように（時間切れかどうかは中で調べる）
+      group: ci-failure-issue-${{ github.event.workflow_run.name || 'sweep' }}${{ github.event.workflow_run.conclusion == 'cancelled' && format('-cancelled-{0}', github.event.workflow_run.id) || '' }}
       cancel-in-progress: false
     steps:
       - name: Issue を立てる・閉じる
@@ -41,6 +49,7 @@ jobs:
           WF_NAME: ${{ github.event.workflow_run.name }}
           RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           RUN_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
           SHA: ${{ github.event.workflow_run.head_sha }}
           RUN_EVENT: ${{ github.event.workflow_run.event }}
           CALLER_REF: ${{ github.workflow_ref }}
@@ -48,6 +57,23 @@ jobs:
         run: |
           set -euo pipefail
           head=$(gh api "repos/${GH_REPO}/commits/HEAD" --jq .sha 2>/dev/null || echo "")
+
+          # cancelled の実行が、ジョブの時間切れ（timeout-minutes）で止まったものなら timed_out を、ほかは cancelled を出す
+          timeout_or_cancelled() {
+            local rid=$1 ids id hit=""
+            if ! ids=$(gh api "repos/${GH_REPO}/actions/runs/${rid}/jobs?per_page=100" --jq '.jobs[] | select(.conclusion == "cancelled") | .id' 2>/dev/null); then
+              echo "::warning title=時間切れか分かりません::実行 ${rid} のジョブを読めませんでした（actions: read が要る）" >&2
+              echo cancelled; return 0
+            fi
+            for id in $ids; do
+              if ! hit=$(gh api --paginate "repos/${GH_REPO}/check-runs/${id}/annotations?per_page=100" --jq '.[].message' 2>/dev/null); then
+                echo "::warning title=時間切れか分かりません::ジョブ ${id} の注記を読めませんでした（非公開リポジトリは呼び出し元に checks: read が要る）" >&2
+                hit=""; continue
+              fi
+              if grep -q "exceeded the maximum execution time" <<<"$hit"; then echo timed_out; return 0; fi
+            done
+            echo cancelled
+          }
 
           # 1つのワークフローの1回の実行について、Issue を立てる・コメントする・閉じる
           report() {
@@ -101,7 +127,10 @@ jobs:
           }
 
           if [ "$EVENT_NAME" = "workflow_run" ]; then
-            report "$WF_NAME" "$RUN_CONCLUSION" "$RUN_URL" "$SHA" "$RUN_EVENT"
+            c=$RUN_CONCLUSION
+            if [ "$c" = "cancelled" ]; then c=$(timeout_or_cancelled "$RUN_ID"); fi
+            if [ "$c" = "cancelled" ]; then echo "${WF_NAME}: cancelled（時間切れではないので数えない）"; exit 0; fi
+            report "$WF_NAME" "$c" "$RUN_URL" "$SHA" "$RUN_EVENT"
             exit 0
           fi
 
@@ -115,9 +144,10 @@ jobs:
           fi
           while IFS= read -r wf; do
             run=$(gh run list --workflow "$wf" --branch "$DEFAULT_BRANCH" --status completed --limit 1 \
-              --json conclusion,url,headSha,event --jq '.[0] // empty | [.conclusion, .url, .headSha, .event] | @tsv' 2>/dev/null || true)
+              --json conclusion,url,headSha,event,databaseId --jq '.[0] // empty | [.conclusion, .url, .headSha, .event, .databaseId] | @tsv' 2>/dev/null || true)
             if [ -z "$run" ]; then echo "${wf}: main の実行が無い"; continue; fi
-            IFS=$'\t' read -r c u s e <<<"$run"
+            IFS=$'\t' read -r c u s e id <<<"$run"
+            if [ "$c" = "cancelled" ]; then c=$(timeout_or_cancelled "$id"); fi
             case "$c" in
               failure|success|timed_out) echo "${wf}: ${c}"; report "$wf" "$c" "$u" "$s" "$e" ;;
               *) echo "${wf}: ${c}（数えない）" ;;
