@@ -36,7 +36,9 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runner) }}
     timeout-minutes: 5
     concurrency:
-      group: ci-failure-issue-${{ github.event.workflow_run.name || 'sweep' }}
+      # cancelled の実行は別の組にする。同じ組で待てるのは1つだけなので、ただの cancelled が
+      # 待っている失敗の知らせを押しのけないように（時間切れかどうかは中で調べる）
+      group: ci-failure-issue-${{ github.event.workflow_run.name || 'sweep' }}${{ github.event.workflow_run.conclusion == 'cancelled' && format('-cancelled-{0}', github.event.workflow_run.id) || '' }}
       cancel-in-progress: false
     steps:
       - name: Issue を立てる・閉じる
@@ -64,7 +66,7 @@ jobs:
               echo cancelled; return 0
             fi
             for id in $ids; do
-              if ! hit=$(gh api "repos/${GH_REPO}/check-runs/${id}/annotations" --jq '.[].message' 2>/dev/null); then
+              if ! hit=$(gh api --paginate "repos/${GH_REPO}/check-runs/${id}/annotations?per_page=100" --jq '.[].message' 2>/dev/null); then
                 echo "::warning title=時間切れか分かりません::ジョブ ${id} の注記を読めませんでした（非公開リポジトリは呼び出し元に checks: read が要る）" >&2
                 hit=""; continue
               fi
