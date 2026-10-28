@@ -25,10 +25,10 @@ jobs:
         run: |
           set -euo pipefail
           files=$(gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[].filename')
-          if ! grep -qxE 'routines/(autonomy|common)\.md' <<<"$files"; then echo "権限の表は変えていません"; exit 0; fi
+          if ! grep -qxE 'routines/(autonomy|common|common-detail)\.md' <<<"$files"; then echo "権限の表は変えていません"; exit 0; fi
           if jq -e 'index("satou承認")' <<<"$LABELS" >/dev/null; then
-            echo "routines/autonomy.md か common.md を変えています。ラベル「satou承認」があるので通します" | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "routines/autonomy.md か common.md・common-detail.md を変えています。ラベル「satou承認」があるので通します" | tee -a "$GITHUB_STEP_SUMMARY"
           else
-            echo "::error::routines/autonomy.md か common.md を変える PR には、satou さんの「はい」をもらってからラベル「satou承認」を付けてください（common.md「権限の表を変えるとき」）"
+            echo "::error::routines/autonomy.md か common.md・common-detail.md を変える PR には、satou さんの「はい」をもらってからラベル「satou承認」を付けてください（common.md「権限の表を変えるとき」）"
             exit 1
           fi
