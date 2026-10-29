@@ -41,7 +41,7 @@ satou-aaaaa の各リポジトリで、PR を作る・CI を通す・コンフ�
 ## 4. コンフリクトを直す
 
 1. PR のブランチに `origin/main` を取り込む（`git merge origin/main`）。rebase・amend・force push はしない（マージコミットにする）。
-2. 両側が別々に足したもの（テスト・文書への追記・import の追加など）は両方残す。連番（ADR 番号など）がぶつかったら、後から直す側を次の空き番号にする。
+2. 両側が別々に足したもの（テスト・文書への追記・import の追加など）は両方残す。連番（ADR 番号・アプリの版の番号と点検の記録など）がぶつかったら、後から直す側を今の main の次の空き番号にする（local-kanban は qa/check-review.mjs が main の版と比べて止める。incidents/2026-10-29-kanban-same-version-conflict.md）。
 3. 判定ロジックや安全装置など、同じ所を両側が別の中身に変えているときは、意図を読んで直す。決められなければマージを保留し、PR にその旨を書く。
 4. lockfile・生成物は手で直さず、リポジトリの道具で作り直す（Dependabot の PR は `@dependabot rebase` とコメントする）。
 5. 1 の確認コマンドを回してから push し、CI を待つ。別の PR が先に入ってまたぶつかったら同じことをする。
