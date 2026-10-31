@@ -17,4 +17,4 @@
 ## 対策
 - [x] 直す: `automerge.yml` に `require_checks`（同じコミットで ✅ が要る check run の名前）を足した。呼び出し側は `checks: read` が要る。last-tell-godot は `scan / scan` を指定
 - [x] 防ぐ: この PR の `template/.github/workflows/automerge.yml` に `checks: read` と `require_checks` の書き方を入れ、新しいリポジトリは最初から入る
-- [ ] 防ぐ: last-tell・naitei-no-michi・local-kanban・articles の呼び出しに `checks: read` と `require_checks: scan / scan` を足す（.github/ を変える PR なので CI 緑でエージェントがマージ。担当: 全リポジトリ巡回、期限: 2026-10-29）
+- [x] 防ぐ: last-tell・naitei-no-michi・local-kanban・articles の呼び出しに `checks: read` と `require_checks: scan / scan` を足す（2026-10-31 完了。last-tell #157・naitei-no-michi #12・local-kanban #90・articles #7。期限 10/29 を2日過ぎた。`check` 名は4つとも `scan / scan` で一致を確認、CI 緑でマージ）
