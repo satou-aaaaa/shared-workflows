@@ -8,6 +8,8 @@ const OWNER = process.env.OWNER || 'satou-aaaaa';
 // weekly-summary.yml・scorecard.yml の REPOS と同じ並び（リポジトリを足したらここにも足す）
 const REPOS = (process.env.REPOS || 'sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban carcassonne-research shared-workflows').split(/\s+/).filter(Boolean);
 const STALE_DAYS = 3;
+// main の CI 失敗は1日で「直されていない」に上げる（2026-10-24 local-kanban の Link check が担当の無いまま3日開いていた）
+const CI_STALE_DAYS = 1;
 const ACTION_DAYS = 14; // 再発防止の対策がこれより長く残っていたら出す
 const REPEAT_DAYS = 30; // この期間に同じ種類が2件以上なら出す
 const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || '';
@@ -33,7 +35,12 @@ try {
 for (const r of REPOS) {
   try {
     const fails = await api(`repos/${OWNER}/${r}/issues?state=open&labels=ci-failure&per_page=20`);
-    for (const i of fails) add(2, `CI 失敗（main）[${r}] ${i.title} → ログを見て直す ${i.html_url}`);
+    for (const i of fails) {
+      // 週1の定期実行は次の回まで成功で閉じないので、日数を出して止まったものを目立たせる（2026-10-22 Law watch が3週落ち続けた件）
+      const days = Math.floor((now - Date.parse(i.created_at)) / 86400000);
+      if (days >= CI_STALE_DAYS) add(1, `${days}日直されていない CI 失敗（main）[${r}] ${i.title} → 担当に渡っていない。監督が直すスレッドを立てる ${i.html_url}`);
+      else add(2, `CI 失敗（main）[${r}] ${i.title} → ログを見て直す ${i.html_url}`);
+    }
 
     const decisions = await api(`repos/${OWNER}/${r}/issues?state=open&labels=needs-decision&per_page=20`);
     for (const i of decisions) if (!i.pull_request) add(5, `needs-decision [${r}] ${i.title} → 読んで選ぶ ${i.html_url}`);

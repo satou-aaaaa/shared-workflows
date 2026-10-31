@@ -4,10 +4,13 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 al="$PWD/.tools/bin/actionlint"
 [ -x "$al" ] || al=actionlint
+# shellcheck が無いと actionlint は run: を調べず、手元だけ通って CI で落ちる（shared-workflows #83）
+command -v shellcheck >/dev/null || { echo "✗ shellcheck が要る（bash scripts/setup.sh の案内を見る）" >&2; exit 1; }
 "$al" .github/workflows/*.yml
 (cd template && "$al" .github/workflows/*.yml)
 if command -v uvx >/dev/null; then z=(uvx zizmor==1.31.1); else z=(pipx run zizmor==1.31.1); fi
 "${z[@]}" --offline --config zizmor.yml --min-severity medium .github/workflows template/.github/workflows
 node scripts/check-bootstrap.mjs
 node scripts/check-routines.mjs
+node scripts/check-incidents.mjs
 echo "✓ 確認が通った"

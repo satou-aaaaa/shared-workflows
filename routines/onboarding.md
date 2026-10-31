@@ -56,7 +56,8 @@ Chrome が使えないときは、次を /mnt/project-files/notes/todo.md に書
 1. Pages: `https://github.com/satou-aaaaa/<repo>/settings/pages` → Deploy from a branch → main / (root)
 2. main のルールセット: `…/settings/rules` → New branch ruleset → Include default branch →「Restrict deletions」「Block force pushes」だけ ON（ほかのリポジトリと同じ）
 3. fork PR の承認: `…/settings/actions` →「Require approval for all external contributors」
-4. CodeRabbit のアプリの対象にそのリポジトリを加える（https://github.com/apps/coderabbitai → Configure。公開リポジトリなら無料）
+4. CI が自分で PR を作るリポジトリ（main が PR 必須で、定期実行の生成物を `merge_via_pr.sh` などで入れるもの）だけ: `…/settings/actions` → Workflow permissions →「Allow GitHub Actions to create and approve pull requests」に ✓ → Save（切れていると `GitHub Actions is not permitted to create or approve pull requests` で落ちる。2026-10-24 carcassonne-research）
+5. CodeRabbit のアプリの対象にそのリポジトリを加える（https://github.com/apps/coderabbitai → Configure。公開リポジトリなら無料）
 
 ## つまずいたところ（2026-10-18）
 
@@ -69,3 +70,22 @@ Chrome が使えないときは、次を /mnt/project-files/notes/todo.md に書
 
 - アプリが GitHub の API で main に直接書くリポジトリ（articles はメモアプリが記事を書く）では、main の守りを「削除と force push の禁止」だけにする（PR 必須にすると書き出しが止まる）。
   Post-deploy check も入れない（last-good に戻すと、アプリが書いたデータまで消える）。公開ワークフローは QA が赤でも止めず、CI 失敗 Issue で知らせる。
+
+## つまずいたところ（2026-10-22 last-tell-godot：非公開リポジトリ）
+
+satou-aaaaa は GitHub の無料プラン。非公開リポジトリでは次が使えない（GitHub Docs の gated-features。API でも「Upgrade to GitHub Pro」の 403）。お金のかかる切り替えはしないので、入れずに報告だけする。
+- main の Ruleset・ブランチ保護（Pro から）→ 守りは無し。AGENTS.md に「変更は PR で」を書く
+- Push protection・Secret scanning（非公開の個人リポジトリは対象外）→ `secret-scan.yml`（gitleaks）を入れる
+- Pages（Pro から）→ `site-watch`・`lighthouse`・`link-check`・`post-deploy` は入れない。`automerge.yml` は `pages_build: false`
+- CodeQL（コードスキャンは非公開だと有料）・Dependabot auto-merge（必須チェックが要る）も入れない
+- CodeRabbit は非公開でもレビューが付いた（2026-10-22、アプリが「All repositories」）。`.coderabbit.yaml` は無くても既定の設定で動く
+- fork PR: 非公開では「フォークからの PR でワークフローを動かす」が最初から Off。API（actions/permissions）はプロキシで読めないので、Chrome が使えるときだけ `…/settings/actions` で Off を確かめる
+- Actions は月の無料枠がある（Windows は2倍で数える。使い切ると止まり、支払い方法があれば課金）。重い検査を増やさない
+- `weekly-summary.yml`・`scorecard.yml`・`ci-time-report.yml` の `REPOS` には入れない（shared-workflows の GITHUB_TOKEN では非公開リポジトリを読めない）
+
+## つまずいたところ（2026-10-28 security-toolkit：CI を置かない非公開リポジトリ）
+
+持ち主が「非公開の Actions は無料枠を超えると有料なので CI を置かない」と決めたリポジトリでは、上の非公開の節に加えて次のようにする。
+- `.github/workflows/` の部品は1つも入れない（Secret scan も含む。1回1分でも、2026-10-23 に使い切った月の枠を他の非公開リポジトリと分け合うため。`incidents/2026-10-23-actions-minutes-ran-out.md`）。
+- 代わりに、秘密の混入の検査を手元の確認コマンドに入れる：`scripts/setup.sh` で gitleaks を secret-scan.yml と同じ版・チェックサムで `.tools/bin` に入れ、確認コマンドの最後で `gitleaks dir --redact .` を回す（`.tools/` は .gitignore）。テストの作り物の値が引っかかったら行末に `gitleaks:allow`。わざと鍵の形の値を置いて、確認コマンドが失敗することを1回確かめる。
+- CI が無いので、確認コマンドが通れば PR をエージェントがマージする（AGENTS.md に書く）。監督の ci-failure の巡回対象にも入れない。

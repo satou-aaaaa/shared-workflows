@@ -34,8 +34,20 @@ jobs:
           body="$RUNNER_TEMP/body.md"
           node scripts/ci-time.mjs > "$body"
           total=$(grep -oE '合計 \*\*[0-9.]+ 分' "$body" | grep -oE '[0-9.]+' | head -1)
+          # GitHub の API が一時的に落ちることがある（2026-10-22 の回は GraphQL のエラーで落ちた）。Issue の操作は3回までやり直す
+          retry() { for i in 1 2 3; do "$@" && return 0; echo "::warning::やり直し $i: $*" >&2; sleep $((i * 20)); done; return 1; }
           gh label create CI時間 --color 1D76DB --description "CI time report が作る週1の CI 実行時間（自動）" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
-          for old in $(gh issue list -R "$GITHUB_REPOSITORY" --label CI時間 --state open --json number --jq '.[].number'); do
-            gh issue close "$old" -R "$GITHUB_REPOSITORY" --reason completed --comment "新しい集計を作ったので閉じます（自動）"
+          # 一覧が取れないまま「空」として進まない（$(...) の中の失敗は set -e で止まらない）
+          olds=$(retry gh issue list -R "$GITHUB_REPOSITORY" --label CI時間 --state open --json number --jq '.[].number') || { echo "::error::CI時間の Issue の一覧が取れない" >&2; exit 1; }
+          for old in $olds; do
+            retry gh issue close "$old" -R "$GITHUB_REPOSITORY" --reason completed --comment "新しい集計を作ったので閉じます（自動）"
           done
-          gh issue create -R "$GITHUB_REPOSITORY" --label CI時間 --title "CI時間 ${day}（直近7日 ${total} 分）" --body-file "$body"
+          title="CI時間 ${day}（直近7日 ${total} 分）"
+          # やり直しで同じ日の Issue が2件にならないよう、できていれば作らない
+          # 一覧が取れないときは作らずに失敗を返す（取れないのを「無い」と見て二重に作らない）
+          make() {
+            local found
+            found=$(gh issue list -R "$GITHUB_REPOSITORY" --label CI時間 --state open --search "\"CI時間 ${day}\" in:title" --json number --jq '.[].number') || return 1
+            [ -n "$found" ] || gh issue create -R "$GITHUB_REPOSITORY" --label CI時間 --title "$title" --body-file "$body"
+          }
+          retry make

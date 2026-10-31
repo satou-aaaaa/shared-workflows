@@ -12,7 +12,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 
 | 作業 | 手順書 | 実行 |
 | --- | --- | --- |
-| 監督の巡回 | [supervisor.md](supervisor.md) | 6時間ごと（:41） |
+| 監督の巡回 | [supervisor.md](supervisor.md) | 見回りの中で1日2回（8:07・20:07 JST。2026-10-28 から） |
 | 全リポジトリ・全プロジェクト巡回 | [repo-patrol.md](repo-patrol.md) | 毎日 22:38 JST |
 | ルーティンとスキルの定期見直し | [routine-review.md](routine-review.md) | 土曜 9:53 JST |
 | CI の時間短縮 | [ci-speedup.md](ci-speedup.md) | 木曜 10:26 JST |
@@ -41,7 +41,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 
 | 作業 | 置き場所 | 実行 |
 | --- | --- | --- |
-| 週次まとめ Issue（開いた PR・CI 失敗・次にやること・再発防止の残った対策と繰り返し） | このリポジトリ `weekly-summary.yml` | 月曜の朝 |
+| 週次まとめ Issue（開いた PR・CI 失敗・次にやること・再発防止の残った対策と繰り返し・ひな形からのずれ） | このリポジトリ `weekly-summary.yml`（ずれは `scripts/drift-check.mjs`） | 月曜の朝 |
 | 控えの見張り（毎朝の書き出しが止まったら Issue。Claude が止まった合図） | satou-aaaaa/ops-backup（非公開）`watch.yml` | 毎日 12:23 JST |
 | CI時間 Issue | このリポジトリ `ci-time-report.yml` | 木曜 05:29 JST |
 | 成績表 Issue | このリポジトリ `scorecard.yml` | 月曜 06:07 JST |
@@ -61,8 +61,11 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | LAST TELL の更新（index.html の作り直し・公開） | last-tell `README.md`、スキル last-tell-release-check |
 | tenbin の作り直し・論文問題の追加 | tenbin `CLAUDE.md`、スキル add-ronbun-questions |
 | カンバン（local-kanban）を直す | local-kanban `AGENTS.md`（データ側の `local-board/kanban.html` もそろえる） |
-| 単体HTMLアプリの画面点検 | スキル law-app-ui-check |
+| 単体HTMLアプリの画面点検 | スキル law-app-ui-check。数で見る部分は共通部品 `ui-check.yml`（PR のたび） |
 | LAST TELL の演出の提案 | スキル last-tell-proposal-demo |
 | 聞くか聞かないかの判断 | [autonomy.md](autonomy.md) |
+| できないと分かっている操作の回り道（クラウドから開けないページは `fetch-page.yml`） | [known-limits.md](known-limits.md) |
+| 定期の見回りを作る前に、イベントで受けられないか見る | [events.md](events.md) |
+| 作業を並列に分ける・合わせる | [parallel.md](parallel.md) |
 | Claude が使えないときの運転（週1の確認・ほかの AI で動かす） | [without-claude.md](without-claude.md)・[tool-map.md](tool-map.md)・`scripts/next-actions.mjs` |
 | 各プロジェクトの進め方の見直し（分野のベストプラクティス） | [project-practices.md](project-practices.md)（土曜の見直しの F が1プロジェクトずつ） |

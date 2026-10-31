@@ -49,6 +49,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 - 対策の行は `- [x]` か `- [ ]` で始め、`直す:`・`防ぐ:`・`見つける:`・`弱める:` のどれかを付ける（Google SRE の action item の種類）。
 - `防ぐ:` か `見つける:` が1つも無い記録は Lint が落とす（直しただけで終わらせないため）。
+- 済んだ `防ぐ:`・`見つける:` には、あとから確かめられる証拠を1つ書く。PR・Issue の番号（`#12`）、版（`v31`・`18版`）、`` `ファイル` ``、`[名前](リンク)`、「この PR」、手順の番号（`手順10`）のどれか。無いと Lint が落とす（書いただけの対策を防ぐ）。
 - まだ済んでいない `- [ ]` には「担当」と「期限」を書く。期限を過ぎたもの・14日以上残ったものは、週次まとめの「次にやること」に出る（`scripts/next-actions.mjs`）。
 
 ## 種類
@@ -78,6 +79,22 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-10-29 | 検査の見逃し | [カンバンのアプリ版で、並行した2つの PR が同じ版 v57 を取り、片方が main とぶつかって1日半止まった](2026-10-29-kanban-same-version-conflict.md) | 対策済み |
+| 2026-10-29 | 手順の抜け | [カンバンのアプリ版が、10/25 から古いカードを読み続けていた](2026-10-29-kanban-app-stale-cards.md) | 対策済み |
+| 2026-10-28 | 見回りの見落とし | [sandbox の Weekly mutation が初回から4週続けて2時間の上限で止まり、だれも気づかなかった](2026-10-28-timeout-cancelled-unwatched.md) | 対策済み |
+| 2026-10-28 | 公開・CI | [carcassonne-research の「CI失敗: AI content」が、直ったあとも2日閉じなかった](2026-10-28-dispatched-run-not-watched.md) | 対策済み |
+| 2026-10-28 | 公開・CI | [carcassonne-research の selfplay が、もう main に入っていた差し替えを PR にしようとして失敗した](2026-10-28-queued-run-empty-pr.md) | 対策済み |
+| 2026-10-24 | 公開・CI | [last-tell の main の QA が、進んでいた WebKit の自動対戦（第5章）を「止まった」として ❌ にした](2026-10-24-webkit-fuzz-false-stall.md) | 対策済み |
+| 2026-10-24 | 見回りの見落とし | [last-tell の QA ❌ を直す PR が、検査は緑のまま2日マージされなかった](2026-10-24-github-pr-left-unmerged-again.md) | 対策済み |
+| 2026-10-24 | 見回りの見落とし | [local-kanban の Link check が「リンク0件」で初回から落ち、Issue が3日だれにも直されなかった](2026-10-24-link-check-no-links.md) | 対策済み |
+| 2026-10-24 | 見回りの見落とし | [selfplay が main へ直接 push して断られ、直す PR も2日マージされず失敗が続いた](2026-10-24-fix-pr-left-unmerged.md) | 一部対策済み |
+| 2026-10-23 | 公開・CI | [非公開リポジトリの Actions 無料枠を使い切り、CI と自動マージが止まった](2026-10-23-actions-minutes-ran-out.md) | 対策中 |
+| 2026-10-22 | 公開・CI | [CI の時間の週1集計が GitHub の一時的なエラーで落ち、どこにも知らせが出なかった](2026-10-22-ci-time-report-failed-silently.md) | 対策済み |
+| 2026-10-22 | 見回りの見落とし | [sandbox の法令の見張り（Law watch）が3週続けて落ち、法令の版の更新が知らされなかった](2026-10-22-law-watch-failing-unnoticed.md) | 対策済み |
+| 2026-10-22 | 表示 | [ボードの詳細画面に「AI に頼む」のボタンを足し、UI/UX の点検で増えすぎを見逃した](2026-10-22-board-buttons-added-unchecked.md) | 対策済み |
+| 2026-10-22 | 公開・CI | [自動マージが Secret scan の結果を見ず、QA が通ればマージできた](2026-10-22-automerge-ignores-secret-scan.md) | 一部対策済み |
+| 2026-10-21 | 手順の抜け | [同期の仕組みを「定期の巡回」だけで考え、イベントを受け取る形を出していなかった](2026-10-21-alternatives-not-proposed.md) | 対策済み |
+| 2026-10-21 | 権限・設定 | [自動マージのあと公開や main の検査を起こせず、黙って止まっていた](2026-10-21-automerge-dispatch-403.md) | 対策済み |
 | 2026-10-20 | 検査の見逃し | [ボードのカードの詳細を開くと、閉じられなくなった](2026-10-20-board-detail-not-closing.md) | 対策済み |
 | 2026-10-20 | 見回りの見落とし | [satou さんがやり終えたカードが、ボードで「済み」にならなかった](2026-10-20-board-you-cards-not-closed.md) | 対策済み |
 | 2026-10-20 | 表示 | [ボードのカードの「⋯」メニューが、下のカードや隣の列に隠れて読めなかった](2026-10-20-board-menu-hidden.md) | 対策済み |

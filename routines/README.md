@@ -11,12 +11,15 @@
 | [STYLE.md](STYLE.md) | 手順書の書き方（どの AI でも人でも同じ結果になる形） | — |
 | [tool-map.md](tool-map.md) | Claude 専用の道具の置き換え表（ほかの AI・人が手順書を使うとき） | — |
 | [without-claude.md](without-claude.md) | Claude が使えないときの運転マニュアル（止まるもの・週1の確認・ほかの AI・戻ったとき） | 使えないとき |
+| [known-limits.md](known-limits.md) | つまずき台帳（クラウドから開けないサイト・GitHub や claude.ai の道具でできないこと・回り道）。試す前に見る | — |
+| [events.md](events.md) | 巡回より受信（起きたことを知らせで受ける形の早見表）。定期の見回りを作る前に読む | — |
+| [parallel.md](parallel.md) | 並列で進めるとき（分けてよいか・worktree・合わせ方） | — |
 | [pr.md](pr.md) | PR の手順（push 前・PR・CI・コンフリクト・マージ・公開の確認）。全リポジトリ共通 | — |
 | [../bootstrap/](../bootstrap/README.md) | 全部を立ち上げ直す手順（ルーティンの定義・チェック機構・プロジェクト指示・メモリ・スキル） | — |
 | [catalog.md](catalog.md) | 繰り返しの作業すべての一覧（ほかの場所にある手順書・CI・スキルも含む） | — |
 | [agent-practices.md](agent-practices.md) | エージェント利用のベストプラクティスの台帳（取り入れたもの・出典・見直しの記録） | — |
 | [project-practices.md](project-practices.md) | 各プロジェクトの進め方の台帳（分野ごとのベストプラクティス・各プロジェクトの状況・見直しの記録） | — |
-| [supervisor.md](supervisor.md) | 監督エージェントの巡回 | 6時間ごと（:41） |
+| [supervisor.md](supervisor.md) | 監督エージェントの巡回 | 見回りの中で1日2回（8:07・20:07 JST） |
 | [repo-patrol.md](repo-patrol.md) | 全リポジトリ・全プロジェクト巡回と改善提案 | 毎日 22:38 JST |
 | [routine-review.md](routine-review.md) | ルーティンとスキルの定期見直し（エージェント利用のベストプラクティスの調べ直しと、各プロジェクトの進め方の見直しを含む） | 週1（土曜 9:53 JST） |
 | [ci-speedup.md](ci-speedup.md) | CI の時間短縮（集計は CI time report が木曜 05:29 JST に Issue「CI時間」へ） | 週1（木曜 10:26 JST） |

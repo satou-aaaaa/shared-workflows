@@ -41,7 +41,7 @@ satou-aaaaa の各リポジトリで、PR を作る・CI を通す・コンフ�
 ## 4. コンフリクトを直す
 
 1. PR のブランチに `origin/main` を取り込む（`git merge origin/main`）。rebase・amend・force push はしない（マージコミットにする）。
-2. 両側が別々に足したもの（テスト・文書への追記・import の追加など）は両方残す。連番（ADR 番号など）がぶつかったら、後から直す側を次の空き番号にする。
+2. 両側が別々に足したもの（テスト・文書への追記・import の追加など）は両方残す。連番（ADR 番号・アプリの版の番号と点検の記録など）がぶつかったら、後から直す側を今の main の次の空き番号にする（local-kanban は qa/check-review.mjs が main の版と比べて止める。incidents/2026-10-29-kanban-same-version-conflict.md）。
 3. 判定ロジックや安全装置など、同じ所を両側が別の中身に変えているときは、意図を読んで直す。決められなければマージを保留し、PR にその旨を書く。
 4. lockfile・生成物は手で直さず、リポジトリの道具で作り直す（Dependabot の PR は `@dependabot rebase` とコメントする）。
 5. 1 の確認コマンドを回してから push し、CI を待つ。別の PR が先に入ってまたぶつかったら同じことをする。
@@ -51,6 +51,7 @@ satou-aaaaa の各リポジトリで、PR を作る・CI を通す・コンフ�
 - satou さんは PR のマージを Claude に任せている（2026-10-10）。CI が緑で、コンフリクトが無く、未解決のレビューが無ければ、下書きを解除して squash マージする。タイトルは PR のタイトルのまま。
 - 自動マージ（共通部品 `automerge.yml`）が入っているリポジトリ（last-tell・naitei-no-michi・dungeon-boardgame・local-kanban）は、QA が ✅ になると自動でマージされる。
   `.github/` を変える PR、ラベル「自動マージしない」の PR、QA が回らない PR は自動マージされないので、CI が緑なのを確かめてから手でマージする（2026-10-16 satou さん）。
+  手でマージが要る PR を出したら、PR を出した担当がマージまで持つ。subscribe_pr_activity で見張り、緑になったらその場でマージする。自分が終わる前に、自分の出した PR が開いたまま残っていないかを `pulls?state=open` で確かめ、残すなら理由を PR に書く（Auto merge は .github/ を変える PR にラベル「手でマージ」を付ける。2026-10-24 同じ種類で2件止まった。`incidents/2026-10-24-github-pr-left-unmerged-again.md`）。
 - Dependabot の patch/minor は `dependabot-automerge.yml`（sandbox）がマージを予約するので、手で重ねて扱わない。メジャー更新は CI が検証しない道具に効くことがあるので、その道具を小さく動かして確かめてからマージする。
 - shared-workflows は次の実行から全リポジトリに効く。必ず PR で出し、Lint（actionlint）が通ってからマージする（main は Ruleset で PR 必須）。
 - shared-workflows に「自動マージ停止: <リポジトリ>」の Issue が開いているあいだは、直す PR だけをマージする（autonomy.md のブレーキ）。

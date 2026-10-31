@@ -10,6 +10,8 @@ permissions:
   contents: write
   pull-requests: write
   pages: write
+  checks: read     # require_checks で同じコミットの検査の結果を読む
+  actions: write   # dispatch: と recheck_main（既定 true）でワークフローを起こすのに要る（無いと 403。2026-10-21）
 
 jobs:
   merge:
@@ -18,3 +20,6 @@ jobs:
       # Pages を「ブランチから公開」にしているときは true。Actions で公開しているときは dispatch: "pages.yml"
       pages_build: true
       delete_branch: true
+      # 同じコミットで ✅ が要る検査（改行区切り）。Secret scan を入れたリポジトリは "scan / scan"
+      # require_checks: |
+      #   scan / scan

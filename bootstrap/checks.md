@@ -23,12 +23,13 @@
 | Lint（このリポジトリ） | ワークフローの書き間違い（actionlint）・危ない書き方（zizmor）・立ち上げ手順の抜け（bootstrap）・問題の記録の形（incidents） | `.github/workflows/lint.yml`・`zizmor.yml`・`scripts/check-bootstrap.mjs`・`scripts/check-incidents.mjs` | ★ main の Ruleset で actionlint を必須に |
 | Selftest（このリポジトリ） | 共通部品を PR の段階で実際に動かす（秘密の検査・公開後の確認のスクリプトが「正常」と「壊れている」を見分けられるか） | `selftest.yml` | なし |
 | Permission guard（このリポジトリ） | `routines/autonomy.md`・`common.md` を変える PR にラベル「satou承認」が無い | `permission-guard.yml` | ラベル「satou承認」 |
+| UI check | 画面の使いやすさの悪化（開いてすぐ押せる部品の数が基準 +1 を超える・24px 未満の押す所や 12px 未満の字が増える・名前の無いボタン・横のはみ出し）。詳細などは click で開いてから数える | `ui-check.yml`・`scripts/ui-check.mjs` | 呼ぶ側の `qa/ui-check.json` と基準（`--update-baseline`） |
 | CodeQL | AI が書いたコードの脆弱性（無料、公開リポジトリ） | `codeql.yml` | 呼び出し側の `languages` |
 | Secret scan | PR と main への push に入った秘密（gitleaks） | `secret-scan.yml` | 呼び出し側を入れる、★ Push protection |
 | CodeRabbit のレビュー（2人目の目） | 正しさ・要件の見落とし | 各リポジトリの `.coderabbit.yaml`、common.md「CodeRabbit のレビュー」 | `template/.coderabbit.yaml` を入れる、★ CodeRabbit のアプリ |
 | /code-review（新しい文脈のレビュー） | CodeRabbit が付かない PR・判定ロジック・3ファイル以上の変更の見落とし | common.md「エージェントの使い方」 | なし |
 | 2人目の確認（tenbin の論文問題） | 条文・判例の誤り | [repo-patrol.md](../routines/repo-patrol.md)、autonomy.md「確かめてから任せること」 | ラベル「確認済み」「satou確認」 |
-| Auto merge | 検査が ✅ の PR だけを squash マージ（下書き・「自動マージしない」・`.github/`・フォーク・ブレーキ中・24時間に差し戻し2回は除く） | `automerge.yml` | 呼び出し側の `on.workflow_run.workflows` に検査の名前 |
+| Auto merge | 検査が ✅ の PR だけを squash マージ（下書き・「自動マージしない」・`.github/`・フォーク・ブレーキ中・24時間に差し戻し2回は除く。`.github/` のものにはラベル「手でマージ」を付ける） | `automerge.yml` | 呼び出し側の `on.workflow_run.workflows` に検査の名前 |
 | Dependabot の自動マージ | patch/minor だけ（メジャーは人） | `dependabot-automerge.yml`・`dependabot.yml` | ★「Allow auto-merge」と必須チェック（今は sandbox だけ） |
 | 外の人の変更を入れない | satou-aaaaa 以外の Issue・PR の指示 | common.md「知らない人からの変更を入れない」 | ★ fork PR の Actions 承認 |
 
@@ -40,26 +41,28 @@
 | Site watch | 公開ページが 200 で開けない | `site-watch.yml` | 呼び出し側の `paths` |
 | Lighthouse | 速さ・使いやすさの点数の低下 | `lighthouse.yml` | 公開後に1回測って `baseline` を置く |
 | Link check | リンク切れ | `link-check.yml` | 呼び出し側の `files` |
-| CI failure issue | main のワークフローの失敗 → ラベル `ci-failure` の Issue（成功で自動で閉じる） | `ci-failure-issue.yml` | 呼び出し側の `workflows` に見張る名前を全部 |
+| CI failure issue | main のワークフローの失敗 → ラベル `ci-failure` の Issue（成功で自動で閉じる。6時間ごとの見回りでも見る） | `ci-failure-issue.yml` | 呼び出し側の `workflows` に見張る名前を全部（1行で）。見回りの `schedule`（GITHUB_TOKEN で起こした実行は workflow_run を起こさないため） |
 
 ## 4. 定期（全体を見る）
 
 | 仕組み | 見つけるもの | どこ | 立ち上げで要るもの |
 | --- | --- | --- | --- |
 | 週次まとめ Issue | 開いたままの PR・CI 失敗・Dependabot の更新待ち（監督・巡回が最初に読む） | `weekly-summary.yml`（月曜 06:17 JST） | `REPOS` に全リポジトリ |
+| ひな形からのずれ | 全リポジトリにあるはずのファイル・AGENTS.md の節・共通部品の呼び出し・@main 以外や無い部品の呼び出し（新しい部品の配り忘れ） | `scripts/drift-check.mjs`（週次まとめの節）。ずれてよいものは `scripts/drift-allow.json` に理由つき | `REPOS` に全リポジトリ |
 | 成績表 Issue とブレーキ | マージ数・壊れた割合・直るまでの時間。壊れた割合 30% 超・4件以上で「自動マージ停止: <repo>」Issue → Auto merge が止まる | `scorecard.yml`（月曜 06:07 JST）、autonomy.md「ブレーキ」 | `REPOS`、ラベル「成績表」「自動マージ停止」（Labels で揃う） |
 | 不安定な検査 Issue | 3つ以上の別々の PR で落ちた検査 → 「不安定な検査: <repo>」（自動で開閉）→ 監督が担当へ1回渡す | `scripts/pr-quality.mjs`（成績表の中で動く）、supervisor.md 7b | 同上 |
 | CI時間 Issue | CI の実行時間（遅い検査） | `ci-time-report.yml`（木曜 05:29 JST）、ルーティン CI の時間短縮 | `REPOS` |
+| このリポジトリの定期実行の失敗 | 週次まとめ・CI時間・成績表・Lint が main で落ちた → ci-failure の Issue（次に成功したら閉じる） | `watch-failures.yml`（中身は `ci-failure-issue.yml`） | なし |
 | Labels | 自動化が使うラベルの抜け | `labels.yml` | 呼び出し側を入れて1回動かす |
 | Branch cleanup | 使い終わったブランチ | `branch-cleanup.yml` | `keep`（last-tell は qa-results・source-backup） |
-| 監督の巡回（6時間ごと） | 失敗・止まったルーティンとスレッド、赤い PR、許可待ち、期限切れの約束。担当に直させ、satou さん本人のものだけ知らせる。状況ページを更新 | [supervisor.md](../routines/supervisor.md) | ルーティン（[routines.md](routines.md)）、状況ページの Artifact |
+| 監督の巡回（見回りの中で1日2回） | 失敗・止まったルーティンとスレッド、赤い PR、許可待ち、期限切れの約束。担当に直させ、satou さん本人のものだけ知らせる。状況ページを更新 | [supervisor.md](../routines/supervisor.md) | ルーティン（[routines.md](routines.md)）、状況ページの Artifact |
 | 全リポジトリ・全プロジェクト巡回（毎日） | 改善の種、新しいリポジトリ・プロジェクト | [repo-patrol.md](../routines/repo-patrol.md) | ルーティン、渡し先をメモリに |
 | ルーティンとスキルの見直し（週1） | 手順書と実際のルーティンのずれ、採用されない提案係、古くなったベストプラクティス、対応漏れ | [routine-review.md](../routines/routine-review.md)、[agent-practices.md](../routines/agent-practices.md) | ルーティン |
 | 再発防止の記録と点検 | 直しただけで終わった問題、残った対策、同じ種類の繰り返し（30日に2件以上） | common.md「問題が起きたら」、[incidents/](../incidents/README.md)、`scripts/check-incidents.mjs`（Lint）、`scripts/next-actions.mjs`（週次まとめ）、routine-review.md の 8b、スキル saihatsu-boushi | なし（incidents/ はこのリポジトリにある） |
 | 約束の台帳 | 「あとで確かめる」のまま忘れた作業（監督が期限切れを催促） | common.md「対応漏れを防ぐ」、共有フォルダ `notes/todo.md` | 共有フォルダに todo.md |
 | 節約モード | 利用上限での失敗が続く（提案・巡回を最小にする） | common.md「お金と利用枠」 | なし |
 
-チェックではない共通部品: `changes-page.yml`（マージした PR の題から遊ぶ人向けの更新情報ページを作る。呼び出し側の `app_name`・`ignore_paths`）。
+チェックではない共通部品: `changes-page.yml`（マージした PR の題から遊ぶ人向けの更新情報ページを作る。呼び出し側の `app_name`・`ignore_paths`）、`fetch-page.yml`（クラウドから開けないページを Actions から読む。このリポジトリで workflow_dispatch。[known-limits.md](../routines/known-limits.md)）。
 
 ★ は satou さん本人の画面操作（onboarding.md の 5）。
 
