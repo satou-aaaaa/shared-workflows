@@ -50,8 +50,17 @@ satou-aaaaa の各リポジトリで、PR を作る・CI を通す・コンフ�
 
 - satou さんは PR のマージを Claude に任せている（2026-10-10）。CI が緑で、コンフリクトが無く、未解決のレビューが無ければ、下書きを解除して squash マージする。タイトルは PR のタイトルのまま。
   手でマージする直前に、今の head へのレビューのスレッド（get_review_comments）を読み直す。CodeRabbit はチェックを緑にするのと同じころに指摘を書くので、チェックの緑だけで決めない（2026-11-01 `incidents/2026-11-01-roppo-merged-before-review.md`）。
-  - 読み方（Claude）：`pull_request_read` の `get`（`head.sha` が今の head か）→ `get_review_comments`（`perPage` 50、続きは `after`、`isResolved: false` が0件になるまで全ページ）。
-  - 読み方（gh）：`gh pr view <番号> --json headRefOid` で head を確かめ、`gh api graphql --paginate -f query='query($endCursor:String){repository(owner:"<owner>",name:"<repo>"){pullRequest(number:<番号>){reviewThreads(first:100,after:$endCursor){nodes{isResolved isOutdated comments(first:1){nodes{path body}}} pageInfo{hasNextPage endCursor}}}}}' --jq '.data.repository.pullRequest.reviewThreads.nodes[]|select(.isResolved|not)'` が何も出さないこと。
+  - 読み方（Claude）：`pull_request_read` の `get` で `head.sha` を控える → `get_review_comments`（`perPage` 50、続きは `after`）を全ページ読み、`is_resolved: false` が0件か見る → `merge_pull_request` に控えた SHA を `expectedHeadSha` で渡す。
+  - 読み方（gh）：PR のブランチにいる状態で、次をそのまま貼る（`OWNER`・`REPO`・`PR`・`SHA` はコマンドが入れる）。
+    ```bash
+    read -r OWNER REPO < <(gh repo view --json owner,name --jq '"\(.owner.login) \(.name)"')
+    PR=$(gh pr view --json number --jq .number)
+    SHA=$(gh pr view --json headRefOid --jq .headRefOid)
+    gh api graphql --paginate -F owner="$OWNER" -F repo="$REPO" -F pr="$PR" -f query='query($owner:String!,$repo:String!,$pr:Int!,$endCursor:String){repository(owner:$owner,name:$repo){pullRequest(number:$pr){reviewThreads(first:100,after:$endCursor){nodes{isResolved comments(first:1){nodes{path body}}} pageInfo{hasNextPage endCursor}}}}}' --jq '.data.repository.pullRequest.reviewThreads.nodes[]|select(.isResolved|not)'
+    gh pr merge "$PR" --squash --match-head-commit "$SHA"
+    ```
+    graphql が何か出したら、マージしない（未解決の指摘がある）。
+  - head が控えた SHA と違うとき（マージが SHA の不一致で断られたとき）：止めて、この 5. の確認を最初からやり直す。レビューのスレッドは PR 全体のもので SHA に結びつかないので、新しい head へのレビューが届くのを待ってから読む。
 - 自動マージ（共通部品 `automerge.yml`）が入っているリポジトリ（last-tell・naitei-no-michi・dungeon-boardgame・local-kanban）は、QA が ✅ になると自動でマージされる。
   `.github/` を変える PR、ラベル「自動マージしない」の PR、QA が回らない PR は自動マージされないので、CI が緑なのを確かめてから手でマージする（2026-10-16 satou さん）。
   手でマージが要る PR を出したら、PR を出した担当がマージまで持つ。subscribe_pr_activity で見張り、緑になったらその場でマージする。自分が終わる前に、自分の出した PR が開いたまま残っていないかを `pulls?state=open` で確かめ、残すなら理由を PR に書く（Auto merge は .github/ を変える PR にラベル「手でマージ」を付ける。2026-10-24 同じ種類で2件止まった。`incidents/2026-10-24-github-pr-left-unmerged-again.md`）。
