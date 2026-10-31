@@ -20,11 +20,11 @@
 | [agent-practices.md](agent-practices.md) | エージェント利用のベストプラクティスの台帳（取り入れたもの・出典・見直しの記録） | — |
 | [project-practices.md](project-practices.md) | 各プロジェクトの進め方の台帳（分野ごとのベストプラクティス・各プロジェクトの状況・見直しの記録） | — |
 | [supervisor.md](supervisor.md) | 監督エージェントの巡回 | 見回りの中で1日2回（8:07・20:07 JST） |
-| [repo-patrol.md](repo-patrol.md) | 全リポジトリ・全プロジェクト巡回と改善提案 | 毎日 22:38 JST |
+| [repo-patrol.md](repo-patrol.md) | 全リポジトリ・全プロジェクト巡回と改善提案 | 平日 22:38 JST |
 | [routine-review.md](routine-review.md) | ルーティンとスキルの定期見直し（エージェント利用のベストプラクティスの調べ直しと、各プロジェクトの進め方の見直しを含む） | 週1（土曜 9:53 JST） |
 | [ci-speedup.md](ci-speedup.md) | CI の時間短縮（集計は CI time report が木曜 05:29 JST に Issue「CI時間」へ） | 週1（木曜 10:26 JST） |
 | [onboarding.md](onboarding.md) | 新しいリポジトリ・プロジェクトの受け入れ（巡回の新規検出や satou さんの連絡から呼ぶ） | 増えたとき |
-| [dungeon-issue.md](dungeon-issue.md) | ダンジョンボドゲ issue 自動対応 | 3時間ごと（:54） |
+| [dungeon-issue.md](dungeon-issue.md) | ダンジョンボドゲ issue 自動対応 | 毎朝 9:54 JST |
 | [last-tell-backup.md](last-tell-backup.md) | LAST TELL ソースの控え（source-backup ブランチへ） | 週1（日曜 8:52 JST） |
 
 sandbox のルーティン（Issue/PR定期対応・運用エージェント・新規Issueの提案）の手順は satou-aaaaa/sandbox の `docs/routines/` にあり、共通のきまりはここの `common.md` を使う。
