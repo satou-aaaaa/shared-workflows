@@ -1,9 +1,11 @@
 name: Auto merge
 
 # 検査（QA）がプルリクエストで ✅ になったら自動で squash マージする。中身と条件は共通部品 satou-aaaaa/shared-workflows。
+# Secret scan を入れたリポジトリは、workflows を [QA, Secret scan] にして require_checks に QA の check 名と scan / scan を書く
+# （QA が先に終わると scan 待ちで止まり、後から scan が通っても再実行されないため。2026-10-31。下の例）。
 on:
   workflow_run:
-    workflows: [QA]
+    workflows: [QA]   # Secret scan を入れたら [QA, Secret scan]
     types: [completed]
 
 permissions:
@@ -20,6 +22,10 @@ jobs:
       # Pages を「ブランチから公開」にしているときは true。Actions で公開しているときは dispatch: "pages.yml"
       pages_build: true
       delete_branch: true
-      # 同じコミットで ✅ が要る検査（改行区切り）。Secret scan を入れたリポジトリは "scan / scan"
+      # 同じコミットで ✅ が要る検査（改行区切り）。Secret scan を入れたリポジトリは QA の check 名（qa.yml の job の name）と "scan / scan"
+      # きっかけが Secret scan のとき recheck_main は secret-scan.yml を起こそうとするので、false にして dispatch に qa.yml を足す
       # require_checks: |
+      #   <QA の check 名>
       #   scan / scan
+      # dispatch: qa.yml
+      # recheck_main: false
