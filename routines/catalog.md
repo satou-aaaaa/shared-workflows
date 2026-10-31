@@ -4,7 +4,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 新しいルーティン・定期の CI・決まった手順のスキルを作ったら、同じ PR でこの表に1行足す。止めたら消す。
 ルーティンとスキルの定期見直し（[routine-review.md](routine-review.md) の A）が、毎週 list_triggers とこの表を突き合わせる。
 
-最終確認: 2026-10-18（有効なルーティンを list_triggers で全件見た）
+最終確認: 2026-10-31（有効なルーティンを list_triggers で全件見た）
 
 ## Claude のルーティン（手順書がこのリポジトリにあるもの）
 
@@ -13,10 +13,10 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | 作業 | 手順書 | 実行 |
 | --- | --- | --- |
 | 監督の巡回 | [supervisor.md](supervisor.md) | 見回りの中で1日2回（8:07・20:07 JST。2026-10-28 から） |
-| 全リポジトリ・全プロジェクト巡回 | [repo-patrol.md](repo-patrol.md) | 毎日 22:38 JST |
+| 全リポジトリ・全プロジェクト巡回 | [repo-patrol.md](repo-patrol.md) | 平日 22:38 JST |
 | ルーティンとスキルの定期見直し | [routine-review.md](routine-review.md) | 土曜 9:53 JST |
 | CI の時間短縮 | [ci-speedup.md](ci-speedup.md) | 木曜 10:26 JST |
-| ダンジョンボドゲ issue 自動対応 | [dungeon-issue.md](dungeon-issue.md) | 3時間ごと（:54） |
+| ダンジョンボドゲ issue 自動対応 | [dungeon-issue.md](dungeon-issue.md) | 毎朝 9:54 JST |
 | LAST TELL ソースの控え | [last-tell-backup.md](last-tell-backup.md) | 日曜 8:52 JST |
 | 新しいリポジトリ・プロジェクトの受け入れ | [onboarding.md](onboarding.md) | 増えたとき |
 
@@ -25,12 +25,13 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | 作業 | 手順書 | 実行 |
 | --- | --- | --- |
 | sandbox Issue/PR定期対応 | satou-aaaaa/sandbox `docs/routines/issue-pr.md` | 月曜 4:35 JST |
-| sandbox 運用エージェント | satou-aaaaa/sandbox `docs/routines/ops-agent.md` | 平日 2:07 JST |
 | sandbox 新規Issueの提案 | satou-aaaaa/sandbox `docs/routines/weekly-issue-proposal.md` | 水曜 8:47 JST |
 | カンバンの自動改善 | このプロジェクトの共有フォルダ `board/improve.md` | 毎日 11:23 JST |
+| 見回り（止まっているスレッドをボードに集める。監督の巡回もこの中） | このプロジェクトの共有フォルダ `board/patrol.md` | 毎日 8:07・20:07 JST |
+| 見回りの届き先を新しいスレッドに替える | このプロジェクトの共有フォルダ `board/patrol-weekly-reset.md` | 月曜 7:47 JST |
+| カンバンの頼みごとを片付ける | このプロジェクトの共有フォルダ `board/app-requests.md` | アプリでの答え・依頼のたび（ops-backup の app-inbox への push が合図） |
 | 週1の開発レポート | このプロジェクトの共有フォルダ `dev-report/README.md` | 月曜 7:13 JST |
 | claude.ai の中身の控え（全ルーティンの定義・自作スキル・satouさんのボード（カンバン）と、全プロジェクトの指示・メモリ・共有フォルダ） | satou-aaaaa/ops-backup（非公開）`README.md` | 毎日 9:17 JST（ルーティンの定義は日曜。ほかのプロジェクトは各プロジェクトが日曜に） |
-| LAST TELL 毎日の改善提案 | プロンプト内（短い。LAST TELL プロジェクト） | 毎日（send_later で自分を入れ直す） |
 | カルカソンヌ 週次の研究進捗まとめ | プロンプト内（短い。カルカソンヌ プロジェクト） | 日曜 20:45 JST |
 | 個人の作業（朝のタスク整理・転職・動画・連載など） | 各プロジェクトの共有フォルダかプロンプト内 | — |
 

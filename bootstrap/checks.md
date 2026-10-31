@@ -56,7 +56,7 @@
 | Labels | 自動化が使うラベルの抜け | `labels.yml` | 呼び出し側を入れて1回動かす |
 | Branch cleanup | 使い終わったブランチ | `branch-cleanup.yml` | `keep`（last-tell は qa-results・source-backup） |
 | 監督の巡回（見回りの中で1日2回） | 失敗・止まったルーティンとスレッド、赤い PR、許可待ち、期限切れの約束。担当に直させ、satou さん本人のものだけ知らせる。状況ページを更新 | [supervisor.md](../routines/supervisor.md) | ルーティン（[routines.md](routines.md)）、状況ページの Artifact |
-| 全リポジトリ・全プロジェクト巡回（毎日） | 改善の種、新しいリポジトリ・プロジェクト | [repo-patrol.md](../routines/repo-patrol.md) | ルーティン、渡し先をメモリに |
+| 全リポジトリ・全プロジェクト巡回（平日） | 改善の種、新しいリポジトリ・プロジェクト | [repo-patrol.md](../routines/repo-patrol.md) | ルーティン、渡し先をメモリに |
 | ルーティンとスキルの見直し（週1） | 手順書と実際のルーティンのずれ、採用されない提案係、古くなったベストプラクティス、対応漏れ | [routine-review.md](../routines/routine-review.md)、[agent-practices.md](../routines/agent-practices.md) | ルーティン |
 | 再発防止の記録と点検 | 直しただけで終わった問題、残った対策、同じ種類の繰り返し（30日に2件以上） | common.md「問題が起きたら」、[incidents/](../incidents/README.md)、`scripts/check-incidents.mjs`（Lint）、`scripts/next-actions.mjs`（週次まとめ）、routine-review.md の 8b、スキル saihatsu-boushi | なし（incidents/ はこのリポジトリにある） |
 | 約束の台帳 | 「あとで確かめる」のまま忘れた作業（監督が期限切れを催促） | common.md「対応漏れを防ぐ」、共有フォルダ `notes/todo.md` | 共有フォルダに todo.md |
