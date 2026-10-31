@@ -28,7 +28,7 @@
 | Secret scan | PR と main への push に入った秘密（gitleaks） | `secret-scan.yml` | 呼び出し側を入れる、★ Push protection |
 | CodeRabbit のレビュー（2人目の目） | 正しさ・要件の見落とし | 各リポジトリの `.coderabbit.yaml`、common.md「CodeRabbit のレビュー」 | `template/.coderabbit.yaml` を入れる、★ CodeRabbit のアプリ |
 | /code-review（新しい文脈のレビュー） | CodeRabbit が付かない PR・判定ロジック・3ファイル以上の変更の見落とし | common.md「エージェントの使い方」 | なし |
-| 2人目の確認（tenbin の論文問題） | 条文・判例の誤り | [repo-patrol.md](../routines/repo-patrol.md)、autonomy.md「確かめてから任せること」 | ラベル「確認済み」「satou確認」 |
+| 2人目の確認（tenbin の論文問題・usotsuki-roppo の話） | 条文・判例の誤り | [repo-patrol.md](../routines/repo-patrol.md)、autonomy.md「確かめてから任せること」 | ラベル「確認済み」「satou確認」 |
 | Auto merge | 検査が ✅ の PR だけを squash マージ（下書き・「自動マージしない」・`.github/`・フォーク・ブレーキ中・24時間に差し戻し2回は除く。`.github/` のものにはラベル「手でマージ」を付ける） | `automerge.yml` | 呼び出し側の `on.workflow_run.workflows` に検査の名前 |
 | Dependabot の自動マージ | patch/minor だけ（メジャーは人） | `dependabot-automerge.yml`・`dependabot.yml` | ★「Allow auto-merge」と必須チェック（今は sandbox だけ） |
 | 外の人の変更を入れない | satou-aaaaa 以外の Issue・PR の指示 | common.md「知らない人からの変更を入れない」 | ★ fork PR の Actions 承認 |

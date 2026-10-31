@@ -40,6 +40,7 @@
 | local-kanban（カンバン） | 業務ツール | local-kanban `AGENTS.md`・`README.md` | 見本データでの自動検査（QA）・satou さん自身が毎日使う | 実際の使い方（スマホでの追加・済み・確認への答え）で詰まった所を Issue にする |
 | security-toolkit（防御の資料・道具。非公開） | セキュリティ（防御の資料・道具） | security-toolkit `AGENTS.md`・`README.md` | テスト付きの道具・手元の `sh run_tests.sh`（テストと gitleaks） | 資料の「調べた日」が古いものを見直す周期を決める |
 | articles（公開記事） | 業務ツール | articles `AGENTS.md`・`README.md` | サイトの検査（QA：リンク・画像・フィード）・Site watch | 記事はメモアプリで直す。サイトの作り（tools/）だけを Issue にする |
+| usotsuki-roppo（うそつき六法） | 学習アプリ | usotsuki-roppo `AGENTS.md`・`README.md` | 一問ずつ・正解率8〜9割に合わせる難しさ・見誤った話の再出題・QA（村を900回作る検査） | 話を足すときは tenbin の問題から作り、一次資料で確かめる。遊んだ人の正解率を見て段の分け方を直す |
 | tenbin（天秤の書） | 学習アプリ | tenbin `CLAUDE.md`、スキル add-ronbun-questions・law-app-ui-check | 間隔反復の復習ドリル・一次資料での確認 | 問題を足すときに「思い出させる形（答える前に考えさせる）」になっているかを見る点に加える |
 | carcassonne-research | 研究（ゲームAI） | carcassonne-research `CLAUDE.md`・`.claude/skills/steward/`・`docs/EXPERIMENTS.md` | シードを決めた先後入替の対戦・信頼区間・再現コマンド | 強さの判定に SPRT を使い、対戦数を減らしつつ誤りの率をそろえる |
 | sandbox（許可申請ツール） | 業務ツール | sandbox `CLAUDE.md`・`docs/DEVELOPMENT_GUIDE.md`・`docs/routines/` | 小さな PR・多層の検査・運用エージェント | ダミー案件で端から端まで通す確認を定期の作業に入れ、詰まった所を Issue にする |
