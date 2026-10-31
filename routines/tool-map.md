@@ -20,6 +20,7 @@ Claude が使えないときや、ほかの AI（Codex・Gemini・Copilot など
 | Artifact（状況ページ・レポート） | まとめを見せる | Issue「週次まとめ」「成績表」「CI時間」（Actions が毎週作る） |
 | スキル（pr-flow など） | 決まった手順の作業 | スキルの `SKILL.md` はただの Markdown なので、ほかの AI もそのまま手順書として読める。共通スキルの控えはこのリポジトリ（立ち上げ直しの手順と同じ場所）、リポジトリだけのものは各リポジトリの `.claude/skills/<名前>/SKILL.md` |
 | GitHub の MCP（`mcp__github__*`） | PR・Issue を扱う | `gh` コマンド（`gh pr list`・`gh pr merge --squash` など）か GitHub の画面 |
+| `pull_request_read`（`get_review_comments`）（レビューのスレッド） | マージ前に未解決の指摘が無いか見る | `gh api graphql --paginate` で `reviewThreads` の `isResolved` を見る（書き方は `routines/pr.md` の 5. マージ） |
 | サブエージェント | 調べものを分ける | 使わない。1つずつ順に行う |
 
 ## ほかの AI に頼むときの1行
