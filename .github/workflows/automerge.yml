@@ -61,8 +61,10 @@ jobs:
       github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ${{ fromJSON(inputs.runner) }}
     timeout-minutes: 5
+    # 枝ごとに分ける。全 PR で1つの枠だと、待機中の実行は1件しか残らず、別 PR のイベントで Secret scan 後の再評価が置き換わる
+    # （QA と Secret scan のどちらからも起きるようにしたため、起きやすくなった。2026-11-01 CodeRabbit の指摘）
     concurrency:
-      group: automerge
+      group: automerge-${{ github.event.workflow_run.head_branch }}
       cancel-in-progress: false
     steps:
       - name: 検査の通ったプルリクエストをマージする
@@ -142,11 +144,10 @@ jobs:
           gh api -X PUT "repos/$REPO/pulls/$pr/merge" -f merge_method=squash -f sha="$SHA" --jq .message
           echo "merged=true" >> "$GITHUB_OUTPUT"
       - name: 公開などを起こす
-        if: steps.merge.outputs.merged == 'true' && (inputs.dispatch != '' || inputs.pages_build)
+        if: steps.merge.outputs.merged == 'true' && inputs.dispatch != ''
         env:
           GH_TOKEN: ${{ github.token }}
           DISPATCH: ${{ inputs.dispatch }}
-          PAGES_BUILD: ${{ inputs.pages_build }}
         run: |
           for wf in $DISPATCH; do
             if ! out=$(gh workflow run "$wf" -R "$GITHUB_REPOSITORY" --ref main 2>&1); then
@@ -160,9 +161,12 @@ jobs:
               exit 1
             fi
           done
-          if [ "$PAGES_BUILD" = true ]; then
-            gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" --jq .status || echo "::warning::公開を起こせませんでした（main への次の push で公開されます）"
-          fi
+      # dispatch が失敗しても公開は起こす（同じ手順に入れていると、dispatch の失敗で公開が飛ばされた）
+      - name: Pages の公開を起こす
+        if: always() && steps.merge.outputs.merged == 'true' && inputs.pages_build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" --jq .status || echo "::warning::公開を起こせませんでした（main への次の push で公開されます）"
       - name: main で検査を回し直す
         if: steps.merge.outputs.merged == 'true' && inputs.recheck_main
         env:
