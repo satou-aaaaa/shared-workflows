@@ -82,9 +82,11 @@ jobs:
           info=$(gh api "repos/$REPO/pulls/$pr")
           if [ "$(jq -r .draft <<<"$info")" = true ]; then echo "#$pr は下書きなのでマージしません"; exit 0; fi
           if jq -e '.labels[].name | select(. == "自動マージしない")' <<<"$info" >/dev/null; then echo "#$pr は「自動マージしない」"; exit 0; fi
-          # 名前を JSON の文字列で1行ずつ取る（名前に改行があっても1件1行のまま数えられる）
-          names=$(gh api --paginate "repos/$REPO/pulls/$pr/files" --jq '.[].filename | @json')
-          files=$(jq -r . <<<"$names")
+          # 1ファイル1行の JSON 配列で取る（名前に改行があっても数えられる）。名前を変えたファイルは元の名前も判定に入れる
+          names=$(gh api --paginate "repos/$REPO/pulls/$pr/files" --jq '.[] | [.filename, (.previous_filename // empty)] | @json')
+          # 名前に改行があると行の判定がすり抜けるので、手でマージに回す
+          if jq -se 'any(.[][]; test("\n"))' <<<"$names" >/dev/null; then echo "#$pr は名前に改行のあるファイルを変えるので、自動ではマージしません（手でマージ）"; exit 0; fi
+          files=$(jq -r '.[]' <<<"$names")
           # ファイルの一覧は 3,000 件までしか返らない。全部を見られないと .github/ や hold_paths の判定がすり抜けるので、手でマージに回す
           if [ "$(grep -c . <<<"$names")" -lt "$(jq -r .changed_files <<<"$info")" ]; then echo "#$pr は変えたファイルを全部は見られないので、自動ではマージしません（手でマージ）"; exit 0; fi
           manual=''
