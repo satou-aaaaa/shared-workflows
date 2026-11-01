@@ -86,7 +86,8 @@ jobs:
           names=$(gh api --paginate "repos/$REPO/pulls/$pr/files" --jq '.[] | [.filename, (.previous_filename // empty)] | @json')
           # 名前に改行があると行の判定がすり抜けるので、手でマージに回す
           if jq -se 'any(.[][]; test("\n"))' <<<"$names" >/dev/null; then echo "#$pr は名前に改行のあるファイルを変えるので、自動ではマージしません（手でマージ）"; exit 0; fi
-          files=$(jq -r '.[]' <<<"$names")
+          files=$(jq -r '.[]' <<<"$names")          # 変更前後の名前（.github/ と hold_paths は、止める側に倒すため両方を見る）
+          new_files=$(jq -r '.[0]' <<<"$names")     # 変更後の名前だけ（require_paths は今までどおり）
           # ファイルの一覧は 3,000 件までしか返らない。全部を見られないと .github/ や hold_paths の判定がすり抜けるので、手でマージに回す
           if [ "$(grep -c . <<<"$names")" -lt "$(jq -r .changed_files <<<"$info")" ]; then echo "#$pr は変えたファイルを全部は見られないので、自動ではマージしません（手でマージ）"; exit 0; fi
           manual=''
@@ -102,7 +103,7 @@ jobs:
               || echo "::warning::#$pr にラベル「自動マージしない」を付けられませんでした（呼び出し側の permissions に pull-requests: write が要る）"
             exit 0
           fi
-          if [ -z "$manual" ] && [ -n "$REQUIRE_PATHS" ] && ! echo "$files" | grep -qE "$REQUIRE_PATHS"; then echo "#$pr は対象のファイルを変えないので手でマージ"; exit 0; fi
+          if [ -z "$manual" ] && [ -n "$REQUIRE_PATHS" ] && ! echo "$new_files" | grep -qE "$REQUIRE_PATHS"; then echo "#$pr は対象のファイルを変えないので手でマージ"; exit 0; fi
           while IFS= read -r c; do
             [ -n "$c" ] || continue
             st=$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100" --jq "[.check_runs[] | select(.name == \"$c\")] | sort_by(.started_at) | last | (.conclusion // .status // \"なし\")")
