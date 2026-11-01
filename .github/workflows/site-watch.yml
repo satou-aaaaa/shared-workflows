@@ -22,7 +22,9 @@ jobs:
           PATHS: ${{ inputs.paths }}
         run: |
           set -euo pipefail
-          base=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .html_url 2>/dev/null || true)
+          # gh api は 404 でもエラーの本文を標準出力に出すので、|| true で受けると本文が URL になる（incidents/2026-11-01-pages-404-body-as-url.md）
+          base=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .html_url 2>/dev/null) || base=""
+          case "$base" in https://*) ;; *) base="" ;; esac
           if [ -z "$base" ]; then
             echo "Pages が有効になっていないので、何もせずに終わります" | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
@@ -34,7 +36,7 @@ jobs:
           for f in "" $PATHS; do
             # 一時的な揺れで Issue が立たないよう、3回まで試す
             code=$(curl -sS -o /dev/null -w '%{http_code}' --retry 2 --retry-delay 20 --retry-all-errors \
-              --max-time 30 "${base}${f}" || echo 000)
+              --max-time 30 "${base}${f}") || code=000
             if [ "$code" = 200 ]; then
               echo "- OK ${f:-（トップ）}" >> "$GITHUB_STEP_SUMMARY"
             else

@@ -31,7 +31,9 @@ jobs:
           MARGIN: ${{ inputs.margin }}
         run: |
           set -euo pipefail
-          url=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .html_url 2>/dev/null || true)
+          # gh api は 404 でもエラーの本文を標準出力に出すので、|| true で受けない（incidents/2026-11-01-pages-404-body-as-url.md）
+          url=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .html_url 2>/dev/null) || url=""
+          case "$url" in https://*) ;; *) url="" ;; esac
           if [ -z "$url" ]; then echo "Pages が有効になっていないので、何もせずに終わります" | tee -a "$GITHUB_STEP_SUMMARY"; exit 0; fi
           npx -y lighthouse@12.8.2 "$url" --quiet --output=json --output-path=lh.json \
             --only-categories=performance,accessibility,best-practices,seo \
