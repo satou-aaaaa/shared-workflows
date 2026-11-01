@@ -85,8 +85,16 @@ jobs:
           files=$(gh api --paginate "repos/$REPO/pulls/$pr/files" --jq '.[].filename')
           manual=''
           if echo "$files" | grep -q '^\.github/'; then manual=1; fi
-          if [ -n "$HOLD_PATHS" ] && echo "$files" | grep -qE "$HOLD_PATHS"; then
-            echo "#$pr はレビューを読んでから手でマージするファイルを変えるので、自動ではマージしません"
+          if [ -n "$HOLD_PATHS" ]; then
+            # 正規表現が不正だと grep は 2 を返し「当てはまらない」と同じに見えるので、先に赤にする
+            rc=0; printf '' | grep -qE "$HOLD_PATHS" || rc=$?
+            if [ "$rc" -eq 2 ]; then echo "::error::hold_paths が正規表現として正しくありません: $HOLD_PATHS"; exit 1; fi
+            # ファイルの一覧は 3,000 件までしか返らない。全部を見られないときは止める側に倒す
+            total=$(jq -r .changed_files <<<"$info")
+            if [ "$(grep -c . <<<"$files")" -lt "$total" ]; then hold=1; fi
+          fi
+          if [ -n "$HOLD_PATHS" ] && { [ -n "${hold:-}" ] || echo "$files" | grep -qE "$HOLD_PATHS"; }; then
+            echo "#$pr はレビューを読んでから手でマージするファイルを変える（か、変えたファイルを全部は見られない）ので、自動ではマージしません"
             gh api -X POST "repos/$REPO/issues/$pr/labels" -f 'labels[]=自動マージしない' >/dev/null \
               || echo "::warning::#$pr にラベル「自動マージしない」を付けられませんでした（呼び出し側の permissions に pull-requests: write が要る）"
             exit 0
