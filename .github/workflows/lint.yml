@@ -67,4 +67,5 @@ jobs:
         run: |
           node scripts/check-routines.mjs
           node scripts/check-incidents.mjs
+          node scripts/check-capture.mjs
           node --check scripts/next-actions.mjs

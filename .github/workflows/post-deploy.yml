@@ -56,7 +56,9 @@ jobs:
           PATHS: ${{ inputs.paths }}
         run: |
           set -euo pipefail
-          base=$(gh api "repos/$R/pages" --jq .html_url 2>/dev/null || true)
+          # gh api は 404 でもエラーの本文を標準出力に出すので、|| true で受けない（incidents/2026-11-01-pages-404-body-as-url.md）
+          base=$(gh api "repos/$R/pages" --jq .html_url 2>/dev/null) || base=""
+          case "$base" in https://*) ;; *) base="" ;; esac
           if [ -z "$base" ]; then echo "Pages が有効になっていないので終わります" | tee -a "$GITHUB_STEP_SUMMARY"; echo "result=skip" >> "$GITHUB_OUTPUT"; exit 0; fi
           (cd .shared && npm i --no-save --no-audit --no-fund playwright-core@1.56.1 >/dev/null)
           export CHROME_PATH
