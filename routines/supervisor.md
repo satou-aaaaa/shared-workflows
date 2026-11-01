@@ -28,25 +28,13 @@ list_triggers で last_run が前回以降に失敗したもの（利用上限�
    日本時間の月曜 8:07 の回は、shared-workflows のラベル「成績表」の最新 Issue を読み、状況ページの note に「成績表: マージ N・壊れた割合 M%・最初の CI で赤 K%（最も高いリポジトリ）」の1行を書く。
    shared-workflows にラベル「不安定な検査」の Issue（題「不安定な検査: <リポジトリ>」）が開いていれば、手順3と同じ担当に Issue の URL を付けて「再実行で済ませず、どれか1つの検査の原因を直す PR を出してほしい」と1回だけ伝える（a として扱う）。2週続けて開いたままなら、もう1回だけ伝える。
 8. **状況まとめページの更新**（毎回の巡回の最後）: ArtifactData（url https://claude.ai/artifact/RudgLH14WFAY9ToCjNW8my）で collection "status"・doc_id "latest" を get して version を読み、update する（if_version に読んだ version。weekly など自分が書かないフィールドは触らない）。フィールド: updated_at（ISO）、note（短い一言、無ければ空）、needs_satou [{text,url}]、ci_failures [{repo,title,url}]、prs [{repo,number,title,state,ci,url}]、routines [{name,last_status,last_run,next_run}]（list_triggers ですでに読んだ情報から）。早めに終える回でも、すでに読んだ情報だけで書く。
-8b. **ボードからの依頼を届ける**（毎回の巡回。2026-10-18 satou さん「カンバンから agent への指示をできるようにしたい」）: TODO ボード（手順 9b の URL）の collection "cards" を ArtifactData の query（where request == true）で読む。
-   request_status が "new" のカード（ボードから直接届けられなかったもの。deleted が true のカードは除く）があれば、get_channel_session_id で調整役のセッションを調べ、send_message で「TODO ボードに依頼カード（doc_id と依頼文）がある。中身を確かめて受けてほしい」と渡し、カードを request_status "sent" にする（if_version 付き）。
-   あわせて collection "config"・doc_id "route" の session_id がその調整役の id と違えば書き換える（ボードが直接届ける先）。"sent" のまま24時間たったカードは調整役にもう1回だけ渡し、それでも受付されなければ c としてカードで知らせる。
+8b. （2026-10-29 廃止）ボードからの依頼は、カンバンをアプリ版に一本化したので、アプリの合図で起きる定期実行と見回り（`board/patrol.md` 手順11）が扱う。監督は claude.ai のボード（ArtifactData cards）に書かない。
 9. **satou さんの TODO の更新**（日本時間 8:07 の回だけ。2026-10-16 satou さん承認。「連絡のチェックとTODO最新化」の自動化）: /mnt/project-files/notes/todo.md を直前に読み直し、
    この巡回で見つけた satou さん本人に回すもの（c）と、各スレッドの「satouさんにお願い：」で未対応のものを足し、済んだもの（API や画面で確かめられたもの）を「済んだもの」へ移し、最終更新日時を書き換える。
    小さく編集し、10秒後に読み戻して上書きされていないか確かめる。カレンダーとメールは朝のタスク整理の担当なので書かない（既にある予定の行は、過ぎたものを消すだけ）。転職の TODO（tenshoku/）は触らない。
    変化が無ければ書かない。TODO の更新だけでは reply しない。
    あわせて「エージェントの約束」欄（`common.md` の「対応漏れを防ぐ」）を見て、期限を過ぎた約束はその担当スレッドに send_message で催促する（同じ約束は2回まで、3回目は c）。
    satou さんの未完了の項目のうち追加から7日以上たったものは、1件ずつ ask_decision のカード（やる・やめる・後で）で一度だけ聞き、答えに合わせて TODO を直す（同じ項目は2回聞かない）。
-9b. **TODO ボードの同期**（予備。ふだんは「TODO のカンバン化」スレッドが変更のたびにすぐ写す。毎回の巡回の最後。8:07 の回は手順9のあと。2026-10-18 satou さんがカードで採用）: satou さんは TODO をカンバンのボード https://claude.ai/artifact/8yUssaEaqLxjiQhkFtHqbZ で見る。todo.md が正、ボードはその見え方。
-   ArtifactData の list（collection "cards"、limit 1000）で全カードを読み、todo.md と突き合わせて次だけを1回の batch で書く（既にあるカードには読んだ version を if_version に付ける）。
-   - ボードで lane が "done" なのに todo.md で `[ ]` のもの: satou さんがボードで済みにしたので、todo.md を `[x]` にする（手順9と同じく小さく編集して読み戻す）。
-   - from_todo が無いカード（satou さんがボードで足したもの）: todo.md の合う欄に1行足し、カードに from_todo: true を書く。
-   - todo.md の未完了の項目でカードが無いもの: カードを足す。fields は title・owner（satou さん向け "you"、エージェントの約束 "agent"）・lane（「すぐやること」「satouさんにお願い」は "now"、ただし now が3枚以上なら "next"。設定画面・Issue の答え待ちは "next"、「時間があるとき」は "later"、「エージェントの約束」は "agent"）・due（期限があれば YYYY-MM-DD）・note（短い補足）・link（https の URL があれば）・order・from_todo: true。doc_id は英小文字・数字・ハイフンの短い名前。
-   - todo.md で済んだもの（`[x]` か「済んだもの」欄）なのにカードが "done" でないもの: lane "done"、done_at に今の時刻。
-   - lane "done" で done_at が30日より前のカードは消す。ボードで「消す」を押したカード（deleted: true）は、todo.md の同じ項目を「済んだもの」へ「（ボードで取り消し）」付きで移し、30日たったら delete する。deleted のカードは足し直さない。
-   - todo.md とボードで食い違うとき（済み・未済みが逆など）は、カードの updated と todo.md の最終更新のうち新しい方に合わせる。
-   - 依頼カード（request: true）はエージェントが作らない。ボードの「頼む」・ボタンだけが作り、source: "board" と by（satou さんの id）が付く。
-   依頼カード（request: true）で、受けたスレッドの進み具合が分かれば progress に1行（「PR を出した」「satou さんの答え待ち」など）を書き、スレッドが終わったら lane "done"・done_at にする。
-   カレンダーの予定の行と転職の TODO（tenshoku/）はボードに載せない。変化が無ければ書かない。ボードの同期だけでは reply しない。
+9b. （2026-10-29 廃止）ボードの同期は見回りの手順11（ops-backup の `local-board/cards.json` が正）が行う。
 
 **守ること**: 監督は自分でコードやリポジトリを書き換えない（Issue の起票は可）。QA/CI を飛ばす・無効化する、リポジトリ設定・シークレット・他のルーティンの変更はしない（手順7の fire_trigger による再実行だけは例外）。マージと本番は担当エージェントに任されているので、監督から止めたり代行したりしない。
