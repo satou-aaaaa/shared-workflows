@@ -79,6 +79,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-11-01 | 手順の抜け | [sandbox の Issue/PR 定期対応が、手順書のある sandbox を読めずに何もせず終わった](2026-11-01-sandbox-routine-repo-missing.md) | 対策中 |
 | 2026-11-01 | 手順の抜け | [うそつき六法の条文の PR が、レビューの指摘を読む前にマージされた](2026-11-01-roppo-merged-before-review.md) | 対策済み |
 | 2026-11-01 | 公開・CI | [carcassonne-research のコツ集の言い切りが、48局のぶれで再び AI content を止めた](2026-11-01-tips-claim-noise-again.md) | 対策済み |
 | 2026-10-31 | 動作 | [うそつき六法の見本で、村人が0人の村ができて止まることがあった](2026-10-31-roppo-empty-village.md) | 対策済み |
