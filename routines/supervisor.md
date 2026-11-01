@@ -28,7 +28,7 @@ list_triggers で last_run が前回以降に失敗したもの（利用上限�
    日本時間の月曜 8:07 の回は、shared-workflows のラベル「成績表」の最新 Issue を読み、状況ページの note に「成績表: マージ N・壊れた割合 M%・最初の CI で赤 K%（最も高いリポジトリ）」の1行を書く。
    shared-workflows にラベル「不安定な検査」の Issue（題「不安定な検査: <リポジトリ>」）が開いていれば、手順3と同じ担当に Issue の URL を付けて「再実行で済ませず、どれか1つの検査の原因を直す PR を出してほしい」と1回だけ伝える（a として扱う）。2週続けて開いたままなら、もう1回だけ伝える。
 8. **状況まとめページの更新**（毎回の巡回の最後）: ArtifactData（url https://claude.ai/artifact/RudgLH14WFAY9ToCjNW8my）で collection "status"・doc_id "latest" を get して version を読み、update する（if_version に読んだ version。weekly など自分が書かないフィールドは触らない）。フィールド: updated_at（ISO）、note（短い一言、無ければ空）、needs_satou [{text,url}]、ci_failures [{repo,title,url}]、prs [{repo,number,title,state,ci,url}]、routines [{name,last_status,last_run,next_run}]（list_triggers ですでに読んだ情報から）。早めに終える回でも、すでに読んだ情報だけで書く。
-8b. （2026-10-29 廃止）ボードからの依頼は、カンバンをアプリ版に一本化したので、アプリの合図で起きる定期実行と見回り（`board/patrol.md` 手順11）が扱う。監督は claude.ai のボード（ArtifactData cards）に書かない。
+8b. （2026-10-29 廃止）ボードからの依頼は、カンバンをアプリ版に一本化したので、アプリの合図で起きる定期実行（共有フォルダ `board/app-requests.md`。見回りも予備で回す）が扱う。監督は claude.ai のボード（ArtifactData cards）に書かない。
 9. **satou さんの TODO の更新**（日本時間 8:07 の回だけ。2026-10-16 satou さん承認。「連絡のチェックとTODO最新化」の自動化）: /mnt/project-files/notes/todo.md を直前に読み直し、
    この巡回で見つけた satou さん本人に回すもの（c）と、各スレッドの「satouさんにお願い：」で未対応のものを足し、済んだもの（API や画面で確かめられたもの）を「済んだもの」へ移し、最終更新日時を書き換える。
    小さく編集し、10秒後に読み戻して上書きされていないか確かめる。カレンダーとメールは朝のタスク整理の担当なので書かない（既にある予定の行は、過ぎたものを消すだけ）。転職の TODO（tenshoku/）は触らない。
