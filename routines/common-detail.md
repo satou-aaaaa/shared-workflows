@@ -32,8 +32,8 @@
 ## 対応漏れを防ぐ
 
 - **約束は台帳に書く**: 後の回へ回す作業は /mnt/project-files/notes/todo.md の「エージェントの約束」欄に `- [ ] (追加日) 担当スレッド名: やること（いつまでに）` で書き、済んだら消す。
-  TODO ボード（`supervisor.md` 手順 9b の URL）にも同じ内容のカードを ArtifactData で足し、済んだら lane "done" にする（ArtifactData が無いセッションは書かなくてよい。監督の同期が拾う）。todo.md とボードを同時に直して、ずれを残さないため。
-- **ボードの列は Claude が動かす**（2026-10-19 satou さん「カンバンのステータスの更新は自動で。手動で動かすことはほとんどない」）: ボードのカード（約束・確認・ボードから回された依頼のどれでも。link・ask_thread がこのスレッドのもの）の列は、作業の状態に合わせてそのスレッドが ArtifactData で動かし、history に1行足す。着手したら owner "agent"・lane "agent"、satou さんの答えや操作を待つなら owner "you"・lane "now"（題は「やること」の形）、終えたら（resolve する前、または最後の報告と同じ回）lane "done"。ArtifactData が無いセッションは書かなくてよい（ボードの見回りが2時間ごとにスレッド・PR・Issue・予定の状態と突き合わせて動かす）。
+  カンバン（2026-10-29 からアプリ版が正。ops-backup の `local-board/cards.json`）にも同じ内容のカードを `python3 tools/local_board.py update <id> --new … --push` で足し、済んだら lane "done" にする（ops-backup に push できないセッションは書かなくてよい。見回りが拾う）。claude.ai のボード（ArtifactData cards）は見るだけの写しなので書かない。todo.md とカンバンを同時に直して、ずれを残さないため。
+- **ボードの列は Claude が動かす**（2026-10-19 satou さん「カンバンのステータスの更新は自動で。手動で動かすことはほとんどない」）: ボードのカード（約束・確認・ボードから回された依頼のどれでも。link・ask_thread がこのスレッドのもの）の列は、作業の状態に合わせてそのスレッドが `tools/local_board.py update`（ops-backup）で動かし、history に1行足す。着手したら owner "agent"・lane "agent"、satou さんの答えや操作を待つなら owner "you"・lane "now"（題は「やること」の形）、終えたら（resolve する前、または最後の報告と同じ回）lane "done"。ops-backup に push できないセッションは書かなくてよい（見回りが1日2回、スレッド・PR・Issue・予定の状態と突き合わせて動かす）。
 - **複数の対象に同じ変更を入れるとき**: 先に対象の一覧を作り、持ち主が satou-aaaaa でフォークでないことを API で確かめる。一覧を報告に書いてから1件ずつ入れ、そのたびにスレッドの新着を確かめる。「止めて」があればその場で止める。
 - **PC（Remote Control）で変更させるとき**: PC 側は satou さん本人の言葉が無いと止まり、カードの選択も届かない。対象と中身を書いて satou さんの「進めて」の一言をもらってから頼み、その一言をそのまま渡す。
 - **無人の回は確認待ちで止まらない**: 確認のプロンプトが出る操作（Artifact の type_url publish、PC の権限、ログインなど）は使わず、飛ばして「satouさんにお願い：」で1行残す。
