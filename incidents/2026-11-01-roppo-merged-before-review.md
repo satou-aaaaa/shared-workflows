@@ -23,3 +23,4 @@
 - [x] 防ぐ: `routines/pr.md` の「5. マージ」に、手でマージする直前に今の head へのレビューのスレッドを読み直す（チェックの緑だけで決めない）を足した
 - [x] 防ぐ: usotsuki-roppo の `AGENTS.md` に、ページ（条文）を変える PR はラベル「自動マージしない」を付けて CodeRabbit のレビューを待つ、を足した（usotsuki-roppo #7）
 - [x] 防ぐ: usotsuki-roppo の `AGENTS.md` の決まりを「条文」から「条文か画面の仕組み（index.html の script・sw.js・manifest）」を変える PR に広げた。#9 の差分は自分で読み直した（usotsuki-roppo #10）
+- [x] 防ぐ: ラベルを手で付ける決まりだけでは、付ける前に自動マージされる隙が残る（CodeRabbit の指摘）。共通部品 `automerge.yml` に `hold_paths` を足し、当てはまるファイルを変える PR は自動ではマージせずラベル「自動マージしない」を付けるようにした。usotsuki-roppo は `index.html|sw.js|manifest.webmanifest` を指定
