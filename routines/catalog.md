@@ -18,13 +18,13 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | CI の時間短縮 | [ci-speedup.md](ci-speedup.md) | 木曜 10:26 JST |
 | ダンジョンボドゲ issue 自動対応 | [dungeon-issue.md](dungeon-issue.md) | 毎朝 9:54 JST |
 | LAST TELL ソースの控え | [last-tell-backup.md](last-tell-backup.md) | 日曜 8:52 JST |
+| sandbox Issue/PR定期対応（kensetsu-kyoka-toolkit） | [sandbox-issue-pr.md](sandbox-issue-pr.md) | 月曜 4:35 JST |
 | 新しいリポジトリ・プロジェクトの受け入れ | [onboarding.md](onboarding.md) | 増えたとき |
 
 ## Claude のルーティン（手順書がほかにあるもの）
 
 | 作業 | 手順書 | 実行 |
 | --- | --- | --- |
-| sandbox Issue/PR定期対応 | satou-aaaaa/sandbox `docs/routines/issue-pr.md` | 月曜 4:35 JST |
 | sandbox 新規Issueの提案 | satou-aaaaa/sandbox `docs/routines/weekly-issue-proposal.md` | 水曜 8:47 JST |
 | カンバンの自動改善 | このプロジェクトの共有フォルダ `board/improve.md` | 毎日 11:23 JST |
 | 見回り（止まっているスレッドをボードに集める。監督の巡回もこの中） | このプロジェクトの共有フォルダ `board/patrol.md` | 毎日 8:07・20:07 JST |

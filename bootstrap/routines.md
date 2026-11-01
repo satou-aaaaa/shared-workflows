@@ -42,6 +42,7 @@
 | --- | --- | --- | --- |
 | ダンジョンボドゲ issue 自動対応（毎朝9:54） | [dungeon-issue.md](../routines/dungeon-issue.md) | `CRON_TZ=Asia/Tokyo 54 9 * * *` | ダンジョンボドゲ |
 | LAST TELL ソースの控え（週1） | [last-tell-backup.md](../routines/last-tell-backup.md) | `CRON_TZ=Asia/Tokyo 52 8 * * 0` | LAST TELL |
+| Issue/PR定期対応 (kensetsu-kyoka-toolkit)（月曜 4:35、Sonnet・low） | [sandbox-issue-pr.md](../routines/sandbox-issue-pr.md) | `35 19 * * 0` | ドラえもん（手順の1で sandbox を自分で足す） |
 
 ## sandbox のルーティン（手順書が satou-aaaaa/sandbox にあるもの）
 
@@ -51,7 +52,6 @@
 
 | ルーティン | 手順書 | cron | モデル |
 | --- | --- | --- | --- |
-| Issue/PR定期対応 (kensetsu-kyoka-toolkit) | `issue-pr.md` | `35 19 * * 0`（月曜 4:35 JST） | 既定 |
 | リポジトリ運用エージェント（クラウド・1サイクル） | `ops-agent.md` | `7 17 * * 0-4`（平日 2:07 JST） | 既定（2026-10-31 時点で無効。作り直すかは satou さんに聞く） |
 | 週次: 新規Issueの提案（調査つき） | `weekly-issue-proposal.md` | `CRON_TZ=Asia/Tokyo 47 8 * * 3` | claude-sonnet-5-5 |
 
