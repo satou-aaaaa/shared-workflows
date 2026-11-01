@@ -8,6 +8,8 @@ name: Auto merge (共通部品)
 #   （.github/ を変える PR は GITHUB_TOKEN ではマージできない。workflows 権限が無いため）
 # - require_checks に書いた検査（check run の名前）が同じコミットで ✅ でなければマージしない（例: Secret scan の "scan / scan"）
 # - require_paths を指定したときは、その正規表現に当てはまるファイルを1つも変えない PR もマージしない
+# - hold_paths を指定したときは、その正規表現に当てはまるファイルを1つでも変える PR はマージせず、ラベル「自動マージしない」を付ける
+#   （レビューを読んでから手でマージする決まりのファイル。ラベルを手で付ける前に自動マージされた。usotsuki-roppo #9、2026-11-01）
 # - 検査した時のコミットから新しいコミットが積まれていたら、マージしない（新しい方の検査を待つ）
 # - 成績表の「自動マージ停止」Issue が開いているとき、直近24時間に公開後の差し戻しが2回あったときもマージしない
 # GITHUB_TOKEN でマージしたときは main への push で他のワークフローが動かないので、
@@ -28,6 +30,10 @@ on:
         default: ''
       require_paths:
         description: 'この正規表現（grep -E）に当てはまるファイルを変える PR だけマージする。空ならすべて'
+        type: string
+        default: ''
+      hold_paths:
+        description: 'この正規表現（grep -E）に当てはまるファイルを1つでも変える PR はマージせず、ラベル「自動マージしない」を付ける。空なら使わない'
         type: string
         default: ''
       dispatch:
@@ -67,6 +73,7 @@ jobs:
           SHA: ${{ github.event.workflow_run.head_sha }}
           BRANCH: ${{ github.event.workflow_run.head_branch }}
           REQUIRE_PATHS: ${{ inputs.require_paths }}
+          HOLD_PATHS: ${{ inputs.hold_paths }}
           REQUIRE_CHECKS: ${{ inputs.require_checks }}
           WF_NAME: ${{ github.event.workflow_run.name }}
         run: |
@@ -78,6 +85,12 @@ jobs:
           files=$(gh api --paginate "repos/$REPO/pulls/$pr/files" --jq '.[].filename')
           manual=''
           if echo "$files" | grep -q '^\.github/'; then manual=1; fi
+          if [ -n "$HOLD_PATHS" ] && echo "$files" | grep -qE "$HOLD_PATHS"; then
+            echo "#$pr はレビューを読んでから手でマージするファイルを変えるので、自動ではマージしません"
+            gh api -X POST "repos/$REPO/issues/$pr/labels" -f 'labels[]=自動マージしない' >/dev/null \
+              || echo "::warning::#$pr にラベル「自動マージしない」を付けられませんでした（呼び出し側の permissions に pull-requests: write が要る）"
+            exit 0
+          fi
           if [ -z "$manual" ] && [ -n "$REQUIRE_PATHS" ] && ! echo "$files" | grep -qE "$REQUIRE_PATHS"; then echo "#$pr は対象のファイルを変えないので手でマージ"; exit 0; fi
           while IFS= read -r c; do
             [ -n "$c" ] || continue

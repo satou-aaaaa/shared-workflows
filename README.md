@@ -20,7 +20,7 @@ security-toolkit（非公開）は CI を置かない方針なので部品は呼
 | `site-watch.yml` | 公開ページ（GitHub Pages）が 200 で開けるか見る | `paths` |
 | `lighthouse.yml` | Lighthouse の点数が基準から下がっていないか測る | `baseline`・`margin` |
 | `branch-cleanup.yml` | 使い終わったブランチを消す（作業中・PR が開いているものは消さない） | `keep`・`keep_days`・`dry_run` |
-| `automerge.yml` | 検査が ✅ の PR を squash マージし、公開を起こす | `require_paths`・`dispatch`・`pages_build`・`delete_branch` |
+| `automerge.yml` | 検査が ✅ の PR を squash マージし、公開を起こす | `require_paths`・`hold_paths`・`dispatch`・`pages_build`・`delete_branch` |
 | `dependabot-automerge.yml` | Dependabot の patch/minor 更新の自動マージを予約する | — |
 | `link-check.yml` | HTML のリンク切れを調べる（外部リンクも、3回まで試す） | `files`・`exclude` |
 | `secret-scan.yml` | PR と main への push で、API キーなどの混入を gitleaks で調べる | — |
