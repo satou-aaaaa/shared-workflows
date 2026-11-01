@@ -101,7 +101,8 @@ jobs:
             echo "#$pr はレビューを読んでから手でマージするファイルを変えるので、自動ではマージしません"
             gh api -X POST "repos/$REPO/issues/$pr/labels" -f 'labels[]=自動マージしない' >/dev/null \
               || echo "::warning::#$pr にラベル「自動マージしない」を付けられませんでした（呼び出し側の permissions に pull-requests: write が要る）"
-            exit 0
+            # .github/ も変えるときは、下の「手でマージ」の一言とラベルまで進める（監督の巡回がそのラベルで拾う）。そこで必ず止まる
+            if [ -z "$manual" ]; then exit 0; fi
           fi
           if [ -z "$manual" ] && [ -n "$REQUIRE_PATHS" ] && ! printf '%s\n' "$new_files" | grep -qE -- "$REQUIRE_PATHS"; then echo "#$pr は対象のファイルを変えないので手でマージ"; exit 0; fi
           while IFS= read -r c; do
