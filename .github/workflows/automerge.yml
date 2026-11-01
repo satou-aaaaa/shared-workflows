@@ -91,19 +91,19 @@ jobs:
           # ファイルの一覧は 3,000 件までしか返らない。全部を見られないと .github/ や hold_paths の判定がすり抜けるので、手でマージに回す
           if [ "$(grep -c . <<<"$names")" -lt "$(jq -r .changed_files <<<"$info")" ]; then echo "#$pr は変えたファイルを全部は見られないので、自動ではマージしません（手でマージ）"; exit 0; fi
           manual=''
-          if echo "$files" | grep -q '^\.github/'; then manual=1; fi
+          if printf '%s\n' "$files" | grep -q '^\.github/'; then manual=1; fi
           if [ -n "$HOLD_PATHS" ]; then
             # 正規表現が不正だと grep は 2 を返し「当てはまらない」と同じに見えるので、先に赤にする
             rc=0; printf '' | grep -qE "$HOLD_PATHS" || rc=$?
             if [ "$rc" -eq 2 ]; then echo "::error::hold_paths が正規表現として正しくありません: $HOLD_PATHS"; exit 1; fi
           fi
-          if [ -n "$HOLD_PATHS" ] && echo "$files" | grep -qE "$HOLD_PATHS"; then
+          if [ -n "$HOLD_PATHS" ] && printf '%s\n' "$files" | grep -qE "$HOLD_PATHS"; then
             echo "#$pr はレビューを読んでから手でマージするファイルを変えるので、自動ではマージしません"
             gh api -X POST "repos/$REPO/issues/$pr/labels" -f 'labels[]=自動マージしない' >/dev/null \
               || echo "::warning::#$pr にラベル「自動マージしない」を付けられませんでした（呼び出し側の permissions に pull-requests: write が要る）"
             exit 0
           fi
-          if [ -z "$manual" ] && [ -n "$REQUIRE_PATHS" ] && ! echo "$new_files" | grep -qE "$REQUIRE_PATHS"; then echo "#$pr は対象のファイルを変えないので手でマージ"; exit 0; fi
+          if [ -z "$manual" ] && [ -n "$REQUIRE_PATHS" ] && ! printf '%s\n' "$new_files" | grep -qE "$REQUIRE_PATHS"; then echo "#$pr は対象のファイルを変えないので手でマージ"; exit 0; fi
           while IFS= read -r c; do
             [ -n "$c" ] || continue
             st=$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100" --jq "[.check_runs[] | select(.name == \"$c\")] | sort_by(.started_at) | last | (.conclusion // .status // \"なし\")")
