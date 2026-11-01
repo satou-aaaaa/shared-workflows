@@ -80,6 +80,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
 | 2026-11-01 | 手順の抜け | [うそつき六法の条文の PR が、レビューの指摘を読む前にマージされた](2026-11-01-roppo-merged-before-review.md) | 対策済み |
+| 2026-11-01 | 公開・CI | [carcassonne-research のコツ集の言い切りが、48局のぶれで再び AI content を止めた](2026-11-01-tips-claim-noise-again.md) | 対策済み |
 | 2026-10-31 | 動作 | [うそつき六法の見本で、村人が0人の村ができて止まることがあった](2026-10-31-roppo-empty-village.md) | 対策済み |
 | 2026-10-31 | 表示 | [天秤の書の本番形式模試で、上部の残り時間の表示がスマホで1秒ごとにカクカク動いた](2026-10-31-tenbin-timer-jitter.md) | 対策済み |
 | 2026-10-29 | 検査の見逃し | [カンバンのアプリ版で、並行した2つの PR が同じ版 v57 を取り、片方が main とぶつかって1日半止まった](2026-10-29-kanban-same-version-conflict.md) | 対策済み |
@@ -87,7 +88,6 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 | 2026-10-28 | 見回りの見落とし | [sandbox の Weekly mutation が初回から4週続けて2時間の上限で止まり、だれも気づかなかった](2026-10-28-timeout-cancelled-unwatched.md) | 対策済み |
 | 2026-10-28 | 公開・CI | [carcassonne-research の「CI失敗: AI content」が、直ったあとも2日閉じなかった](2026-10-28-dispatched-run-not-watched.md) | 対策済み |
 | 2026-10-28 | 公開・CI | [carcassonne-research の selfplay が、もう main に入っていた差し替えを PR にしようとして失敗した](2026-10-28-queued-run-empty-pr.md) | 対策済み |
-| 2026-11-01 | 公開・CI | [carcassonne-research のコツ集の言い切りが、48局のぶれで再び AI content を止めた](2026-11-01-tips-claim-noise-again.md) | 対策済み |
 | 2026-10-24 | 公開・CI | [last-tell の main の QA が、進んでいた WebKit の自動対戦（第5章）を「止まった」として ❌ にした](2026-10-24-webkit-fuzz-false-stall.md) | 対策済み |
 | 2026-10-24 | 見回りの見落とし | [last-tell の QA ❌ を直す PR が、検査は緑のまま2日マージされなかった](2026-10-24-github-pr-left-unmerged-again.md) | 対策済み |
 | 2026-10-24 | 見回りの見落とし | [local-kanban の Link check が「リンク0件」で初回から落ち、Issue が3日だれにも直されなかった](2026-10-24-link-check-no-links.md) | 対策済み |

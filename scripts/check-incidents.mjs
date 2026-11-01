@@ -6,6 +6,7 @@
 //   3. 対策が `- [x]`/`- [ ]` と 直す:/防ぐ:/見つける:/弱める: の形で、防ぐ か 見つける が1つ以上ある（直しただけで終わらせない）
 //   4. 済んでいない対策に「担当」と「期限」がある
 //   4b. 済んだ「防ぐ:」「見つける:」に、あとから確かめられる証拠がある（PR・Issue の番号、版、`ファイル`、リンク、この PR、手順の番号）。書いただけの対策を防ぐ
+//   1b. README の「一覧」が日付の新しい順に並んでいる（追記で末尾に足すと見落としやすい）
 //   5. 内部の ID・メールアドレスが無い（公開リポジトリ）
 // 考え方: Google SRE「Postmortem Culture」の action item（種類・担当・追跡）と blameless の書き方。
 import { readFileSync, readdirSync } from 'node:fs';
@@ -24,6 +25,12 @@ const section = (text, title) => {
 const kinds = new Set([...section(readme, '種類').matchAll(/^\| ([^|]+?) \| [^|]+ \|$/gm)].map((m) => m[1]).filter((k) => k !== '種類' && !/^-+$/.test(k)));
 const index = section(readme, '一覧');
 if (!kinds.size) errors.push('incidents/README.md の「種類」の表が読めない');
+{
+  const dates = [...index.matchAll(/^\| (\d{4}-\d{2}-\d{2}) \|/gm)].map((m) => m[1]);
+  dates.forEach((d, i) => {
+    if (i && d > dates[i - 1]) errors.push(`incidents/README.md の「一覧」: ${d} の行が ${dates[i - 1]} より後にある（新しい順に並べる）`);
+  });
+}
 
 const headings = ['## 起きたこと', '## 原因', '## なぜ見つからなかったか', '## 対策'];
 const banned = [
