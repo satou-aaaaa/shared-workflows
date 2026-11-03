@@ -18,6 +18,7 @@
 | ゲーム開発 | 作る→遊んでもらう→目標と比べる→直す、の小さな周回を全工程で回す。核の遊びは作り込む前に確かめる | 同上 |
 | ゲーム開発 | テスターの声はそのまま実装せず、困っている点（症状）を拾い、直し方は作る側が決める | [Playtesting best practices（Wayline）](https://www.wayline.io/blog/game-playtesting-best-practices-implementing-player-suggestions) |
 | ゲーム開発 | 1日1回の問題と練習があるゲームは、途中経過をモードごとに分けて保存し、答えを入れる前に保存した進み具合が画面と同じか確かめる（練習で今日の途中を消さない・古いタブで二重に入れない）。QA で「今日の途中→練習→今日に戻る」と「別のタブで先に進めてから古い画面で答える」を通す | [incidents/2026-11-03-daily-run-overwritten.md](../incidents/2026-11-03-daily-run-overwritten.md) |
+| ゲーム開発 | 「だれでも同じ問題」のゲームは、種から作る乱数を `sort` の比較の中で引かない（比較の回数と順はブラウザごとに違うので、同じ日でも端末で問題が変わる）。候補ごとに1回ずつ引いて選ぶ。QA でソースを検査する | [Array.prototype.sort（MDN）](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/sort) |
 | 学習アプリ | 効果が高いのは「思い出す練習（小テスト）」と「間隔をあけた復習」。読み返し・要約・線引きは効果が低い | [Dunlosky ら 2013 の報告（APS）](https://www.psychologicalscience.org/news/releases/which-study-strategies-make-the-grade.html) |
 | 学習アプリ | 内容の正しさは一次資料（条文・判例）で確かめ、出典を付ける | tenbin のスキル add-ronbun-questions（既に実施） |
 | セキュリティ（防御の資料・道具） | 資料は一次の指針（NIST・IPA・OWASP など）を出典にし、調べた日を書いて定期的に古さを見直す。道具は防御用だけにし、秘密を作らない・混ぜない（push 前に検査） | [NIST SP 800-218 SSDF](https://csrc.nist.gov/pubs/sp/800/218/final)・[OWASP DevSecOps Guideline: Secrets Management](https://owasp.org/www-project-devsecops-guideline/latest/01a-Secrets-Management) |
