@@ -12,6 +12,7 @@
 //   - ci-failure-issue の呼び出しに見回り（schedule）が無い
 //   - scripts/setup.sh の「ひな形の版」が template/scripts/setup.sh より古い（ひな形を直しても写しに届かない。incidents/2026-11-03-setup-false-ready.md）
 //   - scripts/setup.sh が渡す CHROMIUM_PATH を、検査のスクリプト（qa/・tools/ など）が読んでいない
+//   - 依存の置き場（package.json・requirements.txt・pyproject.toml）を Dependabot が見ていない
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -111,6 +112,29 @@ for (const r of REPOS) {
           if (t.includes('CHROMIUM_PATH')) { reads = true; break; }
         }
         if (launches && !reads) flag('setup:chromium-path', 'scripts/setup.sh は CHROMIUM_PATH を渡すが、検査（qa/ など）が CHROMIUM_PATH を読んでいない（chromium.launch の executablePath に process.env.CHROMIUM_PATH を足す）');
+      }
+    }
+
+    // 依存の置き場（package.json・requirements.txt・pyproject.toml）を Dependabot が見ているか
+    // （2026-11-04 tenbin の package.json の Playwright を見ておらず、古いまま残っていた。tenbin #64）
+    {
+      const eco = { 'package.json': 'npm', 'requirements.txt': 'pip', 'pyproject.toml': 'pip' };
+      const manifests = [...paths].filter((q) => eco[q.split('/').pop()] && !/(^|\/)(node_modules|fixtures?|examples?|vendor)\//.test(q));
+      if (manifests.length) {
+        const dep = paths.has('.github/dependabot.yml') ? await src.read('.github/dependabot.yml') : '';
+        // package-ecosystem ごとに directory / directories を拾う（YAML を読む部品は使わない）
+        const watched = new Set();
+        for (const block of dep.split(/^\s*-\s*package-ecosystem:/m).slice(1)) {
+          const e = (block.match(/^\s*["']?([\w-]+)/) || [])[1];
+          const dirs = [...block.matchAll(/^\s*(?:directory:\s*|-\s*)["']?(\/[^"'\s]*)["']?\s*$/gm)].map((m) => m[1].replace(/\/$/, '') || '/');
+          for (const d of dirs) watched.add(`${e}:${d}`);
+        }
+        for (const q of manifests) {
+          const d = '/' + q.split('/').slice(0, -1).join('/');
+          const e = eco[q.split('/').pop()];
+          const dir = d === '/' ? '/' : d;
+          if (!watched.has(`${e}:${dir}`)) flag(`dependabot:${q}`, `${q} の依存を Dependabot が見ていない（.github/dependabot.yml に package-ecosystem: "${e}"・directory: "${dir}" を足す）`);
+        }
       }
     }
 
