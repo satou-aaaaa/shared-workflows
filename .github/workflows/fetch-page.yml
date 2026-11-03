@@ -2,6 +2,9 @@ name: Fetch page
 
 # クラウドのセッションから開けないページ（docs.github.com など、クラウドで名前を引けないサイト）を、GitHub Actions から読む（Claude は使わない）。
 # e-Gov は Actions からも 403（海外のサーバーを拒む）。e-Gov は satou さんの PC で読む（routines/known-limits.md）。
+# 拒まれたサイトは回り込まない（名乗りを偽らない・繰り返し叩かない）。DENIED_HOSTS のサイトは相手に送る前に止め、
+# robots.txt（RFC 9309）で拒まれたページも読まない。403・429 が返ったら再試行せず、known-limits.md に足して別の道を使う。
+# 2026-10-21〜22、e-Gov の 403 で5回続けて失敗した（incidents/2026-11-03-fetch-page-egov-refused.md）。
 # エージェントは workflow_dispatch で url を渡して起こし、ジョブのログ（本文の先頭）か成果物「page」（全文）を読む。
 # 読めるのは下の ALLOWED_HOSTS に当たる https のページだけ（何でも読める踏み台にしないため）。足すときは理由を1行添える。
 # 使い方は routines/known-limits.md。
@@ -17,8 +20,13 @@ permissions:
   contents: read
 
 env:
-  # laws.e-gov.go.jp: Actions からも 403 だが、拒まなくなったか確かめるために残す。go.jp: 官公庁の公式情報（法令の根拠を確かめる）。docs.github.com: クラウドから名前を引けない（2026-10-22）
-  ALLOWED_HOSTS: "laws.e-gov.go.jp .go.jp docs.github.com"
+  # go.jp: 官公庁の公式情報（法令の根拠を確かめる）。docs.github.com: クラウドから名前を引けない（2026-10-22）
+  ALLOWED_HOSTS: ".go.jp docs.github.com"
+  # 拒まれていると分かっているサイト（送らずに止める）。laws.e-gov.go.jp: Actions（海外のサーバー）を 403 で拒む（2026-10-22 known-limits.md）。
+  # 拒まなくなったかは satou さんの PC から確かめ、確かめたらここから外す（Actions から叩いて確かめない）
+  DENIED_HOSTS: "laws.e-gov.go.jp"
+  # 名乗り（ブラウザのふりをしない。誰が何のために読んでいるかと連絡先を書く）
+  USER_AGENT: "satou-aaaaa-fetch-page/1.0 (+https://github.com/satou-aaaaa/shared-workflows/blob/main/.github/workflows/fetch-page.yml)"
 
 jobs:
   fetch:
@@ -34,14 +42,42 @@ jobs:
           import os, sys, urllib.parse
           u = urllib.parse.urlsplit(os.environ["URL"])
           host = (u.hostname or "").lower()
-          ok = u.scheme == "https" and any(host == a or (a.startswith(".") and host.endswith(a)) for a in os.environ["ALLOWED_HOSTS"].split())
-          if not ok:
+          hit = lambda names: any(host == a or (a.startswith(".") and host.endswith(a)) for a in names.split())
+          if hit(os.environ["DENIED_HOSTS"]):
+              print(f"::error::{host} はこの道（GitHub Actions）を拒むと分かっているので送りません。routines/known-limits.md の回り道（satou さんの PC で読む）を使う")
+              sys.exit(1)
+          if not (u.scheme == "https" and hit(os.environ["ALLOWED_HOSTS"])):
               print(f"::error::読めるのは https で ALLOWED_HOSTS に当たるページだけです: {host or '(なし)'}")
               sys.exit(1)
           PY
+          # robots.txt（RFC 9309 https://www.rfc-editor.org/rfc/rfc9309 ）を守る。無いとき（404 など）は 2.3.1.3 のとおり制限なしとして扱う。
+          # サーバーの不調（5xx）は 2.3.1.4 のとおり全部を拒まれたものとして扱う。401・403 は RFC では制限なしとしてよいが、
+          # サイトがこの経路を拒んでいる合図なので、ここでは送らない側に倒す
+          python3 - <<'PY'
+          import os, sys, urllib.error, urllib.parse, urllib.request, urllib.robotparser
+          u = urllib.parse.urlsplit(os.environ["URL"])
+          robots = f"https://{u.netloc}/robots.txt"
+          ua = os.environ["USER_AGENT"]
+          rp = urllib.robotparser.RobotFileParser()
+          try:
+              with urllib.request.urlopen(urllib.request.Request(robots, headers={"User-Agent": ua}), timeout=30) as r:
+                  rp.parse(r.read().decode("utf-8", "replace").splitlines())
+          except urllib.error.HTTPError as e:
+              if e.code in (401, 403) or e.code >= 500:
+                  print(f"::error::{robots} が HTTP {e.code}。このサイトはいま読まない（再試行しない。routines/known-limits.md に足す）")
+                  sys.exit(1)
+              rp.parse([])
+          except Exception as e:
+              print(f"::error::{robots} を読めない（{e}）。読めるか分からないので送らない")
+              sys.exit(1)
+          if not rp.can_fetch(ua, os.environ["URL"]):
+              print(f"::error::robots.txt がこのページを読むのを許していないので読まない: {os.environ['URL']}")
+              sys.exit(1)
+          print("robots.txt: 読んでよい")
+          PY
           mkdir -p page
           # 転送（3xx）は追わない。転送先が ALLOWED_HOSTS の外かもしれないため。転送先を出すので、許すならその URL で起こし直す
-          code=$(curl -sS --max-time 60 --max-filesize 5000000 -A "Mozilla/5.0 (fetch-page; satou-aaaaa/shared-workflows)" -o page/raw -D page/headers -w '%{http_code}' -- "$URL")
+          code=$(curl -sS --max-time 60 --max-filesize 5000000 -A "$USER_AGENT" -o page/raw -D page/headers -w '%{http_code}' -- "$URL")
           echo "HTTP $code"
           if [ "$code" -ge 300 ] && [ "$code" -lt 400 ]; then
             echo "::error::転送されました（HTTP $code）。転送先: $(grep -i '^location:' page/headers | head -1 | cut -d' ' -f2- | tr -d '\r')。その URL が許してよいものなら、それで起こし直してください"
@@ -58,6 +94,9 @@ jobs:
           print("----- 本文（先頭 20000 字。全文は成果物 page の text.txt）-----")
           print(text[:20000])
           PY
+          case "$code" in
+            401|403|429) echo "::error::HTTP $code（サイトに拒まれた）。再試行・名乗りの変更・別の経路での回り込みはしない。routines/known-limits.md に1行足し、DENIED_HOSTS に足す PR を出す"; exit 1 ;;
+          esac
           [ "$code" -lt 300 ] || { echo "::error::HTTP $code"; exit 1; }
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()

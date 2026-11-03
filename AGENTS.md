@@ -6,9 +6,11 @@ satou-aaaaa の各リポジトリが `@main` で呼ぶ CI の共通部品・ひ�
 ## push する前の確認
 
 ```bash
-bash scripts/setup.sh   # 最初に一度。actionlint を .tools/bin に入れる（Node.js 22 と、uv か pipx が要る）
-bash scripts/check.sh   # actionlint・zizmor・立ち上げ手順（bootstrap/）の抜け・手順書の書き方。CI の Lint と同じ
+bash scripts/setup.sh   # 最初に一度。actionlint と shellcheck を .tools/bin に入れ、push の前に check.sh を回すフック（.githooks/pre-push）を登録する（Node.js 22 と、uv か pipx が要る）
+bash scripts/check.sh   # actionlint・zizmor・立ち上げ手順（bootstrap/）の抜け・手順書の書き方・incidents の形。CI の Lint と同じ
 ```
+
+- フックが通らない push は止まる。`--no-verify` で飛ばさず、直してから push する（2026-10-20〜28 の Lint の失敗は全部、手元の check.sh で分かるものだった）。
 
 ## 決まり
 

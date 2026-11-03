@@ -79,6 +79,11 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-11-03 | 公開・CI | [sandbox の Dependabot のセキュリティ更新が、overrides の固定とメジャー違いで6回続けて落ちた](2026-11-03-sandbox-dependabot-override-pinned.md) | 対策済み |
+| 2026-11-03 | 検査の見逃し | [sandbox で新しく公表された脆弱性が、関係のない Dependabot の PR 5本を npm audit で止めた](2026-11-03-sandbox-audit-blocked-unrelated-prs.md) | 対策済み |
+| 2026-11-03 | 公開・CI | [Permission guard が、ラベルを付ける数秒前の「PR を作った」実行で毎回落ちていた](2026-11-03-permission-guard-label-race.md) | 対策済み |
+| 2026-11-03 | 手順の抜け | [shared-workflows の Lint が、手元で分かる指摘で push のあとに落ち続けた](2026-11-03-lint-failed-after-push.md) | 対策済み |
+| 2026-11-03 | 権限・設定 | [Fetch page が、Actions を拒む e-Gov を5回続けて読みに行って落ちた](2026-11-03-fetch-page-egov-refused.md) | 対策済み |
 | 2026-11-03 | 検査の見逃し | [準備の1コマンド（setup.sh）が、使えない状態でも「✓ 準備できた」と出していた](2026-11-03-setup-false-ready.md) | 対策中 |
 | 2026-11-02 | 公開・CI | [carcassonne-research の selfplay が、採用の知らせの本文が長すぎて失敗した](2026-11-02-selfplay-issue-body-too-long.md) | 対策済み |
 | 2026-11-01 | 公開・CI | [Pages の無いリポジトリで、Site watch が gh api の 404 の本文を URL にして落ちた](2026-11-01-pages-404-body-as-url.md) | 対策済み |

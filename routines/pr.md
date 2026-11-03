@@ -27,6 +27,8 @@ satou-aaaaa の各リポジトリで、PR を作る・CI を通す・コンフ�
 
 - 下書き（draft）で作る。リポジトリに PR テンプレート（`.github/pull_request_template.md`）があればその見出しに沿って書き、無ければ Before / After / How の順に短く書く。
 - 本文の先頭に決まりの帰属行、末尾に Claude Code の署名行を付ける。コミットメッセージは日本語で簡潔に（sandbox など既存の文体に合わせる）。
+- `routines/autonomy.md`・`common.md`・`common-detail.md` を変える PR は、satou さんの「はい」があるときだけ作り、作ったらすぐラベル「satou承認」を付ける（gh は `gh pr create --draft --label satou承認`、Claude は create_pull_request の直後に issue_write で `labels`）。
+  Permission guard は作ってから3分ラベルを待ち、付かなければ落ちる。「はい」が無いなら、その3ファイルの変更を PR から外す（2026-10-31 #98 は途中で外した）。
 - 作ったら subscribe_pr_activity で見張る。CI の失敗とレビューには自分で対応する（見張りは待つだけで届くので、ポーリングしない）。
 - 着手前にベストプラクティスを調べたなら、要点と出典を本文に1〜3行（common.md）。
 

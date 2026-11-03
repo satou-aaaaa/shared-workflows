@@ -24,11 +24,13 @@ jobs:
       # 手元と同じ準備の1コマンドで actionlint を入れる（版は scripts/setup.sh にだけ書く。準備の手順が古びたらここで気づく）
       - name: 準備（scripts/setup.sh）
         run: bash scripts/setup.sh
+      # shellcheck も setup.sh が入れた版を使う（手元の scripts/check.sh と同じ版。機械に入っている版とずれて手元だけ通らないように）
       - name: actionlint
         run: |
           set -euo pipefail
-          .tools/bin/actionlint -color .github/workflows/*.yml
-          (cd template && ../.tools/bin/actionlint -color .github/workflows/*.yml)
+          sc="$PWD/.tools/bin/shellcheck"
+          .tools/bin/actionlint -color -shellcheck "$sc" .github/workflows/*.yml
+          (cd template && ../.tools/bin/actionlint -color -shellcheck "$sc" .github/workflows/*.yml)
 
   # 立ち上げ直しの手順書（bootstrap/）に、ルーティンの手順書・共通部品の抜けや内部 ID の混入が無いかを調べる。
   bootstrap:
