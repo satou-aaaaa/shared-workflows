@@ -79,10 +79,11 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-11-04 | 公開・CI | [carcassonne-research の selfplay が1週間で3回、本番でしか動かない手順で落ちた](2026-11-04-selfplay-third-failure-in-week.md) | 対策済み |
 | 2026-11-04 | 検査の見逃し | [sandbox の E2E が、下書きの名前が固定のため、やり直すと必ず落ちていた](2026-11-04-sandbox-e2e-fixed-draft-name.md) | 対策済み |
 | 2026-11-04 | 手順の抜け | [tenbin の Playwright を Dependabot が見ておらず、古いまま残っていた](2026-11-04-dependabot-missed-manifest.md) | 対策済み |
 | 2026-11-04 | 検査の見逃し | [準備の1コマンド（setup.sh）が、Node の版が足りないとき何も言わずに止まっていた](2026-11-04-setup-nvm-silent-stop.md) | 対策中 |
-| 2026-11-03 | 公開・CI | [carcassonne-research の自動の CI が2週間で73回赤になった](2026-11-03-carcassonne-auto-pr-ci-noise.md) | 対策中 |
+| 2026-11-03 | 公開・CI | [carcassonne-research の自動の CI が2週間で73回赤になった](2026-11-03-carcassonne-auto-pr-ci-noise.md) | 対策済み |
 | 2026-11-03 | 公開・CI | [last-tell の QA が2週間で33回失敗し、うち約13回が検査の揺れだった](2026-11-03-last-tell-ci-install-and-noise.md) | 対策済み |
 | 2026-11-03 | 公開・CI | [sandbox の Dependabot のセキュリティ更新が、overrides の固定とメジャー違いで6回続けて落ちた](2026-11-03-sandbox-dependabot-override-pinned.md) | 対策済み |
 | 2026-11-03 | 検査の見逃し | [sandbox で新しく公表された脆弱性が、関係のない Dependabot の PR 5本を npm audit で止めた](2026-11-03-sandbox-audit-blocked-unrelated-prs.md) | 対策済み |
