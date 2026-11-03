@@ -14,7 +14,7 @@ permissions:
   issues: write
 
 env:
-  REPOS: sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban articles carcassonne-research usotsuki-roppo wagamama-burger shared-workflows
+  REPOS: sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban articles carcassonne-research usotsuki-roppo wagamama-burger kabu-news shared-workflows
 
 jobs:
   summary:
