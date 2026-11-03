@@ -69,3 +69,6 @@ jobs:
           node scripts/check-incidents.mjs
           node scripts/check-capture.mjs
           node --check scripts/next-actions.mjs
+      # ひな形の準備スクリプトが「準備できた」と言うとき本当に使えるか（壊れた依存・ブラウザ無し・nvm）を作り物の環境で確かめる
+      - name: setup template
+        run: bash scripts/check-setup-template.sh
