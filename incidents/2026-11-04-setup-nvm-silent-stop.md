@@ -22,4 +22,5 @@
 - [x] 防ぐ: `scripts/check-setup-template.sh` の作り物の nvm.sh に、本物と同じ「`--no-use` なしで読むと .nvmrc があれば 3 を返す」動きを足した。直す前のひな形ではこの検査が落ちることを確かめた（この PR）
 - [x] 直す: 写しを版 3 にした（sandbox・last-tell・tenbin・naitei-no-michi・articles・carcassonne-research・security-toolkit・local-kanban。それぞれの PR）
 - [x] 見つける: `scripts/drift-check.mjs` が版 3 より古い写しを週次まとめの「ひな形からのずれ」に出す（版の行を上げたので、版 2 の写しも出る）。大きいリポジトリで ENOBUFS で落ちていたのも直した（この PR）
+- [x] 見つける: 同じ作業で、dungeon-boardgame の検査が準備の渡す `CHROMIUM_PATH` を読まず（`PW_CHROMIUM` だけ）、「✓ 準備できた」のあと検査がブラウザを見つけられないことも分かった（dungeon-boardgame #18 で直した）。`scripts/drift-check.mjs` が「setup.sh が CHROMIUM_PATH を渡すのに、検査のスクリプトが読んでいない」を出す。直す前の run.mjs で出て、直したあと出ないことを確かめた（この PR）
 - [ ] 直す: ゲームのリポジトリ（usotsuki-roppo・wagamama-burger・kabu-news・batsu-doko・kasane-zome・rosen-hitofude・seiza-tsunagi）の写しを版 3 にする。週次まとめの「ひな形からのずれ」に出たものから、各ゲームの担当が直す（担当: 各ゲームの担当スレッド、期限: 2026-11-17）

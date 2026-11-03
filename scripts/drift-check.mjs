@@ -11,6 +11,7 @@
 //   - 共通部品の呼び出しが @main 以外を指している・もう無い部品を呼んでいる
 //   - ci-failure-issue の呼び出しに見回り（schedule）が無い
 //   - scripts/setup.sh の「ひな形の版」が template/scripts/setup.sh より古い（ひな形を直しても写しに届かない。incidents/2026-11-03-setup-false-ready.md）
+//   - scripts/setup.sh が渡す CHROMIUM_PATH を、検査のスクリプト（qa/・tools/ など）が読んでいない
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -96,8 +97,21 @@ for (const r of REPOS) {
     }
 
     if (paths.has('scripts/setup.sh')) {
-      const v = setupVer(await src.read('scripts/setup.sh'));
+      const setup = await src.read('scripts/setup.sh');
+      const v = setupVer(setup);
       if (v < SETUP_VER) flag('setup:version', `scripts/setup.sh がひな形の版 ${v}（今は ${SETUP_VER}。template/scripts/setup.sh の版の行の下にある変わったところを写し、版の行も上げる）`);
+      // 準備が渡すブラウザの場所（CHROMIUM_PATH）を、検査が読んでいるか。読んでいないと「✓ 準備できた」のあと検査がブラウザを見つけられない
+      // （2026-11-04 dungeon-boardgame の qa/run.mjs は PW_CHROMIUM しか読んでいなかった。incidents/2026-11-04-setup-nvm-silent-stop.md）
+      if (/session_env "CHROMIUM_PATH=/.test(setup)) {
+        const cand = [...paths].filter((q) => /^(qa|tools|tests?|e2e|scripts)\/(?:[^/]+\/)?[^/]+\.[cm]?js$/.test(q) && !q.includes('node_modules')).slice(0, 60);
+        let launches = false; let reads = false;
+        for (const q of cand) {
+          const t = await src.read(q);
+          if (/chromium\.launch|chromium\.executablePath|CHROME_PATH/.test(t)) launches = true;
+          if (t.includes('CHROMIUM_PATH')) { reads = true; break; }
+        }
+        if (launches && !reads) flag('setup:chromium-path', 'scripts/setup.sh は CHROMIUM_PATH を渡すが、検査（qa/ など）が CHROMIUM_PATH を読んでいない（chromium.launch の executablePath に process.env.CHROMIUM_PATH を足す）');
+      }
     }
 
     const called = new Set();
