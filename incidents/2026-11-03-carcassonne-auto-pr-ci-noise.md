@@ -25,4 +25,4 @@
 - [x] 防ぐ: 言い切りが外れたら止めずにコツ集を前の版で残し、`data/tips_blocked.json` と Issue で直しを頼む（carcassonne-research #121）
 - [x] 防ぐ: gh の 5xx は `scripts/gh_retry.sh` でやり直す。Issue は gh_issue_create_once で2件にしない（carcassonne-research #121）
 - [x] 見つける: にせものの gh で merge_via_pr.sh・gh_retry.sh を試しに動かすテストと、ワークフローの gh が ghr を通るかの検査（`tests/test_merge_via_pr.py`・`tests/test_workflows.py`、carcassonne-research #121）
-- [ ] 見つける: actionlint を CI か check.py に入れる（担当: carcassonne-research のスレッド、期限: 2026-11-17）
+- [x] 見つける: actionlint を CI に入れた（test.yml の actionlint ジョブ、carcassonne-research #126）
