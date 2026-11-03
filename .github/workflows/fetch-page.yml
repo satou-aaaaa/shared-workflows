@@ -98,7 +98,7 @@ jobs:
             401|403|429) echo "::error::HTTP $code（サイトに拒まれた）。再試行・名乗りの変更・別の経路での回り込みはしない。routines/known-limits.md に1行足し、DENIED_HOSTS に足す PR を出す"; exit 1 ;;
           esac
           [ "$code" -lt 300 ] || { echo "::error::HTTP $code"; exit 1; }
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: page
