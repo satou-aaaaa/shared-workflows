@@ -61,7 +61,8 @@ async function source(r) {
     const dir = join(LOCAL_ROOT, r);
     if (!existsSync(join(dir, '.git'))) return null;
     // 追跡していても作業ツリーで消したものは「無い」と数える
-    const list = execFileSync('git', ['-C', dir, 'ls-files'], { encoding: 'utf8' }).split('\n').filter((p) => p && existsSync(join(dir, p)));
+    // 大きいリポジトリ（last-tell-godot は数万ファイル）は既定の 1MB を超えて ENOBUFS で落ちていた（2026-11-04）
+    const list = execFileSync('git', ['-C', dir, 'ls-files'], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 }).split('\n').filter((p) => p && existsSync(join(dir, p)));
     return { paths: new Set(list), read: async (p) => readFileSync(join(dir, p), 'utf8') };
   }
   const repo = await api(`repos/${OWNER}/${r}`);

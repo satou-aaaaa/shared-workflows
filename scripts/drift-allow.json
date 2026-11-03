@@ -1,3 +1,30 @@
 {
-  "_書き方": [{ "id": "file:scripts/setup.sh", "reason": "例: このリポジトリは入れるものが無い（AGENTS.md の準備の節に書いてある）" }]
+  "_書き方": [
+    {
+      "id": "file:scripts/setup.sh",
+      "reason": "例: このリポジトリは入れるものが無い（AGENTS.md の準備の節に書いてある）"
+    }
+  ],
+  "security-toolkit": [
+    {
+      "id": "call:ci-failure-issue",
+      "reason": "CI を置かない非公開リポジトリ（Actions の無料枠を他と分け合うため。routines/onboarding.md「2026-10-28 security-toolkit」）。秘密の検査は手元の run_tests.sh の gitleaks"
+    },
+    {
+      "id": "call:secret-scan",
+      "reason": "CI を置かない非公開リポジトリ（Actions の無料枠を他と分け合うため。routines/onboarding.md「2026-10-28 security-toolkit」）。秘密の検査は手元の run_tests.sh の gitleaks"
+    },
+    {
+      "id": "call:branch-cleanup",
+      "reason": "CI を置かない非公開リポジトリ（Actions の無料枠を他と分け合うため。routines/onboarding.md「2026-10-28 security-toolkit」）。秘密の検査は手元の run_tests.sh の gitleaks"
+    },
+    {
+      "id": "call:labels",
+      "reason": "CI を置かない非公開リポジトリ（Actions の無料枠を他と分け合うため。routines/onboarding.md「2026-10-28 security-toolkit」）。秘密の検査は手元の run_tests.sh の gitleaks"
+    },
+    {
+      "id": "call:setup-check",
+      "reason": "CI を置かない非公開リポジトリ（Actions の無料枠を他と分け合うため。routines/onboarding.md「2026-10-28 security-toolkit」）。秘密の検査は手元の run_tests.sh の gitleaks"
+    }
+  ]
 }
