@@ -85,6 +85,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 | 2026-11-03 | 公開・CI | [carcassonne-research の自動の CI が2週間で73回赤になった](2026-11-03-carcassonne-auto-pr-ci-noise.md) | 対策中 |
 | 2026-11-03 | 公開・CI | [last-tell の QA が2週間で33回失敗し、うち約13回が検査の揺れだった](2026-11-03-last-tell-ci-install-and-noise.md) | 対策済み |
 | 2026-11-03 | 公開・CI | [sandbox の Dependabot のセキュリティ更新が、overrides の固定とメジャー違いで6回続けて落ちた](2026-11-03-sandbox-dependabot-override-pinned.md) | 対策済み |
+| 2026-11-03 | 動作 | [新しいゲームで、練習を始めると今日の途中経過が消え、古いタブで答えを二重に入れられた](2026-11-03-daily-run-overwritten.md) | 対策済み |
 | 2026-11-03 | 検査の見逃し | [sandbox で新しく公表された脆弱性が、関係のない Dependabot の PR 5本を npm audit で止めた](2026-11-03-sandbox-audit-blocked-unrelated-prs.md) | 対策済み |
 | 2026-11-03 | 公開・CI | [Permission guard が、ラベルを付ける数秒前の「PR を作った」実行で毎回落ちていた](2026-11-03-permission-guard-label-race.md) | 対策済み |
 | 2026-11-03 | 手順の抜け | [shared-workflows の Lint が、手元で分かる指摘で push のあとに落ち続けた](2026-11-03-lint-failed-after-push.md) | 対策済み |

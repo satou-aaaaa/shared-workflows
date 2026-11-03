@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 
 const OWNER = process.env.OWNER || 'satou-aaaaa';
 // weekly-summary.yml の REPOS と同じ並び（shared-workflows 自身は部品の置き場なので見ない）
-const REPOS = (process.env.REPOS || 'sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban articles carcassonne-research usotsuki-roppo wagamama-burger kabu-news batsu-doko')
+const REPOS = (process.env.REPOS || 'sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban articles carcassonne-research usotsuki-roppo wagamama-burger kabu-news batsu-doko kasane-zome rosen-hitofude seiza-tsunagi')
   .split(/\s+/).filter((r) => r && r !== 'shared-workflows');
 const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || '';
 const here = dirname(fileURLToPath(import.meta.url));
