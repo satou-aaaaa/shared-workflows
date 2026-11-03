@@ -10,25 +10,34 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   guard:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
+      # ラベルはイベントの中身ではなく、いまの PR から読む。作った直後・push の直後は、ラベルを付けるまで少し待つ。
+      # PR を作る API はラベルを一緒に付けられず、作ってから数秒〜1分あとに付く。前は作ったときの実行が毎回落ちていた
+      # （2026-10-21〜11-01 の6件のうち5件。どれも satou承認 は数秒〜71秒後に付いていた。incidents/2026-11-03-permission-guard-label-race.md）。
+      # 待っても付かなければ、今までどおり落とす（関門は弱めない）。
       - name: 権限の表を変えていればラベルを確かめる
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           PR: ${{ github.event.pull_request.number }}
-          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          ACTION: ${{ github.event.action }}
         run: |
           set -euo pipefail
           files=$(gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[].filename')
           if ! grep -qxE 'routines/(autonomy|common|common-detail)\.md' <<<"$files"; then echo "権限の表は変えていません"; exit 0; fi
-          if jq -e 'index("satou承認")' <<<"$LABELS" >/dev/null; then
-            echo "routines/autonomy.md か common.md・common-detail.md を変えています。ラベル「satou承認」があるので通します" | tee -a "$GITHUB_STEP_SUMMARY"
-          else
-            echo "::error::routines/autonomy.md か common.md・common-detail.md を変える PR には、satou さんの「はい」をもらってからラベル「satou承認」を付けてください（common.md「権限の表を変えるとき」）"
-            exit 1
-          fi
+          case "$ACTION" in opened|reopened|synchronize) tries=18 ;; *) tries=1 ;; esac
+          for i in $(seq "$tries"); do
+            if gh api "repos/$REPO/issues/$PR/labels" --jq '.[].name' | grep -qx 'satou承認'; then
+              echo "routines/autonomy.md か common.md・common-detail.md を変えています。ラベル「satou承認」があるので通します" | tee -a "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            if [ "$i" -lt "$tries" ]; then echo "ラベル「satou承認」を待っています（$i/$tries）"; sleep 10; fi
+          done
+          echo "::error::routines/autonomy.md か common.md・common-detail.md を変える PR には、satou さんの「はい」をもらってからラベル「satou承認」を付けてください（common.md「権限の表を変えるとき」・pr.md「2. PR を作る」）"
+          exit 1

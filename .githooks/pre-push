@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# push の前に CI の Lint と同じ確認（scripts/check.sh）を回す。scripts/setup.sh が git config core.hooksPath .githooks で登録する。
+# 2026-10-20〜28 の Lint の失敗5件は、どれも push の前に scripts/check.sh を回していれば手元で分かったもの（incidents/2026-11-03-lint-failed-after-push.md）。
+# main への push・タグだけの push でも回す（ここが壊れると全リポジトリの CI が止まるため）。
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+echo "pre-push: bash scripts/check.sh を回す（CI の Lint と同じ）"
+if ! bash scripts/check.sh; then
+  echo "✗ pre-push: 確認が通らないので push を止めた。直してからもう一度 push する（道具が無いときは bash scripts/setup.sh）" >&2
+  exit 1
+fi
