@@ -22,6 +22,7 @@
 | [supervisor.md](supervisor.md) | 監督エージェントの巡回 | 見回りの中で1日2回（8:07・20:07 JST） |
 | [repo-patrol.md](repo-patrol.md) | 全リポジトリ・全プロジェクト巡回と改善提案 | 平日 22:38 JST |
 | [routine-review.md](routine-review.md) | ルーティンとスキルの定期見直し（エージェント利用のベストプラクティスの調べ直しと、各プロジェクトの進め方の見直しを含む） | 週1（土曜 9:53 JST） |
+| [game-feedback.md](game-feedback.md) | ゲームの感想を読んで直す（Issue フォーム「感想」。感想が無い週も1つ直す） | 週1（日曜 10:41 JST） |
 | [ci-speedup.md](ci-speedup.md) | CI の時間短縮（集計は CI time report が木曜 05:29 JST に Issue「CI時間」へ） | 週1（木曜 10:26 JST） |
 | [onboarding.md](onboarding.md) | 新しいリポジトリ・プロジェクトの受け入れ（巡回の新規検出や satou さんの連絡から呼ぶ） | 増えたとき |
 | [dungeon-issue.md](dungeon-issue.md) | ダンジョンボドゲ issue 自動対応 | 毎朝 9:54 JST |

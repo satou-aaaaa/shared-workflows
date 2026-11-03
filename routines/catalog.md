@@ -16,6 +16,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | 全リポジトリ・全プロジェクト巡回 | [repo-patrol.md](repo-patrol.md) | 平日 22:38 JST |
 | ルーティンとスキルの定期見直し | [routine-review.md](routine-review.md) | 土曜 9:53 JST |
 | CI の時間短縮 | [ci-speedup.md](ci-speedup.md) | 木曜 10:26 JST |
+| ゲームの感想を読んで直す | [game-feedback.md](game-feedback.md) | 日曜 10:41 JST |
 | ダンジョンボドゲ issue 自動対応 | [dungeon-issue.md](dungeon-issue.md) | 毎朝 9:54 JST |
 | LAST TELL ソースの控え | [last-tell-backup.md](last-tell-backup.md) | 日曜 8:52 JST |
 | sandbox Issue/PR定期対応（kensetsu-kyoka-toolkit） | [sandbox-issue-pr.md](sandbox-issue-pr.md) | 月曜 4:35 JST |
