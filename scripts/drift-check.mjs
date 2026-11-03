@@ -11,6 +11,8 @@
 //   - 共通部品の呼び出しが @main 以外を指している・もう無い部品を呼んでいる
 //   - ci-failure-issue の呼び出しに見回り（schedule）が無い
 //   - scripts/setup.sh の「ひな形の版」が template/scripts/setup.sh より古い（ひな形を直しても写しに届かない。incidents/2026-11-03-setup-false-ready.md）
+//   - scripts/setup.sh が渡す CHROMIUM_PATH を、検査のスクリプト（qa/・tools/ など）が読んでいない
+//   - 依存の置き場（package.json・requirements.txt・pyproject.toml）を Dependabot が見ていない
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -61,7 +63,8 @@ async function source(r) {
     const dir = join(LOCAL_ROOT, r);
     if (!existsSync(join(dir, '.git'))) return null;
     // 追跡していても作業ツリーで消したものは「無い」と数える
-    const list = execFileSync('git', ['-C', dir, 'ls-files'], { encoding: 'utf8' }).split('\n').filter((p) => p && existsSync(join(dir, p)));
+    // 大きいリポジトリ（last-tell-godot は数万ファイル）は既定の 1MB を超えて ENOBUFS で落ちていた（2026-11-04）
+    const list = execFileSync('git', ['-C', dir, 'ls-files'], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 }).split('\n').filter((p) => p && existsSync(join(dir, p)));
     return { paths: new Set(list), read: async (p) => readFileSync(join(dir, p), 'utf8') };
   }
   const repo = await api(`repos/${OWNER}/${r}`);
@@ -95,8 +98,44 @@ for (const r of REPOS) {
     }
 
     if (paths.has('scripts/setup.sh')) {
-      const v = setupVer(await src.read('scripts/setup.sh'));
+      const setup = await src.read('scripts/setup.sh');
+      const v = setupVer(setup);
       if (v < SETUP_VER) flag('setup:version', `scripts/setup.sh がひな形の版 ${v}（今は ${SETUP_VER}。template/scripts/setup.sh の版の行の下にある変わったところを写し、版の行も上げる）`);
+      // 準備が渡すブラウザの場所（CHROMIUM_PATH）を、検査が読んでいるか。読んでいないと「✓ 準備できた」のあと検査がブラウザを見つけられない
+      // （2026-11-04 dungeon-boardgame の qa/run.mjs は PW_CHROMIUM しか読んでいなかった。incidents/2026-11-04-setup-nvm-silent-stop.md）
+      if (/session_env "CHROMIUM_PATH=/.test(setup)) {
+        const cand = [...paths].filter((q) => /^(qa|tools|tests?|e2e|scripts)\/(?:[^/]+\/)?[^/]+\.[cm]?js$/.test(q) && !q.includes('node_modules')).slice(0, 60);
+        let launches = false; let reads = false;
+        for (const q of cand) {
+          const t = await src.read(q);
+          if (/chromium\.launch|chromium\.executablePath|CHROME_PATH/.test(t)) launches = true;
+          if (t.includes('CHROMIUM_PATH')) { reads = true; break; }
+        }
+        if (launches && !reads) flag('setup:chromium-path', 'scripts/setup.sh は CHROMIUM_PATH を渡すが、検査（qa/ など）が CHROMIUM_PATH を読んでいない（chromium.launch の executablePath に process.env.CHROMIUM_PATH を足す）');
+      }
+    }
+
+    // 依存の置き場（package.json・requirements.txt・pyproject.toml）を Dependabot が見ているか
+    // （2026-11-04 tenbin の package.json の Playwright を見ておらず、古いまま残っていた。tenbin #64）
+    {
+      const eco = { 'package.json': 'npm', 'requirements.txt': 'pip', 'pyproject.toml': 'pip' };
+      const manifests = [...paths].filter((q) => eco[q.split('/').pop()] && !/(^|\/)(node_modules|fixtures?|examples?|vendor)\//.test(q));
+      if (manifests.length) {
+        const dep = paths.has('.github/dependabot.yml') ? await src.read('.github/dependabot.yml') : '';
+        // package-ecosystem ごとに directory / directories を拾う（YAML を読む部品は使わない）
+        const watched = new Set();
+        for (const block of dep.split(/^\s*-\s*package-ecosystem:/m).slice(1)) {
+          const e = (block.match(/^\s*["']?([\w-]+)/) || [])[1];
+          const dirs = [...block.matchAll(/^\s*(?:directory:\s*|-\s*)["']?(\/[^"'\s]*)["']?\s*$/gm)].map((m) => m[1].replace(/\/$/, '') || '/');
+          for (const d of dirs) watched.add(`${e}:${d}`);
+        }
+        for (const q of manifests) {
+          const d = '/' + q.split('/').slice(0, -1).join('/');
+          const e = eco[q.split('/').pop()];
+          const dir = d === '/' ? '/' : d;
+          if (!watched.has(`${e}:${dir}`)) flag(`dependabot:${q}`, `${q} の依存を Dependabot が見ていない（.github/dependabot.yml に package-ecosystem: "${e}"・directory: "${dir}" を足す）`);
+        }
+      }
     }
 
     const called = new Set();

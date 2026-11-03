@@ -68,7 +68,9 @@ real=$(dirname "$(command -v node)")
 mkdir -p "$tmp/old" "$tmp/nvm"
 printf '#!/bin/sh\necho %s\n' "$((want - 1))" > "$tmp/old/node"; chmod +x "$tmp/old/node"
 # shellcheck disable=SC2016  # $PATH は nvm.sh の中で広げる
-printf 'nvm() { PATH="%s:$PATH"; }\n' "$real" > "$tmp/nvm/nvm.sh"
+# 本物の nvm.sh は、--no-use なしで読むと .nvmrc の版に切り替えようとし、入っていなければ 3 を返す（set -e だと黙って止まる。2026-11-04）
+{ echo 'case " $* " in *" --no-use "*) ;; *) [ -f .nvmrc ] && return 3 ;; esac'
+  printf 'nvm() { PATH="%s:$PATH"; }\n' "$real"; } > "$tmp/nvm/nvm.sh"
 if run CHROMIUM_PATH="$tmp/bin/chromium" NVM_DIR="$tmp/nvm" PATH="$tmp/old:$PATH" && grep -q "nvm use $want" "$tmp/out" && ! grep -q '^✓' "$tmp/out"; then
   ok "nvm で Node を入れたら nvm use を出し ✓ を出さない"
 else ng "6. nvm で入れた Node をこのシェルで使う案内が無い"; fi
