@@ -10,6 +10,7 @@
 //   - 全リポジトリで呼ぶはずの共通部品（ci-failure-issue・secret-scan・branch-cleanup・labels・setup-check）
 //   - 共通部品の呼び出しが @main 以外を指している・もう無い部品を呼んでいる
 //   - ci-failure-issue の呼び出しに見回り（schedule）が無い
+//   - scripts/setup.sh の「ひな形の版」が template/scripts/setup.sh より古い（ひな形を直しても写しに届かない。incidents/2026-11-03-setup-false-ready.md）
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -18,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 
 const OWNER = process.env.OWNER || 'satou-aaaaa';
 // weekly-summary.yml の REPOS と同じ並び（shared-workflows 自身は部品の置き場なので見ない）
-const REPOS = (process.env.REPOS || 'sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban articles carcassonne-research usotsuki-roppo')
+const REPOS = (process.env.REPOS || 'sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban articles carcassonne-research usotsuki-roppo wagamama-burger kabu-news')
   .split(/\s+/).filter((r) => r && r !== 'shared-workflows');
 const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || '';
 const here = dirname(fileURLToPath(import.meta.url));
@@ -32,6 +33,10 @@ const wfDir = join(here, '..', '.github', 'workflows');
 const reusable = new Set(existsSync(wfDir)
   ? readdirSync(wfDir).filter((f) => /\.ya?ml$/.test(f) && /^\s*workflow_call:/m.test(readFileSync(join(wfDir, f), 'utf8'))).map((f) => f.replace(/\.ya?ml$/, ''))
   : []);
+
+// 準備スクリプトのひな形の版（写しの「ひな形の版: N」と比べる）
+const setupVer = (text) => Number((text.match(/ひな形の版:\s*(\d+)/) || [])[1] || 1);
+const SETUP_VER = setupVer(readFileSync(join(here, '..', 'template', 'scripts', 'setup.sh'), 'utf8'));
 
 const allowPath = join(here, 'drift-allow.json');
 const allow = existsSync(allowPath) ? JSON.parse(readFileSync(allowPath, 'utf8')) : {};
@@ -87,6 +92,11 @@ for (const r of REPOS) {
     if (paths.has('CLAUDE.md')) {
       const claude = await src.read('CLAUDE.md');
       if (!/^@AGENTS\.md\s*$/m.test(claude)) flag('claude:import', 'CLAUDE.md が @AGENTS.md を読み込んでいない（AGENTS.md と二重に書いている）');
+    }
+
+    if (paths.has('scripts/setup.sh')) {
+      const v = setupVer(await src.read('scripts/setup.sh'));
+      if (v < SETUP_VER) flag('setup:version', `scripts/setup.sh がひな形の版 ${v}（今は ${SETUP_VER}。template/scripts/setup.sh の版の行の下にある変わったところを写し、版の行も上げる）`);
     }
 
     const called = new Set();
