@@ -49,6 +49,7 @@
 | kasane-zome（かさね染め） | ゲーム（色あわせ） | kasane-zome `AGENTS.md`・`README.md` | 今日の5色（全員同じ）・上級（見本を覚えて染める）・色帳・QA（お手本の計算し直し・3000日分の組み方） | 色は実在の伝統色の色見本から。染めの計算は QA が別の式で突き合わせる。お笑いは入れない |
 | rosen-hitofude（路線図ひと筆） | パズルゲーム | rosen-hitofude `AGENTS.md`・`README.md` | 今日の3路線（全員同じ）・特急・乗車スタンプ・QA（答えが1つ・線路が交わらないを各大きさで何百回） | 道が1つだけであることを数え上げで確かめてから出す。駅の間はスマホ幅でも40px以上 |
 | seiza-tsunagi（星座つなぎ） | 学習ゲーム（星） | seiza-tsunagi `AGENTS.md`・`README.md` | 今夜見ごろの3星座（全員同じ）・上級（見本なし）・星座帳・QA（星の向き・3年分の選び方） | 星の位置は Yale 輝星表から作り、東西を取り違えない（QA がベテルギウスとリゲルの位置で見る） |
+| mannaka-kanji（まんなか漢字） | 学習ゲーム（漢字） | mannaka-kanji `AGENTS.md`・`README.md` | 今日の3問（全員同じ）・上級（札12枚・ヒントなし）・漢字帳・QA（答えが1つ・難しさの並び） | 熟語は JMdict（CC BY-SA）から作り、出典と使い方の決まりを README に書く |
 | tenbin（天秤の書） | 学習アプリ | tenbin `CLAUDE.md`、スキル add-ronbun-questions・law-app-ui-check | 間隔反復の復習ドリル・一次資料での確認 | 問題を足すときに「思い出させる形（答える前に考えさせる）」になっているかを見る点に加える |
 | carcassonne-research | 研究（ゲームAI） | carcassonne-research `CLAUDE.md`・`.claude/skills/steward/`・`docs/EXPERIMENTS.md` | シードを決めた先後入替の対戦・信頼区間・再現コマンド | 強さの判定に SPRT を使い、対戦数を減らしつつ誤りの率をそろえる |
 | sandbox（許可申請ツール） | 業務ツール | sandbox `CLAUDE.md`・`docs/DEVELOPMENT_GUIDE.md`・`docs/routines/` | 小さな PR・多層の検査・運用エージェント | ダミー案件で端から端まで通す確認を定期の作業に入れ、詰まった所を Issue にする |
