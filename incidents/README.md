@@ -79,6 +79,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-11-04 | 手順の抜け | [新しいゲーム3本で、main の QA が初めから赤になり「CI失敗」の Issue が開いた](2026-11-04-new-repo-main-qa-without-qa-dir.md) | 対策済み |
 | 2026-11-04 | 検査の見逃し | [sandbox の E2E が、下書きの名前が固定のため、やり直すと必ず落ちていた](2026-11-04-sandbox-e2e-fixed-draft-name.md) | 対策済み |
 | 2026-11-04 | 手順の抜け | [tenbin の Playwright を Dependabot が見ておらず、古いまま残っていた](2026-11-04-dependabot-missed-manifest.md) | 対策済み |
 | 2026-11-04 | 検査の見逃し | [準備の1コマンド（setup.sh）が、Node の版が足りないとき何も言わずに止まっていた](2026-11-04-setup-nvm-silent-stop.md) | 対策中 |

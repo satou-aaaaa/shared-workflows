@@ -18,6 +18,7 @@
 ## 2. リポジトリの初期設定（PR で入れる）
 
 `add_repo`（access: push、ずっと使うなら save_to_project: true）→ clone して、似たリポジトリ（静的ゲームなら dungeon-boardgame）の呼び出し側を手本にする。
+main に直接置くはじめの commit（リポジトリを作るときの1つ目）は README だけにする。`.github/workflows/` は、それが呼ぶ `qa/` などのスクリプトと同じ PR で入れる（workflows だけ先に main へ入れると main の QA が初めから赤になる。2026-11-04 `incidents/2026-11-04-new-repo-main-qa-without-qa-dir.md`）。
 
 1. `template/.github/workflows/` をコピーし、設定値だけを合わせる。
    - QA: リポジトリにある自動プレイ・テストのスクリプトを `qa/` に置き、CI で回す（回数・乱数の種・`qa-report/report.md` の書き出し・失敗で終了コード 1）。ブラウザを使うなら Playwright の版を `qa/package.json` で固定し、`npx playwright install --with-deps chromium`。
