@@ -14,6 +14,7 @@
 //   - scripts/setup.sh が渡す CHROMIUM_PATH を、検査のスクリプト（qa/・tools/ など）が読んでいない
 //   - 依存の置き場（package.json・requirements.txt・pyproject.toml）を Dependabot が見ていない
 //   - 公開リポジトリの既定のブランチに、削除と force push を止めるルールが無い（API で読むときだけ。incidents/2026-11-04-new-repos-no-ruleset.md）
+//   - 公開の見張り（post-deploy・site-watch）があるのに GitHub Pages が有効でない（API で読むときだけ。incidents/2026-11-04-pages-never-enabled.md）
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -146,6 +147,13 @@ for (const r of REPOS) {
       const types = new Set((Array.isArray(rules) ? rules : []).map((x) => x.type));
       const miss = ['deletion', 'non_fast_forward'].filter((t) => !types.has(t));
       if (miss.length) flag('ruleset', `${src.repo.default_branch} のルールセットに ${miss.join('・')} が無い（routines/onboarding.md 手順5の2。…/settings/rules → New branch ruleset →「Restrict deletions」「Block force pushes」）`);
+    }
+
+    // 公開の見張り（post-deploy・site-watch）を入れているのに Pages が切れている。site-watch は前は「切れているので何もしない」で緑だった
+    // （2026-11-04 mannaka-kanji・kippu-10・bento-zume が 404 のまま X で紹介された。incidents/2026-11-04-pages-never-enabled.md）
+    if (src.repo && (paths.has('.github/workflows/post-deploy.yml') || paths.has('.github/workflows/site-watch.yml'))) {
+      const pages = await api(`repos/${OWNER}/${r}/pages`);
+      if (!pages) flag('pages', 'GitHub Pages が有効になっていない（公開の見張りはあるのにページが 404。routines/onboarding.md 手順5の1：…/settings/pages → Deploy from a branch → main / (root)）');
     }
 
     const called = new Set();

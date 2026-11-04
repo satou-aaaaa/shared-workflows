@@ -26,8 +26,10 @@ jobs:
           base=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .html_url 2>/dev/null) || base=""
           case "$base" in https://*) ;; *) base="" ;; esac
           if [ -z "$base" ]; then
-            echo "Pages が有効になっていないので、何もせずに終わります" | tee -a "$GITHUB_STEP_SUMMARY"
-            exit 0
+            # 前は緑で終えていたので、Pages を入れ忘れたリポジトリが 404 のまま気づかれなかった（incidents/2026-11-04-pages-never-enabled.md）
+            echo "::error title=Pages が有効になっていません::settings/pages → Deploy from a branch → main / (root)（公開しないリポジトリなら site-watch.yml を外す）"
+            echo "Pages が有効になっていません（公開しないリポジトリなら site-watch.yml を外す）" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
           fi
           base="${base%/}/"
           echo "公開URL: $base" | tee -a "$GITHUB_STEP_SUMMARY"
