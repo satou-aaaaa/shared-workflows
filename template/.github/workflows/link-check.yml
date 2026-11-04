@@ -19,8 +19,8 @@ jobs:
   check:
     uses: satou-aaaaa/shared-workflows/.github/workflows/link-check.yml@main
     with:
-      # 調べるリンクが0件だと落ちる（lychee の failIfEmpty）。画面を JS で作るアプリや、README だけの main でも0件にならないよう *.md も調べる
+      # 調べるリンクが0件だと落ちる（lychee の failIfEmpty）。画面を JS で作るアプリや、README だけの main でも0件にならないよう README.md も調べる（AGENTS.md などは全角かっこの続きまで URL と読まれて落ちるので入れない）
       # （2026-11-04 incidents/2026-11-04-link-check-readme-only-main.md）
-      files: '*.html *.md'
+      files: '*.html README.md'
       # 自分たちの公開ページ（*.github.io）は各リポジトリの site-watch が毎日見張る。初めて公開する前の PR では 404 になるので、ここでは調べない
       exclude: '^https://satou-aaaaa\.github\.io/'
