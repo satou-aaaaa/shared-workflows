@@ -23,3 +23,12 @@
 - [x] 直す: 4本とも直した（kasane-zome #1 dc70414、rosen-hitofude #3、seiza-tsunagi #3、mannaka-kanji #1 3c11639）。sw の版も上げた。
 - [x] 防ぐ: `routines/project-practices.md` のゲーム開発の行に、この3つを足した（この PR）。
 - [x] 見つける: 4本の `qa/run.mjs`（kasane-zome #1・rosen-hitofude #3・seiza-tsunagi #3・mannaka-kanji #1）に「前の記録あり＋書き込みだけ失敗で今日が始まる」「前の日に終えた進み具合が翌日に記録される」「sw.js がネットの返事の保存をイベントの中で waitUntil に預ける」を足した。
+
+## 追記（同じ日・2回目のレビュー）
+- rosen-hitofude #3・seiza-tsunagi #3 のレビューで、同じ種類があと3つ見つかった。どれも4本に同じ形であった。
+  1. メモリを先に読む直しのせいで、保存に失敗したタブが、あとで別のタブが保存した新しい記録を古いメモリで上書きできた。
+  2. 前の日の結果を今日開くと「上級」のボタンが出て、今日の分を終える前に今日の上級を始められた。
+  3. sw.js のキャッシュ保存が失敗する（容量いっぱいなど）と、`waitUntil` に渡した promise が失敗のまま残った。
+- [x] 直す: 保存のたびに時刻 `t` を付け、`load()` はメモリと localStorage の新しい方を読む。上級のボタンは今日の結果にだけ出す。sw は末尾に `.catch(() => {})`（kasane-zome 6caf154・rosen-hitofude adbf14f・seiza-tsunagi 383d7c2・mannaka-kanji 16dced6）。
+- [x] 防ぐ: `routines/project-practices.md` のゲーム開発の行に3つを足した。
+- [x] 見つける: 4本の `qa/run.mjs` に「別のタブの新しい記録を古いメモリで上書きしない」「前の日の結果から今日の上級を始められない」「sw の保存に `.catch`」を足した（直す前の版では3つとも落ちる）。
