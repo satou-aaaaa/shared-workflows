@@ -44,7 +44,9 @@
 
 1. 節約モード（common.md）なら、手順2〜3だけして、下書きを共有フォルダに置き、報告して終える。
 2. 共有フォルダ `x-promo/schedule.md` を読み、予約済みの最後の日を確かめる。
-3. 次の7日（予約済みの最後の日の翌日から）の下書きを、決まりと話題の表どおりに作り、`x-promo/schedule.md` の末尾に足す。各ゲームの URL が開けるか先に確かめる（`curl -s -o /dev/null -w '%{http_code}' <URL>` が 200）。
+3. 次の7日（予約済みの最後の日の翌日から）の下書きを、決まりと話題の表どおりに作り、`x-promo/schedule.md` の末尾に足す。載せてよいゲームは次のとおり（`*.github.io` はクラウドから開けないので curl では確かめない。known-limits.md）。
+   - Chrome が使えるとき：Chrome で `https://satou-aaaaa.github.io/<どれかのリポジトリ>/` を開き、javascript で `(await fetch('/<リポジトリ>/',{cache:'no-store'})).status` が 200 のものだけ。
+   - Chrome が使えないとき：`x-promo/schedule.md` の表で前に「予約済み」「投稿済み」になったゲームだけ。
 4. Chrome が使えるか確かめる：`tabs_context_mcp` を呼ぶ。
 5. 下の表で分ける。
 
