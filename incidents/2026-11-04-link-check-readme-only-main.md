@@ -20,4 +20,5 @@
 ## 対策
 - [x] 直す: kasane-zome ほか新しいゲーム11本の Link check を `files: '*.html *.md'` にした（kasane-zome #4 ほか各リポジトリの PR）
 - [x] 防ぐ: ひな形 `template/.github/workflows/link-check.yml` の既定を `'*.html *.md'` にした。README には必ず出どころなどのリンクがあるので、HTML が無くても0件にならない（この PR）
+- [x] 防ぐ: `*.md` を調べると README の公開ページの URL も調べる。初めて公開する前の PR では 404 で落ちた（mannaka-kanji #2・kippu-10 #1・bento-zume #1）。自分たちの公開ページ（`satou-aaaaa.github.io`）は各リポジトリの site-watch が毎日見張っているので、Link check では `exclude` で外した（ひな形と各リポジトリ）
 - [x] 見つける: `ci-failure-issue.yml` が main の失敗で Issue を開き、巡回が拾う仕組みが今回そのまま働いた（[repo-patrol](../routines/repo-patrol.md)）
