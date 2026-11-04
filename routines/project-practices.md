@@ -50,6 +50,13 @@
 | rosen-hitofude（路線図ひと筆） | パズルゲーム | rosen-hitofude `AGENTS.md`・`README.md` | 今日の3路線（全員同じ）・特急・乗車スタンプ・QA（答えが1つ・線路が交わらないを各大きさで何百回） | 道が1つだけであることを数え上げで確かめてから出す。駅の間はスマホ幅でも40px以上 |
 | seiza-tsunagi（星座つなぎ） | 学習ゲーム（星） | seiza-tsunagi `AGENTS.md`・`README.md` | 今夜見ごろの3星座（全員同じ）・上級（見本なし）・星座帳・QA（星の向き・3年分の選び方） | 星の位置は Yale 輝星表から作り、東西を取り違えない（QA がベテルギウスとリゲルの位置で見る） |
 | mannaka-kanji（まんなか漢字） | 学習ゲーム（漢字） | mannaka-kanji `AGENTS.md`・`README.md` | 今日の3問（全員同じ）・上級（札12枚・ヒントなし）・漢字帳・QA（答えが1つ・難しさの並び） | 熟語は JMdict（CC BY-SA）から作り、出典と使い方の決まりを README に書く |
+| kippu-10（きっぷで10） | パズルゲーム（数字） | kippu-10 `AGENTS.md`・`README.md` | 今日の5枚（全員同じ）・上級・切符帳・別解・QA（715通りを別の数え方で解き直す・3年分の組み方） | 計算は分数で正確に。難しさは式の数で決め、data.js は tools/make-data.cjs で作る。切符は架空 |
+| bento-zume（お弁当づめ） | パズルゲーム（形） | bento-zume `AGENTS.md`・`README.md` | 今日の3箱（全員同じ）・上級・図鑑・QA（4つの大きさ×400箱が答えどおりに埋まる・詰め方の数を別の数え方で確かめる） | 先に箱を切り分けてから出すので必ず解ける。回すのはよいが裏返しはしない |
+| todofuken-relay（都道府県リレー） | 学習ゲーム（地理） | todofuken-relay `AGENTS.md`・`README.md` | 今日の3問（全員同じ）・上級・通行止め・QA（1年分の問題で最短と地図の字の大きさ） | 県の形ととなりは国土数値情報から作る。海をこえるつながりは決めた5か所だけ |
+| shiritori-saitan（しりとり最短） | パズルゲーム（言葉） | shiritori-saitan `AGENTS.md`・`README.md` | 今日の3問（全員同じ）・上級・QA（まよう札を足しても最短が変わらない） | 言葉は JMdict（CC BY-SA）から作り、出典を README に書く。字のきまり（小さい字・ー・濁音）を遊び方と README で同じに |
+| madori-puzzle（間取りパズル） | パズルゲーム | madori-puzzle `AGENTS.md`・`README.md` | 今日の3軒（全員同じ）・上級・家の種類ごとに新しい希望を1つ・QA（答えが1つ・要らない希望が無い・1年同じ家なし） | 上が北・右が東、「となり」は壁を共有する部屋だけ。data.js は tools/gen-levels.cjs で作る |
+| tenkizu-yomi（天気図よみ） | 学習ゲーム（気象） | tenkizu-yomi `AGENTS.md`・`README.md` | 今日の5問（全員同じ）・上級（8方位）・QA（答えが迷う所を出さない） | 天気図は架空で実際の予報として出さない。風は等圧線から低気圧側へ30度（北半球） |
+| bushu-tashizan（部首たし算） | 学習ゲーム（漢字） | bushu-tashizan `AGENTS.md`・`README.md` | 今日の5問（全員同じ）・上級（部品3つ）・QA（答えが1つ・つらい言葉の字を使わない） | 字の組み立ては KanjiVG、読み・熟語は KANJIDIC2/JMdict（CC BY-SA）から作り、出典を README に書く |
 | tenbin（天秤の書） | 学習アプリ | tenbin `CLAUDE.md`、スキル add-ronbun-questions・law-app-ui-check | 間隔反復の復習ドリル・一次資料での確認 | 問題を足すときに「思い出させる形（答える前に考えさせる）」になっているかを見る点に加える |
 | carcassonne-research | 研究（ゲームAI） | carcassonne-research `CLAUDE.md`・`.claude/skills/steward/`・`docs/EXPERIMENTS.md` | シードを決めた先後入替の対戦・信頼区間・再現コマンド | 強さの判定に SPRT を使い、対戦数を減らしつつ誤りの率をそろえる |
 | sandbox（許可申請ツール） | 業務ツール | sandbox `CLAUDE.md`・`docs/DEVELOPMENT_GUIDE.md`・`docs/routines/` | 小さな PR・多層の検査・運用エージェント | ダミー案件で端から端まで通す確認を定期の作業に入れ、詰まった所を Issue にする |
