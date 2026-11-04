@@ -34,6 +34,7 @@
 | 3 | ルーティンとスキルの定期見直し（週1・土曜朝） | [routine-review.md](../routines/routine-review.md) | `CRON_TZ=Asia/Tokyo 53 9 * * 6` | ルーティンの改善提案 | 既定 |
 | 4 | CI の時間短縮（週1・木曜朝） | [ci-speedup.md](../routines/ci-speedup.md) | `CRON_TZ=Asia/Tokyo 26 10 * * 4` | CI時間短縮の定期改善 | 既定 |
 | 5 | ゲームの感想を読んで直す（週1・日曜朝） | [game-feedback.md](../routines/game-feedback.md) | `CRON_TZ=Asia/Tokyo 41 10 * * 0`（毎回新しいセッション） | ×はどこだのスレッド（報告の届け先） | 既定 |
+| 6 | ゲームを1本磨く（週1・水曜朝） | [game-dev.md](../routines/game-dev.md) の B | `CRON_TZ=Asia/Tokyo 17 10 * * 3`（毎回新しいセッション） | ゲームをもっとおもしろく・やりこみ要素を足す（報告の届け先） | 既定 |
 
 ## ほかのプロジェクトのルーティン（手順書がこのリポジトリにあるもの）
 
