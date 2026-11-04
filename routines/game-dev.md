@@ -35,7 +35,7 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 | 取りこぼした日 | 過去7日のお題をあとから。連続・今日の記録・Ko-fi に数えない | wagamama-burger #5・seiza-tsunagi #4 |
 | 感想 | Issue フォームへのただのリンク | [game-feedback.md](game-feedback.md) |
 | PWA・OGP | `sw.js`・`manifest.webmanifest`・アイコン・`og.png`（答えを入れない） | どのゲームも |
-| QA | `qa/run.mjs`。乱数で作る所は何百日分も作って確かめる。押せる所は44px以上、幅320px | どのゲームも |
+| QA | `qa/run.mjs`。乱数で作る所は何百日分も作って確かめる。押せる所は44px以上、幅320px。キーボードで選んだボタンに枠が出る（`all:unset` で消えるので、枠の規則は style の最後に `:is(button,a):focus-visible{outline:…!important}`） | どのゲームも |
 
 ## 使う道具
 

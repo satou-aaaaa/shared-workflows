@@ -7,6 +7,7 @@
 //   4. 済んでいない対策に「担当」と「期限」がある
 //   4b. 済んだ「防ぐ:」「見つける:」に、あとから確かめられる証拠がある（PR・Issue の番号、版、`ファイル`、リンク、この PR、手順の番号）。書いただけの対策を防ぐ
 //   1b. README の「一覧」が日付の新しい順に並んでいる（追記で末尾に足すと見落としやすい）
+//   1c. README の「一覧」から指すファイルが本当にある（2026-11-04 #127 で一覧の行だけ入り、記録のファイルを add し忘れた）
 //   5. 内部の ID・メールアドレスが無い（公開リポジトリ）
 // 考え方: Google SRE「Postmortem Culture」の action item（種類・担当・追跡）と blameless の書き方。
 import { readFileSync, readdirSync } from 'node:fs';
@@ -30,6 +31,11 @@ if (!kinds.size) errors.push('incidents/README.md の「種類」の表が読め
   dates.forEach((d, i) => {
     if (i && d > dates[i - 1]) errors.push(`incidents/README.md の「一覧」: ${d} の行が ${dates[i - 1]} より後にある（新しい順に並べる）`);
   });
+}
+
+{
+  const files = new Set(readdirSync(dir));
+  for (const m of index.matchAll(/\]\(([^)/]+\.md)\)/g)) if (!files.has(m[1])) errors.push(`incidents/README.md の「一覧」が指す ${m[1]} が無い（git add し忘れ）`);
 }
 
 const headings = ['## 起きたこと', '## 原因', '## なぜ見つからなかったか', '## 対策'];
