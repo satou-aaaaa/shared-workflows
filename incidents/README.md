@@ -79,6 +79,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-11-05 | 公開・CI | [リンク検査を直したあと main で動かさず、閉じた Issue が開き直した](2026-11-05-link-check-not-rerun-on-main.md) | 対策1つ残り |
 | 2026-11-04 | 公開・CI | [新しいゲームの main で、週1のリンク検査が「リンク0件」で落ちた](2026-11-04-link-check-readme-only-main.md) | 対策済み |
 | 2026-11-04 | 検査の見逃し | [1日1回のゲーム4本に、記録が消える・残らない穴が3つ同じ形であった](2026-11-04-daily-game-save-gaps.md) | 対策済み |
 | 2026-11-04 | 公開・CI | [carcassonne-research の selfplay が1週間で3回、本番でしか動かない手順で落ちた](2026-11-04-selfplay-third-failure-in-week.md) | 対策済み |
