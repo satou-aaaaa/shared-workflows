@@ -51,6 +51,7 @@ Claude in Chrome（`mcp__claude-in-chrome__*`）が使えるときは、下の 1
 - GitHub が「Confirm access」（パスキー）を出したら、そこだけ satou さんに押してもらう（本人確認は Claude がしない）。一度通ると、しばらくは聞かれない。
 - 入れた後に API で確かめる（`/repos/<owner>/<repo>/rulesets/<id>` の rules が deletion と non_fast_forward、conditions が `~DEFAULT_BRANCH`）。
 - 入れられなかったものは下の「Chrome が使えないとき」で必ず satou さんに頼む。ルールセットの抜けは `scripts/drift-check.mjs`（週次まとめの「ひな形からのずれ」）が毎週出すので、受け入れの終わりに `node scripts/drift-check.mjs` を回して `ruleset` の行が残っていないかを見る（2026-11-04 公開ゲーム14本で0件のまま気づかれなかった。`incidents/2026-11-04-new-repos-no-ruleset.md`）。
+- ルールセットは `…/settings/rules/new?target=branch&enforcement=active` を開き、名前・Active・Include default branch を入れて、ON が「Restrict deletions」「Block force pushes」の2つだけか確かめてから Create（座標で押すと画面の高さで「Include all branches」を押し間違える。2026-11-04 bento-zume。メニューは文字で探して押す）。
 - Push protection は公開リポジトリでは最初から On のことが多い。`…/settings/security_analysis` で見て、Off のときだけ入れる。CodeRabbit は「All repositories」なら何もしない。
 
 Chrome が使えないときは、次を /mnt/project-files/notes/todo.md に書き、スレッドの返信の先頭にも「satouさんにお願い：」で並べる。
