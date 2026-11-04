@@ -17,6 +17,8 @@
 | ゲーム開発 | 遊んでほしい体験（体験目標）を先に言葉にし、変更はその目標に照らして確かめる | [Game Design Workshop 抜粋（Tracy Fullerton）](https://gamedeveloper.com/design/book-excerpt-game-design-workshop) |
 | ゲーム開発 | 作る→遊んでもらう→目標と比べる→直す、の小さな周回を全工程で回す。核の遊びは作り込む前に確かめる | 同上 |
 | ゲーム開発 | テスターの声はそのまま実装せず、困っている点（症状）を拾い、直し方は作る側が決める | [Playtesting best practices（Wayline）](https://www.wayline.io/blog/game-playtesting-best-practices-implementing-player-suggestions) |
+| ゲーム開発 | 1日1回の問題と練習があるゲームは、途中経過をモードごとに分けて保存し、答えを入れる前に保存した進み具合が画面と同じか確かめる（練習で今日の途中を消さない・古いタブで二重に入れない）。QA で「今日の途中→練習→今日に戻る」と「別のタブで先に進めてから古い画面で答える」を通す。保存に失敗したらメモリの進み具合を先に読み、終えた進み具合は日付が変わっても終えた日の記録にし、sw.js のキャッシュの保存はイベントの中で `waitUntil` に預ける（QA で「前の記録あり＋書き込みだけ失敗」「0時をまたいで開く」を通す） | [incidents/2026-11-03-daily-run-overwritten.md](../incidents/2026-11-03-daily-run-overwritten.md)・[incidents/2026-11-04-daily-game-save-gaps.md](../incidents/2026-11-04-daily-game-save-gaps.md) |
+| ゲーム開発 | 「だれでも同じ問題」のゲームは、種から作る乱数を `sort` の比較の中で引かない（比較の回数と順はブラウザごとに違うので、同じ日でも端末で問題が変わる）。候補ごとに1回ずつ引いて選ぶ。QA でソースを検査する | [Array.prototype.sort（MDN）](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Array/sort) |
 | 学習アプリ | 効果が高いのは「思い出す練習（小テスト）」と「間隔をあけた復習」。読み返し・要約・線引きは効果が低い | [Dunlosky ら 2013 の報告（APS）](https://www.psychologicalscience.org/news/releases/which-study-strategies-make-the-grade.html) |
 | 学習アプリ | 内容の正しさは一次資料（条文・判例）で確かめ、出典を付ける | tenbin のスキル add-ronbun-questions（既に実施） |
 | セキュリティ（防御の資料・道具） | 資料は一次の指針（NIST・IPA・OWASP など）を出典にし、調べた日を書いて定期的に古さを見直す。道具は防御用だけにし、秘密を作らない・混ぜない（push 前に検査） | [NIST SP 800-218 SSDF](https://csrc.nist.gov/pubs/sp/800/218/final)・[OWASP DevSecOps Guideline: Secrets Management](https://owasp.org/www-project-devsecops-guideline/latest/01a-Secrets-Management) |
@@ -44,6 +46,10 @@
 | wagamama-burger（わがままバーガー） | パズルゲーム | wagamama-burger `AGENTS.md`・`README.md` | 答えが1つ・章ごとに新しい条件を1つ・時間制限なし・ヒントと戻す・QA（全問の全部の並べ方を試す） | 問題は tools/gen-levels.cjs で作り、台詞は手で書く。目的は説明なしで納得できるものに |
 | kabu-news（株ニュース5本勝負） | 学習ゲーム | kabu-news `AGENTS.md`・`README.md` | 1日1回・全員同じ問題・答えを出さない共有・続きから・時間制限なし・QA（5本の組み方を5000回） | 会社とニュースは架空で本物っぽく（お笑いは入れない）。投資の助言にしない。ニュースを足すときは上げ下げを4割以上ずつに保つ |
 | batsu-doko（×はどこだ） | ゲーム（タイムアタック） | batsu-doko `AGENTS.md`・`README.md` | 今日の1本（全員同じ並び）・上級・メダル・図鑑・挑戦状リンク・QA（広告の組み合わせを500回） | 広告・サイト・商品はすべて架空で本物っぽく（笑わせる文言は入れない）。外へ通信しない。ふさぐ広告の間は0.75画面以上 |
+| kasane-zome（かさね染め） | ゲーム（色あわせ） | kasane-zome `AGENTS.md`・`README.md` | 今日の5色（全員同じ）・上級（見本を覚えて染める）・色帳・QA（お手本の計算し直し・3000日分の組み方） | 色は実在の伝統色の色見本から。染めの計算は QA が別の式で突き合わせる。お笑いは入れない |
+| rosen-hitofude（路線図ひと筆） | パズルゲーム | rosen-hitofude `AGENTS.md`・`README.md` | 今日の3路線（全員同じ）・特急・乗車スタンプ・QA（答えが1つ・線路が交わらないを各大きさで何百回） | 道が1つだけであることを数え上げで確かめてから出す。駅の間はスマホ幅でも40px以上 |
+| seiza-tsunagi（星座つなぎ） | 学習ゲーム（星） | seiza-tsunagi `AGENTS.md`・`README.md` | 今夜見ごろの3星座（全員同じ）・上級（見本なし）・星座帳・QA（星の向き・3年分の選び方） | 星の位置は Yale 輝星表から作り、東西を取り違えない（QA がベテルギウスとリゲルの位置で見る） |
+| mannaka-kanji（まんなか漢字） | 学習ゲーム（漢字） | mannaka-kanji `AGENTS.md`・`README.md` | 今日の3問（全員同じ）・上級（札12枚・ヒントなし）・漢字帳・QA（答えが1つ・難しさの並び） | 熟語は JMdict（CC BY-SA）から作り、出典と使い方の決まりを README に書く |
 | tenbin（天秤の書） | 学習アプリ | tenbin `CLAUDE.md`、スキル add-ronbun-questions・law-app-ui-check | 間隔反復の復習ドリル・一次資料での確認 | 問題を足すときに「思い出させる形（答える前に考えさせる）」になっているかを見る点に加える |
 | carcassonne-research | 研究（ゲームAI） | carcassonne-research `CLAUDE.md`・`.claude/skills/steward/`・`docs/EXPERIMENTS.md` | シードを決めた先後入替の対戦・信頼区間・再現コマンド | 強さの判定に SPRT を使い、対戦数を減らしつつ誤りの率をそろえる |
 | sandbox（許可申請ツール） | 業務ツール | sandbox `CLAUDE.md`・`docs/DEVELOPMENT_GUIDE.md`・`docs/routines/` | 小さな PR・多層の検査・運用エージェント | ダミー案件で端から端まで通す確認を定期の作業に入れ、詰まった所を Issue にする |
