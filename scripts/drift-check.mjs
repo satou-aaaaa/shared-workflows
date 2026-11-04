@@ -13,6 +13,7 @@
 //   - scripts/setup.sh の「ひな形の版」が template/scripts/setup.sh より古い（ひな形を直しても写しに届かない。incidents/2026-11-03-setup-false-ready.md）
 //   - scripts/setup.sh が渡す CHROMIUM_PATH を、検査のスクリプト（qa/・tools/ など）が読んでいない
 //   - 依存の置き場（package.json・requirements.txt・pyproject.toml）を Dependabot が見ていない
+//   - 公開リポジトリの既定のブランチに、削除と force push を止めるルールが無い（API で読むときだけ。incidents/2026-11-04-new-repos-no-ruleset.md）
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -21,7 +22,7 @@ import { fileURLToPath } from 'node:url';
 
 const OWNER = process.env.OWNER || 'satou-aaaaa';
 // weekly-summary.yml の REPOS と同じ並び（shared-workflows 自身は部品の置き場なので見ない）
-const REPOS = (process.env.REPOS || 'sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban articles carcassonne-research usotsuki-roppo wagamama-burger kabu-news batsu-doko kasane-zome rosen-hitofude seiza-tsunagi mannaka-kanji')
+const REPOS = (process.env.REPOS || 'sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban articles carcassonne-research usotsuki-roppo wagamama-burger kabu-news batsu-doko kasane-zome rosen-hitofude seiza-tsunagi mannaka-kanji kippu-10 bento-zume todofuken-relay shiritori-saitan madori-puzzle tenkizu-yomi bushu-tashizan')
   .split(/\s+/).filter((r) => r && r !== 'shared-workflows');
 const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || '';
 const here = dirname(fileURLToPath(import.meta.url));
@@ -71,7 +72,7 @@ async function source(r) {
   if (!repo || repo.archived) return repo ? { archived: true } : null;
   const tree = await api(`repos/${OWNER}/${r}/git/trees/${repo.default_branch}?recursive=1`);
   if (tree?.truncated) throw new Error('ファイルが多すぎて一覧が途中で切れた');
-  return { paths: new Set((tree?.tree || []).map((t) => t.path)), read: (p) => api(`repos/${OWNER}/${r}/contents/${p}`, true) };
+  return { repo, paths: new Set((tree?.tree || []).map((t) => t.path)), read: (p) => api(`repos/${OWNER}/${r}/contents/${p}`, true) };
 }
 
 const lines = [];
@@ -136,6 +137,15 @@ for (const r of REPOS) {
           if (!watched.has(`${e}:${dir}`)) flag(`dependabot:${q}`, `${q} の依存を Dependabot が見ていない（.github/dependabot.yml に package-ecosystem: "${e}"・directory: "${dir}" を足す）`);
         }
       }
+    }
+
+    // main の守り（削除と force push の禁止）。設定画面でしか入れられず、Chrome が無い日の受け入れで抜けたまま気づかれなかった
+    // （2026-11-04 公開ゲーム14本で0件。incidents/2026-11-04-new-repos-no-ruleset.md）。無料プランの非公開リポジトリは入れられないので見ない
+    if (src.repo && !src.repo.private) {
+      const rules = await api(`repos/${OWNER}/${r}/rules/branches/${encodeURIComponent(src.repo.default_branch)}`);
+      const types = new Set((Array.isArray(rules) ? rules : []).map((x) => x.type));
+      const miss = ['deletion', 'non_fast_forward'].filter((t) => !types.has(t));
+      if (miss.length) flag('ruleset', `${src.repo.default_branch} のルールセットに ${miss.join('・')} が無い（routines/onboarding.md 手順5の2。…/settings/rules → New branch ruleset →「Restrict deletions」「Block force pushes」）`);
     }
 
     const called = new Set();
