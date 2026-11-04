@@ -35,6 +35,7 @@
 | 4 | CI の時間短縮（週1・木曜朝） | [ci-speedup.md](../routines/ci-speedup.md) | `CRON_TZ=Asia/Tokyo 26 10 * * 4` | CI時間短縮の定期改善 | 既定 |
 | 5 | ゲームの感想を読んで直す（週1・日曜朝） | [game-feedback.md](../routines/game-feedback.md) | `CRON_TZ=Asia/Tokyo 41 10 * * 0`（毎回新しいセッション） | ×はどこだのスレッド（報告の届け先） | 既定 |
 | 6 | ゲームを1本磨く（週1・水曜朝） | [game-dev.md](../routines/game-dev.md) の B | `CRON_TZ=Asia/Tokyo 17 10 * * 3`（毎回新しいセッション） | ゲームをもっとおもしろく・やりこみ要素を足す（報告の届け先） | 既定 |
+| 7 | X（@coedogameclub）の運用（週1・土曜朝） | [x-account.md](../routines/x-account.md) | `CRON_TZ=Asia/Tokyo 47 10 * * 6`（毎回新しいセッション・Sonnet・low） | Xでゲームを広める（報告の届け先） | claude-sonnet-5-5 |
 
 ## ほかのプロジェクトのルーティン（手順書がこのリポジトリにあるもの）
 

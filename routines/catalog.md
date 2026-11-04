@@ -18,6 +18,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | CI の時間短縮 | [ci-speedup.md](ci-speedup.md) | 木曜 10:26 JST |
 | ゲームの感想を読んで直す | [game-feedback.md](game-feedback.md) | 日曜 10:41 JST |
 | ゲームを作る・1本磨く | [game-dev.md](game-dev.md) | 磨くのは水曜 10:17 JST・新作は頼まれたとき |
+| X（@coedogameclub）の運用 | [x-account.md](x-account.md) | 土曜 10:47 JST |
 | ダンジョンボドゲ issue 自動対応 | [dungeon-issue.md](dungeon-issue.md) | 毎朝 9:54 JST |
 | LAST TELL ソースの控え | [last-tell-backup.md](last-tell-backup.md) | 日曜 8:52 JST |
 | sandbox Issue/PR定期対応（kensetsu-kyoka-toolkit） | [sandbox-issue-pr.md](sandbox-issue-pr.md) | 月曜 4:35 JST |
