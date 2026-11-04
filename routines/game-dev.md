@@ -11,6 +11,7 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 
 - 文字少なめ・一画面一問・ほどよい難しさ・見た目リッチ。説明なしで目的が分かる遊び。
 - 時間制限・無理なお笑い・人狼の仕組み・クセを読む系は入れない（2026-10-31〜11-03 の感想）。頼まれない限り本物っぽさを優先する。
+- 漢字・言葉を答えるゲームは、選択肢でなく入力して答える形にする（satou さん 2026-11-04）。変換中の Enter で送らない（`e.isComposing || e.keyCode === 229`）・`normalize("NFKC")` と空白のゆれを許す・かなだけはまちがいに数えない・別解も正解。候補から選ぶのはヒントの最後の段だけ（[Chrome: IME セーフな Enter 送信](https://developer.chrome.com/docs/modern-web-guidance/guides/forms/ime-safe-enter-submit?hl=ja)）。
 - ほかの作品の名前・キャラ・見た目・既存ゲームの再現は使わない。実在の会社名・ロゴもまねない。
 - お金をかけない。外へ通信しない（外から読むのは Google Fonts の文字だけ）。記録は遊ぶ人のブラウザ（localStorage）だけ。名前・メールを聞かない。
 - 応援は Ko-fi（https://ko-fi.com/satouaaaaa）へのただのリンクを、結果の画面に1行だけ（共有フォルダ `kofi/app-guide.md`）。有料版は置かない。
@@ -53,7 +54,7 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 4. はじめの commit は README だけ。workflows・`qa/`・本体は同じ PR #1 で入れる（incidents/2026-11-04-new-repo-main-qa-without-qa-dir.md）。
 5. 上の「共通の形」を全部入れる。AGENTS.md は既存のゲーム（kippu-10 など）を写して直す。
 6. `node qa/run.mjs` が全部通ってから PR。`sw.js` を含む PR は `@coderabbitai review` とコメントし、レビューを読んでから手でマージする。
-7. Pages を main のルートで公開し、Post-deploy check が緑か見る。
+7. Pages を main のルートで公開する（[onboarding.md](onboarding.md) 手順5の1）。`node scripts/drift-check.mjs` に `pages` の行が出ないこと、Actions の Post-deploy check が緑になったことを見るまで、X などで紹介しない（2026-11-04 3本が 404 のまま紹介された。incidents/2026-11-04-pages-never-enabled.md）。
 8. 新しいリポジトリを [project-practices.md](project-practices.md) の表と README.md の一覧に足す。
 
 ### B. 公開中のゲームを1本磨く（週1・水曜）
