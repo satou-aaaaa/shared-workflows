@@ -16,6 +16,6 @@
 - ずれの検査（`scripts/drift-check.mjs`）はファイルと共通部品の呼び出しだけを見て、リポジトリの設定は見ていなかった。CI も ruleset が無くても赤にならない。
 
 ## 対策
-- [ ] 直す: 14本の settings/rules で「Restrict deletions」「Block force pushes」を入れる（設定画面の操作。satou さんにお願い、`/mnt/project-files/notes/todo.md` の 2026-11-04 夜の節。Chrome がつながれば Claude が入れる）
+- [ ] 直す: 14本の settings/rules で「Restrict deletions」「Block force pushes」を入れる（設定画面の操作。satou さんにお願い、`/mnt/project-files/notes/todo.md` の 2026-11-04 夜の節。Chrome がつながれば Claude が入れる。担当: satou さん（設定画面）・期限: 2026-11-11）
 - [x] 防ぐ: `routines/onboarding.md` 手順5に「受け入れの終わりに drift-check を回して ruleset の行が残っていないか見る」を足した（この PR）
 - [x] 見つける: `scripts/drift-check.mjs` が公開リポジトリの既定のブランチのルールを API で読み、削除と force push の禁止が無ければ1行出す（週次まとめの「ひな形からのずれ」に毎週載る。この PR）
