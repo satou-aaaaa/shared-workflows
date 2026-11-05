@@ -5,7 +5,7 @@
 #   1. ふつうに通ると「✓」で終わり、見つけたブラウザを CLAUDE_ENV_FILE に書く
 #   2. 依存の一部が消えた node_modules（目印のファイルは新しいまま）を入れ直す
 #   3. 使えるブラウザが無いと止まり、「✓」を出さない
-#   4. CHROMIUM_PATH が動かせない場所を指すと止まる
+#   4. CHROMIUM_PATH が動かせない場所を指すと止まる（フォルダも。ひな形の版 4）
 #   5. CLAUDE_ENV_FILE が無いと、このシェルで打つ export を出し、「✓」を出さない
 #   6. nvm で Node を入れたときは「nvm use」を出し、「✓」を出さない
 set -euo pipefail
@@ -57,6 +57,14 @@ else ok "使えるブラウザが無いと止まる"; fi
 # 4. CHROMIUM_PATH が動かせない
 if run CLAUDE_ENV_FILE="$envf" CHROMIUM_PATH="$tmp/none/chrome"; then ng "4. 動かせない CHROMIUM_PATH で止まらない"
 else ok "動かせない CHROMIUM_PATH で止まる"; fi
+
+# 4b. CHROMIUM_PATH・決まった場所がフォルダ（-x だけではフォルダも通る。ひな形の版 4）
+mkdir -p "$tmp/dir"
+if run CLAUDE_ENV_FILE="$envf" CHROMIUM_PATH="$tmp/dir"; then ng "4b. フォルダの CHROMIUM_PATH で止まらない"
+else ok "フォルダの CHROMIUM_PATH で止まる"; fi
+if run CLAUDE_ENV_FILE="$envf" PW_PREINSTALLED="$tmp/dir"; then ng "4b. 決まった場所がフォルダなのに止まらない"
+elif grep -q '^✓' "$tmp/out"; then ng "4b. 決まった場所がフォルダなのに ✓ を出した"
+else ok "決まった場所がフォルダだと止まる"; fi
 
 # 5. CLAUDE_ENV_FILE が無い（人の端末・ほかの AI）
 if run && ! grep -q '^✓' "$tmp/out" && grep -q "export CHROMIUM_PATH=$tmp/bin/chromium" "$tmp/out" && grep -q 'activate' "$tmp/out"; then
