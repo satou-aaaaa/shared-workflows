@@ -66,7 +66,38 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 | 取りこぼした日 | 過去7日のお題をあとから。連続・今日の記録・Ko-fi に数えない | wagamama-burger #5・seiza-tsunagi #4 |
 | 感想 | Issue フォームへのただのリンク | [game-feedback.md](game-feedback.md) |
 | PWA・OGP | `sw.js`・`manifest.webmanifest`・アイコン・`og.png`（答えを入れない） | どのゲームも |
+| 見やすさ | 見やすさの設定（`template/a11y/a11y.html`）と検査（`template/qa/a11y.mjs`）。下の「だれでも遊べるように」 | kippu-10 |
 | QA | `qa/run.mjs`。乱数で作る所は何百日分も作って確かめる。押せる所は44px以上、幅320px。キーボードで選んだボタンに枠が出る（`all:unset` で消えるので、枠の規則は style の最後に `:is(button,a):focus-visible{outline:…!important}`） | どのゲームも |
+
+## だれでも遊べるように（色覚・ディスレクシア・弱視・キーボード・動き・ジェンダー。satou さん 2026-11-05）
+
+satou さん「色覚異常や、ディスレクシアの人でも遊べるようにしたい」「他に配慮できるものがあれば、できるだけ」「ジェンダーバイアスも取り除く」。
+
+### 共通の部品（どのゲームにも同じものを入れる）
+
+| 部品 | 入れ方 | 守ること |
+| --- | --- | --- |
+| 見やすさの設定 `template/a11y/a11y.html` | 中身をそのまま `index.html` の `</head>` の前に写す（直すのはひな形だけ）。設定を開くリンク・ボタンに `data-a11y-open` を付けてホームに置く | 読みやすい文字（BIZ UDP ゴシック・行間1.7〜1.8）・色の見分けを助ける・動きを減らす（端末の「視差効果を減らす」で自動で入る）・読み上げ（端末の中の声だけ。外へ送る声は使わない）・ふりがな（`<ruby class="a11y-rb">` を置いたゲームだけ）。設定は同じサイトのゲームどうしで共通（localStorage `a11y-v1`） |
+| 検査 `template/qa/a11y.mjs` | `qa/a11y.mjs` に写し、`qa/run.mjs` の最後で `node qa/a11y.mjs` を回す（落ちたら QA も落とす）。遊ぶ画面までの押し方は `qa/a11y.json` の `screens` | コントラスト 4.5:1・字間を広げても崩れない・動き続けない・Tab の枠・名前の無いボタン・知らせの場所・斜体・決めつけの言葉。許すときは `qa/a11y.json` に理由（理由の無い許しは落ちる） |
+
+### 各ゲームで作るときの決まり
+
+| # | 決まり | 出典 |
+| --- | --- | --- |
+| A1 | 色だけで分けない。正解・まちがい・選んだ・済み・種類などは、色に加えて形・記号（✓ ✕ ● ▲ ■）・模様・文字のどれかでも分かるようにする。ふだんからそうし、「色の見分けを助ける」（`html.a11y-cvd`）では色そのものも見分けやすい組（青と橙など）に替える。`qa/run.mjs` に「記号・文字が出ている」検査を足す | [WCAG 2.2 1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html)・[Game Accessibility Guidelines（色だけで伝えない）](https://gameaccessibilityguidelines.com/) |
+| A2 | 色を当てるゲーム（重ね染めなど）は色そのものが遊びなので、数字（濃さ・赤み/青み）や言葉の手がかりも出し、色覚の人も近づけられるようにする | 同上・[カラーユニバーサルデザイン推奨配色セット](https://jfly.uni-koeln.de/colorset/) |
+| A3 | 字と地のコントラストは 4.5:1 以上（24px 以上・太字 18.7px 以上は 3:1）。押す所の縁・記号は 3:1 以上 | [WCAG 2.2 1.4.3・1.4.11](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html) |
+| A4 | 文は短く、左寄せ。斜体にしない。全部大文字・長い太字の段落を作らない。地は真っ白より生成り色。1行は短めに | [BDA Dyslexia Style Guide](https://www.wigan.gov.uk/Docs/PDF/Business/Professionals/SEN/HEFA/Dyslexia-Style-Guide.pdf) |
+| A5 | 拡大を禁じない（`user-scalable=no` を付けない）。字間・行間を広げても崩れないように、高さを決め打ちした箱に字を入れない | [WCAG 2.2 1.4.4・1.4.12](https://www.w3.org/WAI/WCAG22/Understanding/text-spacing.html) |
+| A6 | 全部をキーボードでも遊べる（押す所は `button`。なぞる操作には押すだけの方法も置く）。片手・指1本で遊べる | [WCAG 2.2 2.1.1・2.5.7](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html)・Game Accessibility Guidelines |
+| A7 | 正解・まちがい・ヒントの知らせは `aria-live="polite"` か `role="status"` の所に文字で出す（読み上げソフトに届く）。読み上げたい問題文に `data-a11y-say` | [WCAG 2.2 4.1.3](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html) |
+| A8 | 音だけで知らせない（音には必ず文字・絵の知らせを添える）。振動・点滅は「動きを減らす」で止める。1秒に3回より多く光らせない | [WCAG 2.2 2.3.1](https://www.w3.org/WAI/WCAG22/Understanding/three-flashes-or-below-threshold.html)・Game Accessibility Guidelines |
+| A9 | 時間制限を付けない（もとからの決まり）。説明はいつでも開き直せる | [WCAG 2.2 2.2.1](https://www.w3.org/WAI/WCAG22/Understanding/timing-adjustable.html) |
+| A10 | 役割や性別を決めつけない。登場人物は男女や年齢がかたよらないよう混ぜ、職業・家事・趣味を性別で決めない。呼び方は「さん」でそろえる（「くん・ちゃん」で性別を分けない）。「主婦→家事をする人」「ビジネスマン→会社員」「看護婦→看護師」などは言いかえる（一覧は `qa/a11y.mjs` の WORDS）。条文・判例の引用は原文のまま変えない | [UNESCO: Promoting gender equality through textbooks](https://webarchive.unesco.org/web/20170509214808/http://unesdoc.unesco.org/images/0024/002473/247337e.pdf)・[欧州評議会：ジェンダーに配慮した言葉](https://rm.coe.int/168070ab79) |
+| A11 | 説明・知らせは「やさしい日本語」で書く：一文を短く（目安40字）、一文に一つのこと、むずかしい言葉・二重否定・あいまいな言い方を避ける。むずかしい漢字の言葉には `<ruby class="a11y-rb">漢字<rt>かんじ</rt></ruby>` でふりがなを付ける（設定の「ふりがなを出す」で出る）。漢字を当てる・読むゲームの問題そのものには付けない | [出入国在留管理庁・文化庁「在留支援のためのやさしい日本語ガイドライン」](https://www.moj.go.jp/isa/support/coexistence/04_00004.html)・BDA Dyslexia Style Guide |
+| A12 | 遅い回線・古い端末でも開ける：はじめに読むファイル（index.html と同じサイトのスクリプト・データ）は合わせて 1.5MB 以下（`qa/a11y.mjs` が見る）。オフラインでも遊べる（PWA） | [web.dev: Fast load times](https://web.dev/explore/fast) |
+
+- 磨くとき（手順 B）は、`node qa/a11y.mjs` が出す色覚の見え方の絵（`qa-report/a11y-*-P型.png` など）を自分で見て、色だけで分けている所が無いか確かめる。
 
 ## 使う道具
 
@@ -83,7 +114,7 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 2. 動く見本（単体の HTML）を Artifact で出し、satou さんに選んでもらう（カード）。
 3. リポジトリは [onboarding.md](onboarding.md) の手順で作る（作れないときは satou さんに `https://github.com/new?name=<名前>&visibility=public` のリンクを渡す）。
 4. はじめの commit は README だけ。workflows・`qa/`・本体は同じ PR #1 で入れる（incidents/2026-11-04-new-repo-main-qa-without-qa-dir.md）。
-5. 上の「共通の形」を全部入れる。AGENTS.md は既存のゲーム（kippu-10 など）を写して直す。
+5. 上の「共通の形」と「だれでも遊べるように」を全部入れる。AGENTS.md は既存のゲーム（kippu-10 など）を写して直す。
    `.github/workflows/` は既存のゲームからでなく `template/.github/workflows/` から写す（古いゲームの写しはひな形の直しが届いていない）。PR #1 を出す前に、shared-workflows で `LOCAL_ROOT=<clone の親> REPOS=<リポジトリ> node scripts/drift-check.mjs` を回し、出た行を直す（2026-11-05 あみだ配達・ことばならべ・ひかり道が、前の日に直した link-check の設定なしで出た）。
 6. `node qa/run.mjs` が全部通ってから PR。`sw.js` を含む PR は `@coderabbitai review` とコメントし、レビューを読んでから手でマージする。
 7. Pages を main のルートで公開する（[onboarding.md](onboarding.md) 手順5の1）。`node scripts/drift-check.mjs` に `pages` の行が出ないこと、Actions の Post-deploy check が緑になったことを見るまで、X などで紹介しない（2026-11-04 3本が 404 のまま紹介された。incidents/2026-11-04-pages-never-enabled.md）。

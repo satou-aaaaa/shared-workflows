@@ -17,6 +17,7 @@
 //   - 公開リポジトリの既定のブランチに、削除と force push を止めるルールが無い（API で読むときだけ。incidents/2026-11-04-new-repos-no-ruleset.md）
 //   - 感想の Issue フォーム（.github/ISSUE_TEMPLATE/feedback.yml）の name がひな形とちがう・形が GitHub の決まりに合わない（incidents/2026-11-05-feedback-form-not-shown.md）
 //   - 公開の見張り（post-deploy・site-watch）があるのに GitHub Pages が有効でない（API で読むときだけ。incidents/2026-11-04-pages-never-enabled.md）
+//   - ゲーム（index.html と sw.js がある）に、見やすさの設定（template/a11y/a11y.html）と検査（template/qa/a11y.mjs）が無い・ひな形とちがう・qa/run.mjs が回していない（routines/game-dev.md「だれでも遊べるように」）
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -47,6 +48,11 @@ const SETUP_VER = setupVer(readFileSync(join(here, '..', 'template', 'scripts', 
 
 // 感想フォームのひな形の name（写しの name がこれとちがえば知らせる）
 const FEEDBACK_NAME = formProblems(readFileSync(join(here, '..', 'template', '.github', 'ISSUE_TEMPLATE', 'feedback.yml'), 'utf8')).name;
+
+// 見やすさの設定と検査のひな形（ゲームの写しがこれと同じか比べる）
+const A11Y_BLOCK = (t) => (t.match(/<!-- a11y:begin[\s\S]*?<!-- a11y:end -->/) || [''])[0];
+const A11Y_HTML = A11Y_BLOCK(readFileSync(join(here, '..', 'template', 'a11y', 'a11y.html'), 'utf8'));
+const A11Y_QA = readFileSync(join(here, '..', 'template', 'qa', 'a11y.mjs'), 'utf8');
 
 const allowPath = join(here, 'drift-allow.json');
 const allow = existsSync(allowPath) ? JSON.parse(readFileSync(allowPath, 'utf8')) : {};
@@ -174,6 +180,19 @@ for (const r of REPOS) {
         for (const l of want) if (!(await api(`repos/${OWNER}/${r}/labels/${encodeURIComponent(l)}`))) flag(`label:${l}`, `${p} が付けるラベル「${l}」がリポジトリに無い（Actions の Labels を Run workflow で動かす）`);
       }
       if (p.endsWith('/feedback.yml') && name && name !== FEEDBACK_NAME) flag('form:feedback-name', `${p} の name が「${name}」（ひな形は「${FEEDBACK_NAME}」。template/.github/ISSUE_TEMPLATE/feedback.yml を写す）`);
+    }
+
+    // 見やすさ：色覚・ディスレクシアなどの人も遊べるよう、どのゲームにも同じ設定と検査を入れる（satou さん 2026-11-05）
+    if (paths.has('index.html') && paths.has('sw.js')) {
+      const page = await src.read('index.html');
+      const mine = A11Y_BLOCK(page);
+      if (!mine) flag('a11y:block', 'index.html に見やすさの設定が無い（template/a11y/a11y.html を </head> の前に写し、開くボタンに data-a11y-open。routines/game-dev.md「だれでも遊べるように」）');
+      else if (mine !== A11Y_HTML) flag('a11y:block', 'index.html の見やすさの設定がひな形とちがう（template/a11y/a11y.html をもう一度写す。写しを直さない）');
+      if (!paths.has('qa/a11y.mjs')) flag('a11y:qa', 'qa/a11y.mjs が無い（template/qa/a11y.mjs を写し、qa/run.mjs から回す）');
+      else {
+        if ((await src.read('qa/a11y.mjs')) !== A11Y_QA) flag('a11y:qa', 'qa/a11y.mjs がひな形とちがう（template/qa/a11y.mjs をもう一度写す。ゲームごとの許しは qa/a11y.json に理由つきで）');
+        if (paths.has('qa/run.mjs') && !(await src.read('qa/run.mjs')).includes('a11y.mjs')) flag('a11y:run', 'qa/run.mjs が qa/a11y.mjs を回していない（CI の QA で見やすさが見られない）');
+      }
     }
 
     const called = new Set();
