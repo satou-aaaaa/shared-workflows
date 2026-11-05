@@ -1,5 +1,5 @@
 // 引き継ぎコード（transfer.js）：このゲームの記録を「コード」と「QR」にして、別の端末へ移す。サーバーは使わない。
-// 引き継ぎの版: 2
+// 引き継ぎの版: 3
 // 正：satou-aaaaa/shared-workflows の template/transfer.js（各ゲームはこれをそのまま写す。直すときはひな形を直して配り、版を上げる）
 // 使い方（index.html の <head> の中、ゲームの script より前に、defer を付けずに置く）:
 //   <script src="transfer.js" data-game="kippu-10" data-keys="kippu-v1"></script>
@@ -17,7 +17,7 @@
 //   - 外へ通信しない（fetch・XMLHttpRequest・外のスクリプトを使わない）。QR は下の qrcode-generator（MIT）をこのファイルの中で作る。
 (function () {
   "use strict";
-  var VERSION = 2;
+  var VERSION = 3;
   var me = document.currentScript;
   var cfg = window.HK_CONFIG || {};
   var GAME = cfg.game || (me && me.dataset.game) || "";
@@ -137,6 +137,26 @@
     return false;
   }
   function fail(kind) { var e = new Error(ERR[kind]); e.kind = kind; return e; }
+  // 縮めたコードを、読みながら大きさを数えて広げる。MAX_JSON を超えたらそこでやめる
+  // （小さなコードが何百MBにも膨らむと、開いただけでタブが固まるため。版3、CodeRabbit の指摘）
+  function inflate(bytes) {
+    var reader = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw")).getReader();
+    var parts = [], total = 0;
+    function next() {
+      return reader.read().then(function (r) {
+        if (r.done) {
+          var out = new Uint8Array(total), at = 0;
+          parts.forEach(function (p) { out.set(p, at); at += p.length; });
+          return out;
+        }
+        total += r.value.length;
+        if (total > MAX_JSON) { try { reader.cancel(); } catch (e) { /* なし */ } throw fail("big"); }
+        parts.push(r.value);
+        return next();
+      });
+    }
+    return next();
+  }
   function decode(text) {
     return Promise.resolve().then(function () {
       var s = clean(text);
@@ -147,7 +167,7 @@
       try { bytes = unb64(m[2]); } catch (e) { throw fail("form"); }
       if (crc32(bytes) !== m[3]) throw fail("crc");
       if (m[1] === "1" && typeof DecompressionStream !== "function") throw fail("old");
-      return (m[1] === "1" ? pipe(bytes, new DecompressionStream("deflate-raw")) : Promise.resolve(bytes)).catch(function () { throw fail("form"); });
+      return (m[1] === "1" ? inflate(bytes) : Promise.resolve(bytes)).catch(function (e) { throw e && e.kind ? e : fail("form"); });
     }).then(function (raw) {
       if (raw.length > MAX_JSON) throw fail("big");
       var o;

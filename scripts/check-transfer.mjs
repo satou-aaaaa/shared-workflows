@@ -24,9 +24,18 @@ function store(init = {}) {
     getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k), _m: m,
   };
 }
+// 広げた大きさを数える DecompressionStream（膨らむコードを途中でやめたかを見る）
+const inflated = { n: 0 };
+class CountingDS {
+  constructor(f) {
+    const ds = new DecompressionStream(f);
+    this.writable = ds.writable;
+    this.readable = ds.readable.pipeThrough(new TransformStream({ transform(ch, c) { inflated.n += ch.length; c.enqueue(ch); } }));
+  }
+}
 function boot({ game, keys, local, session }) {
   const ctx = {
-    console, Promise, Response, Blob, TextEncoder, TextDecoder, CompressionStream, DecompressionStream, Uint8Array, atob, btoa, Date, JSON, Error, setTimeout,
+    console, Promise, Response, Blob, TextEncoder, TextDecoder, CompressionStream, DecompressionStream: CountingDS, Uint8Array, atob, btoa, Date, JSON, Error, setTimeout,
     localStorage: local, sessionStorage: session,
     location: { href: 'https://example.test/game/', hash: '', pathname: '/game/', search: '', replace() {} },
     history: { replaceState() {} },
@@ -68,6 +77,18 @@ const evil = boot({ game: 'kippu-10', keys: 'kippu-v1', local: store({ 'kippu-v1
 ok('HTML の印の文字が入った記録のコードを弾く', (await kind(w.HK.decode(await evil.HK.encode()))) === 'bad');
 const evil2 = boot({ game: 'kippu-10', keys: 'kippu-v1', local: store({ 'kippu-v1': JSON.stringify({ dex: { '1" onmouseover="x': 1 } }) }), session: store() });
 ok('キーの名前に HTML の印の文字が入った記録のコードも弾く', (await kind(w.HK.decode(await evil2.HK.encode()))) === 'bad');
+
+// 小さなコードが大きく膨らむもの（0 を 50MB 縮めたもの）は、広げきる前に弾く
+{
+  const { deflateRawSync } = await import('node:zlib');
+  const z = deflateRawSync(Buffer.alloc(50 * 1024 * 1024, 48));
+  const CRCT = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
+  let c = 0xffffffff; for (const x of z) c = CRCT[(c ^ x) & 255] ^ (c >>> 8);
+  const bomb = 'HK1.' + z.toString('base64url') + '.' + ((c ^ 0xffffffff) >>> 0).toString(36);
+  inflated.n = 0;
+  const k = await kind(w.HK.decode(bomb));
+  ok(`大きく膨らむコードを広げきる前に弾く（${Math.round(z.length / 1024)}KB のコード。結果 ${k}・広げたのは ${Math.round(inflated.n / 1048576)}MB）`, k === 'big' && inflated.n < 8 * 1024 * 1024);
+}
 
 // 控えを書けない（端末の空きが無い）ときは入れ替えない
 const full = store({ 'kippu-v1': '{"old":1}' });
