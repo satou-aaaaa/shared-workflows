@@ -1,7 +1,7 @@
 // CI の実行時間を集計して Markdown を標準出力に書く（Claude は使わない）。
 // 使い方: GH_TOKEN=... OWNER=satou-aaaaa REPOS="a b c" node scripts/ci-time.mjs
 // 直近7日とその前の7日を比べ、ワークフローごとの回数・中央値・p90・合計分を出す。
-// 合計時間が長い上位のワークフローは、最新の成功した実行の「遅いステップ」も出す。
+// 合計時間が長い上位のワークフローは、中央値以上かかった最新の成功した実行の「遅いステップ」も出す。
 // 時間は実行の開始から終了まで（待ち行列の時間を除く壁時計の時間）。
 
 import { execFileSync } from "node:child_process";
@@ -73,8 +73,12 @@ for (const repo of repos) {
     const cur = list.filter((r) => r.start >= now - 7 * DAY);
     const prev = list.filter((r) => r.start < now - 7 * DAY);
     const events = [...new Set(cur.map((r) => r.event))].join(",");
-    const lastOk = cur.filter((r) => r.conclusion === "success").sort((a, b) => b.start - a.start)[0];
-    rows.push({ repo, name: list[0].name, path, events, cur: stats(cur), prev: stats(prev), lastOk });
+    // 遅いステップを見る実行は「中央値以上かかった最新の成功」。ただの最新だと、変更が無くて重い検査を飛ばした
+    // 速い実行を拾い、checkout の2秒しか出ないことがある（2026-11-05 last-tell QA）
+    const st = stats(cur);
+    const oks = cur.filter((r) => r.conclusion === "success").sort((a, b) => b.start - a.start);
+    const lastOk = oks.find((r) => r.sec >= st.p50) || oks[0];
+    rows.push({ repo, name: list[0].name, path, events, cur: st, prev: stats(prev), lastOk });
   }
 }
 
@@ -98,7 +102,7 @@ for (const r of ok) {
 for (const r of rows.filter((r) => r.error)) lines.push(`| ${r.repo} | 読めませんでした（${r.error}） | | | | | | |`);
 
 // 合計時間の上位5本: 最新の成功した実行の遅いステップ
-lines.push("", "### 遅いステップ（合計時間の上位5本、最新の成功した実行）", "");
+lines.push("", "### 遅いステップ（合計時間の上位5本、中央値以上かかった最新の成功した実行）", "");
 for (const r of ok.slice(0, 5)) {
   if (!r.lastOk) continue;
   try {
