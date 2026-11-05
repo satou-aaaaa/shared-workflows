@@ -66,7 +66,7 @@
 | カンバンの自動改善（毎日・11:23） | このプロジェクトの共有フォルダ `board/improve.md` | `CRON_TZ=Asia/Tokyo 23 11 * * *` | 「TODO のカンバン化」スレッドから作る。アプリ版と声は担当スレッドへ頼む |
 | 見回り（止まっているスレッドをボードに集める） | このプロジェクトの共有フォルダ `board/patrol.md` | `CRON_TZ=Asia/Tokyo 7 8,20 * * *` | 持続するスレッドを起こす。届き先は毎週替える（次の行） |
 | 見回りの届き先を新しいスレッドに替える | このプロジェクトの共有フォルダ `board/patrol-weekly-reset.md` | `CRON_TZ=Asia/Tokyo 47 7 * * 1` | 新しいセッション |
-| カンバンの頼みごとを片付ける | このプロジェクトの共有フォルダ `board/app-requests.md` | なし（ops-backup の app-inbox への push が合図） | 新しいセッション。PC につないでいないスレッドから作る |
+| カンバンの頼みごとを片付ける | このプロジェクトの共有フォルダ `board/app-requests.md` | なし（ops-backup の app-inbox への push が合図） | 新しいセッション。PC につないでいないスレッドから作る。GitHub の合図は Web の画面でしか付けられず、付くまでは見回り（8:07・20:07）が拾う（11/5 の1週間の振り返り：取りこぼし0） |
 | ops-backup 書き出し（毎日・9:17） | satou-aaaaa/ops-backup（非公開）`README.md`「書き出し」 | `CRON_TZ=Asia/Tokyo 17 9 * * *` | 業務代行エージェント作りのスレッドから作る |
 | ops-backup 書き出し（ほかのプロジェクト・週1） | satou-aaaaa/ops-backup（非公開）`README.md`「ほかのプロジェクト」 | 日曜 9:23〜10:05 JST（時刻とフォルダ名はそこの表） | 外のプロジェクトからは作れない。各プロジェクトのチャットで README の1行を頼んで作る |
 | 週次の研究進捗まとめ（カルカソンヌ） | プロンプト内: 「satou-aaaaa/carcassonne-research の過去1週間のコミットと PR の状態を確認し、AI の強さの変化と、初心者向け解説に使える発見を日本語で短くまとめてプロジェクトに投稿してください。」 | `CRON_TZ=Asia/Tokyo 45 20 * * 0` | モデル claude-haiku-5-5 |
