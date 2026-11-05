@@ -148,7 +148,10 @@
   // 縮めたコードを、読みながら大きさを数えて広げる。MAX_JSON を超えたらそこでやめる
   // （小さなコードが何百MBにも膨らむと、開いただけでタブが固まるため。版3、CodeRabbit の指摘）
   function inflate(bytes) {
-    var reader = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw")).getReader();
+    // deflate-raw を知らない古いブラウザは、ここで作れずに投げる（形のまちがいでなく「古い」と知らせる。版4）
+    var ds;
+    try { ds = new DecompressionStream("deflate-raw"); } catch (e) { throw fail("old"); }
+    var reader = new Blob([bytes]).stream().pipeThrough(ds).getReader();
     var parts = [], total = 0;
     function next() {
       return reader.read().then(function (r) {
@@ -199,7 +202,7 @@
     var p;
     try { p = sessionStorage.getItem(PENDING); sessionStorage.removeItem(PENDING); } catch (e) { return; }
     if (!p) return;
-    var msg, partial = false;
+    var msg, partial = false, undo = false;
     try {
       var job = JSON.parse(p);
       // いまの data-keys の外のキー（前の版の控えに入っていた a11y-v1 など）は書かない
@@ -220,10 +223,13 @@
       }
       if (!count(cur) && job.undo) { try { localStorage.removeItem(BACKUP); } catch (e) { /* なし */ } }
       msg = job.undo ? "取り込む前の記録に戻しました" : "記録を引き継ぎました";
+      undo = !job.undo && count(cur) > 0;
     } catch (e) {
+      undo = partial;
       msg = partial ? "途中で止まりました（端末の空きが足りないかもしれません）。「引き継ぎ」の「控えに戻す」で前の記録に戻せます" : "引き継げませんでした（端末の空きが足りないかもしれません）。記録は元のままです";
     }
-    try { sessionStorage.setItem(DONE, msg); } catch (e) { /* なし */ }
+    // u：知らせに「控えに戻す」を付ける（取り込んだ記録の形でゲームが動かなくても、ここから戻せるように。版4）
+    try { sessionStorage.setItem(DONE, JSON.stringify({ m: msg, u: undo })); } catch (e) { /* なし */ }
   })();
 
   // ---- 画面 ----
@@ -248,7 +254,10 @@
     ".hk-box [hidden]{display:none!important}",
     ".hk-err{color:var(--hk-err)!important;font-weight:bold}",
     ".hk-file input{position:absolute;width:1px;height:1px;opacity:0}",
-    ".hk-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2147483001;background:#222;color:#fff;padding:12px 18px;border-radius:12px;font:14px/1.5 system-ui,sans-serif;max-width:calc(100% - 32px)}",
+    ".hk-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2147483001;background:#222;color:#fff;padding:12px 18px;border-radius:12px;font:14px/1.5 system-ui,sans-serif;max-width:calc(100% - 32px);box-sizing:border-box}",
+    ".hk-toast .hk-row{margin-top:6px}",
+    ".hk-toast button{min-height:44px;min-width:44px;padding:8px 14px;border-radius:10px;border:1px solid #888;background:transparent;color:#fff;font:inherit;cursor:pointer}",
+    ".hk-toast button:focus-visible{outline:3px solid #5b9cff;outline-offset:2px}",
   ].join("\n");
   var back = null, lastFocus = null, req = 0;
   function el(tag, attrs, kids) {
@@ -263,11 +272,19 @@
     s.textContent = CSS;
     document.head.appendChild(s);
   }
-  function toast(text) {
+  // withUndo のときは自分では消えず、「控えに戻す」「閉じる」を出す（ゲームの画面が出なくても戻せるように）
+  function toast(text, withUndo) {
     style();
-    var t = el("div", { class: "hk-toast", role: "status", text: text });
+    var t = el("div", { class: "hk-toast", role: "status" }, [el("div", { text: text })]);
+    function gone() { if (t.parentNode) t.parentNode.removeChild(t); }
+    var b = withUndo ? readBackup() : null;
+    if (b) {
+      t.appendChild(el("div", { class: "hk-row" }, [
+        btn("控えに戻す", function () { gone(); confirmUndo(b); }, false, "hk-toast-undo"),
+        btn("閉じる", gone, false, "hk-toast-close"),
+      ]));
+    } else setTimeout(gone, 4000);
     document.body.appendChild(t);
-    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 4000);
   }
   function close() {
     req++; // 読み取り中のコードの結果は、閉じたあとに画面へ出さない
@@ -435,7 +452,11 @@
     });
     var msg = null;
     try { msg = sessionStorage.getItem(DONE); sessionStorage.removeItem(DONE); } catch (e) { /* なし */ }
-    if (msg) toast(msg);
+    if (msg) {
+      var o = null;
+      try { o = JSON.parse(msg); } catch (e) { /* 前の版の知らせ（ただの文字） */ }
+      if (o && typeof o.m === "string") toast(o.m, !!o.u); else toast(msg);
+    }
     checkHash();
     window.addEventListener("hashchange", checkHash);
   }

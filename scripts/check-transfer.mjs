@@ -72,6 +72,20 @@ ok('入れ替えると取り込んだ記録になる', local2.getItem('kippu-v1'
 ok('入れ替えでほかのゲームの記録・分け合う設定（a11y-v1）に触らない', local2.getItem('bento-v1') === '{"other":1}' && local2.getItem('a11y-v1') === '{"font":2}');
 ok('入れ替える前の記録を控え（hk-backup:<ゲーム>）に残す', JSON.parse(local2.getItem('hk-backup:kippu-10') || '{}').d?.['kippu-v1'] === '{"old":1}');
 ok('預けた中身は1回で消す（読み直すたびに入れ替えない）', session2.getItem('hk-pending:kippu-10') === null && !!session2.getItem('hk-done:kippu-10'));
+// 取り込んだあとの知らせには「控えに戻す」を付ける（取り込んだ記録の形でゲームが動かなくても戻せるように。版4）
+const done = (ss) => { try { return JSON.parse(ss.getItem('hk-done:kippu-10') || 'null'); } catch { return null; } };
+ok('前の記録があって取り込んだときは、知らせに「控えに戻す」を付ける', done(session2)?.u === true);
+{
+  const ss = store({ 'hk-pending:kippu-10': JSON.stringify({ d: { 'kippu-v1': '{"old":1}' }, undo: true }) });
+  boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x', local: store({ 'kippu-v1': rec }), session: ss });
+  ok('控えに戻したあとの知らせには「控えに戻す」を付けない', done(ss)?.u === false && /戻しました/.test(done(ss)?.m || ''));
+}
+// deflate-raw を作れない古いブラウザでは「古い」と知らせる（形のまちがいにしない）
+{
+  const old = boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x', local: store(), session: store() });
+  old.DecompressionStream = function () { throw new TypeError('Unsupported compression format: deflate-raw'); };
+  ok('deflate-raw を知らないブラウザでは「古い」と知らせる', (await kind(old.HK.decode(c))) === 'old');
+}
 // HTML の印になる文字（< > " ' `）が入った記録のコードは弾く（ゲームが innerHTML に入れてもスクリプトにならないように）
 const evil = boot({ game: 'kippu-10', keys: 'kippu-v1', local: store({ 'kippu-v1': JSON.stringify({ v: 1, ebest: '<img src=x onerror=alert(1)>' }) }), session: store() });
 ok('HTML の印の文字が入った記録のコードを弾く', (await kind(w.HK.decode(await evil.HK.encode()))) === 'bad');
