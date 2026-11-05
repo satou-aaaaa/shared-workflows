@@ -18,6 +18,7 @@
 - 各ゲームのリポジトリは、これを `.github/ISSUE_TEMPLATE/feedback.yml` に写す。ラベル「感想」は共通部品 `labels.yml` が作る。
 - ゲームの終わりの画面と遊び方（メニュー）の画面に、次のリンクを置く（`target="_blank" rel="noopener"`）。ゲームからは何も送らない。
   `https://github.com/satou-aaaaa/<リポジトリ>/issues/new?template=feedback.yml`
+- 写すときは `name: 感想フォーム` のまま写す（「感想」の2字にすると、フォームが出ず白紙の Issue になる。incidents/2026-11-05-feedback-form-not-shown.md）。写したリポジトリでマージしたら、上のリンクと `…/issues/new/choose` を開き、楽しさ（5段階）の項目が出るか確かめる。出なければ白紙のまま直っていない。
 - 後で Google フォーム（GitHub のアカウントが無い人も送れる）に替えるときは、リンクの先だけを替え、この手順書の手順2に「フォームの回答のスプレッドシートを読む」を足す。satou さんは 2026-11-03 に「まず GitHub で始め、Google フォームは後で」を選んだ。
 
 ## 使う道具
