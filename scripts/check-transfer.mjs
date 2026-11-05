@@ -90,6 +90,14 @@ ok('キーの名前に HTML の印の文字が入った記録のコードも弾�
   ok(`大きく膨らむコードを広げきる前に弾く（${Math.round(z.length / 1024)}KB のコード。結果 ${k}・広げたのは ${Math.round(inflated.n / 1048576)}MB）`, k === 'big' && inflated.n < 8 * 1024 * 1024);
 }
 
+// 受け取る側が弾く大きさの記録は、書き出しの時点で止める
+{
+  const big = boot({ game: 'kippu-10', keys: 'kippu-v1', local: store({ 'kippu-v1': JSON.stringify({ v: 1, pad: 'a'.repeat(4 * 1024 * 1024 + 10) }) }), session: store() });
+  ok('4MB を超える記録は書き出しで止める（作れたのに取り込めない、をなくす）', (await kind(big.HK.encode())) === 'big');
+}
+// URL の途中で改行されていても読める
+ok('URL の途中で改行されたコードも読める', (await w.HK.decode(`https://example.test/game/#hk=${c.slice(0, 20)}\n${c.slice(20)}\n`)).d['kippu-v1'] === rec);
+
 // 控えを書けない（端末の空きが無い）ときは入れ替えない
 const full = store({ 'kippu-v1': '{"old":1}' });
 const realSet = full.setItem;
