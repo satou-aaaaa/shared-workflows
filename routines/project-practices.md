@@ -57,6 +57,8 @@
 | madori-puzzle（間取りパズル） | パズルゲーム | madori-puzzle `AGENTS.md`・`README.md` | 今日の3軒（全員同じ）・上級・家の種類ごとに新しい希望を1つ・QA（答えが1つ・要らない希望が無い・1年同じ家なし） | 上が北・右が東、「となり」は壁を共有する部屋だけ。data.js は tools/gen-levels.cjs で作る |
 | tenkizu-yomi（天気図よみ） | 学習ゲーム（気象） | tenkizu-yomi `AGENTS.md`・`README.md` | 今日の5問（全員同じ）・上級（8方位）・QA（答えが迷う所を出さない） | 天気図は架空で実際の予報として出さない。風は等圧線から低気圧側へ30度（北半球） |
 | bushu-tashizan（部首たし算） | 学習ゲーム（漢字） | bushu-tashizan `AGENTS.md`・`README.md` | 今日の5問（全員同じ）・上級（部品3つ）・QA（答えが1つ・つらい言葉の字を使わない） | 字の組み立ては KanjiVG、読み・熟語は KANJIDIC2/JMdict（CC BY-SA）から作り、出典を README に書く |
+| amida-haitatsu（あみだ配達） | パズルゲーム | amida-haitatsu `AGENTS.md`・`README.md` | 今日の3問（全員同じ）・上級・QA（いちばん少ない本数を gen.js の solve で全部数える） | 出す前に最少の本数を数え上げで確かめる。同じ回数の古いタブでもヒントの数は多いほうを残す |
+| kotoba-narabe（ことばならべ） | 学習ゲーム（言葉） | kotoba-narabe `AGENTS.md`・`README.md` | 今日の3問（全員同じ）・上級（7字・8字）・QA（全読みで答えが1つか数え直す） | 言葉は JMdict（CC BY-SA）から作り、出典を README に書く。答えが1つの言葉だけを出す |
 | tenbin（天秤の書） | 学習アプリ | tenbin `CLAUDE.md`、スキル add-ronbun-questions・law-app-ui-check | 間隔反復の復習ドリル・一次資料での確認 | 問題を足すときに「思い出させる形（答える前に考えさせる）」になっているかを見る点に加える |
 | carcassonne-research | 研究（ゲームAI） | carcassonne-research `CLAUDE.md`・`.claude/skills/steward/`・`docs/EXPERIMENTS.md` | シードを決めた先後入替の対戦・信頼区間・再現コマンド | 強さの判定に SPRT を使い、対戦数を減らしつつ誤りの率をそろえる |
 | sandbox（許可申請ツール） | 業務ツール | sandbox `CLAUDE.md`・`docs/DEVELOPMENT_GUIDE.md`・`docs/routines/` | 小さな PR・多層の検査・運用エージェント | ダミー案件で端から端まで通す確認を定期の作業に入れ、詰まった所を Issue にする |
