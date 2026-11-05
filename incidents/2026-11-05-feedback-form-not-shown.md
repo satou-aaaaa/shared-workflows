@@ -22,4 +22,7 @@
 - [x] 直す: ひな形と8本の feedback.yml を `name: 感想フォーム` にした（この PR と各ゲームの PR）
 - [x] 防ぐ: `scripts/check-issue-forms.mjs` が、ひな形の Issue フォームに name・description・body（markdown 以外の項目）があり、name が3字以上かを見る。check.sh と CI の Lint が呼ぶ（この PR）
 - [x] 見つける: `scripts/drift-check.mjs` が、各リポジトリの Issue フォームの形と、feedback.yml の name がひな形と同じかを週次まとめに出す（この PR）
+- [x] 直す: kabu-news・wagamama-burger にラベル「感想」が無く、フォームから送ってもラベルが付かなかった（labels.yml が「感想」を足す前に動いたきりで、次は月1の見回り）。Labels を手で動かした
+- [x] 見つける: `scripts/drift-check.mjs` が、Issue フォームの `labels:` にあるラベルがリポジトリに無いと週次まとめに出す（2本目の PR）
+- [x] 直す: 確かめた。マージ後の kabu-news で `issues/new/choose` に「感想フォーム」が出て、`?template=feedback.yml` で楽しさ・よかった所の項目が出た
 - [x] 防ぐ: ひな形を直したらマージ後に `issues/new/choose` と `issues/new?template=feedback.yml` を開いてフォームが出るか確かめる（`routines/game-feedback.md` に1行足した）

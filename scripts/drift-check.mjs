@@ -164,8 +164,15 @@ for (const r of REPOS) {
 
     // 感想フォーム：name が「感想」（2字）だと GitHub がフォームを出さず白紙の Issue になった（2026-11-05 ゲーム8本。incidents/2026-11-05-feedback-form-not-shown.md）
     for (const p of [...paths].filter((q) => /^\.github\/ISSUE_TEMPLATE\/[^/]+\.ya?ml$/.test(q) && !/\/config\.ya?ml$/.test(q))) {
-      const { name, problems } = formProblems(await src.read(p));
+      const text = await src.read(p);
+      const { name, problems } = formProblems(text);
       for (const pr of problems) flag(`form:${p}`, `${p}: ${pr}`);
+      // フォームの labels にあるラベルがリポジトリに無いと、付かないまま Issue になる（週1の読み手がラベルで探せない）。
+      // 2026-11-05 kabu-news・wagamama-burger は labels.yml が「感想」を足す前に動いたきりで、月1の見回りまで無かった
+      if (src.repo) {
+        const want = ((text.match(/^labels:\s*\[(.*)\]/m) || [])[1] || '').split(',').map((x) => x.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+        for (const l of want) if (!(await api(`repos/${OWNER}/${r}/labels/${encodeURIComponent(l)}`))) flag(`label:${l}`, `${p} が付けるラベル「${l}」がリポジトリに無い（Actions の Labels を Run workflow で動かす）`);
+      }
       if (p.endsWith('/feedback.yml') && name && name !== FEEDBACK_NAME) flag('form:feedback-name', `${p} の name が「${name}」（ひな形は「${FEEDBACK_NAME}」。template/.github/ISSUE_TEMPLATE/feedback.yml を写す）`);
     }
 
