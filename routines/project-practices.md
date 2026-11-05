@@ -61,6 +61,9 @@
 | kotoba-narabe（ことばならべ） | 学習ゲーム（言葉） | kotoba-narabe `AGENTS.md`・`README.md` | 今日の3問（全員同じ）・上級（7字・8字）・QA（全読みで答えが1つか数え直す） | 言葉は JMdict（CC BY-SA）から作り、出典を README に書く。答えが1つの言葉だけを出す |
 | jobun-tobatsu（条文討伐） | 学習ゲーム（法律） | jobun-tobatsu `AGENTS.md`・`README.md`・`docs/design.md` | 今日の5体（全員同じ）・上級（無法大君）・おさらい・条文帳・QA（3年分の組み方） | 条文は e-Gov の本文と tools/check-laws.py で1字ずつ照らす。法律相談にしない。順位表は入れない |
 | machi-michijun（町の道順） | 頭の体操（高齢の人向け・道順を覚える） | machi-michijun `AGENTS.md`・`README.md` | 今日の道3本（全員同じ）・上級・練習・とことん・目印帳・思い出し・QA（3年分の道・練習4000本） | 「認知症を予防できる」と言い切らない（WHO 2019 を出典に）。押すだけ・時間制限なし・文字3段 |
+| hikari-michi（ひかり道） | パズルゲーム | hikari-michi `AGENTS.md`・`README.md` | 今日の3問（全員同じ）・上級・部屋帳・QA（いちばん少ない鏡の数を別のたどり方と全部の置き方で数え直す） | 出す前に最少の鏡の数を数え上げで確かめる |
+| otsukai-memo（おつかいメモ） | 頭の体操（高齢の人向け・覚える・計算） | otsukai-memo `AGENTS.md`・`README.md` | 今日の3回（全員同じ）・上級・練習・とことん・QA（3年分の組み方・言い方） | 「認知症を予防できる」と言い切らない（WHO 2019 を出典に）。押すだけ・時間制限なし・文字3段 |
+| bunshi-tsukuri（分子づくり） | 学習ゲーム（化学） | bunshi-tsukuri `AGENTS.md`・`README.md` | 今日の3分子（全員同じ）・上級・とことん・分子帳・QA（手の数・化学式・同じ形の分子を別の数え方で） | 分子のデータは手の数と化学式を確かめてから足す |
 | tenbin（天秤の書） | 学習アプリ | tenbin `CLAUDE.md`、スキル add-ronbun-questions・law-app-ui-check | 間隔反復の復習ドリル・一次資料での確認 | 問題を足すときに「思い出させる形（答える前に考えさせる）」になっているかを見る点に加える |
 | carcassonne-research | 研究（ゲームAI） | carcassonne-research `CLAUDE.md`・`.claude/skills/steward/`・`docs/EXPERIMENTS.md` | シードを決めた先後入替の対戦・信頼区間・再現コマンド | 強さの判定に SPRT を使い、対戦数を減らしつつ誤りの率をそろえる |
 | sandbox（許可申請ツール） | 業務ツール | sandbox `CLAUDE.md`・`docs/DEVELOPMENT_GUIDE.md`・`docs/routines/` | 小さな PR・多層の検査・運用エージェント | ダミー案件で端から端まで通す確認を定期の作業に入れ、詰まった所を Issue にする |
