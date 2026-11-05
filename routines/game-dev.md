@@ -94,6 +94,8 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 | A8 | 音だけで知らせない（音には必ず文字・絵の知らせを添える）。振動・点滅は「動きを減らす」で止める。1秒に3回より多く光らせない | [WCAG 2.2 2.3.1](https://www.w3.org/WAI/WCAG22/Understanding/three-flashes-or-below-threshold.html)・Game Accessibility Guidelines |
 | A9 | 時間制限を付けない（もとからの決まり）。説明はいつでも開き直せる | [WCAG 2.2 2.2.1](https://www.w3.org/WAI/WCAG22/Understanding/timing-adjustable.html) |
 | A10 | 役割や性別を決めつけない。登場人物は男女や年齢がかたよらないよう混ぜ、職業・家事・趣味を性別で決めない。呼び方は「さん」でそろえる（「くん・ちゃん」で性別を分けない）。「主婦→家事をする人」「ビジネスマン→会社員」「看護婦→看護師」などは言いかえる（一覧は `qa/a11y.mjs` の WORDS）。条文・判例の引用は原文のまま変えない | [UNESCO: Promoting gender equality through textbooks](https://webarchive.unesco.org/web/20170509214808/http://unesdoc.unesco.org/images/0024/002473/247337e.pdf)・[欧州評議会：ジェンダーに配慮した言葉](https://rm.coe.int/168070ab79) |
+| A11 | 説明・知らせは「やさしい日本語」で書く：一文を短く（目安40字）、一文に一つのこと、むずかしい言葉・二重否定・あいまいな言い方を避ける。むずかしい漢字の言葉には `<ruby class="a11y-rb">漢字<rt>かんじ</rt></ruby>` でふりがなを付ける（設定の「ふりがなを出す」で出る）。漢字を当てる・読むゲームの問題そのものには付けない | [出入国在留管理庁・文化庁「在留支援のためのやさしい日本語ガイドライン」](https://www.moj.go.jp/isa/support/coexistence/04_00004.html)・BDA Dyslexia Style Guide |
+| A12 | 遅い回線・古い端末でも開ける：はじめに読むファイル（index.html と同じサイトのスクリプト・データ）は合わせて 1.5MB 以下（`qa/a11y.mjs` が見る）。オフラインでも遊べる（PWA） | [web.dev: Fast load times](https://web.dev/explore/fast) |
 
 - 磨くとき（手順 B）は、`node qa/a11y.mjs` が出す色覚の見え方の絵（`qa-report/a11y-*-P型.png` など）を自分で見て、色だけで分けている所が無いか確かめる。
 
