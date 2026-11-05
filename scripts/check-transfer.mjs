@@ -80,6 +80,25 @@ ok('前の記録があって取り込んだときは、知らせに「控えに�
   boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x', local: store({ 'kippu-v1': rec }), session: ss });
   ok('控えに戻したあとの知らせには「控えに戻す」を付けない', done(ss)?.u === false && /戻しました/.test(done(ss)?.m || ''));
 }
+// 控えに戻すときは、入れ替えが済むまで控えを上書きしない（途中で止まっても控えが残り、もう一度戻せる。版5）
+{
+  const bk = JSON.stringify({ at: '2026-11-01T00:00:00Z', d: { 'kippu-v1': '{"old":1}', 'kippu-x': '{"x":1}' } });
+  const l = store({ 'kippu-v1': rec, 'kippu-x': '{"font":1}', 'hk-backup:kippu-10': bk });
+  const rs = l.setItem; let n = 0;
+  l.setItem = (k, v) => { if (!k.startsWith('hk-') && ++n >= 2) throw new Error('QuotaExceededError'); return rs(k, v); };
+  const ss = store({ 'hk-pending:kippu-10': JSON.stringify({ d: JSON.parse(bk).d, undo: true }) });
+  boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x', local: l, session: ss });
+  ok('控えに戻す途中で止まり元にも戻せなかったときも、控え（戻したい記録）を消さない', l.getItem('hk-backup:kippu-10') === bk && done(ss)?.u === true);
+  const l2 = store({ 'kippu-v1': rec, 'hk-backup:kippu-10': bk });
+  const s2 = store({ 'hk-pending:kippu-10': JSON.stringify({ d: JSON.parse(bk).d, undo: true }) });
+  boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x', local: l2, session: s2 });
+  const l3 = store({ 'kippu-v1': rec, 'hk-backup:kippu-10': bk });
+  const rs3 = l3.setItem; l3.setItem = (k, v) => { if (k.startsWith('hk-backup:')) throw new Error('QuotaExceededError'); return rs3(k, v); };
+  const s3 = store({ 'hk-pending:kippu-10': JSON.stringify({ d: JSON.parse(bk).d, undo: true }) });
+  boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x', local: l3, session: s3 });
+  ok('控えに戻せても新しい控えを書けないときは、戻す前の記録に戻して「元のまま」と知らせる', l3.getItem('kippu-v1') === rec && l3.getItem('kippu-x') === null && l3.getItem('hk-backup:kippu-10') === bk && /元のまま/.test(done(s3)?.m || ''));
+  ok('控えに戻せたら、戻す前の記録が新しい控えになる（もう一度押すと戻る）', l2.getItem('kippu-v1') === '{"old":1}' && JSON.parse(l2.getItem('hk-backup:kippu-10') || '{}').d?.['kippu-v1'] === rec);
+}
 // deflate-raw を作れない古いブラウザでは「古い」と知らせる（形のまちがいにしない）
 {
   const old = boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x', local: store(), session: store() });
