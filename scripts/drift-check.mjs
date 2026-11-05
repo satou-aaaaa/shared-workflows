@@ -15,12 +15,14 @@
 //   - scripts/setup.sh が渡す CHROMIUM_PATH を、検査のスクリプト（qa/・tools/ など）が読んでいない
 //   - 依存の置き場（package.json・requirements.txt・pyproject.toml）を Dependabot が見ていない
 //   - 公開リポジトリの既定のブランチに、削除と force push を止めるルールが無い（API で読むときだけ。incidents/2026-11-04-new-repos-no-ruleset.md）
+//   - 感想の Issue フォーム（.github/ISSUE_TEMPLATE/feedback.yml）の name がひな形とちがう・形が GitHub の決まりに合わない（incidents/2026-11-05-feedback-form-not-shown.md）
 //   - 公開の見張り（post-deploy・site-watch）があるのに GitHub Pages が有効でない（API で読むときだけ。incidents/2026-11-04-pages-never-enabled.md）
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { formProblems } from './check-issue-forms.mjs';
 
 const OWNER = process.env.OWNER || 'satou-aaaaa';
 // weekly-summary.yml の REPOS と同じ並び（shared-workflows 自身は部品の置き場なので見ない）
@@ -42,6 +44,9 @@ const reusable = new Set(existsSync(wfDir)
 // 準備スクリプトのひな形の版（写しの「ひな形の版: N」と比べる）
 const setupVer = (text) => Number((text.match(/ひな形の版:\s*(\d+)/) || [])[1] || 1);
 const SETUP_VER = setupVer(readFileSync(join(here, '..', 'template', 'scripts', 'setup.sh'), 'utf8'));
+
+// 感想フォームのひな形の name（写しの name がこれとちがえば知らせる）
+const FEEDBACK_NAME = formProblems(readFileSync(join(here, '..', 'template', '.github', 'ISSUE_TEMPLATE', 'feedback.yml'), 'utf8')).name;
 
 const allowPath = join(here, 'drift-allow.json');
 const allow = existsSync(allowPath) ? JSON.parse(readFileSync(allowPath, 'utf8')) : {};
@@ -155,6 +160,13 @@ for (const r of REPOS) {
     if (src.repo && (paths.has('.github/workflows/post-deploy.yml') || paths.has('.github/workflows/site-watch.yml'))) {
       const pages = await api(`repos/${OWNER}/${r}/pages`);
       if (!pages) flag('pages', 'GitHub Pages が有効になっていない（公開の見張りはあるのにページが 404。routines/onboarding.md 手順5の1：…/settings/pages → Deploy from a branch → main / (root)）');
+    }
+
+    // 感想フォーム：name が「感想」（2字）だと GitHub がフォームを出さず白紙の Issue になった（2026-11-05 ゲーム8本。incidents/2026-11-05-feedback-form-not-shown.md）
+    for (const p of [...paths].filter((q) => /^\.github\/ISSUE_TEMPLATE\/[^/]+\.ya?ml$/.test(q) && !/\/config\.ya?ml$/.test(q))) {
+      const { name, problems } = formProblems(await src.read(p));
+      for (const pr of problems) flag(`form:${p}`, `${p}: ${pr}`);
+      if (p.endsWith('/feedback.yml') && name && name !== FEEDBACK_NAME) flag('form:feedback-name', `${p} の name が「${name}」（ひな形は「${FEEDBACK_NAME}」。template/.github/ISSUE_TEMPLATE/feedback.yml を写す）`);
     }
 
     const called = new Set();
