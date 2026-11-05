@@ -112,7 +112,7 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 
 1. 案を3つ出す。どれも上の「好み」に当てはまるか表で確かめる。
 2. 動く見本（単体の HTML）を Artifact で出し、satou さんに選んでもらう（カード）。
-3. リポジトリは [onboarding.md](onboarding.md) の手順で作る（作れないときは satou さんに `https://github.com/new?name=<名前>&visibility=public` のリンクを渡す）。
+3. リポジトリは [onboarding.md](onboarding.md) 手順0で AI が作る。名前が決まったらすぐ、このスレッドに satou さんの一言を頼む（安全チェックはそのスレッドの本人の言葉だけを見る）。リンクを渡すのは Chrome がつながっていないときだけ。
 4. はじめの commit は README だけ。workflows・`qa/`・本体は同じ PR #1 で入れる（incidents/2026-11-04-new-repo-main-qa-without-qa-dir.md）。
 5. 上の「共通の形」と「だれでも遊べるように」を全部入れる。AGENTS.md は既存のゲーム（kippu-10 など）を写して直す。
    `.github/workflows/` は既存のゲームからでなく `template/.github/workflows/` から写す（古いゲームの写しはひな形の直しが届いていない）。PR #1 を出す前に、shared-workflows で `LOCAL_ROOT=<clone の親> REPOS=<リポジトリ> node scripts/drift-check.mjs` を回し、出た行を直す（2026-11-05 あみだ配達・ことばならべ・ひかり道が、前の日に直した link-check の設定なしで出た）。
