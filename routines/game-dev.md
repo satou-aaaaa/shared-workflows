@@ -19,9 +19,27 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 ## 考え方（調べた要点と出典）
 
 - まず遊びそのもの（手ごたえ・難しさの山・迷ったときの助け）を良くし、やりこみはその上に足す。やりこみだけ足しても、遊びが退屈なら続かない。
-- 実績は「腕前」「集める」「続ける」を混ぜ、まだのものは条件と進み具合を見せる。運だけ・回数だけの実績は避ける。[Hamari & Eranti 2011, Framework for Designing and Evaluating Game Achievements（DiGRA）](https://dl.digra.org/index.php/dl/article/view/545)
-- 1日1回のゲームは「1回で終わり」になりやすい。続けた日数は見せるが0のときは出さず、休んだ日を責めない（連続が義務になると疲れる）。[PeerPush: How we fixed a one-and-done problem on a daily puzzle game](https://peerpush.com/blog/how-we-fixed-a-one-and-done-problem-on-a-daily-puzzle-game)・[GameGrin: Do streaks and leaderboards still work?](https://www.gamegrin.com/articles/do-streaks-and-leaderboards-still-work)
 - 遊んだ人の声は「何が困ったか」を集めるのに使い、直し方はこちらで考える（[game-feedback.md](game-feedback.md)）。
+
+### 研究の要点（ゲーミフィケーションの論文。satou さん 2026-11-05「論文も広く参照して」）
+
+| # | 分かっていること | このゲームたちでの決まり | 出典 |
+| --- | --- | --- | --- |
+| 1 | ゲームの要素を足すと、学び・やる気・行動にそれぞれ小〜中くらいの良い効果がある。物語（フィクション）や、ほかの人との関わりがあると行動への効果が安定する | 世界観を一言でそえる（例：切符・お弁当・乗車記録）。要素は飾りでなく遊びの意味と結びつける | [Sailer & Homner 2020（メタ分析）](https://doi.org/10.1007/s10648-019-09498-w) |
+| 2 | 効果は「どんな場面・どんな人か」で大きく変わる。足せば効くわけではない | 1回に1つずつ足し、何を良くしたいのかを PR に書く | [Hamari, Koivisto & Sarsa 2014（文献レビュー）](https://research.aalto.fi/fi/publications/does-gamification-work-a-literature-review-of-empirical-studies-o/)・[Koivisto & Hamari 2019](https://doi.org/10.1016/j.ijinfomgt.2018.10.013) |
+| 3 | 物めずらしさの効果は時間とともに薄れる | 同じ実績を増やすより、週ごとに変わる目当て（今週のお題など）や新しい種類の問題で変化を出す | [Koivisto & Hamari 2019](https://doi.org/10.1016/j.ijinfomgt.2018.10.013) |
+| 4 | ゲームの楽しさは「できた感（有能感）」「自分で選べる感（自律性）」「人とのつながり」で説明できる | 正解・まちがいのたびに理由が分かる知らせを出す。モード（今日・上級・練習）は自分で選べ、強制しない | [Ryan, Rigby & Przybylski 2006](https://doi.org/10.1007/s11031-006-9051-8) |
+| 5 | 先に約束した「ごほうび」はやる気を下げることがある。ほめ言葉や「どれだけできたか」の知らせは下げない | 実績・★は「できたことの知らせ」として出す。Ko-fi やお金を、遊んだごほうびに結びつけない | [Deci, Koestner & Ryan 1999（メタ分析）](https://doi.org/10.1037/0033-2909.125.6.627) |
+| 6 | 点数・レベル・ランキングは「量」を増やすが、内側からのやる気は増やさない | 点・回数だけの実績を増やさない。腕前（ヒントなし・一発）と集めることを混ぜる | [Mekler ほか 2017](https://doi.org/10.1016/j.chb.2015.08.048) |
+| 7 | バッジ（実績）は、条件が見えると行動を増やす | まだの実績は条件と「いま/目標」を出す | [Hamari 2017（フィールド実験）](https://doi.org/10.1016/j.chb.2015.03.036) |
+| 8 | 他人と比べるランキング・バッジを授業に入れたら、やる気・満足・成績が下がった | 全国ランキングは置かない。比べるのは自分のベストと、遊ぶ人が自分で選んだ挑戦状だけ | [Hanus & Fox 2015](https://doi.org/10.1016/j.compedu.2014.08.019) |
+| 9 | ランキングは「目標」として働き、むずかしくても届く目標がいちばん効く | 目安（★3・メダル・最短の数）は「がんばれば届く」所に置く | [Landers, Bauer & Callan 2017](https://doi.org/10.1016/j.chb.2015.08.008) |
+| 10 | 連続（ストリーク）はやる気を上げるが、途切れると、そのあと続ける人が大きく減る | 連続より合計の日数を主にする。途切れても責めず、取りこぼした日をあとから遊べるようにし、戻った人を迎える言葉を出す | [Silverman & Barasch 2023](https://www.colorado.edu/business/faculty-research/2023/04/19/or-track-how-broken-streaks-affect-consumer-decisions) |
+| 11 | 最初から少し進んだ状態で始まると、最後までやりとげる人が増える（与えられた進み） | はじめての1回で取れる実績を置き、進み具合のバーは0からでなく「もう1つ進んだ」所から見せる | [Nunes & Drèze 2006](https://doi.org/10.1086/500480) |
+| 12 | ゴールに近いほど人はがんばる（ゴール勾配） | 結果の画面で「あと少しの実績」を1つだけ見せる（「あと1日で○○」） | [Kivetz, Urminsky & Zheng 2006](https://doi.org/10.1509/jmkr.43.1.39) |
+| 13 | 実績は「腕前」「集める」「続ける」などを混ぜ、運だけ・回数だけのものは避ける | 実績は10〜14個で種類を混ぜる | [Hamari & Eranti 2011（DiGRA）](https://dl.digra.org/index.php/dl/article/view/545) |
+
+- 1日1回のゲームは「1回で終わり」になりやすい（[PeerPush](https://peerpush.com/blog/how-we-fixed-a-one-and-done-problem-on-a-daily-puzzle-game)・[GameGrin](https://www.gamegrin.com/articles/do-streaks-and-leaderboards-still-work)）。上の 3・10・12 で手当てする。
 
 ## 共通の形（どのゲームもこれにそろえる）
 
@@ -70,6 +88,7 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
    | --- | --- |
    | 「共通の形」に足りない部品がある | それを足す |
    | 手ごたえ・難しさ・迷ったときの助けに困りごとがある | いちばん効くものを1つ直す |
+   | 上の「研究の要点」の決まりに合っていない所がある | 番号を PR に書いて、1つ直す |
    | 遊び方を変える案（ルール・世界観・お金・外への通信） | 直さない。satou さんにカードで1件だけ聞く（質問の先頭に「satouさんにお願い：」） |
    | どれにも当たらない | 止めて、Issue（ラベル needs-decision）に状況を書く |
 
