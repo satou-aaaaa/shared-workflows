@@ -201,6 +201,8 @@
       // いまの data-keys の外のキー（前の版の控えに入っていた a11y-v1 など）は書かない
       var d = {};
       Object.keys(job.d || {}).forEach(function (k) { if (ours(k) && typeof job.d[k] === "string") d[k] = job.d[k]; });
+      // 全部が外のキーだった（中身が空になった）ときは、いまの記録を消さないよう入れ替えない
+      if (!count(d) && count(job.d || {})) throw new Error("data-keys の外のキーだけ");
       job.d = d;
       var cur = snapshot();
       // 先にいまの記録を控えに残す（空なら控えは作らない。前の控えも消さない）。控えを書けなければ入れ替えない

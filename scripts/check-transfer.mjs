@@ -108,6 +108,11 @@ ok('URL の途中で改行されたコードも読める', (await w.HK.decode(`h
   ok('戻すときも data-keys の外のキー・hk- のキーには書かない', l.getItem('kippu-v1') === rec && l.getItem('a11y-v1') === '{"font":2}' && l.getItem('hk-backup:bento-zume') === 'x');
 }
 
+{
+  const l = store({ 'kippu-v1': '{"old":1}' });
+  boot({ game: 'kippu-10', keys: 'kippu-v1', local: l, session: store({ 'hk-pending:kippu-10': JSON.stringify({ d: { 'a11y-v1': '{}' }, undo: true }) }) });
+  ok('外のキーだけの控えに戻すときは、いまの記録を消さない', l.getItem('kippu-v1') === '{"old":1}');
+}
 // 控えを書けない（端末の空きが無い）ときは入れ替えない
 const full = store({ 'kippu-v1': '{"old":1}' });
 const realSet = full.setItem;
