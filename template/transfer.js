@@ -99,7 +99,7 @@
     if (raw.length > MAX_JSON) return Promise.reject(fail("big"));
     var z;
     try { z = new CompressionStream("deflate-raw"); } catch (e) { z = null; }
-    var p = z ? pipe(raw, z) : Promise.resolve(null);
+    var p = z ? pipe(raw, z).catch(function () { return null; }) : Promise.resolve(null); // 縮められなければ HK0
     return p.then(function (bytes) {
       var mode = bytes ? "1" : "0";
       bytes = bytes || raw;
