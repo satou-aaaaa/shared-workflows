@@ -87,7 +87,7 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 | --- | --- | --- |
 | A1 | 色だけで分けない。正解・まちがい・選んだ・済み・種類などは、色に加えて形・記号（✓ ✕ ● ▲ ■）・模様・文字のどれかでも分かるようにする。ふだんからそうし、「色の見分けを助ける」（`html.a11y-cvd`）では色そのものも見分けやすい組（青と橙など）に替える。`qa/run.mjs` に「記号・文字が出ている」検査を足す | [WCAG 2.2 1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html)・[Game Accessibility Guidelines（色だけで伝えない）](https://gameaccessibilityguidelines.com/) |
 | A2 | 色を当てるゲーム（重ね染めなど）は色そのものが遊びなので、数字（濃さ・赤み/青み）や言葉の手がかりも出し、色覚の人も近づけられるようにする | 同上・[カラーユニバーサルデザイン推奨配色セット](https://jfly.uni-koeln.de/colorset/) |
-| A3 | 字と地のコントラストは 4.5:1 以上（24px 以上・太字 18.7px 以上は 3:1）。押す所の縁・記号は 3:1 以上 | [WCAG 2.2 1.4.3・1.4.11](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html) |
+| A3 | 字と地のコントラストは 4.5:1 以上（24px 以上・太字 18.7px 以上は 3:1）。押す所の縁・記号は 3:1 以上。地に絵・グラデーションがある所は qa/a11y.mjs が測れないので、地の色だけにした画面でも自分で測る（html・body の模様は地の色で測る） | [WCAG 2.2 1.4.3・1.4.11](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html) |
 | A4 | 文は短く、左寄せ。斜体にしない。全部大文字・長い太字の段落を作らない。地は真っ白より生成り色。1行は短めに | [BDA Dyslexia Style Guide](https://www.wigan.gov.uk/Docs/PDF/Business/Professionals/SEN/HEFA/Dyslexia-Style-Guide.pdf) |
 | A5 | 拡大を禁じない（`user-scalable=no` を付けない）。字間・行間を広げても崩れないように、高さを決め打ちした箱に字を入れない | [WCAG 2.2 1.4.4・1.4.12](https://www.w3.org/WAI/WCAG22/Understanding/text-spacing.html) |
 | A6 | 全部をキーボードでも遊べる（押す所は `button`。なぞる操作には押すだけの方法も置く）。片手・指1本で遊べる | [WCAG 2.2 2.1.1・2.5.7](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html)・Game Accessibility Guidelines |
