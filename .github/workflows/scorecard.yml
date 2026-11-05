@@ -67,7 +67,7 @@ jobs:
             bad=$((reverts + fails))
             if [ "$merged" -gt 0 ]; then rate=$((bad * 100 / merged)); rtxt="${rate}%"; else rate=0; rtxt="—"; fi
             echo "| $r | $merged | $reverts | $fails | $rtxt | $mttr |" >> "$body"
-            open=$(gh issue list -R "$GITHUB_REPOSITORY" --label 自動マージ停止 --state open --search "in:title $r" --json number,title \
+            open=$(gh issue list -R "$GITHUB_REPOSITORY" --label 自動マージ停止 --state open --limit 200 --json number,title \
               --jq ".[] | select(.title == \"自動マージ停止: $r\") | .number" | head -1)
             if [ "$merged" -ge "$BRAKE_MIN" ] && [ "$rate" -gt "$BRAKE_RATE" ]; then
               brakes="$brakes $r"
@@ -94,7 +94,7 @@ jobs:
           REPOS="$REPOS" FLAKY_OUT="$flaky" node scripts/pr-quality.mjs >> "$body" || { echo "（PR の質は今回読めませんでした）" >> "$body"; echo '{}' > "$flaky"; }
           gh label create 不安定な検査 --color FBCA04 --description "3つ以上の PR で同じ検査が落ちた（Scorecard が自動で開け閉めする）" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
           for r in $REPOS; do
-            open=$(gh issue list -R "$GITHUB_REPOSITORY" --label 不安定な検査 --state open --search "in:title $r" --json number,title \
+            open=$(gh issue list -R "$GITHUB_REPOSITORY" --label 不安定な検査 --state open --limit 200 --json number,title \
               --jq ".[] | select(.title == \"不安定な検査: $r\") | .number" | head -1)
             list=$(jq -r --arg r "$r" --arg o "$OWNER" '.[$r] // [] | .[] | "- \(.check)（\(.prs | length) PR: \(.prs | map("https://github.com/\($o)/\($r)/pull/\(.)") | join(" "))）"' "$flaky")
             if [ -n "$list" ]; then
