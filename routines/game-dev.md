@@ -106,10 +106,11 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 
 | 部品 | 入れ方 | 守ること |
 | --- | --- | --- |
-| `template/transfer.js` | そのまま `transfer.js` に写し、`index.html` の `</head>` の前（ゲームの script より前・`defer` なし）に `<script src="transfer.js" data-game="<リポジトリ名>" data-keys="<記録のキー>,a11y-v1"></script>`。ホーム（いつも出るフッターなど）に `<a href="#" data-hk>引き継ぎ</a>` を置く。`sw.js` の `SHELL` に `./transfer.js` を足して `CACHE` の版を上げる | 直すのはひな形だけ（各ゲームは写す。版は `引き継ぎの版:` の行）。同じサイト（satou-aaaaa.github.io）のゲームは localStorage を分け合うので、`data-keys` には自分のキーだけを書く（`*` だけは不可。`xdoko-*` のように頭の文字なら可） |
-| `template/qa/transfer-check.mjs` | `qa/` に写し、`qa/run.mjs` の最後で `checkTransfer({ browser, url, game, sample, check, open })` を呼ぶ。`sample` はゲームが読める記録 | 書き出し → 別の端末で QR の URL を開いて取り込み → 同じ記録・前の記録は控え・控えに戻せる、写しまちがい・別のゲーム・知らないキー・新しい版のコードを弾く、ボタン44px以上 |
+| `template/transfer.js` | そのまま `transfer.js` に写し、`index.html` の `</head>` の前（ゲームの script より前・`defer` なし）に `<script src="transfer.js" data-game="<リポジトリ名>" data-keys="<記録のキー>"></script>`。ホーム（いつも出るフッターなど）に `<a href="#" data-hk>引き継ぎ</a>` を置く。`sw.js` の `SHELL` に `./transfer.js` を足して `CACHE` の版を上げる | 直すのはひな形だけ（各ゲームは写す。版は `引き継ぎの版:` の行）。同じサイト（satou-aaaaa.github.io）のゲームは localStorage を分け合うので、`data-keys` には自分の記録のキーだけを書く（`*` だけは不可。`xdoko-*` のように頭の文字なら可。全部のゲームで分け合う `a11y-v1` は入れない：取り込むとほかのゲームの設定まで変わる） |
+| `template/qa/transfer-check.mjs` | `qa/` に写し、`qa/run.mjs` の最後で `checkTransfer({ browser, url, game, sample, check, open })` を呼ぶ。`sample` はゲームが読める記録 | 書き出し → 別の端末で QR の URL を開いて取り込み → 同じ記録・前の記録は控え・控えに戻せる、写しまちがい・別のゲーム・知らないキー・HTML の印の文字・新しい版のコードを弾く、ボタン44px以上 |
 
-- 取り込みは上書きなので、必ず確認の画面を出し、前の記録を控え（`hk-backup:<ゲーム>`）に残して「控えに戻す」で戻せるようにする（部品がやる）。
+- 取り込みは上書きなので、必ず確認の画面を出し、前の記録を控え（`hk-backup:<ゲーム>`）に残して「控えに戻す」で戻せるようにする（部品がやる。控えを先に書き、書けなければ入れ替えない）。
+- コードは他人から届くこともある。部品は記録の中に `< > " ' ` + "`" + ` が入ったコードを弾く（ゲームは記録を innerHTML に入れるので、作ったコードでスクリプトを入れられないように。2026-11-05 CodeRabbit が6本で指摘）。ゲーム側も、記録の値を画面に出すときは数なら `Number()`、文字なら `esc()` を通す。
 - ゲームが記録を読む前に入れ替えるため、部品は sessionStorage に預けてページを読み直す。ゲーム側で `load` の形を変えたら `sample` も合わせる。
 - QR の中身は `ページの URL#hk=コード`。`#` より後ろはサーバーへ送られない（[MDN: URL.hash](https://developer.mozilla.org/docs/Web/API/URL/hash)）。外へ通信しない決まりのままでよい。
 - iPhone はブラウザ（Safari）とホーム画面のアプリで記録が別。ホーム画面のアプリで遊ぶ人は、アプリの中の「引き継ぎ」にコードを貼る（画面にも書いてある）。

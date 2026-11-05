@@ -39,12 +39,12 @@ function boot({ game, keys, local, session }) {
 }
 
 const rec = JSON.stringify({ v: 1, days: { '2026-11-05': [3, 3, 2] }, name: 'ひらがなと漢字' });
-const local = store({ 'kippu-v1': rec, 'a11y-v1': '{"font":1}', 'bento-v1': '{"other":1}' });
-const w = boot({ game: 'kippu-10', keys: 'kippu-v1,a11y-v1', local, session: store() });
+const local = store({ 'kippu-v1': rec, 'kippu-x': '{"font":1}', 'a11y-v1': '{"font":2}', 'bento-v1': '{"other":1}' });
+const w = boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x', local, session: store() });
 const c = await w.HK.encode();
 ok('書き出したコードが HK1.<中身>.<CRC> の形', /^HK1\.[A-Za-z0-9_-]+\.[0-9a-z]+$/.test(c));
 const back = await w.HK.decode(c);
-ok('読み戻すと同じ記録（自分のキーだけ・ほかのゲームのキーは入らない）', JSON.stringify(back.d) === JSON.stringify({ 'kippu-v1': rec, 'a11y-v1': '{"font":1}' }));
+ok('読み戻すと同じ記録（自分のキーだけ・ほかのゲームのキーは入らない）', JSON.stringify(back.d) === JSON.stringify({ 'kippu-v1': rec, 'kippu-x': '{"font":1}' }));
 ok('URL ごと貼っても読める', (await w.HK.decode(`見てね https://example.test/game/#hk=${c}\n`)).d['kippu-v1'] === rec);
 const kind = (p) => p.then(() => 'ok', (e) => e.kind || e.message);
 const mid = Math.floor(c.length / 2);
@@ -52,18 +52,33 @@ ok('写しまちがいを弾く', (await kind(w.HK.decode(c.slice(0, mid) + (c[m
 ok('途中で切れたコードを弾く', (await kind(w.HK.decode(c.slice(0, mid)))) !== 'ok');
 const other = boot({ game: 'bento-zume', keys: 'bento-v1', local: store({ 'bento-v1': '{}' }), session: store() });
 ok('別のゲームのコードを弾く', (await kind(other.HK.decode(c))) === 'game');
-const wide = boot({ game: 'kippu-10', keys: 'kippu-v1,a11y-v1,bento-v1', local: store({ 'bento-v1': '{}', 'kippu-v1': '{}' }), session: store() });
+const wide = boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x,bento-v1', local: store({ 'bento-v1': '{}', 'kippu-v1': '{}' }), session: store() });
 ok('知らないキー（ほかのゲームの記録）が入ったコードを弾く', (await kind(w.HK.decode(await wide.HK.encode()))) === 'keys');
 
 // 読み直したときの入れ替え：前の記録を控えに残し、ほかのゲームのキーには触らない
-const local2 = store({ 'kippu-v1': '{"old":1}', 'bento-v1': '{"other":1}' });
+const local2 = store({ 'kippu-v1': '{"old":1}', 'bento-v1': '{"other":1}', 'a11y-v1': '{"font":2}' });
 const session2 = store({ 'hk-pending:kippu-10': JSON.stringify({ d: back.d, undo: false }) });
-boot({ game: 'kippu-10', keys: 'kippu-v1,a11y-v1', local: local2, session: session2 });
-ok('入れ替えると取り込んだ記録になる', local2.getItem('kippu-v1') === rec && local2.getItem('a11y-v1') === '{"font":1}');
-ok('入れ替えでほかのゲームの記録に触らない', local2.getItem('bento-v1') === '{"other":1}');
+boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x', local: local2, session: session2 });
+ok('入れ替えると取り込んだ記録になる', local2.getItem('kippu-v1') === rec && local2.getItem('kippu-x') === '{"font":1}');
+ok('入れ替えでほかのゲームの記録・分け合う設定（a11y-v1）に触らない', local2.getItem('bento-v1') === '{"other":1}' && local2.getItem('a11y-v1') === '{"font":2}');
 ok('入れ替える前の記録を控え（hk-backup:<ゲーム>）に残す', JSON.parse(local2.getItem('hk-backup:kippu-10') || '{}').d?.['kippu-v1'] === '{"old":1}');
 ok('預けた中身は1回で消す（読み直すたびに入れ替えない）', session2.getItem('hk-pending:kippu-10') === null && !!session2.getItem('hk-done:kippu-10'));
+// HTML の印になる文字（< > " ' `）が入った記録のコードは弾く（ゲームが innerHTML に入れてもスクリプトにならないように）
+const evil = boot({ game: 'kippu-10', keys: 'kippu-v1', local: store({ 'kippu-v1': JSON.stringify({ v: 1, ebest: '<img src=x onerror=alert(1)>' }) }), session: store() });
+ok('HTML の印の文字が入った記録のコードを弾く', (await kind(w.HK.decode(await evil.HK.encode()))) === 'bad');
+const evil2 = boot({ game: 'kippu-10', keys: 'kippu-v1', local: store({ 'kippu-v1': JSON.stringify({ dex: { '1" onmouseover="x': 1 } }) }), session: store() });
+ok('キーの名前に HTML の印の文字が入った記録のコードも弾く', (await kind(w.HK.decode(await evil2.HK.encode()))) === 'bad');
+
+// 控えを書けない（端末の空きが無い）ときは入れ替えない
+const full = store({ 'kippu-v1': '{"old":1}' });
+const realSet = full.setItem;
+full.setItem = (k, v) => { if (k.startsWith('hk-backup:')) throw new Error('QuotaExceededError'); return realSet(k, v); };
+const session3 = store({ 'hk-pending:kippu-10': JSON.stringify({ d: { 'kippu-v1': rec }, undo: false }) });
+boot({ game: 'kippu-10', keys: 'kippu-v1', local: full, session: session3 });
+ok('控えを書けないときは入れ替えず、元の記録のまま', full.getItem('kippu-v1') === '{"old":1}' && /元のまま/.test(session3.getItem('hk-done:kippu-10') || ''));
+
 const bad = boot({ game: 'x', keys: '*', local: store(), session: store() });
+ok('data-keys に分け合う a11y-v1 があるときは動かない', !boot({ game: 'x', keys: 'x-v1,a11y-v1', local: store(), session: store() }).HK && !boot({ game: 'x', keys: 'x-v1,a11y*', local: store(), session: store() }).HK);
 ok('data-keys が * だけのときは動かない（同じサイトのほかのゲームの記録まで持ち出さない）', !bad.HK);
 
 if (errors.length) {
