@@ -148,7 +148,7 @@ ok('控えを書けないときは入れ替えず、元の記録のまま', full
   l.setItem = (k, v) => { if (!k.startsWith('hk-') && ++n >= 2) throw new Error('QuotaExceededError'); return rs(k, v); };
   const ss = store({ 'hk-pending:kippu-10': JSON.stringify({ d: { 'kippu-v1': rec, 'kippu-x': '{"font":1}' }, undo: false }) });
   boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x', local: l, session: ss });
-  ok('元に戻せなかったときは控えを残し、控えに戻せると知らせる', JSON.parse(l.getItem('hk-backup:kippu-10') || '{}').d?.['kippu-v1'] === '{"old":1}' && /控えに戻す/.test(ss.getItem('hk-done:kippu-10') || ''));
+  ok('元に戻せなかったときは控えを残し、控えに戻せると知らせる', JSON.parse(l.getItem('hk-backup:kippu-10') || '{}').d?.['kippu-v1'] === '{"old":1}' && /控えに戻す/.test(ss.getItem('hk-done:kippu-10') || '') && JSON.parse(ss.getItem('hk-done:kippu-10') || '{}').u === true);
 }
 
 const bad = boot({ game: 'x', keys: '*', local: store(), session: store() });
