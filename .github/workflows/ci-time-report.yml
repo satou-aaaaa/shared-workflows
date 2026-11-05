@@ -40,7 +40,8 @@ jobs:
           retry() { for i in 1 2 3; do "$@" && return 0; echo "::warning::やり直し $i: $*" >&2; sleep $((i * 20)); done; return 1; }
           gh label create CI時間 --color 1D76DB --description "CI time report が作る週1の CI 実行時間（自動）" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
           # 一覧が取れないまま「空」として進まない（$(...) の中の失敗は set -e で止まらない）
-          olds=$(retry gh issue list -R "$GITHUB_REPOSITORY" --label CI時間 --state open --json number --jq '.[].number') || { echo "::error::CI時間の Issue の一覧が取れない" >&2; exit 1; }
+          # 同じ日の Issue は閉じない（閉じたあと検索の索引が遅れて「もうある」と見え、1件も無くなった。2026-11-05 incidents/2026-11-05-ci-time-report-missing-repos.md）
+          olds=$(retry gh issue list -R "$GITHUB_REPOSITORY" --label CI時間 --state open --json number,title --jq ".[] | select(.title | startswith(\"CI時間 ${day}\") | not) | .number") || { echo "::error::CI時間の Issue の一覧が取れない" >&2; exit 1; }
           for old in $olds; do
             retry gh issue close "$old" -R "$GITHUB_REPOSITORY" --reason completed --comment "新しい集計を作ったので閉じます（自動）"
           done
@@ -49,7 +50,8 @@ jobs:
           # 一覧が取れないときは作らずに失敗を返す（取れないのを「無い」と見て二重に作らない）
           make() {
             local found
-            found=$(gh issue list -R "$GITHUB_REPOSITORY" --label CI時間 --state open --search "\"CI時間 ${day}\" in:title" --json number --jq '.[].number') || return 1
+            # 検索（--search）は索引が遅れるので使わず、開いている一覧の題で見る
+            found=$(gh issue list -R "$GITHUB_REPOSITORY" --label CI時間 --state open --json number,title --jq ".[] | select(.title | startswith(\"CI時間 ${day}\")) | .number") || return 1
             [ -n "$found" ] || gh issue create -R "$GITHUB_REPOSITORY" --label CI時間 --title "$title" --body-file "$body"
           }
           retry make
