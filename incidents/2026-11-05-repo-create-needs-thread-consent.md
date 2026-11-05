@@ -18,7 +18,8 @@
 - 止められたスレッドはそれぞれリンクを渡して先へ進み、「なぜ止まるか」を調べて手順に戻す場所が無かった（メモリの new-games-round3 に一行あるだけ）。
 
 ## 対策
-- [ ] 直す: このスレッドで satou さんの一言をもらって、machi-michijun・kimari-sagashi を作る（担当: リポジトリ作成をAIだけでできるようにする、期限: 2026-11-06）
+- [x] 直す: このスレッドで satou さんの一言をもらい、machi-michijun・kimari-sagashi を Chrome で作った（Pages・ルールセットも）。
 - [x] 防ぐ: `routines/onboarding.md` に手順0「リポジトリを作る」を足した。名前が決まったらすぐ、そのスレッドで本人の一言（コードの枠）を頼み、もらってから Chrome で押す（この PR）。
 - [x] 防ぐ: `routines/game-dev.md` 手順A-3 を「AI が作る。リンクは Chrome が無いときだけ」に変えた（この PR）。
-- [ ] 防ぐ: 毎回の一言も要らない作り方（CI に作る仕組みを置く）を satou さんに選んでもらって入れる（担当: リポジトリ作成をAIだけでできるようにする、期限: 2026-11-12）
+- [x] 防ぐ: 毎回の一言も要らない作り方として、Actions「Create repo」（`.github/workflows/create-repo.yml`）を足した。作成・Pages・ルールセットまで1回で入れる（この PR。satou さんがカードで選んだ）。
+- [ ] 防ぐ: 鍵（環境 repo-create の REPO_CREATE_TOKEN）を satou さんに入れてもらい、試しに1つ作って緑を確かめる（担当: リポジトリ作成をAIだけでできるようにする、期限: 2026-11-12）

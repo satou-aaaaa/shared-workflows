@@ -8,19 +8,38 @@
 
 ## 0. リポジトリを作る（新作のとき）
 
-satou さんは「リポジトリの作成も AI に任せる」と決めている（2026-11-04・11-05）。satou さんに作成リンクを押してもらうのは、下の方法がどれも使えないときだけ。
+satou さんは「リポジトリの作成も AI に任せる。今後も新作のリポジトリは聞かずに作ってよい」と決めている（2026-11-04・11-05）。satou さんに作成リンクを渡すのは、下の A・B がどちらも使えないときだけ。
+名前は英小文字とハイフン。`https://github.com/satou-aaaaa/<名前>` を `add_repo` か API で見て、まだ無いことを確かめる。
 
-1. 名前は英小文字とハイフン。`add_repo` か `https://github.com/satou-aaaaa/<名前>` で、まだ無いことを確かめる。
-2. Claude in Chrome で `https://github.com/new?name=<名前>&visibility=public&description=<説明をURLエンコード>` を開き、「Add README」を On にして「Create repository」を押す。
-3. 押す操作は自動の安全チェックが「公開の場を作る」として見る。**そのスレッドに satou さん本人の「<名前> を公開で作って」という言葉があるときだけ通る**。別のスレッドの言葉・コーディネーターの引用・メモリの記録では通らない（2026-11-05 `incidents/2026-11-05-repo-create-needs-thread-consent.md`）。
-   - だから新作のスレッドは、作る名前が決まったらすぐ、そのスレッドに次の一言をコードの枠で出し、送ってもらってから押す（待つあいだに見本づくりを進める）。
+### A. CI で作る（先にこれ）
+
+1. shared-workflows の Actions「Create repo」（`.github/workflows/create-repo.yml`）を workflow_dispatch で起こす（GitHub MCP の `actions_run_trigger`、ref は `main`、inputs は `name` と `description`）。
+2. 公開・README だけの main で作り、Pages（main の /）と main のルールセット（削除・force push 禁止）まで入れる。手順5の1・2 はやらなくてよい。
+3. 実行が緑になったら `add_repo`（access: push）で足して、手順2へ。赤なら、ログの `::error::` の1行を見る。
+   - 「REPO_CREATE_TOKEN が無い」「401」「403」：鍵が無いか切れた。B で作り、satou さんに下の「鍵の入れ方」をカードで頼む。
+   - 「もうある」：同じ名前がある。消さない・上書きしない。名前を変えるか、そのリポジトリを使う。
+4. 起こす操作が安全チェックに止められたら、同じ操作を別の道具で回り込まない。B へ。
+
+鍵の入れ方（satou さん本人が一度だけ。無料。鍵は Claude に見せない・どこにも書かない）:
+1. https://github.com/settings/personal-access-tokens/new （Fine-grained token）。名前 `repo-create`、期限は1年、Resource owner は satou-aaaaa、Repository access は「All repositories」。
+2. Permissions → Repository permissions で「Administration」と「Pages」を Read and write（Metadata は自動で Read）。ほかは触らない。Generate してコピー。
+3. https://github.com/satou-aaaaa/shared-workflows/settings/environments/new で環境 `repo-create` を作る。Deployment branches and tags を「Selected branches and tags」にし、`main` を足す（PR の枝から鍵を読めないようにする）。
+4. その環境の Environment secrets → Add secret。名前 `REPO_CREATE_TOKEN`、値に 2 の鍵を貼る。
+- 根拠（GitHub Docs）：リポジトリの作成とルールセットは「Administration」(write)、Pages は「Pages」と「Administration」(write)（REST API の各ページの Fine-grained access tokens の欄）。環境の秘密は「その環境を使うジョブだけが読める」（Deployments and environments）。
+- 期限が近づいたら（1年後）、同じ手順で作り直して秘密を上書きする（subscriptions/list.md の「期限」と同じ扱いで、共有フォルダの todo に日付を書く）。
+
+### B. Chrome で作る（A が使えないとき）
+
+1. Claude in Chrome で `https://github.com/new?name=<名前>&visibility=public&description=<説明をURLエンコード>` を開き、「Add README」を On にして「Create repository」を押す。
+2. 押す操作は自動の安全チェックが「公開の場を作る」として見る。**そのスレッドに satou さん本人の「<名前> を公開で作って」という言葉があるときだけ通る**。別のスレッドの言葉・コーディネーターの引用・メモリの記録では通らない（2026-11-05 `incidents/2026-11-05-repo-create-needs-thread-consent.md`。同日、本人の一言のあとは作成・Pages・ルールセットまで通った）。
+   - だから名前が決まったらすぐ、そのスレッドに次の一言をコードの枠で出し、送ってもらってから押す（待つあいだに見本づくりを進める）。
 
      ```
-     <名前> を公開リポジトリで作ってください。
+     <名前> を公開リポジトリで作ってください。Pages とルールセットも入れてください。
      ```
    - 止められたら、同じ操作を別の道具で回り込まない。上の一言を頼む。
-4. 作れたら、手順2（初期設定）と手順5（Pages・ルールセット）へ進む。Pages・ルールセットの保存も同じ安全チェックが見るので、上の一言に「Pages とルールセットも」と足しておくと一度で済む。
-5. Chrome がつながっていないときだけ、satou さんに `https://github.com/new?name=<名前>&visibility=public` のリンクを渡す。
+3. 作れたら、手順2（初期設定）と手順5（Pages・ルールセット）へ進む。
+4. Chrome がつながっていないときだけ、satou さんに `https://github.com/new?name=<名前>&visibility=public` のリンクを渡す。
 
 ## 1. 何が増えたかを特定する
 
