@@ -17,6 +17,7 @@
 //   - 公開リポジトリの既定のブランチに、削除と force push を止めるルールが無い（API で読むときだけ。incidents/2026-11-04-new-repos-no-ruleset.md）
 //   - 感想の Issue フォーム（.github/ISSUE_TEMPLATE/feedback.yml）の name がひな形とちがう・形が GitHub の決まりに合わない（incidents/2026-11-05-feedback-form-not-shown.md）
 //   - 公開の見張り（post-deploy・site-watch）があるのに GitHub Pages が有効でない（API で読むときだけ。incidents/2026-11-04-pages-never-enabled.md）
+//   - 記録を localStorage に置く PWA のゲームに、引き継ぎコード（transfer.js）が無い・版が template/transfer.js より古い・sw.js が保存していない（routines/game-dev.md「引き継ぎコード」）
 //   - ゲーム（index.html と sw.js がある）に、見やすさの設定（template/a11y/a11y.html）と検査（template/qa/a11y.mjs）が無い・ひな形とちがう・qa/run.mjs が回していない（routines/game-dev.md「だれでも遊べるように」）
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
@@ -45,6 +46,10 @@ const reusable = new Set(existsSync(wfDir)
 // 準備スクリプトのひな形の版（写しの「ひな形の版: N」と比べる）
 const setupVer = (text) => Number((text.match(/ひな形の版:\s*(\d+)/) || [])[1] || 1);
 const SETUP_VER = setupVer(readFileSync(join(here, '..', 'template', 'scripts', 'setup.sh'), 'utf8'));
+
+// 引き継ぎコードのひな形の版（写しの「引き継ぎの版: N」と比べる）
+const hkVer = (text) => Number((text.match(/引き継ぎの版:\s*(\d+)/) || [])[1] || 0);
+const HK_VER = hkVer(readFileSync(join(here, '..', 'template', 'transfer.js'), 'utf8'));
 
 // 感想フォームのひな形の name（写しの name がこれとちがえば知らせる）
 const FEEDBACK_NAME = formProblems(readFileSync(join(here, '..', 'template', '.github', 'ISSUE_TEMPLATE', 'feedback.yml'), 'utf8')).name;
@@ -192,6 +197,19 @@ for (const r of REPOS) {
       else {
         if ((await src.read('qa/a11y.mjs')) !== A11Y_QA) flag('a11y:qa', 'qa/a11y.mjs がひな形とちがう（template/qa/a11y.mjs をもう一度写す。ゲームごとの許しは qa/a11y.json に理由つきで）');
         if (paths.has('qa/run.mjs') && !(await src.read('qa/run.mjs')).includes('a11y.mjs')) flag('a11y:run', 'qa/run.mjs が qa/a11y.mjs を回していない（CI の QA で見やすさが見られない）');
+      }
+    }
+
+    // 引き継ぎコード：記録が端末の中だけにあるゲームは、機種変更で記録が消える（2026-11-05 satou さん「PWA 型のゲームでデータの引継ぎを」）。
+    // 新しいゲームに入れ忘れないよう、PWA（sw.js と manifest）で AGENTS.md が localStorage に記録を置くと書いているリポジトリを見る
+    if (paths.has('sw.js') && paths.has('manifest.webmanifest') && paths.has('AGENTS.md') && (await src.read('AGENTS.md')).includes('localStorage')) {
+      if (!paths.has('transfer.js')) flag('transfer', '引き継ぎコード（transfer.js）が無い（routines/game-dev.md「引き継ぎコード」：template/transfer.js と template/qa/transfer-check.mjs を写す）');
+      else {
+        const v = hkVer(await src.read('transfer.js'));
+        if (v < HK_VER) flag('transfer:version', `transfer.js が引き継ぎの版 ${v}（今は ${HK_VER}。template/transfer.js をそのまま写す）`);
+        const sw = await src.read('sw.js');
+        if (!/["']\.\/transfer\.js["']/.test(sw)) flag('transfer:sw', 'sw.js の SHELL に ./transfer.js が無い（電波が無いと引き継ぎが開かない）');
+        if (!paths.has('qa/transfer-check.mjs')) flag('transfer:qa', 'qa/transfer-check.mjs が無い（template/qa/transfer-check.mjs を写し、qa/run.mjs から checkTransfer を呼ぶ）');
       }
     }
 

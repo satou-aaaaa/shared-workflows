@@ -67,6 +67,7 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 | 感想 | Issue フォームへのただのリンク | [game-feedback.md](game-feedback.md) |
 | PWA・OGP | `sw.js`・`manifest.webmanifest`・アイコン・`og.png`（答えを入れない） | どのゲームも |
 | 見やすさ | 見やすさの設定（`template/a11y/a11y.html`）と検査（`template/qa/a11y.mjs`）。下の「だれでも遊べるように」 | kippu-10 |
+| 引き継ぎ | 記録を別の端末へ移す「引き継ぎコード」と QR（`template/transfer.js`）と検査（`template/qa/transfer-check.mjs`）。下の「引き継ぎコード」 | kippu-10 |
 | QA | `qa/run.mjs`。乱数で作る所は何百日分も作って確かめる。押せる所は44px以上、幅320px。キーボードで選んだボタンに枠が出る（`all:unset` で消えるので、枠の規則は style の最後に `:is(button,a):focus-visible{outline:…!important}`） | どのゲームも |
 
 ## だれでも遊べるように（色覚・ディスレクシア・弱視・キーボード・動き・ジェンダー。satou さん 2026-11-05）
@@ -98,6 +99,21 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 | A12 | 遅い回線・古い端末でも開ける：はじめに読むファイル（index.html と同じサイトのスクリプト・データ）は合わせて 1.5MB 以下（`qa/a11y.mjs` が見る）。オフラインでも遊べる（PWA） | [web.dev: Fast load times](https://web.dev/explore/fast) |
 
 - 磨くとき（手順 B）は、`node qa/a11y.mjs` が出す色覚の見え方の絵（`qa-report/a11y-*-P型.png` など）を自分で見て、色だけで分けている所が無いか確かめる。
+
+## 引き継ぎコード（別の端末へ記録を移す。satou さん 2026-11-05）
+
+ゲームの記録はその端末のブラウザの中だけにあり、機種変更で消える。iPhone の Safari は7日使わないと消すこともある（[WebKit blog: Full Third-Party Cookie Blocking and More](https://webkit.org/blog/10218/full-third-party-cookie-blocking-and-more/)・[web.dev: Storage for the web](https://web.dev/articles/storage-for-the-web)）。サーバーを置かず、記録を「コード」と「QR」にして移す。
+
+| 部品 | 入れ方 | 守ること |
+| --- | --- | --- |
+| `template/transfer.js` | そのまま `transfer.js` に写し、`index.html` の `</head>` の前（ゲームの script より前・`defer` なし）に `<script src="transfer.js" data-game="<リポジトリ名>" data-keys="<記録のキー>,a11y-v1"></script>`。ホーム（いつも出るフッターなど）に `<a href="#" data-hk>引き継ぎ</a>` を置く。`sw.js` の `SHELL` に `./transfer.js` を足して `CACHE` の版を上げる | 直すのはひな形だけ（各ゲームは写す。版は `引き継ぎの版:` の行）。同じサイト（satou-aaaaa.github.io）のゲームは localStorage を分け合うので、`data-keys` には自分のキーだけを書く（`*` だけは不可。`xdoko-*` のように頭の文字なら可） |
+| `template/qa/transfer-check.mjs` | `qa/` に写し、`qa/run.mjs` の最後で `checkTransfer({ browser, url, game, sample, check, open })` を呼ぶ。`sample` はゲームが読める記録 | 書き出し → 別の端末で QR の URL を開いて取り込み → 同じ記録・前の記録は控え・控えに戻せる、写しまちがい・別のゲーム・知らないキー・新しい版のコードを弾く、ボタン44px以上 |
+
+- 取り込みは上書きなので、必ず確認の画面を出し、前の記録を控え（`hk-backup:<ゲーム>`）に残して「控えに戻す」で戻せるようにする（部品がやる）。
+- ゲームが記録を読む前に入れ替えるため、部品は sessionStorage に預けてページを読み直す。ゲーム側で `load` の形を変えたら `sample` も合わせる。
+- QR の中身は `ページの URL#hk=コード`。`#` より後ろはサーバーへ送られない（[MDN: URL.hash](https://developer.mozilla.org/docs/Web/API/URL/hash)）。外へ通信しない決まりのままでよい。
+- iPhone はブラウザ（Safari）とホーム画面のアプリで記録が別。ホーム画面のアプリで遊ぶ人は、アプリの中の「引き継ぎ」にコードを貼る（画面にも書いてある）。
+- `node scripts/drift-check.mjs` が、PWA のゲームに `transfer.js` が無い・版が古いのを知らせる。
 
 ## 使う道具
 
