@@ -1,0 +1,94 @@
+name: Create repo
+
+# 新作のリポジトリを作る（Claude は使わない）。エージェントが workflow_dispatch で name と description を渡して起こす。
+# 公開・README だけの main で作り、Pages（main の /）と main のルールセット（削除・force push 禁止）も入れる。
+# 2026-11-05 satou さん「今後は、リポジトリーの作成までお願いしたい」（incidents/2026-11-05-repo-create-needs-thread-consent.md）。
+# 鍵は環境「repo-create」の秘密 REPO_CREATE_TOKEN（fine-grained PAT。Administration と Pages の書き込みだけ）。
+# 環境は main からしか使えないようにしてある（PR の枝のワークフローから鍵を読めないため）。手順は routines/onboarding.md 手順0。
+# 鍵の権限の根拠（GitHub Docs）：リポジトリの作成・ルールセットは "Administration" (write)、Pages は "Pages" (write) と "Administration" (write)。
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "リポジトリ名（英小文字・数字・ハイフン。例 machi-michijun）"
+        required: true
+        type: string
+      description:
+        description: "説明文（1行）"
+        required: false
+        type: string
+        default: ""
+
+permissions: {}
+
+concurrency:
+  group: create-repo
+  cancel-in-progress: false
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: repo-create
+    steps:
+      - name: 名前を確かめる
+        env:
+          NAME: ${{ inputs.name }}
+          DESC: ${{ inputs.description }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$NAME" =~ ^[a-z0-9][a-z0-9-]{1,62}$ ]]; then
+            echo "::error::名前は英小文字・数字・ハイフンだけ（2〜63字）: $NAME"; exit 1
+          fi
+          if [ "${#DESC}" -gt 300 ]; then echo "::error::説明文は300字まで"; exit 1; fi
+          case "$DESC" in *$'\n'*) echo "::error::説明文は1行にする"; exit 1;; esac
+
+      - name: 作る（もうあれば止める）
+        env:
+          GH_TOKEN: ${{ secrets.REPO_CREATE_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          NAME: ${{ inputs.name }}
+          DESC: ${{ inputs.description }}
+        run: |
+          set -euo pipefail
+          if [ -z "$GH_TOKEN" ]; then echo "::error::環境 repo-create に REPO_CREATE_TOKEN が無い（routines/onboarding.md 手順0）"; exit 1; fi
+          if gh api "repos/$OWNER/$NAME" --silent 2>/dev/null; then
+            echo "::error::$OWNER/$NAME はもうある（消したり上書きしたりしない）"; exit 1
+          fi
+          jq -n --arg n "$NAME" --arg d "$DESC" \
+            '{name:$n, description:$d, private:false, auto_init:true, has_wiki:false}' \
+            | gh api -X POST user/repos --input - --jq '.html_url'
+
+      - name: Pages（main の /）を入れる
+        env:
+          GH_TOKEN: ${{ secrets.REPO_CREATE_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          NAME: ${{ inputs.name }}
+        run: |
+          set -euo pipefail
+          # 作った直後は main が見えないことがあるので、少し待ってやり直す
+          for i in 1 2 3 4 5; do
+            if jq -n '{source:{branch:"main", path:"/"}}' | gh api -X POST "repos/$OWNER/$NAME/pages" --input - --silent; then
+              echo "Pages を入れた"; exit 0
+            fi
+            sleep $((i * 3))
+          done
+          echo "::error::Pages を入れられなかった"; exit 1
+
+      - name: main のルールセット（削除・force push 禁止）を入れる
+        env:
+          GH_TOKEN: ${{ secrets.REPO_CREATE_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          NAME: ${{ inputs.name }}
+        run: |
+          set -euo pipefail
+          jq -n '{name:"main", target:"branch", enforcement:"active",
+                  conditions:{ref_name:{include:["~DEFAULT_BRANCH"], exclude:[]}},
+                  rules:[{type:"deletion"},{type:"non_fast_forward"}]}' \
+            | gh api -X POST "repos/$OWNER/$NAME/rulesets" --input - --jq '"ルールセット " + (.id|tostring)'
+          {
+            echo "### 作った: [$OWNER/$NAME](https://github.com/$OWNER/$NAME)"
+            echo "- 公開・README だけの main"
+            echo "- Pages: main の /（https://$OWNER.github.io/$NAME/）"
+            echo "- main のルールセット: 削除・force push 禁止"
+          } >> "$GITHUB_STEP_SUMMARY"

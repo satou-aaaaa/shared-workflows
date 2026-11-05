@@ -11,6 +11,7 @@
 //   - 共通部品の呼び出しが @main 以外を指している・もう無い部品を呼んでいる
 //   - ci-failure-issue の呼び出しに見回り（schedule）が無い
 //   - link-check の呼び出しに、main への push で動き直す設定が無い（incidents/2026-11-05-link-check-not-rerun-on-main.md）
+//   - Playwright を入れる QA のジョブの timeout-minutes が 20 より短い（入れる段階だけで9分かかる日がある。incidents/2026-11-05-qa-timeout-slow-install.md）
 //   - scripts/setup.sh の「ひな形の版」が template/scripts/setup.sh より古い（ひな形を直しても写しに届かない。incidents/2026-11-03-setup-false-ready.md）
 //   - scripts/setup.sh が渡す CHROMIUM_PATH を、検査のスクリプト（qa/・tools/ など）が読んでいない
 //   - 依存の置き場（package.json・requirements.txt・pyproject.toml）を Dependabot が見ていない
@@ -28,13 +29,14 @@ import { formProblems } from './check-issue-forms.mjs';
 
 const OWNER = process.env.OWNER || 'satou-aaaaa';
 // weekly-summary.yml の REPOS と同じ並び（shared-workflows 自身は部品の置き場なので見ない）
-const REPOS = (process.env.REPOS || 'sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban articles carcassonne-research usotsuki-roppo wagamama-burger kabu-news batsu-doko kasane-zome rosen-hitofude seiza-tsunagi mannaka-kanji kippu-10 bento-zume todofuken-relay shiritori-saitan madori-puzzle tenkizu-yomi bushu-tashizan amida-haitatsu kotoba-narabe')
+const REPOS = (process.env.REPOS || 'sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban articles carcassonne-research usotsuki-roppo wagamama-burger kabu-news batsu-doko kasane-zome rosen-hitofude seiza-tsunagi mannaka-kanji kippu-10 bento-zume todofuken-relay shiritori-saitan madori-puzzle tenkizu-yomi bushu-tashizan amida-haitatsu kotoba-narabe jobun-tobatsu')
   .split(/\s+/).filter((r) => r && r !== 'shared-workflows');
 const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || '';
 const here = dirname(fileURLToPath(import.meta.url));
 
 const FILES = ['AGENTS.md', 'CLAUDE.md', 'scripts/setup.sh', '.claude/settings.json', '.coderabbit.yaml'];
 const SECTIONS = ['## push する前の確認', '## 共通のきまり'];
+const QA_MIN = 20;
 const CALLS = ['ci-failure-issue', 'secret-scan', 'branch-cleanup', 'labels', 'setup-check'];
 
 // 部品の一覧（このリポジトリの .github/workflows で workflow_call を持つもの）
@@ -231,6 +233,11 @@ for (const r of REPOS) {
         if (m[1] === 'ci-failure-issue' && !/^\s*schedule:/m.test(live)) flag('ci-failure-issue:sweep', `${p} に見回りの schedule が無い（template/.github/workflows/ci-failure-issue.yml を写す）`);
         // 直した設定がマージされても main で動き直さないと、赤のまま残り Issue が開き直す（incidents/2026-11-05-link-check-not-rerun-on-main.md）
         if (m[1] === 'link-check' && !/^\s*push:/m.test(live)) flag('link-check:push', `${p} に main への push で動き直す設定が無い（template/.github/workflows/link-check.yml を写す）`);
+      }
+      // Playwright を入れる段階（apt）が9分かかる日があり、10分の時間切れで QA が止まった（incidents/2026-11-05-qa-timeout-slow-install.md）
+      if (/playwright install/.test(live)) {
+        const t = Math.min(...[...live.matchAll(/^\s*timeout-minutes:\s*(\d+)/gm)].map((x) => Number(x[1])));
+        if (t < QA_MIN) flag('qa:timeout', `${p} の timeout-minutes が ${t} 分（Playwright を入れるジョブは ${QA_MIN} 分以上。template/.github/workflows/qa.yml を写す）`);
       }
     }
     for (const c of CALLS) if (!called.has(c)) flag(`call:${c}`, `共通部品 ${c} を呼んでいない（template/.github/workflows/${c}.yml を写す）`);
