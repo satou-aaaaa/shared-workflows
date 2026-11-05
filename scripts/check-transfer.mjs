@@ -133,6 +133,11 @@ ok('URL の途中で改行されたコードも読める', (await w.HK.decode(`h
 
 // 改行のあとに字下げ（空白・タブ）があっても読める。改行の無い空白のあとの文字はコードに入れない
 ok('改行のあとの字下げをまたいだコードも読める', (await w.HK.decode(`https://example.test/game/#hk=${c.slice(0, 20)}\n    ${c.slice(20)}`)).d['kippu-v1'] === rec);
+// URL のすぐ下に字下げした別の行（メモなど）があっても、コードに入れない（版6。hikari-michi #2 の CodeRabbit の指摘）
+ok('URL の下の字下げした別の行の字はコードに入れない', (await kind(w.HK.decode(`https://example.test/game/#hk=${c}\n  Note: keep`))) === 'ok');
+ok('折り返したコードの下に字下げした別の行があっても読める', (await kind(w.HK.decode(`https://example.test/game/#hk=${c.slice(0, 20)}\n  ${c.slice(20)}\n  keep this`))) === 'ok');
+ok('コードの下の行も字だけのときは、合うところまでで止める', (await kind(w.HK.decode(`${c}\nabc`))) === 'ok');
+ok('ほんとうの写しまちがいは今までどおり弾く', (await kind(w.HK.decode(`https://example.test/game/#hk=${c.slice(0, 20)}\n  ${c.slice(21)}`))) === 'crc');
 ok('コードのあとに空白と言葉が続いても読める', (await w.HK.decode(`#hk=${c} です`)).d['kippu-v1'] === rec);
 // 記録が無いときはコードを作らない（受け取る側で必ず弾かれる）
 ok('記録が無いときは書き出さない', (await kind(boot({ game: 'kippu-10', keys: 'kippu-v1', local: store(), session: store() }).HK.encode())) === 'empty');
