@@ -98,6 +98,16 @@ ok('キーの名前に HTML の印の文字が入った記録のコードも弾�
 // URL の途中で改行されていても読める
 ok('URL の途中で改行されたコードも読める', (await w.HK.decode(`https://example.test/game/#hk=${c.slice(0, 20)}\n${c.slice(20)}\n`)).d['kippu-v1'] === rec);
 
+// 預けた中身に data-keys の外のキー（前の版の控えの a11y-v1・控え hk-backup:）があっても書かない
+{
+  const l = store({ 'kippu-v1': '{"old":1}', 'a11y-v1': '{"font":2}', 'hk-backup:bento-zume': 'x' });
+  const ss = store({ 'hk-pending:kippu-10': JSON.stringify({ d: { 'kippu-v1': rec, 'a11y-v1': '{"font":9}', 'hk-backup:bento-zume': 'y' }, undo: true }) });
+  boot({ game: 'kippu-10', keys: 'kippu-v1,k*', local: l, session: ss });
+  const hw = boot({ game: 'kippu-10', keys: 'kippu-v1,h*', local: store({ 'kippu-v1': rec, 'hk-backup:kippu-10': '{}' }), session: store() });
+  ok('h* と書いても控え（hk-）は書き出さない', !Object.keys((await hw.HK.decode(await hw.HK.encode())).d).some((k) => k.startsWith('hk-')));
+  ok('戻すときも data-keys の外のキー・hk- のキーには書かない', l.getItem('kippu-v1') === rec && l.getItem('a11y-v1') === '{"font":2}' && l.getItem('hk-backup:bento-zume') === 'x');
+}
+
 // 控えを書けない（端末の空きが無い）ときは入れ替えない
 const full = store({ 'kippu-v1': '{"old":1}' });
 const realSet = full.setItem;

@@ -202,14 +202,18 @@ for (const r of REPOS) {
 
     // 引き継ぎコード：記録が端末の中だけにあるゲームは、機種変更で記録が消える（2026-11-05 satou さん「PWA 型のゲームでデータの引継ぎを」）。
     // 新しいゲームに入れ忘れないよう、PWA（sw.js と manifest）で AGENTS.md が localStorage に記録を置くと書いているリポジトリを見る
-    if (paths.has('sw.js') && paths.has('manifest.webmanifest') && paths.has('AGENTS.md') && (await src.read('AGENTS.md')).includes('localStorage')) {
+    // AGENTS.md に書いていなくても、index.html が localStorage を使っていれば見る
+    if (paths.has('sw.js') && paths.has('manifest.webmanifest') && ((paths.has('AGENTS.md') && (await src.read('AGENTS.md')).includes('localStorage')) || (paths.has('index.html') && (await src.read('index.html')).includes('localStorage')))) {
       if (!paths.has('transfer.js')) flag('transfer', '引き継ぎコード（transfer.js）が無い（routines/game-dev.md「引き継ぎコード」：template/transfer.js と template/qa/transfer-check.mjs を写す）');
       else {
         const v = hkVer(await src.read('transfer.js'));
         if (v < HK_VER) flag('transfer:version', `transfer.js が引き継ぎの版 ${v}（今は ${HK_VER}。template/transfer.js をそのまま写す）`);
-        const sw = await src.read('sw.js');
-        if (!/["']\.\/transfer\.js["']/.test(sw)) flag('transfer:sw', 'sw.js の SHELL に ./transfer.js が無い（電波が無いと引き継ぎが開かない）');
+        // コメントの中の './transfer.js' では通さない（SHELL の配列の中の、生きている要素だけを見る）
+        const sw = (await src.read('sw.js')).replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+        const shell = (sw.match(/SHELL\s*=\s*\[([\s\S]*?)\]/) || [, ''])[1];
+        if (!/["']\.\/transfer\.js["']/.test(shell)) flag('transfer:sw', 'sw.js の SHELL に ./transfer.js が無い（電波が無いと引き継ぎが開かない）');
         if (!paths.has('qa/transfer-check.mjs')) flag('transfer:qa', 'qa/transfer-check.mjs が無い（template/qa/transfer-check.mjs を写し、qa/run.mjs から checkTransfer を呼ぶ）');
+        else if (!paths.has('qa/run.mjs') || !(await src.read('qa/run.mjs')).includes('checkTransfer')) flag('transfer:run', 'qa/run.mjs が checkTransfer を呼んでいない（引き継ぎの画面検査が走らない）');
       }
     }
 

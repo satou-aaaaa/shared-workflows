@@ -36,6 +36,7 @@
 
   // ---- 記録の読み書き ----
   function ours(k) {
+    if (/^hk-/.test(k)) return false; // 控え・預け物は「h*」のような書き方でも記録に入れない
     return KEYS.some(function (p) { return p.slice(-1) === "*" ? k.indexOf(p.slice(0, -1)) === 0 : k === p; });
   }
   function snapshot() {
@@ -197,6 +198,10 @@
     var msg;
     try {
       var job = JSON.parse(p);
+      // いまの data-keys の外のキー（前の版の控えに入っていた a11y-v1 など）は書かない
+      var d = {};
+      Object.keys(job.d || {}).forEach(function (k) { if (ours(k) && typeof job.d[k] === "string") d[k] = job.d[k]; });
+      job.d = d;
       var cur = snapshot();
       // 先にいまの記録を控えに残す（空なら控えは作らない。前の控えも消さない）。控えを書けなければ入れ替えない
       var prev = localStorage.getItem(BACKUP);
