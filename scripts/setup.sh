@@ -28,10 +28,10 @@ if [ "$(.tools/bin/actionlint -version 2>/dev/null | head -1)" != "$ver" ]; then
   esac
   mkdir -p .tools/bin
   if [ "$plat" = windows_amd64 ]; then
-    curl -sSfL -o .tools/al.zip "https://github.com/rhysd/actionlint/releases/download/v$ver/actionlint_${ver}_$plat.zip"
+    curl -sSfL --retry 3 --retry-delay 5 --retry-all-errors -o .tools/al.zip "https://github.com/rhysd/actionlint/releases/download/v$ver/actionlint_${ver}_$plat.zip"
     unzip -oq .tools/al.zip actionlint.exe -d .tools/bin
   else
-    curl -sSfL "https://github.com/rhysd/actionlint/releases/download/v$ver/actionlint_${ver}_$plat.tar.gz" | tar xz -C .tools/bin actionlint
+    curl -sSfL --retry 3 --retry-delay 5 --retry-all-errors "https://github.com/rhysd/actionlint/releases/download/v$ver/actionlint_${ver}_$plat.tar.gz" | tar xz -C .tools/bin actionlint
   fi
 fi
 session_env "PATH=\"$PWD/.tools/bin:\$PATH\""
@@ -50,7 +50,7 @@ if [ "$(.tools/bin/shellcheck --version 2>/dev/null | sed -n 's/^version: //p')"
     *) fail "shellcheck を自動で入れられない環境（https://github.com/koalaman/shellcheck の手順で $sc_ver を入れ、.tools/bin/shellcheck に置く）" ;;
   esac
   mkdir -p .tools/bin .tools/dl
-  curl -sSfL -o ".tools/dl/$sc_file" "https://github.com/koalaman/shellcheck/releases/download/v$sc_ver/$sc_file"
+  curl -sSfL --retry 3 --retry-delay 5 --retry-all-errors -o ".tools/dl/$sc_file" "https://github.com/koalaman/shellcheck/releases/download/v$sc_ver/$sc_file"
   if command -v sha256sum >/dev/null; then got=$(sha256sum ".tools/dl/$sc_file" | cut -d' ' -f1); else got=$(shasum -a 256 ".tools/dl/$sc_file" | cut -d' ' -f1); fi
   [ "$got" = "$sc_sum" ] || fail "shellcheck のチェックサムが合わない（$sc_file）"
   case "$sc_file" in
