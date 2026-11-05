@@ -14,5 +14,6 @@ node scripts/check-bootstrap.mjs
 node scripts/check-routines.mjs
 node scripts/check-incidents.mjs
 node scripts/check-capture.mjs
+node scripts/check-repo-lists.mjs
 bash scripts/check-setup-template.sh
 echo "✓ 確認が通った"
