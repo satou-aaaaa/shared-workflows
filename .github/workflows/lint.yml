@@ -31,6 +31,9 @@ jobs:
           sc="$PWD/.tools/bin/shellcheck"
           .tools/bin/actionlint -color -shellcheck "$sc" .github/workflows/*.yml
           (cd template && ../.tools/bin/actionlint -color -shellcheck "$sc" .github/workflows/*.yml)
+      # 各ゲームが写す引き継ぎコード（template/transfer.js）が読み戻せ、まちがったコードを弾くか（Node 22 の CompressionStream を使うので setup-node のあるこの job で）
+      - name: 引き継ぎコードのひな形
+        run: node scripts/check-transfer.mjs
 
   # 立ち上げ直しの手順書（bootstrap/）に、ルーティンの手順書・共通部品の抜けや内部 ID の混入が無いかを調べる。
   bootstrap:
