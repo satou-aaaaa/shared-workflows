@@ -92,6 +92,11 @@ ok('前の記録があって取り込んだときは、知らせに「控えに�
   const l2 = store({ 'kippu-v1': rec, 'hk-backup:kippu-10': bk });
   const s2 = store({ 'hk-pending:kippu-10': JSON.stringify({ d: JSON.parse(bk).d, undo: true }) });
   boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x', local: l2, session: s2 });
+  const l3 = store({ 'kippu-v1': rec, 'hk-backup:kippu-10': bk });
+  const rs3 = l3.setItem; l3.setItem = (k, v) => { if (k.startsWith('hk-backup:')) throw new Error('QuotaExceededError'); return rs3(k, v); };
+  const s3 = store({ 'hk-pending:kippu-10': JSON.stringify({ d: JSON.parse(bk).d, undo: true }) });
+  boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x', local: l3, session: s3 });
+  ok('控えに戻せても新しい控えを書けないときは、戻す前の記録に戻して「元のまま」と知らせる', l3.getItem('kippu-v1') === rec && l3.getItem('kippu-x') === null && l3.getItem('hk-backup:kippu-10') === bk && /元のまま/.test(done(s3)?.m || ''));
   ok('控えに戻せたら、戻す前の記録が新しい控えになる（もう一度押すと戻る）', l2.getItem('kippu-v1') === '{"old":1}' && JSON.parse(l2.getItem('hk-backup:kippu-10') || '{}').d?.['kippu-v1'] === rec);
 }
 // deflate-raw を作れない古いブラウザでは「古い」と知らせる（形のまちがいにしない）

@@ -215,8 +215,11 @@
       if (job.undo) {
         // 控えに戻す：控え（job.d と同じ中身）は入れ替えが済むまで上書きしない。途中で止まっても、もう一度「控えに戻す」で戻せる（版5）
         try { replaceAll(job.d); } catch (e) { partial = e.rolledBack === false; throw e; }
-        // 済んだら、戻す前の記録を控えにする（もう一度押すと戻る）。書けなくても前の控えは残る
-        try { if (count(cur)) localStorage.setItem(BACKUP, JSON.stringify({ at: new Date().toISOString(), d: cur })); else localStorage.removeItem(BACKUP); } catch (e) { /* なし */ }
+        // 済んだら、戻す前の記録を控えにする（もう一度押すと戻る）。控えを書けなければ、戻す前の記録の写しが無くなるので入れ替えを戻す
+        try { if (count(cur)) localStorage.setItem(BACKUP, JSON.stringify({ at: new Date().toISOString(), d: cur })); else localStorage.removeItem(BACKUP); } catch (e) {
+          try { replaceAll(cur); } catch (e2) { partial = true; throw e2; }
+          throw e;
+        }
       } else {
         // 先にいまの記録を控えに残す（空なら控えは作らない。前の控えも消さない）。控えを書けなければ入れ替えない
         var prev = localStorage.getItem(BACKUP);
