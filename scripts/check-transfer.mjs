@@ -98,6 +98,12 @@ ok('キーの名前に HTML の印の文字が入った記録のコードも弾�
 // URL の途中で改行されていても読める
 ok('URL の途中で改行されたコードも読める', (await w.HK.decode(`https://example.test/game/#hk=${c.slice(0, 20)}\n${c.slice(20)}\n`)).d['kippu-v1'] === rec);
 
+// 改行のあとに字下げ（空白・タブ）があっても読める。改行の無い空白のあとの文字はコードに入れない
+ok('改行のあとの字下げをまたいだコードも読める', (await w.HK.decode(`https://example.test/game/#hk=${c.slice(0, 20)}\n    ${c.slice(20)}`)).d['kippu-v1'] === rec);
+ok('コードのあとに空白と言葉が続いても読める', (await w.HK.decode(`#hk=${c} です`)).d['kippu-v1'] === rec);
+// 記録が無いときはコードを作らない（受け取る側で必ず弾かれる）
+ok('記録が無いときは書き出さない', (await kind(boot({ game: 'kippu-10', keys: 'kippu-v1', local: store(), session: store() }).HK.encode())) === 'empty');
+
 // 預けた中身に data-keys の外のキー（前の版の控えの a11y-v1・控え hk-backup:）があっても書かない
 {
   const l = store({ 'kippu-v1': '{"old":1}', 'a11y-v1': '{"font":2}', 'hk-backup:bento-zume': 'x' });
@@ -120,6 +126,16 @@ full.setItem = (k, v) => { if (k.startsWith('hk-backup:')) throw new Error('Quot
 const session3 = store({ 'hk-pending:kippu-10': JSON.stringify({ d: { 'kippu-v1': rec }, undo: false }) });
 boot({ game: 'kippu-10', keys: 'kippu-v1', local: full, session: session3 });
 ok('控えを書けないときは入れ替えず、元の記録のまま', full.getItem('kippu-v1') === '{"old":1}' && /元のまま/.test(session3.getItem('hk-done:kippu-10') || ''));
+
+// 入れ替えの途中で止まり、元にも戻せなかったときは、前の記録の控えを消さない
+{
+  const l = store({ 'kippu-v1': '{"old":1}', 'kippu-x': '{"x":1}' });
+  const rs = l.setItem; let n = 0;
+  l.setItem = (k, v) => { if (!k.startsWith('hk-') && ++n >= 2) throw new Error('QuotaExceededError'); return rs(k, v); };
+  const ss = store({ 'hk-pending:kippu-10': JSON.stringify({ d: { 'kippu-v1': rec, 'kippu-x': '{"font":1}' }, undo: false }) });
+  boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x', local: l, session: ss });
+  ok('元に戻せなかったときは控えを残し、控えに戻せると知らせる', JSON.parse(l.getItem('hk-backup:kippu-10') || '{}').d?.['kippu-v1'] === '{"old":1}' && /控えに戻す/.test(ss.getItem('hk-done:kippu-10') || ''));
+}
 
 const bad = boot({ game: 'x', keys: '*', local: store(), session: store() });
 ok('data-keys に分け合う a11y-v1 があるときは動かない', !boot({ game: 'x', keys: 'x-v1,a11y-v1', local: store(), session: store() }).HK && !boot({ game: 'x', keys: 'x-v1,a11y*', local: store(), session: store() }).HK);
