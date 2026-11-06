@@ -65,6 +65,7 @@
 | otsukai-memo（おつかいメモ） | 頭の体操（高齢の人向け・覚える・計算） | otsukai-memo `AGENTS.md`・`README.md` | 今日の3回（全員同じ）・上級・練習・とことん・QA（3年分の組み方・言い方） | 「認知症を予防できる」と言い切らない（WHO 2019 を出典に）。押すだけ・時間制限なし・文字3段 |
 | bunshi-tsukuri（分子づくり） | 学習ゲーム（化学） | bunshi-tsukuri `AGENTS.md`・`README.md` | 今日の3分子（全員同じ）・上級・とことん・分子帳・QA（手の数・化学式・同じ形の分子を別の数え方で） | 分子のデータは手の数と化学式を確かめてから足す |
 | kimari-sagashi（きまり探し） | 頭の体操（高齢の人向け・並びのきまり） | kimari-sagashi `AGENTS.md`・`README.md` | 今日の5問（全員同じ）・上級・練習・とことん・きまり帳・QA（19種類×2000問を別の数え方で解き直し、答えが1つか） | 「認知症を予防できる」と言い切らない（otsukai-memo とそろえる）。押すだけ・時間制限なし・文字3段・選び肢72px以上 |
+| denki-kairo（でんき回路） | 学習ゲーム（理科・小4「電流のはたらき」） | denki-kairo `AGENTS.md`・`README.md` | 今日の3問（全員同じ）・上級・練習・QA（直列・並列・ショートの見本で回路の計算を別の解き方と照らす・いちばん少ない導線の数を総当たりで数え直す） | 回路のきまりを変えたら遊び方・README と QA の見本もそろえる。ショートは色だけで分けない |
 | tenbin（天秤の書） | 学習アプリ | tenbin `CLAUDE.md`、スキル add-ronbun-questions・law-app-ui-check | 間隔反復の復習ドリル・一次資料での確認 | 問題を足すときに「思い出させる形（答える前に考えさせる）」になっているかを見る点に加える |
 | carcassonne-research | 研究（ゲームAI） | carcassonne-research `CLAUDE.md`・`.claude/skills/steward/`・`docs/EXPERIMENTS.md` | シードを決めた先後入替の対戦・信頼区間・再現コマンド | 強さの判定に SPRT を使い、対戦数を減らしつつ誤りの率をそろえる |
 | sandbox（許可申請ツール） | 業務ツール | sandbox `CLAUDE.md`・`docs/DEVELOPMENT_GUIDE.md`・`docs/routines/` | 小さな PR・多層の検査・運用エージェント | ダミー案件で端から端まで通す確認を定期の作業に入れ、詰まった所を Issue にする |
