@@ -21,6 +21,7 @@
 //   - 記録を localStorage に置く PWA のゲームに、引き継ぎコード（transfer.js）が無い・版が template/transfer.js より古い・sw.js が保存していない（routines/game-dev.md「引き継ぎコード」）
 //   - ゲーム（index.html と sw.js がある）に、見やすさの設定（template/a11y/a11y.html）と検査（template/qa/a11y.mjs）が無い・ひな形とちがう・qa/run.mjs が回していない（routines/game-dev.md「だれでも遊べるように」）
 //   - ゲーム（index.html と sw.js がある）に、遊ぶ量を縛るチケット🎫や「○○すると開く」のモードの鍵がある（routines/game-dev.md「好きなだけ遊べるように」。satou さん 2026-11-06）
+//   - ゲームの sw.js が、入れるとき（install）に HTTP の保存を通して SHELL を取る（cache: 'reload' が無い。古い画面が新しい版に入る。routines/game-dev.md「PWA」）
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -230,6 +231,11 @@ for (const r of REPOS) {
       }
     }
 
+    // PWA の入れ直し：GitHub Pages は index.html を10分ほど HTTP に保存させるので、install で普通に取ると古い画面を新しい CACHE に入れてしまう（2026-11-06 CodeRabbit が間取り・部首で指摘）
+    if (paths.has('index.html') && paths.has('sw.js')) {
+      const sw = (await src.read('sw.js')).replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+      if (/addAll\(/.test(sw) && !/cache:\s*["']reload["']/.test(sw)) flag('sw:reload', 'sw.js の install が SHELL を HTTP の保存から取る（addAll(SHELL.map((u) => new Request(u, { cache: "reload" }))) にする）');
+    }
     const called = new Set();
     for (const p of paths) {
       if (!/^\.github\/workflows\/[^/]+\.ya?ml$/.test(p)) continue;
