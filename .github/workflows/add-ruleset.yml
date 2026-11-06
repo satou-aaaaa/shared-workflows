@@ -1,0 +1,51 @@
+name: Add ruleset
+
+# あるリポジトリの main にルールセット（削除・force push 禁止）だけを入れる（Claude は使わない）。
+# Chrome で入れるとパスキーを毎回聞かれ、satou さんが離れていると止まるため（2026-11-06）。
+# エージェントが workflow_dispatch で name を渡して起こす。同じ名前「main」のルールセットがもうあれば何もしない（2つ作らない）。
+# 鍵は Create repo と同じ環境「repo-create」の REPO_CREATE_TOKEN（fine-grained PAT。ルールセットは "Administration" (write)。GitHub Docs の REST API「Rules」）。
+# 環境は main からしか使えない（PR の枝のワークフローから鍵を読めない）。手順は routines/onboarding.md 手順5。
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "リポジトリ名（satou-aaaaa の下。例 hikari-michi）"
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: add-ruleset-${{ inputs.name }}
+  cancel-in-progress: false
+
+jobs:
+  add:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: repo-create
+    steps:
+      - name: main のルールセット（削除・force push 禁止）を入れる
+        env:
+          GH_TOKEN: ${{ secrets.REPO_CREATE_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          NAME: ${{ inputs.name }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$NAME" =~ ^[a-z0-9][a-z0-9-]{1,62}$ ]]; then
+            echo "::error::名前は英小文字・数字・ハイフンだけ（2〜63字）: $NAME"; exit 1
+          fi
+          if [ -z "$GH_TOKEN" ]; then echo "::error::環境 repo-create に REPO_CREATE_TOKEN が無い（routines/onboarding.md 手順0）"; exit 1; fi
+          info=$(gh api "repos/$OWNER/$NAME" --jq '[.owner.login, (.fork|tostring)] | join(" ")')
+          if [ "$info" != "$OWNER false" ]; then echo "::error::$OWNER/$NAME は持ち主がちがうかフォーク（$info）。入れない"; exit 1; fi
+          have=$(gh api "repos/$OWNER/$NAME/rulesets" --jq '[.[] | select(.name=="main")] | length')
+          if [ "$have" != "0" ]; then
+            echo "main のルールセットはもうある。何もしない"
+            echo "### $OWNER/$NAME: main のルールセットはもうある（何もしなかった）" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          jq -n '{name:"main", target:"branch", enforcement:"active",
+                  conditions:{ref_name:{include:["~DEFAULT_BRANCH"], exclude:[]}},
+                  rules:[{type:"deletion"},{type:"non_fast_forward"}]}' \
+            | gh api -X POST "repos/$OWNER/$NAME/rulesets" --input - --jq '"ルールセット " + (.id|tostring)'
+          echo "### $OWNER/$NAME: main のルールセット（削除・force push 禁止）を入れた" >> "$GITHUB_STEP_SUMMARY"
