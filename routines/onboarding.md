@@ -83,6 +83,7 @@ main に直接置くはじめの commit（リポジトリを作るときの1つ�
 Claude in Chrome（`mcp__claude-in-chrome__*`）が使えるときは、下の 1〜4 を Claude が satou さんの Chrome で行う（2026-10-20 satou さん「リスクが少なく、繰り返し行なっているため」、追記も同日 satou さん承認）。
 
 - Chrome が2つ以上つながっていたら（`list_connected_browsers`）、どちらを使うかをカードで聞く。片方に出した画面は satou さんから見えないことがある。
+- **ルールセットは先に Actions「Add ruleset」（`.github/workflows/add-ruleset.yml`）を workflow_dispatch で起こす**（ref は `main`、inputs は `name`）。鍵は Create repo と同じで、パスキーが要らない。もうあれば何もしない。赤のときだけ下の Chrome で入れる（2026-11-06 Chrome ではルールセットのたびにパスキーを聞かれ、satou さんが離れていて3本が1日止まった）。
 - GitHub が「Confirm access」（パスキー）を出したら、そこだけ satou さんに押してもらう（本人確認は Claude がしない）。一度通ると、しばらくは聞かれない。
 - 入れた後に API で確かめる（`/repos/<owner>/<repo>/rulesets/<id>` の rules が deletion と non_fast_forward、conditions が `~DEFAULT_BRANCH`）。
 - 入れられなかったものは下の「Chrome が使えないとき」で必ず satou さんに頼む。ルールセットと Pages の抜けは `scripts/drift-check.mjs`（週次まとめの「ひな形からのずれ」）が毎週出すので、受け入れの終わりに `node scripts/drift-check.mjs` を回して `ruleset`・`pages` の行が残っていないかを見る（2026-11-04 公開ゲーム14本で0件のまま気づかれなかった。`incidents/2026-11-04-new-repos-no-ruleset.md`）。
