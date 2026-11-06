@@ -20,5 +20,5 @@
 
 ## 対策
 - [x] 直す: tenbin の check.yml を20分にした（tenbin #112）。同じ形で15分だった sandbox の Test も20分にした（sandbox #322）。
-- [x] 防ぐ: `routines/common.md`「問題が起きたら」に、ほかのリポジトリへ広げるときはファイル名でなく中身で全部を探すこと、drift-check に決まりを足したらその PR で全リポジトリに回して今ある違反を同じ日に直すことを書いた（この PR）
+- [x] 防ぐ: `incidents/README.md`「書き方」に、ほかのリポジトリへ広げるときはファイル名でなく中身で全部を探すこと、drift-check に決まりを足したらその PR で全リポジトリに回して今ある違反を同じ日に直すことを書いた（この PR）
 - [x] 見つける: `scripts/drift-check.mjs` の `qa:timeout` をジョブごとに見るようにし、ジョブ名も出す（last-tell の誤りが消え、直す前の tenbin は出る。この PR）
