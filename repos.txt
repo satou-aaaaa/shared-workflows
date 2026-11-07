@@ -32,6 +32,7 @@ kimari-sagashi game
 kippu-10 game
 kokoku-minuki game
 kondate-koma game
+kotoba-honrai game
 kotoba-narabe game
 kotowaza-bamen game
 last-tell app
