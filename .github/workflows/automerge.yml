@@ -115,15 +115,19 @@ jobs:
             fi
           fi
           if [ -z "$manual" ] && [ -n "$REQUIRE_PATHS" ] && ! printf '%s\n' "$new_files" | grep -qE -- "$REQUIRE_PATHS"; then echo "#$pr は対象のファイルを変えないので手でマージ"; exit 0; fi
+          # 名前は jq の --arg で渡す（式に埋めると、名前に " があるとき式が壊れて止まる。#252 の CodeRabbit）。見つからなければ空
+          state_of() { jq -r --arg n "$1" '[.check_runs[] | select(.name == $n)] | sort_by(.started_at) | last | if . == null then empty else (.conclusion // .status) end' <<<"$runs"; }
+          runs=''
+          if [ -n "$REQUIRE_CHECKS$PRESENT_CHECKS" ]; then runs=$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100"); fi
           while IFS= read -r c; do
             [ -n "$c" ] || continue
-            st=$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100" --jq "[.check_runs[] | select(.name == \"$c\")] | sort_by(.started_at) | last | (.conclusion // .status // \"なし\")")
+            st=$(state_of "$c")
             if [ "$st" != success ]; then echo "#$pr は「$c」が ${st:-なし} なのでマージしません（通ったら手でマージ）"; exit 0; fi
           done <<<"$REQUIRE_CHECKS"
           # 動いたときだけ待つ検査：無ければ通す。あれば成功まで待つ（呼び出し側の workflows: にその名前を入れ、終わったときにもう一度判定する）
           while IFS= read -r c; do
             [ -n "$c" ] || continue
-            st=$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100" --jq "[.check_runs[] | select(.name == \"$c\")] | sort_by(.started_at) | last | (.conclusion // .status // \"なし\")")
+            st=$(state_of "$c")
             if [ -n "$st" ] && [ "$st" != success ] && [ "$st" != skipped ]; then echo "#$pr は「$c」が $st なのでマージしません（終われば、もう一度判定します）"; exit 0; fi
           done <<<"$PRESENT_CHECKS"
           if [ "$(jq -r .head.sha <<<"$info")" != "$SHA" ]; then echo "#$pr に新しいコミットがあるので、その検査を待ちます"; exit 0; fi
