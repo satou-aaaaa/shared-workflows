@@ -49,6 +49,7 @@ mannaka-kanji game
 meirei-narabe game
 mukashi-narabe game
 naitei-no-michi app
+nijushi-sekki game
 okane-kihon game
 otsukai-memo game
 rekishi-narabe game
