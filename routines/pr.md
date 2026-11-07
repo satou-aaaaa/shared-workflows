@@ -50,7 +50,7 @@ satou-aaaaa の各リポジトリで、PR を作る・CI を通す・コンフ�
 
 ## 5. マージ
 
-- satou さんは PR のマージを Claude に任せている（2026-10-10）。CI が緑で、コンフリクトが無く、未解決のレビューが無ければ、下書きを解除して squash マージする。タイトルは PR のタイトルのまま。
+- satou さんは PR のマージを Claude に任せている（2026-10-10）。何本でも、ラベル「自動マージしない」付きでも、マージの前に satou さんに聞かない（2026-11-07 satou さん「マージは自動でやってください」「前にも同じことを言っています」）。マージできなかったときは、OK を求めるのでなく、何が止まったかを知らせる（`incidents/2026-11-07-asked-before-merge.md`）。CI が緑で、コンフリクトが無く、未解決のレビューが無ければ、下書きを解除して squash マージする。タイトルは PR のタイトルのまま。
   手でマージする直前に、今の head へのレビューのスレッド（get_review_comments）を読み直す。CodeRabbit はチェックを緑にするのと同じころに指摘を書くので、チェックの緑だけで決めない（2026-11-01 `incidents/2026-11-01-roppo-merged-before-review.md`）。
   - 読み方（Claude）：`pull_request_read` の `get` で `head.sha` を控える → `get_review_comments`（`perPage` 50、続きは `after`）を全ページ読み、`is_resolved: false` が0件か見る → `merge_pull_request` に控えた SHA を `expectedHeadSha` で渡す。
   - 読み方（gh）：PR のブランチにいる状態で、次をそのまま貼る（`OWNER`・`REPO`・`PR`・`SHA` はコマンドが入れる）。
