@@ -54,6 +54,7 @@ rosen-hitofude game
 sagi-minuki game
 sandbox app
 seiza-tsunagi game
+sekai-jikoku game
 sentaku-hyoji game
 shiritori-saitan game
 shokuhin-hyoji game
