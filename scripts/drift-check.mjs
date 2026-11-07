@@ -29,6 +29,8 @@
 //   - ゲームの sw.js・qa/sw-check.mjs がひな形（template/sw.js の game:begin〜game:end の外）とちがう（scripts/sync-template.mjs で写す）
 //   - とことんの「ここで降りる」が正解の直後に効かない形がある・manifest がふつうのアイコンを maskable にも使い回す
 //   - ゲームの save が、localStorage に書けなかったときに黙っている（開き直すと記録が消える。incidents/2026-11-07-save-failure-silent.md）
+//   - ゲームのヒント2（cutOf）が、まちがいの数で消す数を変える（しぼったあとにまちがいを選ぶと、消した選び肢が戻る。incidents/2026-11-07-hint-cut-comes-back.md）
+//   - 星の表示（class="stars"）に role="img" が無い・取れなかった星も ★（読まれない・色だけで分ける）
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -37,6 +39,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formProblems } from './check-issue-forms.mjs';
 import { readRepos, repoNames } from './repos.mjs';
+import { cutMoves, starsBare } from './game-patterns.mjs';
 
 const OWNER = process.env.OWNER || 'satou-aaaaa';
 // 見るリポジトリは repos.txt の game・app（shared-workflows 自身は部品の置き場なので見ない）
@@ -293,6 +296,11 @@ for (const r of REPOS) {
     if (paths.has('index.html')) {
       const page = pageCache ?? await src.read('index.html');
       if (/catch\s*\(e\)\s*\{\s*mem\s*=\s*j;\s*\}/.test(page)) flag('save:silent', 'index.html の save が、保存に失敗しても黙っている（開き直すと記録が消える。保存できないあいだは帯 #savewarn を出したままにし、QA に検査を足す。routines/game-dev.md「共通の形」の記録）');
+      // ヒント2：まちがいを除いてから消す数を決めると、しぼったあとにまちがいを選んだとき、消した選び肢が戻る（saibanin-shikumi #1 の CodeRabbit）
+      // コメントを除き、複数行の定義も終わりまで見る（scripts/game-patterns.mjs。見分けの検査は scripts/check-game-patterns.mjs）
+      if (cutMoves(page)) flag('hint:cut-moves', 'index.html の cutOf が、まちがいの数で消す選び肢を変える（しぼったあとにまちがいを選ぶと、消した選び肢が戻る。正解でない選び肢のうち最後の1つ以外を消す形にし、QA に検査を足す。routines/game-dev.md「共通の形」のヒント）');
+      // 星の表示：span に role="img" が無いと aria-label が読まれないことがあり、取れなかった星も ★ だと色だけで分ける（2026-11-07 食中毒よぼうの CodeRabbit）
+      if (starsBare(page)) flag('stars:role', 'index.html の星の表示（class="stars"）に role="img" が無いか、取れなかった星も ★ で色だけで分けている（<span class="stars" role="img" aria-label="星Nつ"> にし、取れなかった星は ☆。routines/game-dev.md「共通の形」の星）');
     }
 
     // 引き継ぎコード：記録が端末の中だけにあるゲームは、機種変更で記録が消える（2026-11-05 satou さん「PWA 型のゲームでデータの引継ぎを」）。
