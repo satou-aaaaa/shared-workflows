@@ -14,8 +14,10 @@ bushu-tashizan game
 carcassonne-research app
 chikei-ate game
 dashisugi-check game
+dema-tashikame game
 denki-kairo game
 dungeon-boardgame app
+gogen-suiri game
 hikari-michi game
 jobun-tobatsu game
 kabu-news game
@@ -37,10 +39,13 @@ mannaka-kanji game
 naitei-no-michi app
 okane-kihon game
 otsukai-memo game
+rekishi-narabe game
 rosen-hitofude game
+sagi-minuki game
 sandbox app
 seiza-tsunagi game
 shiritori-saitan game
+teko-tsuriai game
 tenbin app
 tenkizu-yomi game
 todofuken-relay game
