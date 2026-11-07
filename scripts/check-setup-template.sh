@@ -20,7 +20,7 @@ ng()  { echo "✗ $1" >&2; echo "--- 出力 ---" >&2; cat "$tmp/out" >&2; bad=1;
 
 # --- 作り物のリポジトリ（ひな形の <> を埋める。依存は手元の file: なのでネットは要らない）---
 repo="$tmp/repo"; mkdir -p "$repo/scripts" "$repo/app/dep" "$repo/app/pw" "$tmp/bin"
-sed -e 's|<package.json のあるフォルダ。例: . や qa>|app|' -e 's|<push する前の確認コマンド>|node app/check.js|' \
+sed -e 's|^npm_dir=qa |npm_dir=app |' -e 's|^next="node qa/run.mjs"|next="node app/check.js"|' \
   "$root/template/scripts/setup.sh" > "$repo/scripts/setup.sh"
 if grep -n '<[^<>]*[ぁ-んァ-ヶ一-龠][^<>]*>' "$repo/scripts/setup.sh"; then echo "✗ 埋めていない <> がある（この検査の sed を直す）" >&2; exit 1; fi
 # 埋めたあとの形を shellcheck で見る（check.sh と Lint の actionlint の準備で入っている）
@@ -33,7 +33,7 @@ echo '{"name":"dep","version":"1.0.0"}' > "$repo/app/dep/package.json"
 # 作り物の Playwright：FAKE_LAUNCH_FAIL があると起動に失敗する（ライブラリが足りない Linux の代わり）
 echo '{"name":"playwright","version":"1.0.0"}' > "$repo/app/pw/package.json"
 echo 'exports.chromium={executablePath:()=>"",launch:async()=>{if(process.env.FAKE_LAUNCH_FAIL)throw new Error("libnss3.so: cannot open shared object file");return{close:async()=>{}}}};' > "$repo/app/pw/index.js"
-echo '{"name":"fx","version":"1.0.0","private":true,"dependencies":{"dep":"file:./dep","playwright":"file:./pw"}}' > "$repo/app/package.json"
+echo '{"name":"fx","version":"1.0.0","private":true,"dependencies":{"dep":"file:./dep"},"devDependencies":{"playwright":"file:./pw"}}' > "$repo/app/package.json"
 (cd "$repo/app" && npm install --package-lock-only --no-audit --no-fund >/dev/null)
 printf '#!/bin/sh\nexit 0\n' > "$tmp/bin/chromium"; chmod +x "$tmp/bin/chromium"   # 作り物のブラウザ
 
@@ -107,6 +107,19 @@ touch "$repo/app/node_modules/dep/.keep"
 if run CLAUDE_ENV_FILE="$envf" && [ -f "$repo/app/node_modules/dep/.keep" ] && grep -q '入れ直さない' "$tmp/out"; then
   ok "lock も依存も変わっていなければ入れ直さない"
 else ng "9. 変わっていないのに入れ直した"; fi
+
+# 10. NODE_ENV=production でも devDependencies（playwright）を入れる（2026-11-07 gogen-suiri #1 の CodeRabbit）
+rm -rf "$repo/app/node_modules"
+if run CLAUDE_ENV_FILE="$envf" NODE_ENV=production && [ -f "$repo/app/node_modules/playwright/package.json" ]; then
+  ok "NODE_ENV=production でも devDependencies を入れる"
+else ng "10. NODE_ENV=production で playwright が入らない"; fi
+
+# 11. requirements.txt が無ければ Python の節を飛ばす（写し残しで pip が止まった。2026-11-07 kikigaki-techo の Setup check）
+mv "$repo/requirements.txt" "$tmp/req.bak"
+if run CLAUDE_ENV_FILE="$envf" && grep -q '^✓ 準備できた' "$tmp/out" && [ ! -d "$repo/.venv2" ]; then
+  ok "requirements.txt が無ければ Python の節を飛ばして通る"
+else ng "11. requirements.txt が無いと止まる"; fi
+mv "$tmp/req.bak" "$repo/requirements.txt"
 
 [ "$bad" = 0 ] || { echo "✗ ひな形 template/scripts/setup.sh の検査が落ちた" >&2; exit 1; }
 echo "✓ ひな形の準備スクリプトの検査が通った"

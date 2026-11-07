@@ -4,7 +4,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 
 const dir = 'template/.github/workflows';
-const UNWATCHED = ['CI failure issue', 'Branch cleanup', 'Labels', 'CodeQL', 'Scorecard', 'Weekly summary'];
+const UNWATCHED = ['CI failure issue', 'Scorecard', 'Weekly summary'];
 const drift = readFileSync('scripts/drift-check.mjs', 'utf8');
 const live = (f) => readFileSync(`${dir}/${f}`, 'utf8').split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
 const list = (live('ci-failure-issue.yml').match(/^\s*workflows:\s*\[(.*)\]/m) || [])[1];

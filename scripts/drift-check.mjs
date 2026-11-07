@@ -28,6 +28,7 @@
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { checkSwStall } from '../template/qa/sw-check.mjs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formProblems } from './check-issue-forms.mjs';
@@ -45,7 +46,7 @@ const SECTIONS = ['## push する前の確認', '## 共通のきまり'];
 const QA_MIN = 20;
 const CALLS = ['ci-failure-issue', 'secret-scan', 'branch-cleanup', 'labels', 'setup-check'];
 // main で動いても、落ちたときに Issue を立てなくてよいもの（ci-failure-issue.yml の workflows: に無くてよい）
-const UNWATCHED = ['CI failure issue', 'Branch cleanup', 'Labels', 'CodeQL', 'Scorecard', 'Weekly summary'];
+const UNWATCHED = ['CI failure issue', 'Scorecard', 'Weekly summary'];
 
 // 部品の一覧（このリポジトリの .github/workflows で workflow_call を持つもの）
 const wfDir = join(here, '..', '.github', 'workflows');
@@ -141,7 +142,7 @@ for (const r of REPOS) {
       const v = setupVer(setup);
       // ひな形の「<…>」を埋め忘れると、bash が構文エラーで止まる（2026-11-07 haku-uchi #1 の Setup check。drift-check は通っていた）
       // 引用つき（next="<…>"）も見る：構文エラーにはならず、終わりの案内に <…> がそのまま出ていた（2026-11-07 haku-uchi のひな形の写し直し）
-      const hole = setup.split('\n').find((l) => !/^\s*#/.test(l) && /=["']?<[^>\n]*>/.test(l));
+      const hole = setup.split('\n').find((l) => !/^\s*#/.test(l) && (/=["']?<[^>\n]*>/.test(l) || /<[^<>\n]*[ぁ-んァ-ヶ一-龠][^<>\n]*>/.test(l)));
       if (hole) flag('setup:placeholder', `scripts/setup.sh にひな形の <> が残っている「${hole.trim().slice(0, 40)}」（埋めないと構文エラーで止まる）`);
       // 要らない節の消し忘れ：無いファイルを読む節が残ると、準備が途中で止まる（2026-11-07 haku-uchi。Python の節が requirements.txt を探して落ちた）
       for (const f of ['requirements.txt', '.python-version', '.nvmrc']) {
@@ -283,6 +284,13 @@ for (const r of REPOS) {
     if (paths.has('index.html') && paths.has('sw.js')) {
       const sw = (await src.read('sw.js')).replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
       if (/addAll\(/.test(sw) && !/cache:\s*["']reload["']/.test(sw)) flag('sw:reload', 'sw.js の install が SHELL を HTTP の保存から取る（addAll(SHELL.map((u) => new Request(u, { cache: "reload" }))) にする）');
+      // 4秒で保存したものへ切り替える書き方なら、本文の途中で止まる返事でも切り替わるかを動かして確かめる（2026-11-07 CodeRabbit が kotowaza-awase で指摘）
+      if (/const slow\s*=\s*setTimeout/.test(sw)) {
+        const st = await checkSwStall(await src.read('sw.js')).catch((e) => ({ ok: false, error: String(e) }));
+        if (!st.ok) flag('sw:stall', 'sw.js が本文を読む前に4秒の切り替えを外す（本文の途中で通信が止まると読み込み中のまま。template/qa/sw-check.mjs を写し、ok の返事は本文を読み終えてから返す）');
+        // 返したあとも60秒の見張りが残ると、worker が止まれず保存したものをあとから送ろうとする（2026-11-07 mukashi-narabe #1 の CodeRabbit）
+        if (/setTimeout\([^;]*60000\)/.test(sw) && !/clearTimeout\(deadline\)/.test(sw)) flag('sw:deadline', 'sw.js が返したあとも60秒の見張りを止めない（send の中で clearTimeout(deadline)。kotowaza-awase の sw.js の形）');
+      }
     }
     const called = new Set();
     const onMain = []; let watched = null; // main で動くワークフローの名前・ci-failure-issue が見張る名前
