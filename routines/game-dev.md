@@ -152,6 +152,7 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 6. `node qa/run.mjs` が全部通ってから PR。`sw.js` を含む PR は `@coderabbitai review` とコメントし、レビューを読んでから手でマージする。
 7. Pages を main のルートで公開する（[onboarding.md](onboarding.md) 手順5の1）。`node scripts/drift-check.mjs` に `pages` の行が出ないこと、Actions の Post-deploy check が緑になったことを見るまで、X などで紹介しない（2026-11-04 3本が 404 のまま紹介された。incidents/2026-11-04-pages-never-enabled.md）。
 8. 新しいリポジトリを [project-practices.md](project-practices.md) の表と README.md の一覧に足す。
+9. 公開を知らせたら、同じターンで次の候補（プロジェクトのメモリ game-queue の順）の手順1に入る。satou さんの返事を待たない（2026-11-07「止めずに、進め続けてください」）。レビュー待ちなどで止まるときは、再開の予約（send_later など。ほかの AI は [tool-map.md](tool-map.md)）を入れてからターンを終える。予約なしで終えない（incidents/2026-11-07-new-game-stopped-after-publish.md）。
 
 ### B. 公開中のゲームを1本磨く（週1・水曜）
 
