@@ -38,6 +38,7 @@ kotoba-honrai game
 kotoba-narabe game
 kotowaza-awase game
 kotowaza-bamen game
+kyuyo-meisai game
 last-tell app
 last-tell-godot private
 local-kanban app
