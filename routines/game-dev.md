@@ -156,8 +156,9 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 ### A. 新しいゲームを作る（satou さんに頼まれたとき）
 
 1. 案を3つ出す。どれも上の「好み」に当てはまるか表で確かめる。題材がもう無いかを、[project-practices.md](project-practices.md) のゲームの表を**日本語の題材**（例：`grep -n "防災" routines/project-practices.md`）で探して確かめる。リポジトリ名のローマ字（bousai / bosai）で探さない。プロジェクトのメモリ game-queue に無くても、表にあれば作らない（2026-11-07 「防災の判断」を2本作りかけた。incidents/2026-11-07-same-game-different-romaji.md）。
+   題材を決めたら、作り始める前に shared-workflows に Issue「題材: <日本語の題名>（<題材の言葉>）」を立てる（例「題材: 祝日の由来（祝日）」）。同じ題材の言葉を題に持つ「題材:」Issue（not planned で閉じたものを除く）のうち、**番号のいちばん小さいものが担当**。立てたあとで一覧（`gh api "repos/satou-aaaaa/shared-workflows/issues?state=all&per_page=100" --paginate`。検索は索引が遅れるので使わない）を見て、自分より小さい番号があれば作らず、自分の Issue を not planned で閉じる。メモリ game-queue にも1行書くが、担当の正は Issue（メモリは後から書いたほうが勝ち、先の行が消えることがある。2026-11-07「祝日の由来」が2本並行で作られた。incidents/2026-11-07-topic-claim-overwritten.md）。公開したら Issue に公開先を書いて completed で閉じ、やめたら not planned で閉じる。
 2. 動く見本（単体の HTML）を Artifact で出し、satou さんに選んでもらう（カード）。
-3. リポジトリは [onboarding.md](onboarding.md) 手順0で AI が作る（A：Actions「Create repo」を起こす。だめなら B：Chrome。そのときはこのスレッドに satou さんの一言を頼む）。リンクを渡すのは両方使えないときだけ。
+3. リポジトリは [onboarding.md](onboarding.md) 手順0で AI が作る（A：Actions「Create repo」を、担当の Issue 番号 `claim` と題材の言葉 `topic` を付けて起こす。先の担当・公開済みの表にあれば止まる。だめなら B：Chrome。そのときはこのスレッドに satou さんの一言を頼む）。リンクを渡すのは両方使えないときだけ。
 4. はじめの commit は README だけ。workflows・`qa/`・本体は同じ PR #1 で入れる（incidents/2026-11-04-new-repo-main-qa-without-qa-dir.md）。
 5. 上の「共通の形」と「だれでも遊べるように」を全部入れる。AGENTS.md は既存のゲーム（kippu-10 など）を写して直す。
    `.github/workflows/` は既存のゲームからでなく `template/.github/workflows/` から写す（古いゲームの写しはひな形の直しが届いていない。QA も `template/.github/workflows/qa.yml`（共通部品 game-qa を呼ぶ。検査の名前は `qa / qa` で、main の必須チェックと Auto merge の `require_checks` に書く）を写す）。PR #1 を出す前に、shared-workflows で `LOCAL_ROOT=<clone の親> REPOS=<リポジトリ> node scripts/drift-check.mjs` を回し、出た行を直す（2026-11-05 あみだ配達・ことばならべ・ひかり道が、前の日に直した link-check の設定なしで出た）。
