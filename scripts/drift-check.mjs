@@ -12,6 +12,7 @@
 //   - ci-failure-issue の呼び出しに見回り（schedule）が無い
 //   - link-check の呼び出しに、main への push で動き直す設定が無い（incidents/2026-11-05-link-check-not-rerun-on-main.md）
 //   - Playwright を入れるジョブの timeout-minutes が 20 より短い（ファイル名によらず全部のワークフローを見る。入れる段階だけで9分かかる日がある。incidents/2026-11-05-qa-timeout-slow-install.md・2026-11-07-tenbin-check-timeout.md）
+//   - scripts/setup.sh にひな形の <> が残っている（埋め忘れ）
 //   - scripts/setup.sh の「ひな形の版」が template/scripts/setup.sh より古い（ひな形を直しても写しに届かない。incidents/2026-11-03-setup-false-ready.md）
 //   - scripts/setup.sh が渡す CHROMIUM_PATH を、検査のスクリプト（qa/・tools/ など）が読んでいない
 //   - 依存の置き場（package.json・requirements.txt・pyproject.toml）を Dependabot が見ていない
@@ -135,6 +136,9 @@ for (const r of REPOS) {
     if (paths.has('scripts/setup.sh')) {
       const setup = await src.read('scripts/setup.sh');
       const v = setupVer(setup);
+      // ひな形の「<…>」を埋め忘れると、bash が構文エラーで止まる（2026-11-07 haku-uchi #1 の Setup check。drift-check は通っていた）
+      const hole = setup.split('\n').find((l) => !/^\s*#/.test(l) && /=<[^>\n]*>/.test(l));
+      if (hole) flag('setup:placeholder', `scripts/setup.sh にひな形の <> が残っている「${hole.trim().slice(0, 40)}」（埋めないと構文エラーで止まる）`);
       if (v < SETUP_VER) flag('setup:version', `scripts/setup.sh がひな形の版 ${v}（今は ${SETUP_VER}。template/scripts/setup.sh の版の行の下にある変わったところを写し、版の行も上げる）`);
       // 準備が渡すブラウザの場所（CHROMIUM_PATH）を、検査が読んでいるか。読んでいないと「✓ 準備できた」のあと検査がブラウザを見つけられない
       // （2026-11-04 dungeon-boardgame の qa/run.mjs は PW_CHROMIUM しか読んでいなかった。incidents/2026-11-04-setup-nvm-silent-stop.md）
