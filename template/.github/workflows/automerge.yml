@@ -30,6 +30,7 @@ jobs:
       # 動いたときだけ成功を待つ検査。準備のファイルを変えた PR は Setup check が通るまでマージしない（2026-11-07 atsusa-shisu #1・#252 の CodeRabbit）
       present_checks: |
         setup / setup
-      # きっかけが Setup check（や Secret scan）のとき recheck_main はそのワークフローを起こすので、false にして main では QA を起こす
+      # きっかけが Setup check（や Secret scan）のとき recheck_main はそのワークフローを起こすので、false にして main では QA と Setup check を起こす
+      # （GITHUB_TOKEN のマージでは main の push で動かないため。Setup check を起こさないと、月1の失敗の Issue が次の月まで閉じない。#252 の CodeRabbit）
       recheck_main: false
-      dispatch: qa.yml
+      dispatch: qa.yml setup-check.yml

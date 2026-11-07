@@ -6,7 +6,8 @@
 // ひな形の版: 1（上げたら写しの版も上げる。scripts/drift-check.mjs が古い写し・ひな形とちがう写しを週次まとめに出す）
 //   1: 28本が写し合いで28通りになっていたのを1つにした（2026-11-07 shared-workflows #219）。本文の止まりを進み具合で見る・
 //      控えも通信も止まったら60秒でタイマーから直接 Response.error() を返す・? 付きの URL を同じ1つに保存する・
-//      保存したものは自分の版（cacheName）からだけ探す・入れるときは HTTP の保存を通さない（cache: "reload"）
+//      保存したものは自分の版（cacheName）からだけ探す・入れるときは HTTP の保存を通さない（cache: "reload"）・
+//      長い受信でも保存し直しが終わるまで waitUntil で待つ
 // game:begin
 const CACHE = "game-v1"; // 名前は「<ゲームの短い名前>-v<版>」。中身を大きく変えたら版を上げる
 const SHELL = ["./", "./index.html", "./transfer.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"]; // 画面のファイルを足したらここにも足す
@@ -19,7 +20,6 @@ const KEEP = new Set(SHELL.map((u) => new URL(u, base).pathname)); // 保存し�
 const INDEX = new URL("./index.html", base).pathname;
 const IDLE = 4000; // 本文がこれだけ止まったら保存したものに切り替える（少しずつでも届いていれば待つ）
 const LIMIT = 60000; // 保存したものも無く、これだけ何も届かなければ Response.error() を返す（少しずつでも届いていれば待つ）
-const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
@@ -62,13 +62,17 @@ self.addEventListener("fetch", (e) => {
     .then((c) => c.match(url.pathname).then((hit) => hit || (req.mode === "navigate" ? c.match(INDEX) : undefined)))
     .catch(() => undefined);
   let saved = () => {};
-  e.waitUntil(Promise.race([new Promise((r) => { saved = r; }), wait(LIMIT)])); // 保存し直しが終わるまで（60秒まで）待つ
+  // 保存し直しが終わるまで待つ。少しずつでも届いていれば60秒を過ぎても待つ（受信の途中で止まると保存が残らない。#252 の CodeRabbit）。
+  // 何も届かないまま60秒たったら、下の cap の時計で終える
+  e.waitUntil(new Promise((r) => { saved = r; }));
   e.respondWith(new Promise((resolve) => {
     let sent = false;
     let cap = 0;
-    const send = (r) => { if (sent) return; sent = true; clearTimeout(cap); clearTimeout(first); resolve(r); };
+    const send = (r) => { if (sent) return; sent = true; clearTimeout(first); resolve(r); };
+    const done = () => { clearTimeout(cap); saved(); };
     // 最後の返事。控えの検索も待たない（どちらも止まっても返す）。何か届くたびに時計を戻す（大きなファイルの受信を打ち切らない。#252 の CodeRabbit）
-    const arm = () => { clearTimeout(cap); cap = setTimeout(() => send(Response.error()), LIMIT); };
+    // 返したあとも、受信と保存し直しを見張る（止まったら waitUntil を終える）
+    const arm = () => { clearTimeout(cap); cap = setTimeout(() => { send(Response.error()); saved(); }, LIMIT); };
     const fallback = () => fromCache().then((hit) => hit && send(hit)); // 保存したものがあれば切り替える（無ければネットを待ち続ける）
     const first = setTimeout(fallback, IDLE); // 見出しが4秒届かないとき
     arm();
@@ -78,13 +82,13 @@ self.addEventListener("fetch", (e) => {
         const make = () => new Response(buf, { status: res.status, statusText: res.statusText, headers: res.headers });
         if (res.ok) {
           send(make());
-          if (!KEEP.has(url.pathname)) return saved();
-          return caches.open(CACHE).then((c) => c.put(url.pathname, make())).catch(() => {}).then(saved);
+          if (!KEEP.has(url.pathname)) return done();
+          return caches.open(CACHE).then((c) => c.put(url.pathname, make())).catch(() => {}).then(done);
         }
-        saved();
+        done();
         if (res.status >= 500) return fromCache().then((hit) => send(hit || make()));
         send(make());
       });
-    }).catch(() => { saved(); return fromCache().then((hit) => send(hit || Response.error())); });
+    }).catch(() => { done(); return fromCache().then((hit) => send(hit || Response.error())); });
   }));
 });
