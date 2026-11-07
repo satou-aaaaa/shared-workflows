@@ -220,6 +220,7 @@ for (const r of REPOS) {
       }
     }
 
+    let pageCache = null; // 同じ index.html を何度も取りに行かない（API の読み込みが途中で失敗しても、それまでのずれを出せるように）
     // 好きなだけ遊べるように：寄付で成り立たせるゲームなので、遊ぶ量を縛る仕組み・課金ゲームのような解放を入れない（satou さん 2026-11-06「チケット制はいれる必要ありますか？好きなだけ遊んでほしいです」）
     // 実績の 🔒（まだ取っていない印）は鍵ではないので見ない。「○○すると開く」のようにモードを閉じる文だけを見る
     if (paths.has('index.html') && paths.has('sw.js')) {
@@ -228,6 +229,19 @@ for (const r of REPOS) {
       // 「巻を1回読むと開く」「🔒 上級の5本は、今日の5本のあとで」のような文（「設定を開く」「アプリで開く」は鍵ではない。CSS のコメントは見ない）
       const gate = page.replace(/\/\*[\s\S]*?\*\//g, '').match(/[^<>`'"\n]{0,24}(?:と|たら)開く|🔒 [^<>`'"\n]{2,40}/);
       if (gate) flag('free:gate', `index.html に遊ぶ前の鍵がある「${gate[0].trim()}」（どのモードも最初から遊べるように。routines/game-dev.md「好きなだけ遊べるように」）`);
+      pageCache = page;
+    }
+
+    // 遊び方の「見た」は「わかった」を押したらすぐ残し、dialog の close でも残す（ボタンだけだと Esc で閉じた人に毎回出る。close だけだと知らせが遅れて届き、押した直後に読み直すとまた出る。2026-11-07 incidents/2026-11-07-howto-esc-not-saved.md）
+    if (paths.has('index.html')) {
+      const page = pageCache ?? await src.read('index.html');
+      const ok = page.match(/\$\("howto-ok"\)\.onclick\s*=\s*\(\)\s*=>\s*\{[^\n]*/);
+      if (ok) {
+        const onClose = /\$\("howto"\)\.addEventListener\("close"[^\n]*tut\s*=\s*true/.test(page);
+        const atOnce = /^\$\("howto-ok"\)\.onclick\s*=\s*\(\)\s*=>\s*\{\s*save\(/.test(ok[0]);
+        if (!onClose) flag('howto:close', 'index.html が遊び方の「見た」を dialog の close で残していない（Esc で閉じた人に毎回出る。$("howto").addEventListener("close", () => { if (!load().tut) save(…) })。routines/game-dev.md「共通の形」の遊び方）');
+        else if (!atOnce) flag('howto:close', 'index.html の「わかった」が「見た」をすぐ残していない（close の知らせは遅れて届き、押した直後に読み直すとまた出る。onclick の最初で save(…)。routines/game-dev.md「共通の形」の遊び方）');
+      }
     }
 
     // 引き継ぎコード：記録が端末の中だけにあるゲームは、機種変更で記録が消える（2026-11-05 satou さん「PWA 型のゲームでデータの引継ぎを」）。
