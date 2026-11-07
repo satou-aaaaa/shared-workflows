@@ -21,8 +21,10 @@ on:
 
 permissions: {}
 
+# 同じグループで待っている実行は、あとから来た実行に取り消される（GitHub Docs「Control the concurrency」）。
+# 名前ごとに分け、並行で作る別の名前どうしが取り消し合わないようにする（incidents/2026-11-07-create-repo-cancelled-by-parallel.md）
 concurrency:
-  group: create-repo
+  group: create-repo-${{ inputs.name }}
   cancel-in-progress: false
 
 jobs:

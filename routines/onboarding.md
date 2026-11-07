@@ -15,7 +15,8 @@ satou さんは「リポジトリの作成も AI に任せる。今後も新作�
 
 1. shared-workflows の Actions「Create repo」（`.github/workflows/create-repo.yml`）を workflow_dispatch で起こす（GitHub MCP の `actions_run_trigger`、ref は `main`、inputs は `name` と `description`）。
 2. 公開・README だけの main で作り、Pages（main の /）と main のルールセット（削除・force push 禁止）まで入れる。手順5の1・2 はやらなくてよい。
-3. 実行が緑になったら `add_repo`（access: push）で足して、手順2へ。赤なら、ログの `::error::` の1行を見る。
+3. 起こしたあと、自分の実行（入力の name が同じもの）が緑かを見る。「cancelled」なら同じ inputs でもう一度起こす（2026-11-07 まで、並行で起こした別の作成に取り消されていた）。
+   実行が緑になったら `add_repo`（access: push）で足して、手順2へ。赤なら、ログの `::error::` の1行を見る。
    - 「REPO_CREATE_TOKEN が無い」「401」「403」：鍵が無いか切れた。B で作り、satou さんに下の「鍵の入れ方」をカードで頼む。
    - 「もうある」：同じ名前がある。消さない・上書きしない。名前を変えるか、そのリポジトリを使う。
 4. 起こす操作が安全チェックに止められたら、同じ操作を別の道具で回り込まない。B へ。
