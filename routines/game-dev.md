@@ -70,8 +70,9 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 | 引き継ぎ | 記録を別の端末へ移す「引き継ぎコード」と QR（`template/transfer.js`）と検査（`template/qa/transfer-check.mjs`）。下の「引き継ぎコード」 | kippu-10 |
 | 遊び方 | はじめて開いたときに `<dialog>` で出し、「見た」の記録（`tut`）は「わかった」を押したらすぐ残し、dialog の `cancel`（Esc を押したその場で届く）と `close` イベントでも、まだ残していなければ残す（ボタンの中だけだと Esc や戻る操作で閉じた人に毎回出る。`close` だけだと知らせが少し遅れて届き、押した直後・Esc の直後に読み直すとまた出る。2026-11-07 `incidents/2026-11-07-howto-esc-not-saved.md`）。QA は「わかった」を押したその場で記録が残るか、Esc で閉じてすぐ読み直しても（10回）出ないかを見る。dialog で記録を残すものはどれも同じ | kippu-10 |
 | ホームの題 | 上の帯の `h1{flex:1}` を題（`h1.title`）が受け継ぐと、縦に並べた画面で余った高さを取って伸び、iPad の縦などで題の下に大きなすき間が出る。`.title` に `flex:none` を書く。QA は 820×1180・390×844・1280×800 で、題の高さが伸びない形（flex:none）と同じかを見る（2026-11-07 `incidents/2026-11-07-title-stretched.md`） | kimari-sagashi |
+| 記録の保存 | 記録は localStorage。書けないとき（容量いっぱい・保存を切ったブラウザ）は開いているあいだだけ覚え、遊んでいる途中でも1回だけ `toast` で「この端末に記録を保存できませんでした…」と知らせる（黙っていると開き直したとき記録が消える）。QA は `Storage.prototype.setItem` を失敗させて知らせが1回だけ出るか見る。drift-check の `save:silent` が見る | atsusa-shisu・kippu-10 |
 | 好きなだけ | チケット・鍵なし。とことん・練習は何回でも。問題は300種類以上。下の「好きなだけ遊べるように」 | どのゲームも（2026-11-06 から） |
-| QA | `qa/run.mjs`。乱数で作る所は何百日分も作って確かめる。とことんのように `Math.random` で並べる所も、何百回作って重なり・作れない問題が無いかを見る（5回では0.1%の重なりに当たらない）。押せる所は44px以上、幅320px。キーボードで選んだボタンに枠が出る（`all:unset` で消えるので、枠の規則は style の最後に `:is(button,a):focus-visible{outline:…!important}`） | どのゲームも |
+| QA | `qa/run.mjs`。乱数で作る所は何百日分も作って確かめる。とことんのように `Math.random` で並べる所も、何百回作って重なり・作れない問題が無いかを見る（5回では0.1%の重なりに当たらない）。押せる所は44px以上、幅320px。キーボードで選んだボタンに枠が出る（`all:unset` で消えるので、枠の規則は style の最後に `:is(button,a):focus-visible{outline:…!important}`）。検査で使う問題 id は文字で書かず、データから選ぶ（`G.POOL[2].find(...)`）。別のゲームから写した id はそのゲームに無いことがあり、例外を待つ検査が何も見ないまま通る（drift-check `qa:literal-id`。`incidents/2026-11-07-qa-copied-question-id.md`） | どのゲームも |
 
 ## 好きなだけ遊べるように（寄付で成り立たせる。satou さん 2026-11-06）
 
@@ -156,8 +157,9 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 ### A. 新しいゲームを作る（satou さんに頼まれたとき）
 
 1. 案を3つ出す。どれも上の「好み」に当てはまるか表で確かめる。題材がもう無いかを、[project-practices.md](project-practices.md) のゲームの表を**日本語の題材**（例：`grep -n "防災" routines/project-practices.md`）で探して確かめる。リポジトリ名のローマ字（bousai / bosai）で探さない。プロジェクトのメモリ game-queue に無くても、表にあれば作らない（2026-11-07 「防災の判断」を2本作りかけた。incidents/2026-11-07-same-game-different-romaji.md）。
+   題材を決めたら、作り始める前に shared-workflows に Issue「題材: <日本語の題名>（<題材の言葉>）」を立てる（例「題材: 祝日の由来（祝日）」）。同じ題材の言葉を題に持つ「題材:」Issue（not planned で閉じたものを除く）のうち、**番号のいちばん小さいものが担当**。立てたあとで一覧（`gh api "repos/satou-aaaaa/shared-workflows/issues?state=all&per_page=100" --paginate`。検索は索引が遅れるので使わない）を見て、自分より小さい番号があれば作らず、自分の Issue を not planned で閉じる。メモリ game-queue にも1行書くが、担当の正は Issue（メモリは後から書いたほうが勝ち、先の行が消えることがある。2026-11-07「祝日の由来」が2本並行で作られた。incidents/2026-11-07-topic-claim-overwritten.md）。公開したら Issue に公開先を書いて completed で閉じ、やめたら not planned で閉じる。
 2. 動く見本（単体の HTML）を Artifact で出し、satou さんに選んでもらう（カード）。
-3. リポジトリは [onboarding.md](onboarding.md) 手順0で AI が作る（A：Actions「Create repo」を起こす。だめなら B：Chrome。そのときはこのスレッドに satou さんの一言を頼む）。リンクを渡すのは両方使えないときだけ。
+3. リポジトリは [onboarding.md](onboarding.md) 手順0で AI が作る（A：Actions「Create repo」を、担当の Issue 番号 `claim` と題材の言葉 `topic` を付けて起こす。先の担当・公開済みの表にあれば止まる。だめなら B：Chrome。そのときはこのスレッドに satou さんの一言を頼む）。リンクを渡すのは両方使えないときだけ。
 4. はじめの commit は README だけ。workflows・`qa/`・本体は同じ PR #1 で入れる（incidents/2026-11-04-new-repo-main-qa-without-qa-dir.md）。
 5. 上の「共通の形」と「だれでも遊べるように」を全部入れる。AGENTS.md は既存のゲーム（kippu-10 など）を写して直す。
    `.github/workflows/` は既存のゲームからでなく `template/.github/workflows/` から写す（古いゲームの写しはひな形の直しが届いていない。QA も `template/.github/workflows/qa.yml`（共通部品 game-qa を呼ぶ。検査の名前は `qa / qa` で、main の必須チェックと Auto merge の `require_checks` に書く）を写す）。PR #1 を出す前に、shared-workflows で `LOCAL_ROOT=<clone の親> REPOS=<リポジトリ> node scripts/drift-check.mjs` を回し、出た行を直す（2026-11-05 あみだ配達・ことばならべ・ひかり道が、前の日に直した link-check の設定なしで出た）。

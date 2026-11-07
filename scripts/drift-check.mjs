@@ -21,12 +21,14 @@
 //   - 感想の Issue フォーム（.github/ISSUE_TEMPLATE/feedback.yml）の name がひな形とちがう・形が GitHub の決まりに合わない（incidents/2026-11-05-feedback-form-not-shown.md）
 //   - 公開の見張り（post-deploy・site-watch）があるのに GitHub Pages が有効でない（API で読むときだけ。incidents/2026-11-04-pages-never-enabled.md）
 //   - 記録を localStorage に置く PWA のゲームに、引き継ぎコード（transfer.js）が無い・版が template/transfer.js より古い・sw.js が保存していない（routines/game-dev.md「引き継ぎコード」）
+//   - ゲームの qa/run.mjs の例外を待つ検査（try { make("0:y40|…") }）に、問題 id を文字で書いている（incidents/2026-11-07-qa-copied-question-id.md）
 //   - ゲーム（index.html と sw.js がある）に、見やすさの設定（template/a11y/a11y.html）と検査（template/qa/a11y.mjs）が無い・ひな形とちがう・qa/run.mjs が回していない（routines/game-dev.md「だれでも遊べるように」）
 //   - ゲーム（index.html と sw.js がある）に、遊ぶ量を縛るチケット🎫や「○○すると開く」のモードの鍵がある（routines/game-dev.md「好きなだけ遊べるように」。satou さん 2026-11-06）
 //   - 公開リポジトリなのに repos.txt に無い（一覧の足し忘れ。API で読むときだけ。incidents/2026-11-07-repo-list-conflicts.md）
 //   - ゲームの sw.js が、入れるとき（install）に HTTP の保存を通して SHELL を取る（cache: 'reload' が無い。古い画面が新しい版に入る。routines/game-dev.md「PWA」）
 //   - ゲームの sw.js・qa/sw-check.mjs がひな形（template/sw.js の game:begin〜game:end の外）とちがう（scripts/sync-template.mjs で写す）
 //   - とことんの「ここで降りる」が正解の直後に効かない形がある・manifest がふつうのアイコンを maskable にも使い回す
+//   - ゲームの save が、localStorage に書けなかったときに黙っている（開き直すと記録が消える。incidents/2026-11-07-save-failure-silent.md）
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -242,6 +244,14 @@ for (const r of REPOS) {
       }
     }
 
+    // QA の「この問題は作れない」検査に、問題 id を文字で書かない。別のゲームから写した id がそのゲームに無いと、
+    // 「無い問題」で例外が出て、確かめたいこと（難しさの照合など）を見ないまま通る（2026-11-07 shukujitsu-yurai #1。incidents/2026-11-07-qa-copied-question-id.md）
+    if (paths.has('qa/run.mjs')) {
+      const qa = await src.read('qa/run.mjs');
+      const lit = qa.match(/try\s*\{[^}]*\bmake\(\s*["'][0-9]:[a-z]+[0-9]+/);
+      if (lit) flag('qa:literal-id', `qa/run.mjs の例外を待つ検査に、問題 id を文字で書いている「${lit[0].slice(-24)}」（G.POOL などデータから選ぶ。routines/game-dev.md の QA の行）`);
+    }
+
     let pageCache = null; // 同じ index.html を何度も取りに行かない（API の読み込みが途中で失敗しても、それまでのずれを出せるように）
     // 好きなだけ遊べるように：寄付で成り立たせるゲームなので、遊ぶ量を縛る仕組み・課金ゲームのような解放を入れない（satou さん 2026-11-06「チケット制はいれる必要ありますか？好きなだけ遊んでほしいです」）
     // 実績の 🔒（まだ取っていない印）は鍵ではないので見ない。「○○すると開く」のようにモードを閉じる文だけを見る
@@ -276,6 +286,13 @@ for (const r of REPOS) {
       const titleH1 = /<h1[^>]*class="[^"]*\btitle\b/.test(page);
       const t = css.match(/\.title\s*\{([^}]*)\}/);
       if (h1Grow && titleH1 && !(t && /\bflex\s*:\s*(?:none|0)/.test(t[1]))) flag('title:flex', 'index.html のホームの題（h1.title）が h1{flex:1} を受け継いで縦に伸びる（iPad の縦などで題の下に大きなすき間。.title に flex:none。routines/game-dev.md「共通の形」のホームの題）');
+    }
+
+    // 保存に失敗したら知らせる：容量いっぱい・保存を切ったブラウザでは、記録は開いているあいだだけ残り、開き直すと消える。
+    // 黙っていると遊ぶ人は気づけない（2026-11-07 暑さ指数よみの PR のレビューで見つけ、同じ作りのゲーム14本を直した。incidents/2026-11-07-save-failure-silent.md）
+    if (paths.has('index.html')) {
+      const page = pageCache ?? await src.read('index.html');
+      if (/catch\s*\(e\)\s*\{\s*mem\s*=\s*j;\s*\}/.test(page)) flag('save:silent', 'index.html の save が、保存に失敗しても黙っている（開き直すと記録が消える。catch の中で1回だけ toast で知らせ、QA に検査を足す。routines/game-dev.md「共通の形」の記録）');
     }
 
     // 引き継ぎコード：記録が端末の中だけにあるゲームは、機種変更で記録が消える（2026-11-05 satou さん「PWA 型のゲームでデータの引継ぎを」）。

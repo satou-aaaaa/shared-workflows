@@ -49,6 +49,7 @@ kotowaza-awase game
 kotowaza-bamen game
 kusuri-yomi game
 kyukoku-mei game
+kyukyusha-yobu game
 kyuyo-meisai game
 last-tell app
 last-tell-godot private
@@ -77,6 +78,7 @@ sentaku-hyoji game
 setsuden-kotsu game
 shiritori-saitan game
 shokuhin-hyoji game
+shukujitsu-yurai game
 taiyokei-kurabe game
 tani-kankaku game
 teate-junban game
