@@ -66,12 +66,10 @@ main に直接置くはじめの commit（リポジトリを作るときの1つ�
 
 ## 3. 共通の一覧に加える（shared-workflows に PR）
 
-- `.github/workflows/scorecard.yml`・`weekly-summary.yml` の `REPOS`（CI の時間を測るなら `ci-time-report.yml` も）
-- `README.md` 冒頭のリポジトリ一覧
-- `routines/supervisor.md` の CI を見るリポジトリと、その担当（専任のルーティンが無ければ「修正スレッドか Issue 起票」）
-- `routines/repo-patrol.md` 手順3の渡し先（専任のルーティンが無ければ tenbin と同じ「Issue 起票→コーディネーターに修正スレッドを頼む」）
+- `repos.txt` に「名前 種類」の1行（game・app・private・ignore。**名前の ABC 順の位置**に入れ、末尾に足さない）。週次まとめ・成績表・CI 時間・ひな形のずれの検査・監督・巡回はここを読むので、ワークフローや README・手順書に名前を並べて書かない（2026-11-07 一覧が7か所に分かれていて、新作の PR どうしが毎回ぶつかった。incidents/2026-11-07-repo-list-conflicts.md）
+- 担当が「修正スレッドか Issue 起票」以外のときだけ `routines/supervisor.md`・`routines/repo-patrol.md` に1行（ゲームは要らない。巡回で特に照らすことがあれば repo-patrol.md の「ゲームで特に照らすこと」に名前の順で1行）
 - `routines/project-practices.md` の「プロジェクトごとの状況」に1行（分野・今の流れの置き場所）。分野が表に無ければ、要点を調べて「分野ごとの要点」にも足す（個人情報を扱うプロジェクトは除く）
-- Lint（actionlint）が緑ならマージする。
+- `node scripts/check-repo-lists.mjs`（Lint と同じ）を通す。Lint が緑ならマージする。
 
 ## 4. 記録と連絡
 
@@ -121,7 +119,7 @@ satou-aaaaa は GitHub の無料プラン。非公開リポジトリでは次が
 - CodeRabbit は非公開でもレビューが付いた（2026-10-22、アプリが「All repositories」）。`.coderabbit.yaml` は無くても既定の設定で動く
 - fork PR: 非公開では「フォークからの PR でワークフローを動かす」が最初から Off。API（actions/permissions）はプロキシで読めないので、Chrome が使えるときだけ `…/settings/actions` で Off を確かめる
 - Actions は月の無料枠がある（Windows は2倍で数える。使い切ると止まり、支払い方法があれば課金）。重い検査を増やさない
-- `weekly-summary.yml`・`scorecard.yml`・`ci-time-report.yml` の `REPOS` には入れない（shared-workflows の GITHUB_TOKEN では非公開リポジトリを読めない）
+- `repos.txt` には種類 `private` で入れる（週次まとめ・成績表・CI 時間は private を読まない。shared-workflows の GITHUB_TOKEN では非公開リポジトリを読めない）
 
 ## つまずいたところ（2026-10-28 security-toolkit：CI を置かない非公開リポジトリ）
 
