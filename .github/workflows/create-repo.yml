@@ -20,6 +20,11 @@ on:
         required: false
         type: string
         default: ""
+      similar_ok:
+        description: "似た名前のリポジトリがあっても作る（ローマ字の書き方ちがいの重なりでないと確かめたときだけ）"
+        required: false
+        type: boolean
+        default: false
 
 permissions: {}
 
@@ -53,11 +58,22 @@ jobs:
           OWNER: ${{ github.repository_owner }}
           NAME: ${{ inputs.name }}
           DESC: ${{ inputs.description }}
+          SIMILAR_OK: ${{ inputs.similar_ok }}
         run: |
           set -euo pipefail
           if [ -z "$GH_TOKEN" ]; then echo "::error::環境 repo-create に REPO_CREATE_TOKEN が無い（routines/onboarding.md 手順0）"; exit 1; fi
           if gh api "repos/$OWNER/$NAME" --silent 2>/dev/null; then
             echo "::error::$OWNER/$NAME はもうある（消したり上書きしたりしない）"; exit 1
+          fi
+          # ローマ字の書き方ちがい（bousai / bosai など）の同じ題材を作らない（incidents/2026-11-07-same-game-different-romaji.md）
+          norm() { printf '%s' "$1" | tr -d '-' | sed -E 's/ou/o/g; s/oo/o/g; s/uu/u/g; s/aa/a/g; s/ii/i/g; s/ee/e/g'; }
+          if [ "$SIMILAR_OK" != "true" ]; then
+            want=$(norm "$NAME")
+            while read -r r; do
+              if [ "$(norm "$r")" = "$want" ]; then
+                echo "::error::似た名前の $OWNER/$r がもうある（同じ題材かもしれない）。shared-workflows の routines/project-practices.md のゲームの表を見て、別の題材なら similar_ok を付けて起こし直す"; exit 1
+              fi
+            done < <(gh api "users/$OWNER/repos?per_page=100" --paginate --jq '.[].name')
           fi
           jq -n --arg n "$NAME" --arg d "$DESC" \
             '{name:$n, description:$d, private:false, auto_init:true, has_wiki:false}' \
