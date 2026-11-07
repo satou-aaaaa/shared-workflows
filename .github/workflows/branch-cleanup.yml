@@ -24,6 +24,8 @@ on:
 
 jobs:
   cleanup:
+    # 試しの実行は名前で分かるようにする（ci-failure-issue が、試しの成功で失敗の Issue を閉じないように。2026-11-07 CodeRabbit）
+    name: ${{ inputs.dry_run && 'cleanup (dry run)' || 'cleanup' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
@@ -46,11 +48,13 @@ jobs:
           deleted=0; kept=0
           while IFS=$'\t' read -r b protected sha; do
             if [ "$b" = "$DEFAULT" ] || [ "$protected" = true ] || [[ "$b" =~ $KEEP ]]; then continue; fi
-            if [ "$(gh api "repos/$R/pulls?state=open&head=$OWNER:$b" --jq length)" != 0 ]; then kept=$((kept+1)); continue; fi
+            # 名前に & や # などがあっても問い合わせが崩れないよう、URL の形にしてから渡す（2026-11-07 CodeRabbit）
+            q=$(jq -rn --arg s "$OWNER:$b" '$s | @uri')
+            if [ "$(gh api "repos/$R/pulls?state=open&head=$q" --jq length)" != 0 ]; then kept=$((kept+1)); continue; fi
             d=$(gh api "repos/$R/commits/$sha" --jq .commit.committer.date)
             if [ "$(date -u -d "$d" +%s)" -gt "$cutoff" ]; then kept=$((kept+1)); continue; fi
             ahead=$(gh api "repos/$R/compare/$DEFAULT...$sha" --jq .ahead_by)
-            merged=$(gh api "repos/$R/pulls?state=closed&head=$OWNER:$b&per_page=100" \
+            merged=$(gh api "repos/$R/pulls?state=closed&head=$q&per_page=100" \
               --jq "[.[] | select(.merged_at != null and .head.sha == \"$sha\")] | length")
             if [ "$ahead" != 0 ] && [ "$merged" = 0 ]; then kept=$((kept+1)); continue; fi
             if [ "$DRY_RUN" = true ]; then

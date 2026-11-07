@@ -147,7 +147,9 @@ for (const r of REPOS) {
       // 要らない節の消し忘れ：無いファイルを読む節が残ると、準備が途中で止まる（2026-11-07 haku-uchi。Python の節が requirements.txt を探して落ちた）
       for (const f of ['requirements.txt', '.python-version', '.nvmrc']) {
         const used = setup.split('\n').some((l) => !/^\s*#/.test(l) && l.includes(f));
-        if (used && !paths.has(f)) flag('setup:unused-section', `scripts/setup.sh が ${f} を読むが、リポジトリに無い（ひな形の要らない節を消す）`);
+        // 版6 の Python の節は if [ -f requirements.txt ] で守られ、ファイルが無ければ動かないので数えない（2026-11-07 標識よみ）
+        const guarded = f !== '.nvmrc' && /^\s*if \[ -f requirements\.txt \]; then/m.test(setup);
+        if (used && !guarded && !paths.has(f)) flag('setup:unused-section', `scripts/setup.sh が ${f} を読むが、リポジトリに無い（ひな形の要らない節を消す）`);
       }
       if (v < SETUP_VER) flag('setup:version', `scripts/setup.sh がひな形の版 ${v}（今は ${SETUP_VER}。template/scripts/setup.sh の版の行の下にある変わったところを写し、版の行も上げる）`);
       // 準備が渡すブラウザの場所（CHROMIUM_PATH）を、検査が読んでいるか。読んでいないと「✓ 準備できた」のあと検査がブラウザを見つけられない
@@ -261,6 +263,16 @@ for (const r of REPOS) {
         else if (!onCancel) flag('howto:close', 'index.html が遊び方の「見た」を dialog の cancel（Esc を押したその場）で残していない（close の知らせは遅れて届き、Esc の直後に読み直すとまた出る。$("howto").addEventListener("cancel", …)。routines/game-dev.md「共通の形」の遊び方）');
         else if (!atOnce) flag('howto:close', 'index.html の「わかった」が「見た」をすぐ残していない（close の知らせは遅れて届き、押した直後に読み直すとまた出る。onclick の最初で save(…)。routines/game-dev.md「共通の形」の遊び方）');
       }
+    }
+
+    // ホームの題（h1.title）は、上の帯の h1{flex:1} を受け継ぐと、縦に並べた画面で余った高さを全部取って伸びる（820×1180 で 277〜450px のすき間。2026-11-07 incidents/2026-11-07-title-stretched.md）
+    if (paths.has('index.html')) {
+      const page = pageCache ?? await src.read('index.html');
+      const css = page.replace(/\/\*[\s\S]*?\*\//g, '');
+      const h1Grow = /(?:^|[\s};])h1\s*\{[^}]*\bflex\s*:\s*1/.test(css);
+      const titleH1 = /<h1[^>]*class="[^"]*\btitle\b/.test(page);
+      const t = css.match(/\.title\s*\{([^}]*)\}/);
+      if (h1Grow && titleH1 && !(t && /\bflex\s*:\s*(?:none|0)/.test(t[1]))) flag('title:flex', 'index.html のホームの題（h1.title）が h1{flex:1} を受け継いで縦に伸びる（iPad の縦などで題の下に大きなすき間。.title に flex:none。routines/game-dev.md「共通の形」のホームの題）');
     }
 
     // 引き継ぎコード：記録が端末の中だけにあるゲームは、機種変更で記録が消える（2026-11-05 satou さん「PWA 型のゲームでデータの引継ぎを」）。

@@ -151,8 +151,8 @@ jobs:
             echo "担当エージェントへ: 原因を直して、元の変更を新しい PR で出し直してください。"
           } > "$RUNNER_TEMP/body.md"
           url=$(gh pr create -R "$R" --base main --head "$br" --title "差し戻し: 公開後の確認で壊れていた ${SHA:0:7}（自動）" --body-file "$RUNNER_TEMP/body.md")
-          # 人が点検する決まりのファイル（sw.js など）を戻すときは、ほかの PR と同じく自動ではマージしない（2026-11-07 CodeRabbit）
-          if [ -n "$HOLD_PATHS" ] && git diff --name-only "$good" "$head" -- . ':(exclude).github' | grep -qE -- "$HOLD_PATHS"; then
+          # 人が点検する決まりのファイル（sw.js など）を戻すときは、ほかの PR と同じく自動ではマージしない（2026-11-07 CodeRabbit）。名前を変えた元の名前も見る（--no-renames）
+          if [ -n "$HOLD_PATHS" ] && git diff --name-only --no-renames "$good" "$head" -- . ':(exclude).github' | grep -qE -- "$HOLD_PATHS"; then
             gh pr edit "$url" -R "$R" --add-label "自動マージしない" || true
             echo "::error title=公開後の確認で壊れていました（差し戻しは人の点検待ち）::$url は点検の要るファイル（$HOLD_PATHS）を戻すので、自動ではマージしません。中身を見て手でマージしてください"
             echo "差し戻しの PR（点検待ち）: $url" >> "$GITHUB_STEP_SUMMARY"
