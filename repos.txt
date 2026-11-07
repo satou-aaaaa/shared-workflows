@@ -36,6 +36,7 @@ mannaka-kanji game
 naitei-no-michi app
 okane-kihon game
 otsukai-memo game
+rekishi-narabe game
 rosen-hitofude game
 sandbox app
 seiza-tsunagi game
