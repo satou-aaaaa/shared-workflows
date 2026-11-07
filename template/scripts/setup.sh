@@ -89,12 +89,15 @@ $err"
 fi
 
 # --- Python（版は .python-version。pyenv・uv・mise などはこのファイルを読む）---
-py=$(command -v python3 || command -v python || command -v py || true)
-[ -n "$py" ] || fail "Python $(cat .python-version) が要る（https://www.python.org/ ）"
-"$py" -m venv .venv
-if [ -x .venv/bin/python ]; then vbin=.venv/bin; else vbin=.venv/Scripts; fi   # Windows は Scripts
-"$vbin/python" -m pip install -q -r requirements.txt
-if [ -n "${CLAUDE_ENV_FILE:-}" ]; then session_env "PATH=\"$PWD/$vbin:\$PATH\""; else todo+=(". $vbin/activate"); fi
+# requirements.txt が無いリポジトリ（ゲームなど）では何もしない（消し忘れても Setup check が落ちないように。2026-11-07 sagi-minuki）
+if [ -f requirements.txt ]; then
+  py=$(command -v python3 || command -v python || command -v py || true)
+  [ -n "$py" ] || fail "Python $(cat .python-version) が要る（https://www.python.org/ ）"
+  "$py" -m venv .venv
+  if [ -x .venv/bin/python ]; then vbin=.venv/bin; else vbin=.venv/Scripts; fi   # Windows は Scripts
+  "$vbin/python" -m pip install -q -r requirements.txt
+  if [ -n "${CLAUDE_ENV_FILE:-}" ]; then session_env "PATH=\"$PWD/$vbin:\$PATH\""; else todo+=(". $vbin/activate"); fi
+fi
 
 next="<push する前の確認コマンド>"
 if [ ${#todo[@]} -gt 0 ]; then
