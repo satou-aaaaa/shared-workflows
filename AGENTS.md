@@ -16,6 +16,7 @@ bash scripts/check.sh   # actionlint・zizmor・立ち上げ手順（bootstrap/�
 
 - main は Ruleset で守られている（PR 必須・必須チェック actionlint）。変更は必ず PR で、Lint が通ってからマージ。
 - 部品の中身はここだけに置く。各リポジトリには呼び出しと設定値だけを書く。
+- 共通部品は SHA でなく `@main` で呼ぶ。呼ぶ側も部品も satou-aaaaa の持ち物で、main は Ruleset と Lint・Selftest で守っており、直しを全リポジトリへ一度に届けたいため（外の人のアクションは SHA で固定する。CodeRabbit の「SHA に固定して」はこの理由で見送る。2026-11-07）。
 - zizmor の指摘を許すときは `zizmor.yml` に理由を1行添える。
 - ルーティンの手順の正は `routines/`（全体のきまりは `routines/common.md`）。新しい繰り返しの作業は `routines/catalog.md` に1行足す。
 - ルーティン・CI の部品・スキルを足したら、同じ PR で bootstrap/ にも1行足す（Lint の bootstrap 検査が見る）。

@@ -8,6 +8,9 @@
 #   4. CHROMIUM_PATH が動かせない場所を指すと止まる（フォルダも。ひな形の版 4）
 #   5. CLAUDE_ENV_FILE が無いと、このシェルで打つ export を出し、「✓」を出さない
 #   6. nvm で Node を入れたときは「nvm use」を出し、「✓」を出さない
+#   7. ブラウザを起動できない（Linux のライブラリ不足など）と止まり、「✓」を出さない（ひな形の版 5）
+#   8. 空白のあるブラウザの場所を、引用して CLAUDE_ENV_FILE に書く（版 5）
+#   9. lock も依存も変わっていなければ入れ直さない（QA の最中に node_modules を消さない。版 5）
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
@@ -16,7 +19,7 @@ ok()  { echo "✓ $1"; }
 ng()  { echo "✗ $1" >&2; echo "--- 出力 ---" >&2; cat "$tmp/out" >&2; bad=1; }
 
 # --- 作り物のリポジトリ（ひな形の <> を埋める。依存は手元の file: なのでネットは要らない）---
-repo="$tmp/repo"; mkdir -p "$repo/scripts" "$repo/app/dep" "$tmp/bin"
+repo="$tmp/repo"; mkdir -p "$repo/scripts" "$repo/app/dep" "$repo/app/pw" "$tmp/bin"
 sed -e 's|<package.json のあるフォルダ。例: . や qa>|app|' -e 's|<push する前の確認コマンド>|node app/check.js|' \
   "$root/template/scripts/setup.sh" > "$repo/scripts/setup.sh"
 if grep -n '<[^<>]*[ぁ-んァ-ヶ一-龠][^<>]*>' "$repo/scripts/setup.sh"; then echo "✗ 埋めていない <> がある（この検査の sed を直す）" >&2; exit 1; fi
@@ -27,7 +30,10 @@ echo "$want" > "$repo/.nvmrc"
 python3 -c 'import sys; print(f"{sys.version_info[0]}.{sys.version_info[1]}")' > "$repo/.python-version"
 : > "$repo/requirements.txt"
 echo '{"name":"dep","version":"1.0.0"}' > "$repo/app/dep/package.json"
-echo '{"name":"fx","version":"1.0.0","private":true,"dependencies":{"dep":"file:./dep"}}' > "$repo/app/package.json"
+# 作り物の Playwright：FAKE_LAUNCH_FAIL があると起動に失敗する（ライブラリが足りない Linux の代わり）
+echo '{"name":"playwright","version":"1.0.0"}' > "$repo/app/pw/package.json"
+echo 'exports.chromium={executablePath:()=>"",launch:async()=>{if(process.env.FAKE_LAUNCH_FAIL)throw new Error("libnss3.so: cannot open shared object file");return{close:async()=>{}}}};' > "$repo/app/pw/index.js"
+echo '{"name":"fx","version":"1.0.0","private":true,"dependencies":{"dep":"file:./dep","playwright":"file:./pw"}}' > "$repo/app/package.json"
 (cd "$repo/app" && npm install --package-lock-only --no-audit --no-fund >/dev/null)
 printf '#!/bin/sh\nexit 0\n' > "$tmp/bin/chromium"; chmod +x "$tmp/bin/chromium"   # 作り物のブラウザ
 
@@ -82,6 +88,25 @@ printf '#!/bin/sh\necho %s\n' "$((want - 1))" > "$tmp/old/node"; chmod +x "$tmp/
 if run CHROMIUM_PATH="$tmp/bin/chromium" NVM_DIR="$tmp/nvm" PATH="$tmp/old:$PATH" && grep -q "nvm use $want" "$tmp/out" && ! grep -q '^✓' "$tmp/out"; then
   ok "nvm で Node を入れたら nvm use を出し ✓ を出さない"
 else ng "6. nvm で入れた Node をこのシェルで使う案内が無い"; fi
+
+# 7. ブラウザを起動できない
+if run CLAUDE_ENV_FILE="$envf" FAKE_LAUNCH_FAIL=1; then ng "7. ブラウザを起動できないのに止まらない"
+elif grep -q '^✓' "$tmp/out"; then ng "7. ブラウザを起動できないのに ✓ を出した"
+elif grep -q 'install-deps' "$tmp/out" || [ "$(uname -s)" != Linux ]; then ok "ブラウザを起動できないと止まり、直し方を出す"
+else ng "7. Linux で install-deps の案内が無い"; fi
+
+# 8. 空白のある場所
+mkdir -p "$tmp/my apps"; cp "$tmp/bin/chromium" "$tmp/my apps/chromium"
+: > "$envf"
+if run CLAUDE_ENV_FILE="$envf" PW_PREINSTALLED="$tmp/my apps/chromium" && (set +u; . "$envf"; [ "$CHROMIUM_PATH" = "$tmp/my apps/chromium" ]); then
+  ok "空白のあるブラウザの場所を、切れない形で CLAUDE_ENV_FILE に書く"
+else ng "8. 空白のある場所が CLAUDE_ENV_FILE で切れる"; fi
+
+# 9. 変わっていなければ入れ直さない（目印を置いて、消えないかを見る）
+touch "$repo/app/node_modules/dep/.keep"
+if run CLAUDE_ENV_FILE="$envf" && [ -f "$repo/app/node_modules/dep/.keep" ] && grep -q '入れ直さない' "$tmp/out"; then
+  ok "lock も依存も変わっていなければ入れ直さない"
+else ng "9. 変わっていないのに入れ直した"; fi
 
 [ "$bad" = 0 ] || { echo "✗ ひな形 template/scripts/setup.sh の検査が落ちた" >&2; exit 1; }
 echo "✓ ひな形の準備スクリプトの検査が通った"

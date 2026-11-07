@@ -18,4 +18,4 @@ rules:
     # この2つは作ったページや戻しの PR を push するので、資格情報を残す必要がある
     ignore:
       - changes-page.yml:41
-      - post-deploy.yml:40
+      - post-deploy.yml:48

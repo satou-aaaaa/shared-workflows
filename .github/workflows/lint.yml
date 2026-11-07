@@ -34,6 +34,9 @@ jobs:
       # 各ゲームが写す引き継ぎコード（template/transfer.js）が読み戻せ、まちがったコードを弾くか（Node 22 の CompressionStream を使うので setup-node のあるこの job で）
       - name: 引き継ぎコードのひな形
         run: node scripts/check-transfer.mjs
+      # ひな形の見張りの一覧（ci-failure-issue.yml）に、main で動くワークフローが全部あるか（incidents/2026-11-07-game-template-review-gaps.md）
+      - name: ひな形の見張りの一覧
+        run: node scripts/check-template-watch.mjs
 
   # 立ち上げ直しの手順書（bootstrap/）に、ルーティンの手順書・共通部品の抜けや内部 ID の混入が無いかを調べる。
   bootstrap:

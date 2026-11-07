@@ -33,7 +33,7 @@ class CountingDS {
     this.readable = ds.readable.pipeThrough(new TransformStream({ transform(ch, c) { inflated.n += ch.length; c.enqueue(ch); } }));
   }
 }
-function boot({ game, keys, local, session }) {
+function boot({ game, keys, local, session, Storage }) {
   const ctx = {
     console, Promise, Response, Blob, TextEncoder, TextDecoder, CompressionStream, DecompressionStream: CountingDS, Uint8Array, atob, btoa, Date, JSON, Error, setTimeout,
     localStorage: local, sessionStorage: session,
@@ -42,6 +42,7 @@ function boot({ game, keys, local, session }) {
     document: { currentScript: { dataset: { game, keys } }, readyState: 'loading', addEventListener() {} },
     addEventListener() {},
   };
+  if (Storage) ctx.Storage = Storage;
   ctx.window = ctx;
   vm.runInNewContext(src, ctx);
   return ctx;
@@ -173,6 +174,40 @@ ok('控えを書けないときは入れ替えず、元の記録のまま', full
   const ss = store({ 'hk-pending:kippu-10': JSON.stringify({ d: { 'kippu-v1': rec, 'kippu-x': '{"font":1}' }, undo: false }) });
   boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x', local: l, session: ss });
   ok('元に戻せなかったときは控えを残し、控えに戻せると知らせる', JSON.parse(l.getItem('hk-backup:kippu-10') || '{}').d?.['kippu-v1'] === '{"old":1}' && /控えに戻す/.test(ss.getItem('hk-done:kippu-10') || '') && JSON.parse(ss.getItem('hk-done:kippu-10') || '{}').u === true);
+}
+
+// 版7：保存に失敗したままの記録があると、古い記録のコードを作らない（成功し直せば作る）
+{
+  class FakeStorage {
+    constructor(init) { this.m = new Map(Object.entries(init)); this.full = false; }
+    get length() { return this.m.size; }
+    key(i) { return [...this.m.keys()][i] ?? null; }
+    getItem(k) { return this.m.has(k) ? this.m.get(k) : null; }
+    setItem(k, v) { if (this.full) throw new Error('QuotaExceededError'); this.m.set(k, String(v)); }
+    removeItem(k) { this.m.delete(k); }
+  }
+  const l = new FakeStorage({ 'kippu-v1': rec });
+  const sw = boot({ game: 'kippu-10', keys: 'kippu-v1', local: l, session: store(), Storage: FakeStorage });
+  l.full = true;
+  let threw = false; try { l.setItem('kippu-v1', '{"new":1}'); } catch { threw = true; }
+  ok('保存の失敗はゲームにそのまま返す', threw);
+  ok('保存に失敗したままの記録があると、コードを作らない', (await kind(sw.HK.encode())) === 'unsaved');
+  l.full = false; l.setItem('kippu-v1', '{"new":1}');
+  ok('保存し直せたらコードを作る', (await kind(sw.HK.encode())) === 'ok');
+  l.full = true; try { l.setItem('other-game', 'x'); } catch { /* ほかのキー */ }
+  ok('ほかのキーの保存の失敗では止めない', (await kind(sw.HK.encode())) === 'ok');
+}
+// 版7：縮めないコード（HK0）も作れて、読み戻せる
+{
+  const c0 = await w.HK.encode(true);
+  ok('縮めないコード（HK0）を作れる', /^HK0\./.test(c0));
+  ok('縮めないコードも読み戻せる', (await w.HK.decode(c0)).d['kippu-v1'] === rec);
+}
+// 版7：とても長い貼りつけは、CRC を計る前にすぐ弾く
+{
+  const t0 = Date.now();
+  const k = await kind(w.HK.decode('HK0.' + 'A'.repeat(8 * 1024 * 1024 + 10) + '.0'));
+  ok(`とても長い貼りつけはすぐ弾く（結果 ${k}・${Date.now() - t0}ms）`, k === 'big' && Date.now() - t0 < 1500);
 }
 
 const bad = boot({ game: 'x', keys: '*', local: store(), session: store() });

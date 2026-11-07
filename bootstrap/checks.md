@@ -27,6 +27,7 @@
 | 見やすさの検査（ゲーム） | 色だけに頼る・字のコントラスト不足・字間を広げると崩れる・動き続ける・Tab の枠が無い・名前の無いボタン・知らせの場所が無い・斜体・決めつけの言葉。見やすさの設定がひな形とちがう | 各ゲームの `qa/a11y.mjs`（`template/qa/a11y.mjs` の写し。`qa/run.mjs` から回す）・`template/a11y/a11y.html`。写しのずれは `scripts/drift-check.mjs` | 新作に2つを写す（[game-dev.md](../routines/game-dev.md)「だれでも遊べるように」） |
 | CodeQL | AI が書いたコードの脆弱性（無料、公開リポジトリ） | `codeql.yml` | 呼び出し側の `languages` |
 | Secret scan | PR と main への push に入った秘密（gitleaks） | `secret-scan.yml` | 呼び出し側を入れる、★ Push protection |
+| Game QA | ゲームをブラウザで自動で遊ぶ検査（PR と main。検査の名前 qa / qa を main の必須チェックに） | `game-qa.yml` | `template/.github/workflows/qa.yml`（呼び出し側）と、Actions「Add ruleset」で必須チェック |
 | CodeRabbit のレビュー（2人目の目） | 正しさ・要件の見落とし | 各リポジトリの `.coderabbit.yaml`、common.md「CodeRabbit のレビュー」 | `template/.coderabbit.yaml` を入れる、★ CodeRabbit のアプリ |
 | /code-review（新しい文脈のレビュー） | CodeRabbit が付かない PR・判定ロジック・3ファイル以上の変更の見落とし | common.md「エージェントの使い方」 | なし |
 | 2人目の確認（tenbin の論文問題・usotsuki-roppo の話） | 条文・判例の誤り | [repo-patrol.md](../routines/repo-patrol.md)、autonomy.md「確かめてから任せること」 | ラベル「確認済み」「satou確認」 |
@@ -38,7 +39,7 @@
 
 | 仕組み | 見つけるもの | どこ | 立ち上げで要るもの |
 | --- | --- | --- | --- |
-| Post-deploy check（自動の差し戻し） | 公開したページの 404・JavaScript エラー → タグ last-good の版に戻す PR を自動マージ | `post-deploy.yml`・`scripts/smoke.mjs` | 呼び出し側。最初の公開で last-good ができる |
+| Post-deploy check（自動の差し戻し） | 公開したページの 404・JavaScript エラー → タグ last-good の版に戻す PR を自動マージ（点検の要るファイルは hold_paths で人へ。必須チェックがあれば recheck で検査を起こして待つ） | `post-deploy.yml`・`scripts/smoke.mjs` | 呼び出し側。最初の公開で last-good ができる |
 | Site watch | 公開ページが 200 で開けない | `site-watch.yml` | 呼び出し側の `paths` |
 | Lighthouse | 速さ・使いやすさの点数の低下 | `lighthouse.yml` | 公開後に1回測って `baseline` を置く |
 | Link check | リンク切れ | `link-check.yml` | 呼び出し側の `files` |

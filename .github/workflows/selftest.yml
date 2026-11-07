@@ -6,6 +6,7 @@ name: Selftest
 # - 書き込みをしない部品（秘密の検査）をそのまま呼ぶ
 # - 公開後の確認のスクリプト（smoke.mjs）を、正常なページと存在しないページの両方に当て、結果の見分けが合っているかを見る
 # - 画面の検査（ui-check.mjs）を、基準どおりの見本と、ボタンを足した・はみ出した見本に当てる
+# - 見やすさの検査（template/qa/a11y.mjs）のコントラストの測り方を、薄い字・濃い字の見本に当てる
 # 考え方: 全体に出す前に一部で試す（Google SRE Workbook「Canarying Releases」 https://sre.google/workbook/canarying-releases/ ）
 on:
   pull_request:
@@ -73,3 +74,9 @@ jobs:
           printf '%s\n' "$out"
           if [ "$rc" -ne 1 ] || ! grep -q '::error::' <<<"$out"; then echo "::error::ボタンを足した・はみ出した画面を基準違反として見分けられなかった（終了コード $rc）"; exit 1; fi
           echo "見分けられた" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: 見やすさの検査（template/qa/a11y.mjs）がコントラストを甘く測らないか
+        run: |
+          set -euo pipefail
+          export CHROME_PATH
+          CHROME_PATH=$(command -v google-chrome || command -v chromium)
+          node scripts/check-a11y-contrast.mjs
