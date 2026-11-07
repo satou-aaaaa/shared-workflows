@@ -1,6 +1,7 @@
 // ひな形（template/）の共通部品を、ゲームのフォルダへ写す（Claude は使わない。どの AI でも人でも使える）。
 // 使い方: node scripts/sync-template.mjs <ゲームのフォルダ> [...]          写す（ゲームごとの所は残す）
 //         node scripts/sync-template.mjs --check <ゲームのフォルダ> [...]  写さずに、ひな形とちがう所を出す（ちがえば 1 で終わる）
+//         node scripts/sync-template.mjs --check --only=transfer.js,sw.js <ゲームのフォルダ>  そのファイルだけを見る
 // 写すもの（ゲームにすでにあるものだけ。無いものは足さない。足すのは routines/game-dev.md の手順で）:
 //   transfer.js・qa/a11y.mjs・qa/transfer-check.mjs・qa/sw-check.mjs …… そのまま写す
 //   index.html の <!-- a11y:begin -->〜<!-- a11y:end --> …… その間だけ写す
@@ -86,15 +87,20 @@ export function plan(dir) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const args = process.argv.slice(2);
+  let args = process.argv.slice(2);
   const check = args[0] === '--check';
-  const dirs = check ? args.slice(1) : args;
-  if (!dirs.length) { console.error('使い方: node scripts/sync-template.mjs [--check] <ゲームのフォルダ> [...]'); process.exit(2); }
+  if (check) args = args.slice(1);
+  // --only=<ファイル,...>：そのファイルだけを見る（共通部品 game-qa が、PR で足した・直した写しだけを見るのに使う）
+  const only = args[0] && args[0].startsWith('--only=') ? args.shift().slice(7).split(',').filter(Boolean) : null;
+  const dirs = args;
+  if (!dirs.length) { console.error('使い方: node scripts/sync-template.mjs [--check] [--only=<ファイル,...>] <ゲームのフォルダ> [...]'); process.exit(2); }
   let diff = 0;
   for (const dir of dirs) {
-    const todo = plan(dir);
+    const todo = plan(dir).filter((t) => !only || only.includes(t.path));
     if (!todo.length) { console.log(`✓ ${dir}: ひな形どおり`); continue; }
     for (const t of todo) {
+      // 呼び出しの設定値（時間切れなど）を変えたゲームはあるので、--only のときは知らせるだけにする
+      if (only && t.next === null && CALLERS.includes(t.path)) { console.log(`⚠ ${dir}/${t.path}: ${t.note}`); continue; }
       diff++;
       if (t.next === null) { console.log(`✗ ${dir}/${t.path}: ${t.note}`); continue; }
       if (check) console.log(`✗ ${dir}/${t.path}: ひな形とちがう${t.note ? `（${t.note}）` : ''}`);
