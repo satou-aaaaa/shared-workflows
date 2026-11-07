@@ -60,6 +60,7 @@ mukashi-narabe game
 naitei-no-michi app
 nijushi-sekki game
 okane-kihon game
+onpu-yomi game
 otsukai-memo game
 pikuto-yomi game
 recycle-mark game
