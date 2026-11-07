@@ -26,5 +26,15 @@
       "id": "call:setup-check",
       "reason": "CI を置かない非公開リポジトリ（Actions の無料枠を他と分け合うため。routines/onboarding.md「2026-10-28 security-toolkit」）。秘密の検査は手元の run_tests.sh の gitleaks"
     }
+  ],
+  "local-kanban": [
+    {
+      "id": "sw:template",
+      "reason": "ボードの画面を出すアプリで、ゲームの sw.js（ひな形）とは仕組みがちがう（ボードの HTML を保存する。local-kanban の AGENTS.md）"
+    },
+    {
+      "id": "sw:qa",
+      "reason": "ボードの画面を出すアプリで、ゲームの sw.js（ひな形）とは仕組みがちがう（ボードの HTML を保存する。local-kanban の AGENTS.md）"
+    }
   ]
 }
