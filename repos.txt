@@ -50,6 +50,7 @@ mukashi-narabe game
 naitei-no-michi app
 okane-kihon game
 otsukai-memo game
+pikuto-yomi game
 rekishi-narabe game
 rosen-hitofude game
 sagi-minuki game
