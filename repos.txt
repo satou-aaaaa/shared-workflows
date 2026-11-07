@@ -47,6 +47,7 @@ rosen-hitofude game
 sagi-minuki game
 sandbox app
 seiza-tsunagi game
+sentaku-hyoji game
 shiritori-saitan game
 teko-tsuriai game
 tenbin app
