@@ -1,0 +1,55 @@
+# satou-aaaaa のリポジトリの一覧（ここが正。ワークフロー・スクリプト・手順書はここを読む）
+# 1行に「名前 種類」。名前の ABC 順に並べる（並行の PR が同じ所に足さず、ぶつかりにくい。Lint が見る）
+# 種類: game＝公開のゲーム（磨く対象）／app＝公開のゲーム以外／private＝非公開（GITHUB_TOKEN で読めないので集計に入れない）／ignore＝公開だが見ない（理由を # で書く）
+# shared-workflows 自身は書かない（要るワークフローが足す）
+# 足し方: 名前の順の位置に1行足すだけ（routines/onboarding.md 手順3）。incidents/2026-11-07-repo-list-conflicts.md
+akushitsu-miyaburi game
+amida-haitatsu game
+articles app
+batsu-doko game
+bento-zume game
+bousai-handan game
+bunshi-tsukuri game
+bushu-tashizan game
+carcassonne-research app
+chikei-ate game
+dashisugi-check game
+dema-tashikame game
+denki-kairo game
+dungeon-boardgame app
+gogen-suiri game
+gurafu-minuki game
+haku-uchi game
+hikari-michi game
+jobun-tobatsu game
+kabu-news game
+kasane-zome game
+kengen-check game
+kenko-minuki game
+kikigaki-techo game
+kimari-sagashi game
+kippu-10 game
+kokoku-minuki game
+kondate-koma game
+kotoba-narabe game
+last-tell app
+last-tell-godot private
+local-kanban app
+machi-michijun game
+madori-puzzle game
+mannaka-kanji game
+naitei-no-michi app
+okane-kihon game
+otsukai-memo game
+rekishi-narabe game
+rosen-hitofude game
+sagi-minuki game
+sandbox app
+seiza-tsunagi game
+shiritori-saitan game
+teko-tsuriai game
+tenbin app
+tenkizu-yomi game
+todofuken-relay game
+usotsuki-roppo game
+wagamama-burger game

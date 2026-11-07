@@ -1,9 +1,13 @@
 name: Add ruleset
 
-# あるリポジトリの main にルールセット（削除・force push 禁止）だけを入れる（Claude は使わない）。
+# あるリポジトリの main にルールセット（削除・force push 禁止・必須チェック）を入れる・足りない決まりを足す（Claude は使わない）。
 # Chrome で入れるとパスキーを毎回聞かれ、satou さんが離れていると止まるため（2026-11-06）。
-# エージェントが workflow_dispatch で name を渡して起こす。同じ名前「main」のルールセットがもうあれば何もしない（2つ作らない）。
-# 鍵は Create repo と同じ環境「repo-create」の REPO_CREATE_TOKEN（fine-grained PAT。ルールセットは "Administration" (write)。GitHub Docs の REST API「Rules」）。
+# エージェントが workflow_dispatch で name（と checks）を渡して起こす。名前「main」のルールセットがもうあれば、2つ作らずに足りない決まりだけを足す
+# （前に入れた決まり・必須チェックは消さない）。あわせて「Allow auto-merge」を入れる（必須チェックを待って自動マージするのに要る）。
+# 必須チェックが無いと、Dependabot の自動マージ（gh pr merge --auto）が QA・Secret scan の前にマージしてしまう
+# （2026-11-07 CodeRabbit が bousai-handan #1 で指摘。incidents/2026-11-07-game-template-review-gaps.md）。
+# チェックの名前がまちがっていると、どの PR もマージできなくなる。main の最新のコミットに検査の結果があるのに、その名前が無いときは止める。
+# 鍵は Create repo と同じ環境「repo-create」の REPO_CREATE_TOKEN（fine-grained PAT。ルールセット・設定は "Administration" (write)。GitHub Docs の REST API「Rules」）。
 # 環境は main からしか使えない（PR の枝のワークフローから鍵を読めない）。手順は routines/onboarding.md 手順5。
 on:
   workflow_dispatch:
@@ -12,6 +16,11 @@ on:
         description: "リポジトリ名（satou-aaaaa の下。例 hikari-michi）"
         required: true
         type: string
+      checks:
+        description: "必須チェックの名前（カンマ区切り。check run の名前）。空なら必須チェックを足さない"
+        required: false
+        type: string
+        default: "qa / qa,scan / scan"
 
 permissions: {}
 
@@ -25,27 +34,63 @@ jobs:
     timeout-minutes: 5
     environment: repo-create
     steps:
-      - name: main のルールセット（削除・force push 禁止）を入れる
+      - name: main のルールセットを入れる・足す
         env:
           GH_TOKEN: ${{ secrets.REPO_CREATE_TOKEN }}
           OWNER: ${{ github.repository_owner }}
           NAME: ${{ inputs.name }}
+          CHECKS: ${{ inputs.checks }}
         run: |
           set -euo pipefail
           if ! [[ "$NAME" =~ ^[a-z0-9][a-z0-9-]{1,62}$ ]]; then
             echo "::error::名前は英小文字・数字・ハイフンだけ（2〜63字）: $NAME"; exit 1
           fi
           if [ -z "$GH_TOKEN" ]; then echo "::error::環境 repo-create に REPO_CREATE_TOKEN が無い（routines/onboarding.md 手順0）"; exit 1; fi
-          info=$(gh api "repos/$OWNER/$NAME" --jq '[.owner.login, (.fork|tostring)] | join(" ")')
-          if [ "$info" != "$OWNER false" ]; then echo "::error::$OWNER/$NAME は持ち主がちがうかフォーク（$info）。入れない"; exit 1; fi
-          have=$(gh api "repos/$OWNER/$NAME/rulesets" --jq '[.[] | select(.name=="main")] | length')
-          if [ "$have" != "0" ]; then
-            echo "main のルールセットはもうある。何もしない"
-            echo "### $OWNER/$NAME: main のルールセットはもうある（何もしなかった）" >> "$GITHUB_STEP_SUMMARY"
-            exit 0
+          info=$(gh api "repos/$OWNER/$NAME" --jq '[.owner.login, (.fork|tostring), .default_branch] | join(" ")')
+          read -r own fork branch <<<"$info"
+          if [ "$own $fork" != "$OWNER false" ]; then echo "::error::$OWNER/$NAME は持ち主がちがうかフォーク（$info）。入れない"; exit 1; fi
+          # 必須チェックの名前（前後の空白を取る）
+          want=$(jq -nc --arg c "$CHECKS" '$c | split(",") | map(gsub("^\\s+|\\s+$"; "")) | map(select(length > 0))')
+          # 名前が main の検査の結果にあるか（検査の結果がまだ1つも無い新しいリポジトリは確かめられないので、知らせて入れる）
+          if [ "$(jq length <<<"$want")" -gt 0 ]; then
+            seen=$(gh api "repos/$OWNER/$NAME/commits/$branch/check-runs?per_page=100" --jq '[.check_runs[].name] | unique')
+            if [ "$(jq length <<<"$seen")" -eq 0 ]; then
+              echo "::warning::$OWNER/$NAME の main にはまだ検査の結果が無いので、名前を確かめずに入れる（$CHECKS）"
+            else
+              miss=$(jq -nc --argjson w "$want" --argjson s "$seen" '$w - $s')
+              if [ "$miss" != "[]" ]; then
+                echo "::error::main の検査の結果に無い名前がある: $miss（ある名前: $seen）。まちがった名前を必須にすると PR をマージできなくなるので入れない"; exit 1
+              fi
+            fi
           fi
-          jq -n '{name:"main", target:"branch", enforcement:"active",
-                  conditions:{ref_name:{include:["~DEFAULT_BRANCH"], exclude:[]}},
-                  rules:[{type:"deletion"},{type:"non_fast_forward"}]}' \
-            | gh api -X POST "repos/$OWNER/$NAME/rulesets" --input - --jq '"ルールセット " + (.id|tostring)'
-          echo "### $OWNER/$NAME: main のルールセット（削除・force push 禁止）を入れた" >> "$GITHUB_STEP_SUMMARY"
+          base='[{"type":"deletion"},{"type":"non_fast_forward"}]'
+          id=$(gh api "repos/$OWNER/$NAME/rulesets" --jq '[.[] | select(.name=="main")][0].id // empty')
+          if [ -z "$id" ]; then
+            jq -n --argjson b "$base" --argjson w "$want" '{name:"main", target:"branch", enforcement:"active",
+                    conditions:{ref_name:{include:["~DEFAULT_BRANCH"], exclude:[]}},
+                    rules:($b + (if ($w|length) > 0 then [{type:"required_status_checks", parameters:{strict_required_status_checks_policy:false,
+                      required_status_checks:($w | map({context:.}))}}] else [] end))}' \
+              | gh api -X POST "repos/$OWNER/$NAME/rulesets" --input - --jq '"ルールセット " + (.id|tostring) + " を作った"'
+          else
+            # あるものに足す：前からの決まりは残し、無い決まり（削除・force push 禁止）と、無い必須チェックの名前だけを足す
+            gh api "repos/$OWNER/$NAME/rulesets/$id" > "$RUNNER_TEMP/rs.json"
+            jq --argjson b "$base" --argjson w "$want" '
+              .rules as $r
+              | ($r + ($b | map(select(.type as $t | ($r | map(.type) | index($t)) == null)))) as $r2
+              | (if ($w|length) == 0 then $r2
+                 elif ($r2 | map(.type) | index("required_status_checks")) == null then
+                   $r2 + [{type:"required_status_checks", parameters:{strict_required_status_checks_policy:false, required_status_checks:($w | map({context:.}))}}]
+                 else $r2 | map(if .type == "required_status_checks" then
+                     .parameters.required_status_checks += ($w - (.parameters.required_status_checks | map(.context)) | map({context:.}))
+                   else . end) end) as $r3
+              | {name, target, enforcement, conditions, bypass_actors: (.bypass_actors // []), rules: $r3}' "$RUNNER_TEMP/rs.json" > "$RUNNER_TEMP/new.json"
+            if [ "$(jq -S .rules "$RUNNER_TEMP/new.json")" = "$(jq -S .rules "$RUNNER_TEMP/rs.json")" ]; then
+              echo "ルールセット $id はもうそろっている"
+            else
+              gh api -X PUT "repos/$OWNER/$NAME/rulesets/$id" --input "$RUNNER_TEMP/new.json" --jq '"ルールセット " + (.id|tostring) + " に足した"'
+            fi
+          fi
+          gh api -X PATCH "repos/$OWNER/$NAME" -F allow_auto_merge=true --silent
+          rules=$(gh api "repos/$OWNER/$NAME/rulesets/$(gh api "repos/$OWNER/$NAME/rulesets" --jq '[.[] | select(.name=="main")][0].id')" \
+            --jq '[.rules[] | if .type == "required_status_checks" then "必須チェック " + ([.parameters.required_status_checks[].context] | join("・")) else .type end] | join(" / ")')
+          echo "### $OWNER/$NAME: main のルールセット：$rules（Allow auto-merge も入れた）" >> "$GITHUB_STEP_SUMMARY"

@@ -7,7 +7,7 @@ satou-aaaaa の各リポジトリで、PR を作る・CI を通す・コンフ�
 それより詳しいものはリポジトリの `.claude/skills/steward/SKILL.md` か `docs/`。食い違ったらリポジトリ側が優先。
 ここに同じことを書き写さない（直すところが2か所になるため）。
 
-対象: last-tell・tenbin・carcassonne-research・sandbox・dungeon-boardgame・naitei-no-michi・local-kanban・shared-workflows。kotlin-csv は他の人のものなので触らない。
+対象: [repos.txt](../repos.txt) の全部と shared-workflows。kotlin-csv は他の人のものなので触らない。
 
 ## 1. push する前
 

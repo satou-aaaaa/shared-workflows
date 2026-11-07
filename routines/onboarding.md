@@ -14,8 +14,9 @@ satou さんは「リポジトリの作成も AI に任せる。今後も新作�
 ### A. CI で作る（先にこれ）
 
 1. shared-workflows の Actions「Create repo」（`.github/workflows/create-repo.yml`）を workflow_dispatch で起こす（GitHub MCP の `actions_run_trigger`、ref は `main`、inputs は `name` と `description`）。
-2. 公開・README だけの main で作り、Pages（main の /）と main のルールセット（削除・force push 禁止）まで入れる。手順5の1・2 はやらなくてよい。
-3. 実行が緑になったら `add_repo`（access: push）で足して、手順2へ。赤なら、ログの `::error::` の1行を見る。
+2. 公開・README だけの main で作り、Pages（main の /）と main のルールセット（削除・force push 禁止・必須チェック `qa / qa` と `scan / scan`）・Allow auto-merge まで入れる。PR #1 の QA と Secret scan は、ひな形の qa.yml・secret-scan.yml を写して名前を合わせる（ちがう名前だとマージできない）。手順5の1・2 はやらなくてよい。
+3. 起こしたあと、自分の実行（入力の name が同じもの）が緑かを見る。「cancelled」なら同じ inputs でもう一度起こす（2026-11-07 まで、並行で起こした別の作成に取り消されていた）。
+   実行が緑になったら `add_repo`（access: push）で足して、手順2へ。赤なら、ログの `::error::` の1行を見る。
    - 「REPO_CREATE_TOKEN が無い」「401」「403」：鍵が無いか切れた。B で作り、satou さんに下の「鍵の入れ方」をカードで頼む。
    - 「もうある」：同じ名前がある。消さない・上書きしない。名前を変えるか、そのリポジトリを使う。
 4. 起こす操作が安全チェックに止められたら、同じ操作を別の道具で回り込まない。B へ。
@@ -59,18 +60,16 @@ main に直接置くはじめの commit（リポジトリを作るときの1つ�
    - QA: リポジトリにある自動プレイ・テストのスクリプトを `qa/` に置き、CI で回す（回数・乱数の種・`qa-report/report.md` の書き出し・失敗で終了コード 1）。ブラウザを使うなら Playwright の版を `qa/package.json` で固定し、`npx playwright install --with-deps chromium`。
    - 検査のスクリプトが無いアプリは、Playwright で見本データ（作り話）を読ませて、表示・保存・エラーを見る QA を作る。外の API は `page.route` で差し替え、本物の鍵やデータは使わない（手本は local-kanban の `qa/run.mjs`）。
    - `ci-failure-issue.yml` の見張る名前、`site-watch.yml` の `paths`、`changes.yml` の `app_name` と `ignore_paths`、`lighthouse.yml` の `baseline`（公開前は template の値。公開後に1回測って置き換える）。
-2. `template/.github/dependabot.yml`（npm の directory は `/qa`）、`template/.coderabbit.yaml`（`path_filters` と `path_instructions` をそのリポジトリに合わせる）、`.nojekyll`（Pages をブランチから公開するとき）、`template/AGENTS.md` の `<>` を埋め、`template/CLAUDE.md`（`@AGENTS.md` の1行）と `template/.gemini/settings.json` もそのまま入れる。README の手順も新しい置き場所に合わせる。
+2. `template/.github/dependabot.yml`（npm の directory は `/qa`）、`template/.coderabbit.yaml`（`path_filters` と `path_instructions` をそのリポジトリに合わせる）、`.nojekyll`（Pages をブランチから公開するとき）、`template/AGENTS.md` の `<>` を埋め、`template/CLAUDE.md`（「作業の前に AGENTS.md を読む」の1行。`@` で取り込まない）と `template/.gemini/settings.json` もそのまま入れる。README の手順も新しい置き場所に合わせる。
    準備の1コマンドとして `template/scripts/setup.sh`（`<>` を埋め、要らない節を消す）・`template/.claude/settings.json`（クラウドセッションで自動で呼ぶ）・版のファイル（Node.js は `.nvmrc`、Python は `.python-version`。CI の setup-node・setup-python もこのファイルを読む）を入れ、README の準備の節は `bash scripts/setup.sh` の1行にする。
 3. 手元で QA を回して ✅ を確かめ、`actionlint` を通す。下書き PR → CI 緑 → ドラフトを外して squash マージ（`.github/` を変える PR はエージェントがマージしてよい。common.md）。
 
 ## 3. 共通の一覧に加える（shared-workflows に PR）
 
-- `.github/workflows/scorecard.yml`・`weekly-summary.yml` の `REPOS`（CI の時間を測るなら `ci-time-report.yml` も）
-- `README.md` 冒頭のリポジトリ一覧
-- `routines/supervisor.md` の CI を見るリポジトリと、その担当（専任のルーティンが無ければ「修正スレッドか Issue 起票」）
-- `routines/repo-patrol.md` 手順3の渡し先（専任のルーティンが無ければ tenbin と同じ「Issue 起票→コーディネーターに修正スレッドを頼む」）
+- `repos.txt` に「名前 種類」の1行（game・app・private・ignore。**名前の ABC 順の位置**に入れ、末尾に足さない）。週次まとめ・成績表・CI 時間・ひな形のずれの検査・監督・巡回はここを読むので、ワークフローや README・手順書に名前を並べて書かない（2026-11-07 一覧が7か所に分かれていて、新作の PR どうしが毎回ぶつかった。incidents/2026-11-07-repo-list-conflicts.md）
+- 担当が「修正スレッドか Issue 起票」以外のときだけ `routines/supervisor.md`・`routines/repo-patrol.md` に1行（ゲームは要らない。巡回で特に照らすことがあれば repo-patrol.md の「ゲームで特に照らすこと」に名前の順で1行）
 - `routines/project-practices.md` の「プロジェクトごとの状況」に1行（分野・今の流れの置き場所）。分野が表に無ければ、要点を調べて「分野ごとの要点」にも足す（個人情報を扱うプロジェクトは除く）
-- Lint（actionlint）が緑ならマージする。
+- `node scripts/check-repo-lists.mjs`（Lint と同じ）を通す。Lint が緑ならマージする。
 
 ## 4. 記録と連絡
 
@@ -83,7 +82,7 @@ main に直接置くはじめの commit（リポジトリを作るときの1つ�
 Claude in Chrome（`mcp__claude-in-chrome__*`）が使えるときは、下の 1〜4 を Claude が satou さんの Chrome で行う（2026-10-20 satou さん「リスクが少なく、繰り返し行なっているため」、追記も同日 satou さん承認）。
 
 - Chrome が2つ以上つながっていたら（`list_connected_browsers`）、どちらを使うかをカードで聞く。片方に出した画面は satou さんから見えないことがある。
-- **ルールセットは先に Actions「Add ruleset」（`.github/workflows/add-ruleset.yml`）を workflow_dispatch で起こす**（ref は `main`、inputs は `name`）。鍵は Create repo と同じで、パスキーが要らない。もうあれば何もしない。赤のときだけ下の Chrome で入れる（2026-11-06 Chrome ではルールセットのたびにパスキーを聞かれ、satou さんが離れていて3本が1日止まった）。
+- **ルールセットは先に Actions「Add ruleset」（`.github/workflows/add-ruleset.yml`）を workflow_dispatch で起こす**（ref は `main`、inputs は `name` と `checks`。`checks` の既定はゲームの `qa / qa,scan / scan`、ゲームでないリポジトリは空にする）。鍵は Create repo と同じで、パスキーが要らない。もうあれば、足りない決まり・必須チェックだけを足し、Allow auto-merge を入れる。main の検査の結果に無い名前は入れずに赤で止まる（2026-11-07）。赤のときだけ下の Chrome で入れる（2026-11-06 Chrome ではルールセットのたびにパスキーを聞かれ、satou さんが離れていて3本が1日止まった）。
 - GitHub が「Confirm access」（パスキー）を出したら、そこだけ satou さんに押してもらう（本人確認は Claude がしない）。一度通ると、しばらくは聞かれない。
 - 入れた後に API で確かめる（`/repos/<owner>/<repo>/rulesets/<id>` の rules が deletion と non_fast_forward、conditions が `~DEFAULT_BRANCH`）。
 - 入れられなかったものは下の「Chrome が使えないとき」で必ず satou さんに頼む。ルールセットと Pages の抜けは `scripts/drift-check.mjs`（週次まとめの「ひな形からのずれ」）が毎週出すので、受け入れの終わりに `node scripts/drift-check.mjs` を回して `ruleset`・`pages` の行が残っていないかを見る（2026-11-04 公開ゲーム14本で0件のまま気づかれなかった。`incidents/2026-11-04-new-repos-no-ruleset.md`）。
@@ -120,7 +119,7 @@ satou-aaaaa は GitHub の無料プラン。非公開リポジトリでは次が
 - CodeRabbit は非公開でもレビューが付いた（2026-10-22、アプリが「All repositories」）。`.coderabbit.yaml` は無くても既定の設定で動く
 - fork PR: 非公開では「フォークからの PR でワークフローを動かす」が最初から Off。API（actions/permissions）はプロキシで読めないので、Chrome が使えるときだけ `…/settings/actions` で Off を確かめる
 - Actions は月の無料枠がある（Windows は2倍で数える。使い切ると止まり、支払い方法があれば課金）。重い検査を増やさない
-- `weekly-summary.yml`・`scorecard.yml`・`ci-time-report.yml` の `REPOS` には入れない（shared-workflows の GITHUB_TOKEN では非公開リポジトリを読めない）
+- `repos.txt` には種類 `private` で入れる（週次まとめ・成績表・CI 時間は private を読まない。shared-workflows の GITHUB_TOKEN では非公開リポジトリを読めない）
 
 ## つまずいたところ（2026-10-28 security-toolkit：CI を置かない非公開リポジトリ）
 

@@ -27,6 +27,7 @@
 | 見やすさの検査（ゲーム） | 色だけに頼る・字のコントラスト不足・字間を広げると崩れる・動き続ける・Tab の枠が無い・名前の無いボタン・知らせの場所が無い・斜体・決めつけの言葉。見やすさの設定がひな形とちがう | 各ゲームの `qa/a11y.mjs`（`template/qa/a11y.mjs` の写し。`qa/run.mjs` から回す）・`template/a11y/a11y.html`。写しのずれは `scripts/drift-check.mjs` | 新作に2つを写す（[game-dev.md](../routines/game-dev.md)「だれでも遊べるように」） |
 | CodeQL | AI が書いたコードの脆弱性（無料、公開リポジトリ） | `codeql.yml` | 呼び出し側の `languages` |
 | Secret scan | PR と main への push に入った秘密（gitleaks） | `secret-scan.yml` | 呼び出し側を入れる、★ Push protection |
+| Game QA | ゲームをブラウザで自動で遊ぶ検査（PR と main。検査の名前 qa / qa を main の必須チェックに） | `game-qa.yml` | `template/.github/workflows/qa.yml`（呼び出し側）と、Actions「Add ruleset」で必須チェック |
 | CodeRabbit のレビュー（2人目の目） | 正しさ・要件の見落とし | 各リポジトリの `.coderabbit.yaml`、common.md「CodeRabbit のレビュー」 | `template/.coderabbit.yaml` を入れる、★ CodeRabbit のアプリ |
 | /code-review（新しい文脈のレビュー） | CodeRabbit が付かない PR・判定ロジック・3ファイル以上の変更の見落とし | common.md「エージェントの使い方」 | なし |
 | 2人目の確認（tenbin の論文問題・usotsuki-roppo の話） | 条文・判例の誤り | [repo-patrol.md](../routines/repo-patrol.md)、autonomy.md「確かめてから任せること」 | ラベル「確認済み」「satou確認」 |
@@ -38,7 +39,7 @@
 
 | 仕組み | 見つけるもの | どこ | 立ち上げで要るもの |
 | --- | --- | --- | --- |
-| Post-deploy check（自動の差し戻し） | 公開したページの 404・JavaScript エラー → タグ last-good の版に戻す PR を自動マージ | `post-deploy.yml`・`scripts/smoke.mjs` | 呼び出し側。最初の公開で last-good ができる |
+| Post-deploy check（自動の差し戻し） | 公開したページの 404・JavaScript エラー → タグ last-good の版に戻す PR を自動マージ（点検の要るファイルは hold_paths で人へ。必須チェックがあれば recheck で検査を起こして待つ） | `post-deploy.yml`・`scripts/smoke.mjs` | 呼び出し側。最初の公開で last-good ができる |
 | Site watch | 公開ページが 200 で開けない | `site-watch.yml` | 呼び出し側の `paths` |
 | Lighthouse | 速さ・使いやすさの点数の低下 | `lighthouse.yml` | 公開後に1回測って `baseline` を置く |
 | Link check | リンク切れ | `link-check.yml` | 呼び出し側の `files` |
@@ -48,11 +49,11 @@
 
 | 仕組み | 見つけるもの | どこ | 立ち上げで要るもの |
 | --- | --- | --- | --- |
-| 週次まとめ Issue | 開いたままの PR・CI 失敗・Dependabot の更新待ち（監督・巡回が最初に読む） | `weekly-summary.yml`（月曜 06:17 JST） | `REPOS` に全リポジトリ |
-| ひな形からのずれ | 全リポジトリにあるはずのファイル・AGENTS.md の節・共通部品の呼び出し・@main 以外や無い部品の呼び出し（新しい部品の配り忘れ） | `scripts/drift-check.mjs`（週次まとめの節）。ずれてよいものは `scripts/drift-allow.json` に理由つき | `REPOS` に全リポジトリ |
+| 週次まとめ Issue | 開いたままの PR・CI 失敗・Dependabot の更新待ち（監督・巡回が最初に読む） | `weekly-summary.yml`（月曜 06:17 JST） | `repos.txt` に全リポジトリ |
+| ひな形からのずれ | 全リポジトリにあるはずのファイル・AGENTS.md の節・共通部品の呼び出し・@main 以外や無い部品の呼び出し（新しい部品の配り忘れ） | `scripts/drift-check.mjs`（週次まとめの節）。ずれてよいものは `scripts/drift-allow.json` に理由つき | `repos.txt` に全リポジトリ |
 | 成績表 Issue とブレーキ | マージ数・壊れた割合・直るまでの時間。壊れた割合 30% 超・4件以上で「自動マージ停止: <repo>」Issue → Auto merge が止まる | `scorecard.yml`（月曜 06:07 JST）、autonomy.md「ブレーキ」 | `REPOS`、ラベル「成績表」「自動マージ停止」（Labels で揃う） |
 | 不安定な検査 Issue | 3つ以上の別々の PR で落ちた検査 → 「不安定な検査: <repo>」（自動で開閉）→ 監督が担当へ1回渡す | `scripts/pr-quality.mjs`（成績表の中で動く）、supervisor.md 7b | 同上 |
-| CI時間 Issue | CI の実行時間（遅い検査） | `ci-time-report.yml`（木曜 05:29 JST）、ルーティン CI の時間短縮 | `REPOS` |
+| CI時間 Issue | CI の実行時間（遅い検査） | `ci-time-report.yml`（木曜 05:29 JST）、ルーティン CI の時間短縮 | `repos.txt` |
 | このリポジトリの定期実行の失敗 | 週次まとめ・CI時間・成績表・Lint が main で落ちた → ci-failure の Issue（次に成功したら閉じる） | `watch-failures.yml`（中身は `ci-failure-issue.yml`） | なし |
 | Labels | 自動化が使うラベルの抜け | `labels.yml` | 呼び出し側を入れて1回動かす |
 | Branch cleanup | 使い終わったブランチ | `branch-cleanup.yml` | `keep`（last-tell は qa-results・source-backup） |

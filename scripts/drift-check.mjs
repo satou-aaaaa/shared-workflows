@@ -6,32 +6,37 @@
 // ずれてよい理由があれば scripts/drift-allow.json に理由つきで足す（理由の無い許しは置かない）。
 // 見るもの:
 //   - 全リポジトリにあるはずのファイル（AGENTS.md・CLAUDE.md・scripts/setup.sh・.claude/settings.json・.coderabbit.yaml）
-//   - AGENTS.md の節（「push する前の確認」「共通のきまり」）と、CLAUDE.md が AGENTS.md を読み込むこと
+//   - AGENTS.md の節（「push する前の確認」「共通のきまり」）と、CLAUDE.md が AGENTS.md を指すこと（4KB 超を @ で取り込まない）
 //   - 全リポジトリで呼ぶはずの共通部品（ci-failure-issue・secret-scan・branch-cleanup・labels・setup-check）
 //   - 共通部品の呼び出しが @main 以外を指している・もう無い部品を呼んでいる
-//   - ci-failure-issue の呼び出しに見回り（schedule）が無い
+//   - ci-failure-issue の呼び出しに見回り（schedule）が無い・main で動くワークフローの名前が workflows: に無い
+//   - ゲーム（index.html・sw.js・qa/run.mjs がある）の QA が共通部品 game-qa を呼んでいない
 //   - link-check の呼び出しに、main への push で動き直す設定が無い（incidents/2026-11-05-link-check-not-rerun-on-main.md）
 //   - Playwright を入れるジョブの timeout-minutes が 20 より短い（ファイル名によらず全部のワークフローを見る。入れる段階だけで9分かかる日がある。incidents/2026-11-05-qa-timeout-slow-install.md・2026-11-07-tenbin-check-timeout.md）
+//   - scripts/setup.sh にひな形の <> が残っている（埋め忘れ）
 //   - scripts/setup.sh の「ひな形の版」が template/scripts/setup.sh より古い（ひな形を直しても写しに届かない。incidents/2026-11-03-setup-false-ready.md）
 //   - scripts/setup.sh が渡す CHROMIUM_PATH を、検査のスクリプト（qa/・tools/ など）が読んでいない
 //   - 依存の置き場（package.json・requirements.txt・pyproject.toml）を Dependabot が見ていない
-//   - 公開リポジトリの既定のブランチに、削除と force push を止めるルールが無い（API で読むときだけ。incidents/2026-11-04-new-repos-no-ruleset.md）
+//   - 公開リポジトリの既定のブランチに、削除と force push を止めるルールが無い（API で読むときだけ。incidents/2026-11-04-new-repos-no-ruleset.md）・ゲームの必須チェックに QA と Secret scan が無い
 //   - 感想の Issue フォーム（.github/ISSUE_TEMPLATE/feedback.yml）の name がひな形とちがう・形が GitHub の決まりに合わない（incidents/2026-11-05-feedback-form-not-shown.md）
 //   - 公開の見張り（post-deploy・site-watch）があるのに GitHub Pages が有効でない（API で読むときだけ。incidents/2026-11-04-pages-never-enabled.md）
 //   - 記録を localStorage に置く PWA のゲームに、引き継ぎコード（transfer.js）が無い・版が template/transfer.js より古い・sw.js が保存していない（routines/game-dev.md「引き継ぎコード」）
 //   - ゲーム（index.html と sw.js がある）に、見やすさの設定（template/a11y/a11y.html）と検査（template/qa/a11y.mjs）が無い・ひな形とちがう・qa/run.mjs が回していない（routines/game-dev.md「だれでも遊べるように」）
 //   - ゲーム（index.html と sw.js がある）に、遊ぶ量を縛るチケット🎫や「○○すると開く」のモードの鍵がある（routines/game-dev.md「好きなだけ遊べるように」。satou さん 2026-11-06）
+//   - 公開リポジトリなのに repos.txt に無い（一覧の足し忘れ。API で読むときだけ。incidents/2026-11-07-repo-list-conflicts.md）
 //   - ゲームの sw.js が、入れるとき（install）に HTTP の保存を通して SHELL を取る（cache: 'reload' が無い。古い画面が新しい版に入る。routines/game-dev.md「PWA」）
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { checkSwStall } from '../template/qa/sw-check.mjs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formProblems } from './check-issue-forms.mjs';
+import { readRepos, repoNames } from './repos.mjs';
 
 const OWNER = process.env.OWNER || 'satou-aaaaa';
-// weekly-summary.yml の REPOS と同じ並び（shared-workflows 自身は部品の置き場なので見ない）
-const REPOS = (process.env.REPOS || 'sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban articles carcassonne-research usotsuki-roppo wagamama-burger kabu-news batsu-doko kasane-zome rosen-hitofude seiza-tsunagi mannaka-kanji kippu-10 bento-zume todofuken-relay shiritori-saitan madori-puzzle tenkizu-yomi bushu-tashizan amida-haitatsu kotoba-narabe jobun-tobatsu machi-michijun hikari-michi otsukai-memo bunshi-tsukuri kimari-sagashi kenko-minuki kondate-koma denki-kairo akushitsu-miyaburi dashisugi-check kikigaki-techo bousai-handan')
+// 見るリポジトリは repos.txt の game・app（shared-workflows 自身は部品の置き場なので見ない）
+const REPOS = (process.env.REPOS || repoNames().join(' '))
   .split(/\s+/).filter((r) => r && r !== 'shared-workflows');
 const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || '';
 const here = dirname(fileURLToPath(import.meta.url));
@@ -40,6 +45,8 @@ const FILES = ['AGENTS.md', 'CLAUDE.md', 'scripts/setup.sh', '.claude/settings.j
 const SECTIONS = ['## push する前の確認', '## 共通のきまり'];
 const QA_MIN = 20;
 const CALLS = ['ci-failure-issue', 'secret-scan', 'branch-cleanup', 'labels', 'setup-check'];
+// main で動いても、落ちたときに Issue を立てなくてよいもの（ci-failure-issue.yml の workflows: に無くてよい）
+const UNWATCHED = ['CI failure issue', 'Scorecard', 'Weekly summary'];
 
 // 部品の一覧（このリポジトリの .github/workflows で workflow_call を持つもの）
 const wfDir = join(here, '..', '.github', 'workflows');
@@ -123,12 +130,25 @@ for (const r of REPOS) {
     }
     if (paths.has('CLAUDE.md')) {
       const claude = await src.read('CLAUDE.md');
-      if (!/^@AGENTS\.md\s*$/m.test(claude)) flag('claude:import', 'CLAUDE.md が @AGENTS.md を読み込んでいない（AGENTS.md と二重に書いている）');
+      const imports = /^@AGENTS\.md\s*$/m.test(claude);
+      if (!imports && !/AGENTS\.md/.test(claude)) flag('claude:import', 'CLAUDE.md が AGENTS.md を指していない（template/CLAUDE.md の形に）');
+      // 4KB を超える AGENTS.md を @ で取り込むと、全リポジトリを入れたクラウドの会話で毎回全文が読まれる（2026-11-07 トークン節約。routines/game-dev.md「トークンを節約する」）
+      if (imports && paths.has('AGENTS.md') && Buffer.byteLength(await src.read('AGENTS.md')) > 4096) flag('claude:big-import', 'CLAUDE.md が 4KB を超える AGENTS.md を @ で取り込んでいる（毎回の会話で全文が読まれる。template/CLAUDE.md の1行に替える）');
+      if (Buffer.byteLength(claude) > 1024) flag('claude:long', 'CLAUDE.md が 1KB を超えている（決まりは AGENTS.md に書く）');
     }
 
     if (paths.has('scripts/setup.sh')) {
       const setup = await src.read('scripts/setup.sh');
       const v = setupVer(setup);
+      // ひな形の「<…>」を埋め忘れると、bash が構文エラーで止まる（2026-11-07 haku-uchi #1 の Setup check。drift-check は通っていた）
+      // 引用つき（next="<…>"）も見る：構文エラーにはならず、終わりの案内に <…> がそのまま出ていた（2026-11-07 haku-uchi のひな形の写し直し）
+      const hole = setup.split('\n').find((l) => !/^\s*#/.test(l) && (/=["']?<[^>\n]*>/.test(l) || /<[^<>\n]*[ぁ-んァ-ヶ一-龠][^<>\n]*>/.test(l)));
+      if (hole) flag('setup:placeholder', `scripts/setup.sh にひな形の <> が残っている「${hole.trim().slice(0, 40)}」（埋めないと構文エラーで止まる）`);
+      // 要らない節の消し忘れ：無いファイルを読む節が残ると、準備が途中で止まる（2026-11-07 haku-uchi。Python の節が requirements.txt を探して落ちた）
+      for (const f of ['requirements.txt', '.python-version', '.nvmrc']) {
+        const used = setup.split('\n').some((l) => !/^\s*#/.test(l) && l.includes(f));
+        if (used && !paths.has(f)) flag('setup:unused-section', `scripts/setup.sh が ${f} を読むが、リポジトリに無い（ひな形の要らない節を消す）`);
+      }
       if (v < SETUP_VER) flag('setup:version', `scripts/setup.sh がひな形の版 ${v}（今は ${SETUP_VER}。template/scripts/setup.sh の版の行の下にある変わったところを写し、版の行も上げる）`);
       // 準備が渡すブラウザの場所（CHROMIUM_PATH）を、検査が読んでいるか。読んでいないと「✓ 準備できた」のあと検査がブラウザを見つけられない
       // （2026-11-04 dungeon-boardgame の qa/run.mjs は PW_CHROMIUM しか読んでいなかった。incidents/2026-11-04-setup-nvm-silent-stop.md）
@@ -174,6 +194,13 @@ for (const r of REPOS) {
       const types = new Set((Array.isArray(rules) ? rules : []).map((x) => x.type));
       const miss = ['deletion', 'non_fast_forward'].filter((t) => !types.has(t));
       if (miss.length) flag('ruleset', `${src.repo.default_branch} のルールセットに ${miss.join('・')} が無い（routines/onboarding.md 手順5の2。…/settings/rules → New branch ruleset →「Restrict deletions」「Block force pushes」）`);
+      // ゲーム（QA と Secret scan がある）は、両方を必須チェックにする。無いと Dependabot の自動マージ（--auto）が検査の前にマージする
+      // （2026-11-07 CodeRabbit が bousai-handan #1 で指摘。incidents/2026-11-07-game-template-review-gaps.md）
+      if (paths.has('.github/workflows/qa.yml') && paths.has('.github/workflows/secret-scan.yml') && paths.has('sw.js')) {
+        const need = (Array.isArray(rules) ? rules : []).filter((x) => x.type === 'required_status_checks').flatMap((x) => (x.parameters?.required_status_checks || []).map((c) => c.context));
+        const lack = ['qa / qa', 'scan / scan'].filter((c) => !need.includes(c));
+        if (lack.length) flag('ruleset:checks', `${src.repo.default_branch} の必須チェックに ${lack.join('・')} が無い（shared-workflows の Actions「Add ruleset」を name=${r} で起こす。routines/onboarding.md 手順5）`);
+      }
     }
 
     // 公開の見張り（post-deploy・site-watch）を入れているのに Pages が切れている。site-watch は前は「切れているので何もしない」で緑だった
@@ -210,6 +237,7 @@ for (const r of REPOS) {
       }
     }
 
+    let pageCache = null; // 同じ index.html を何度も取りに行かない（API の読み込みが途中で失敗しても、それまでのずれを出せるように）
     // 好きなだけ遊べるように：寄付で成り立たせるゲームなので、遊ぶ量を縛る仕組み・課金ゲームのような解放を入れない（satou さん 2026-11-06「チケット制はいれる必要ありますか？好きなだけ遊んでほしいです」）
     // 実績の 🔒（まだ取っていない印）は鍵ではないので見ない。「○○すると開く」のようにモードを閉じる文だけを見る
     if (paths.has('index.html') && paths.has('sw.js')) {
@@ -218,6 +246,21 @@ for (const r of REPOS) {
       // 「巻を1回読むと開く」「🔒 上級の5本は、今日の5本のあとで」のような文（「設定を開く」「アプリで開く」は鍵ではない。CSS のコメントは見ない）
       const gate = page.replace(/\/\*[\s\S]*?\*\//g, '').match(/[^<>`'"\n]{0,24}(?:と|たら)開く|🔒 [^<>`'"\n]{2,40}/);
       if (gate) flag('free:gate', `index.html に遊ぶ前の鍵がある「${gate[0].trim()}」（どのモードも最初から遊べるように。routines/game-dev.md「好きなだけ遊べるように」）`);
+      pageCache = page;
+    }
+
+    // 遊び方の「見た」は「わかった」を押したらすぐ残し、dialog の cancel（Esc のその場）と close でも残す（ボタンだけだと Esc で閉じた人に毎回出る。close だけだと知らせが遅れて届き、押した直後に読み直すとまた出る。2026-11-07 incidents/2026-11-07-howto-esc-not-saved.md）
+    if (paths.has('index.html')) {
+      const page = pageCache ?? await src.read('index.html');
+      const ok = page.match(/\$\("howto-ok"\)\.onclick\s*=\s*\(\)\s*=>\s*\{[^\n]*/);
+      if (ok) {
+        const onClose = /\$\("howto"\)\.addEventListener\("close"[^\n]*tut\s*=\s*true/.test(page);
+        const onCancel = /\$\("howto"\)\.addEventListener\("cancel"[^\n]*tut\s*=\s*true/.test(page);
+        const atOnce = /^\$\("howto-ok"\)\.onclick\s*=\s*\(\)\s*=>\s*\{\s*save\(/.test(ok[0]);
+        if (!onClose) flag('howto:close', 'index.html が遊び方の「見た」を dialog の close で残していない（Esc で閉じた人に毎回出る。$("howto").addEventListener("close", () => { if (!load().tut) save(…) })。routines/game-dev.md「共通の形」の遊び方）');
+        else if (!onCancel) flag('howto:close', 'index.html が遊び方の「見た」を dialog の cancel（Esc を押したその場）で残していない（close の知らせは遅れて届き、Esc の直後に読み直すとまた出る。$("howto").addEventListener("cancel", …)。routines/game-dev.md「共通の形」の遊び方）');
+        else if (!atOnce) flag('howto:close', 'index.html の「わかった」が「見た」をすぐ残していない（close の知らせは遅れて届き、押した直後に読み直すとまた出る。onclick の最初で save(…)。routines/game-dev.md「共通の形」の遊び方）');
+      }
     }
 
     // 引き継ぎコード：記録が端末の中だけにあるゲームは、機種変更で記録が消える（2026-11-05 satou さん「PWA 型のゲームでデータの引継ぎを」）。
@@ -241,13 +284,25 @@ for (const r of REPOS) {
     if (paths.has('index.html') && paths.has('sw.js')) {
       const sw = (await src.read('sw.js')).replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
       if (/addAll\(/.test(sw) && !/cache:\s*["']reload["']/.test(sw)) flag('sw:reload', 'sw.js の install が SHELL を HTTP の保存から取る（addAll(SHELL.map((u) => new Request(u, { cache: "reload" }))) にする）');
+      // 4秒で保存したものへ切り替える書き方なら、本文の途中で止まる返事でも切り替わるかを動かして確かめる（2026-11-07 CodeRabbit が kotowaza-awase で指摘）
+      if (/const slow\s*=\s*setTimeout/.test(sw)) {
+        const st = await checkSwStall(await src.read('sw.js')).catch((e) => ({ ok: false, error: String(e) }));
+        if (!st.ok) flag('sw:stall', 'sw.js が本文を読む前に4秒の切り替えを外す（本文の途中で通信が止まると読み込み中のまま。template/qa/sw-check.mjs を写し、ok の返事は本文を読み終えてから返す）');
+        // 返したあとも60秒の見張りが残ると、worker が止まれず保存したものをあとから送ろうとする（2026-11-07 mukashi-narabe #1 の CodeRabbit）
+        if (/setTimeout\([^;]*60000\)/.test(sw) && !/clearTimeout\(deadline\)/.test(sw)) flag('sw:deadline', 'sw.js が返したあとも60秒の見張りを止めない（send の中で clearTimeout(deadline)。kotowaza-awase の sw.js の形）');
+      }
     }
     const called = new Set();
+    const onMain = []; let watched = null; // main で動くワークフローの名前・ci-failure-issue が見張る名前
     for (const p of paths) {
       if (!/^\.github\/workflows\/[^/]+\.ya?ml$/.test(p)) continue;
       const text = await src.read(p);
       // コメントの行は数えない。値の引用符（' "）は外して読む
       const live = text.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
+      const wfName = (live.match(/^name:\s*["']?(.+?)["']?\s*$/m) || [])[1];
+      if (wfName && /^\s*(schedule|push):/m.test(live)) onMain.push(wfName);
+      const wl = live.match(/^\s*workflows:\s*\[(.*)\]/m);
+      if (/shared-workflows\/\.github\/workflows\/ci-failure-issue\.ya?ml@/.test(live) && wl) watched = wl[1].split(',').map((x) => x.trim().replace(/^["']|["']$/g, ''));
       for (const m of live.matchAll(/^\s*(?:-\s*)?uses:\s*["']?satou-aaaaa\/shared-workflows\/\.github\/workflows\/([\w.-]+?)\.ya?ml@([^\s#"']+)["']?/gm)) {
         called.add(m[1]);
         if (m[2] !== 'main') flag(`ref:${m[1]}`, `${p} が ${m[1]} を @${m[2]} で呼んでいる（共通部品は @main）`);
@@ -267,9 +322,33 @@ for (const r of REPOS) {
       }
     }
     for (const c of CALLS) if (!called.has(c)) flag(`call:${c}`, `共通部品 ${c} を呼んでいない（template/.github/workflows/${c}.yml を写す）`);
+    // main で動くのに見張っていないワークフロー（2026-11-07 Setup check が抜けていて、月1の失敗で Issue が立たなかった。incidents/2026-11-07-game-template-review-gaps.md）
+    if (watched) {
+      const miss = onMain.filter((n) => !watched.includes(n) && !UNWATCHED.includes(n));
+      if (miss.length) flag('ci-failure-issue:list', `ci-failure-issue.yml の workflows: に、main で動く ${miss.join('・')} が無い（落ちても Issue が立たない）`);
+    }
+    // ゲームの QA は共通部品 game-qa を呼ぶ（写しだと、版の固定・時間切れの直しが届かない。同じ incident）
+    if (paths.has('index.html') && paths.has('sw.js') && paths.has('qa/run.mjs') && !called.has('game-qa')) flag('call:game-qa', 'ゲームの QA が共通部品 game-qa を呼んでいない（template/.github/workflows/qa.yml を写す。検査の名前は qa / qa になる）');
 
     for (const o of out) lines.push(`[${r}] ${o}`);
   } catch (e) { skipped.push(`${r}（${e.message}）`); }
+}
+
+// 公開リポジトリなのに repos.txt に無いもの（新作を一覧に足し忘れると、週次まとめ・成績表・CI 時間・このずれの検査のどれにも出ない。
+// 2026-11-07 kengen-check が README にはあるのにワークフローの一覧から抜けていた。incidents/2026-11-07-repo-list-conflicts.md）
+if (!LOCAL_ROOT) {
+  try {
+    const known = new Set([...readRepos().map((x) => x.name), 'shared-workflows']);
+    for (let page = 1; page <= 10; page++) {
+      const list = await api(`users/${OWNER}/repos?type=owner&per_page=100&page=${page}`);
+      if (!Array.isArray(list) || !list.length) break;
+      for (const x of list) {
+        if (x.fork || x.archived || x.private || known.has(x.name)) continue;
+        lines.push(`[${x.name}] repos.txt に無い公開リポジトリ（名前の順の位置に「${x.name} game」などを1行足す。見ないなら ignore と理由）`);
+      }
+      if (list.length < 100) break;
+    }
+  } catch (e) { skipped.push(`repos.txt との突き合わせ（${e.message}）`); }
 }
 
 if (lines.length) console.log(lines.join('\n'));

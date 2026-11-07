@@ -1,0 +1,56 @@
+name: Game QA (共通部品)
+
+# ゲームの QA：ブラウザで自動で遊んで確かめる（Claude は使わない）。各ゲームの .github/workflows/qa.yml が @main で呼ぶ。
+# 前は各ゲームが手順を写していて、版の固定（SHA）や時間切れの直しが届かないゲームが出た（incidents/2026-11-07-game-template-review-gaps.md）。
+# 検査の名前（check run）は「呼ぶ側のジョブ名 / qa」。ひな形では qa / qa（Auto merge の require_checks とルールセットの必須チェックに書く）。
+# 落ちたら成果物の qa-report/report.md を見る。手元では node qa/run.mjs で同じものが回る。
+on:
+  workflow_call:
+    inputs:
+      npm_dir:
+        description: 'package-lock.json のあるフォルダ'
+        type: string
+        default: qa
+      command:
+        description: '検査のコマンド（空白区切りの1つのコマンド）'
+        type: string
+        default: node qa/run.mjs
+      timeout:
+        description: '時間切れ（分）。Playwright を入れる段階だけで9分かかる日がある（incidents/2026-11-05-qa-timeout-slow-install.md）'
+        type: number
+        default: 20
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    name: qa
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: ${{ inputs.npm_dir }}/package-lock.json
+      - run: npm ci --no-audit --no-fund
+        working-directory: ${{ inputs.npm_dir }}
+      - run: npx playwright install --with-deps chromium
+        working-directory: ${{ inputs.npm_dir }}
+      - name: 検査
+        env:
+          QA_COMMAND: ${{ inputs.command }}
+        # 空白で区切って1つのコマンドとして動かす（シェルの式は通さない）
+        run: |
+          read -r -a cmd <<<"$QA_COMMAND"
+          "${cmd[@]}"
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: qa-report
+          path: qa-report/
+          if-no-files-found: ignore

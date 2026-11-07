@@ -65,9 +65,10 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 | カレンダー | 遊んだ日に★の印。連続日数は1以上のときだけ | seiza-tsunagi #4 |
 | 取りこぼした日 | 過去7日のお題をあとから。連続・今日の記録・Ko-fi に数えない | wagamama-burger #5・seiza-tsunagi #4 |
 | 感想 | Issue フォームへのただのリンク | [game-feedback.md](game-feedback.md) |
-| PWA・OGP | `sw.js`・`manifest.webmanifest`・アイコン・`og.png`（答えを入れない）。`sw.js` の install は `c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))` で取り直す（普通に取ると、GitHub Pages が10分ほど保存させる古い画面が新しい版に入る。drift-check の `sw:reload` が見る）。`sw.js` の取り方・保存の仕方を変えたら `CACHE` の版も上げる（名前が同じだと、古い worker が `?付き` の URL で保存した画面が残り、オフラインで `ignoreSearch` により返る。2026-11-06 CodeRabbit） | どのゲームも |
+| PWA・OGP | `sw.js`・`manifest.webmanifest`・アイコン・`og.png`（答えを入れない）。`sw.js` の install は `c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))` で取り直す（普通に取ると、GitHub Pages が10分ほど保存させる古い画面が新しい版に入る。drift-check の `sw:reload` が見る）。`template/qa/sw-check.mjs` を `qa/` に写し、`qa/run.mjs` から `checkSwStall(sw.jsの中身)` を呼ぶ（本文の途中で通信が止まっても4秒で保存したものを返すか。ok の返事は本文を読み終えてから返し、返したら60秒の見張りも止める。drift-check の `sw:stall`・`sw:deadline` が見る。`incidents/2026-11-07-sw-body-stall.md`）。`sw.js` の取り方・保存の仕方を変えたら `CACHE` の版も上げる（名前が同じだと、古い worker が `?付き` の URL で保存した画面が残り、オフラインで `ignoreSearch` により返る。2026-11-06 CodeRabbit） | どのゲームも |
 | 見やすさ | 見やすさの設定（`template/a11y/a11y.html`）と検査（`template/qa/a11y.mjs`）。下の「だれでも遊べるように」 | kippu-10 |
 | 引き継ぎ | 記録を別の端末へ移す「引き継ぎコード」と QR（`template/transfer.js`）と検査（`template/qa/transfer-check.mjs`）。下の「引き継ぎコード」 | kippu-10 |
+| 遊び方 | はじめて開いたときに `<dialog>` で出し、「見た」の記録（`tut`）は「わかった」を押したらすぐ残し、dialog の `cancel`（Esc を押したその場で届く）と `close` イベントでも、まだ残していなければ残す（ボタンの中だけだと Esc や戻る操作で閉じた人に毎回出る。`close` だけだと知らせが少し遅れて届き、押した直後・Esc の直後に読み直すとまた出る。2026-11-07 `incidents/2026-11-07-howto-esc-not-saved.md`）。QA は「わかった」を押したその場で記録が残るか、Esc で閉じてすぐ読み直しても（10回）出ないかを見る。dialog で記録を残すものはどれも同じ | kippu-10 |
 | 好きなだけ | チケット・鍵なし。とことん・練習は何回でも。問題は300種類以上。下の「好きなだけ遊べるように」 | どのゲームも（2026-11-06 から） |
 | QA | `qa/run.mjs`。乱数で作る所は何百日分も作って確かめる。とことんのように `Math.random` で並べる所も、何百回作って重なり・作れない問題が無いかを見る（5回では0.1%の重なりに当たらない）。押せる所は44px以上、幅320px。キーボードで選んだボタンに枠が出る（`all:unset` で消えるので、枠の規則は style の最後に `:is(button,a):focus-visible{outline:…!important}`） | どのゲームも |
 
@@ -132,6 +133,16 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 - iPhone はブラウザ（Safari）とホーム画面のアプリで記録が別。ホーム画面のアプリで遊ぶ人は、アプリの中の「引き継ぎ」にコードを貼る（画面にも書いてある）。
 - `node scripts/drift-check.mjs` が、PWA のゲームに `transfer.js` が無い・版が古いのを知らせる。
 
+## トークンを節約する（satou さん 2026-11-07「トークンを節約するための改善も」）
+
+ゲームのスレッドは十数本が同時に動くので、1本の読みすぎが全部の利用枠を減らす。出典：[Claude Code: Manage costs](https://code.claude.com/docs/en/costs)（CLAUDE.md は短く・長い出力はしぼる）、[Memory](https://code.claude.com/docs/en/memory)（`@` で取り込んだファイルは全文が毎回読まれる）。
+
+- `index.html`（100〜230KB）・共有フォルダの `preview.html` は丸ごと読まない。`grep -n '関数名\|id名' index.html` で場所を探し、`sed -n '開始,終わりp'` で要る所だけ読む。直すのは Edit で（書き直しで全文を出さない）。
+- ほかのゲームを見本にするときも、同じ仕組み（例：`endlessList`・`merge`・`lateDays`）の所だけ grep して読む。
+- QA は失敗だけ見る：`node qa/run.mjs 2>&1 | grep -v '^✓' | tail -40`。全部通った回の ✓ の行を会話に流さない。
+- この手順書も、要る節だけ読む（`grep -n '^##' routines/game-dev.md` で見出しを見てから）。
+- 各リポジトリの `CLAUDE.md` は `AGENTS.md` を `@` で取り込まず、「作業の前に AGENTS.md を読む」の1行にする（`template/CLAUDE.md`）。全リポジトリを入れたクラウドの会話では、`@` だと関係ないゲームの AGENTS.md（1本 8〜12KB、16本で約130KB）まで毎回読まれていた。drift-check が `claude:big-import` で見る。
+
 ## 使う道具
 
 - GitHub の道具（PR を作る・読む・マージ）。検索は `gh api -X GET search/...`。
@@ -148,10 +159,16 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 3. リポジトリは [onboarding.md](onboarding.md) 手順0で AI が作る（A：Actions「Create repo」を起こす。だめなら B：Chrome。そのときはこのスレッドに satou さんの一言を頼む）。リンクを渡すのは両方使えないときだけ。
 4. はじめの commit は README だけ。workflows・`qa/`・本体は同じ PR #1 で入れる（incidents/2026-11-04-new-repo-main-qa-without-qa-dir.md）。
 5. 上の「共通の形」と「だれでも遊べるように」を全部入れる。AGENTS.md は既存のゲーム（kippu-10 など）を写して直す。
-   `.github/workflows/` は既存のゲームからでなく `template/.github/workflows/` から写す（古いゲームの写しはひな形の直しが届いていない。QA も `template/.github/workflows/qa.yml`（時間切れ20分）を写す）。PR #1 を出す前に、shared-workflows で `LOCAL_ROOT=<clone の親> REPOS=<リポジトリ> node scripts/drift-check.mjs` を回し、出た行を直す（2026-11-05 あみだ配達・ことばならべ・ひかり道が、前の日に直した link-check の設定なしで出た）。
+   `.github/workflows/` は既存のゲームからでなく `template/.github/workflows/` から写す（古いゲームの写しはひな形の直しが届いていない。QA も `template/.github/workflows/qa.yml`（共通部品 game-qa を呼ぶ。検査の名前は `qa / qa` で、main の必須チェックと Auto merge の `require_checks` に書く）を写す）。PR #1 を出す前に、shared-workflows で `LOCAL_ROOT=<clone の親> REPOS=<リポジトリ> node scripts/drift-check.mjs` を回し、出た行を直す（2026-11-05 あみだ配達・ことばならべ・ひかり道が、前の日に直した link-check の設定なしで出た）。
+   レビュー（CodeRabbit）がひな形の写し（transfer.js・qa/a11y.mjs・qa/transfer-check.mjs・qa/sw-check.mjs・scripts/setup.sh・共通部品の呼び出し）に指摘したら、ゲームでは直さず、その日のうちに shared-workflows でひな形を直す PR を出し（直さない指摘は理由を返す）、直したら版を上げて全部のゲームへ配る。ゲームの PR は待たずに進めてよい（2026-11-07 同じ指摘が新作ごとに繰り返された。`incidents/2026-11-07-game-template-review-gaps.md`）。
 6. `node qa/run.mjs` が全部通ってから PR。`sw.js` を含む PR は `@coderabbitai review` とコメントし、レビューを読んでから手でマージする。
 7. Pages を main のルートで公開する（[onboarding.md](onboarding.md) 手順5の1）。`node scripts/drift-check.mjs` に `pages` の行が出ないこと、Actions の Post-deploy check が緑になったことを見るまで、X などで紹介しない（2026-11-04 3本が 404 のまま紹介された。incidents/2026-11-04-pages-never-enabled.md）。
-8. 新しいリポジトリを [project-practices.md](project-practices.md) の表と README.md の一覧に足す。
+8. shared-workflows に PR を1つ出し、一覧に足す（[onboarding.md](onboarding.md) 手順3）。足すのは次の3か所だけで、どれも**名前の ABC 順の位置**に1行入れる（末尾に足さない。並行の新作の PR が同じ所に足すとぶつかる。2026-11-07 #184 が3つの PR とぶつかった。incidents/2026-11-07-repo-list-conflicts.md）。
+   - [repos.txt](../repos.txt) に `<名前> game`（ワークフロー・巡回・監督・週次まとめはここを読む。ほかのファイルに一覧を書かない）
+   - [project-practices.md](project-practices.md) の「ゲーム」の表に1行
+   - 中身に事実・出典があり、巡回で特に照らすことがあれば [repo-patrol.md](repo-patrol.md) の「ゲームで特に照らすこと」に1行（無ければ足さない）
+   Lint（`node scripts/check-repo-lists.mjs`）が、並び・ゲームの表の抜け・ほかのファイルに書いた一覧を見る。
+9. 公開を知らせたら、同じターンで次の候補（プロジェクトのメモリ game-queue の順）の手順1に入る。satou さんの返事を待たない（2026-11-07「止めずに、進め続けてください」）。レビュー待ちなどで止まるときは、再開の予約（send_later など。ほかの AI は [tool-map.md](tool-map.md)）を入れてからターンを終える。予約なしで終えない（incidents/2026-11-07-new-game-stopped-after-publish.md）。
 
 ### B. 公開中のゲームを1本磨く（週1・水曜）
 
@@ -176,7 +193,7 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 
 ## 一覧（磨く対象）
 
-usotsuki-roppo・wagamama-burger・kabu-news・batsu-doko・kasane-zome・rosen-hitofude・seiza-tsunagi・mannaka-kanji・kippu-10・bento-zume・todofuken-relay・shiritori-saitan・madori-puzzle・tenkizu-yomi・bushu-tashizan・amida-haitatsu・kotoba-narabe・jobun-tobatsu・machi-michijun・hikari-michi・otsukai-memo・bunshi-tsukuri・kimari-sagashi・kenko-minuki・kondate-koma・denki-kairo・akushitsu-miyaburi・dashisugi-check・kikigaki-techo・bousai-handan・kengen-check（新しく作ったら足す）
+[repos.txt](../repos.txt) の種類が `game` の行（`node scripts/repos.mjs game` で出る）。新しく作ったら A の手順8で足す。
 
 ## 完了条件
 
