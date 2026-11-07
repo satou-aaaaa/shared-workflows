@@ -72,7 +72,7 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 | ホームの題 | 上の帯の `h1{flex:1}` を題（`h1.title`）が受け継ぐと、縦に並べた画面で余った高さを取って伸び、iPad の縦などで題の下に大きなすき間が出る。`.title` に `flex:none` を書く。QA は 820×1180・390×844・1280×800 で、題の高さが伸びない形（flex:none）と同じかを見る（2026-11-07 `incidents/2026-11-07-title-stretched.md`） | kimari-sagashi |
 | 記録の保存 | 記録は localStorage。書けないとき（容量いっぱい・保存を切ったブラウザ）は開いているあいだだけ覚え、遊んでいる途中でも1回だけ `toast` で「この端末に記録を保存できませんでした…」と知らせる（黙っていると開き直したとき記録が消える）。QA は `Storage.prototype.setItem` を失敗させて知らせが1回だけ出るか見る。drift-check の `save:silent` が見る | atsusa-shisu・kippu-10 |
 | 好きなだけ | チケット・鍵なし。とことん・練習は何回でも。問題は300種類以上。下の「好きなだけ遊べるように」 | どのゲームも（2026-11-06 から） |
-| QA | `qa/run.mjs`。乱数で作る所は何百日分も作って確かめる。とことんのように `Math.random` で並べる所も、何百回作って重なり・作れない問題が無いかを見る（5回では0.1%の重なりに当たらない）。押せる所は44px以上、幅320px。キーボードで選んだボタンに枠が出る（`all:unset` で消えるので、枠の規則は style の最後に `:is(button,a):focus-visible{outline:…!important}`） | どのゲームも |
+| QA | `qa/run.mjs`。乱数で作る所は何百日分も作って確かめる。とことんのように `Math.random` で並べる所も、何百回作って重なり・作れない問題が無いかを見る（5回では0.1%の重なりに当たらない）。押せる所は44px以上、幅320px。キーボードで選んだボタンに枠が出る（`all:unset` で消えるので、枠の規則は style の最後に `:is(button,a):focus-visible{outline:…!important}`）。検査で使う問題 id は文字で書かず、データから選ぶ（`G.POOL[2].find(...)`）。別のゲームから写した id はそのゲームに無いことがあり、例外を待つ検査が何も見ないまま通る（drift-check `qa:literal-id`。`incidents/2026-11-07-qa-copied-question-id.md`） | どのゲームも |
 
 ## 好きなだけ遊べるように（寄付で成り立たせる。satou さん 2026-11-06）
 
