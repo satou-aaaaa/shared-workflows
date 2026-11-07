@@ -43,6 +43,9 @@ jobs:
       # ヒント2で消した選び肢が戻る作り（hint:cut-moves）・読まれない星の表示（stars:role）を見分けるか（incidents/2026-11-07-hint-cut-comes-back.md）
       - name: ゲームの作りの見分け
         run: node scripts/check-game-patterns.mjs
+      # Link check が読み違える URL の書き方（すぐ後ろに全角の字）を見分けるか（incidents/2026-11-08-link-check-wide-char-after-url.md）
+      - name: リンクの書き方の見分け
+        run: node scripts/check-link-text.mjs
 
   # 立ち上げ直しの手順書（bootstrap/）に、ルーティンの手順書・共通部品の抜けや内部 ID の混入が無いかを調べる。
   bootstrap:

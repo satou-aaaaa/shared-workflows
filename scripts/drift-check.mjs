@@ -12,6 +12,7 @@
 //   - ci-failure-issue の呼び出しに見回り（schedule）が無い・main で動くワークフローの名前が workflows: に無い
 //   - ゲーム（index.html・sw.js・qa/run.mjs がある）の QA が共通部品 game-qa を呼んでいない
 //   - link-check の呼び出しに、main への push で動き直す設定が無い（incidents/2026-11-05-link-check-not-rerun-on-main.md）
+//   - link-check が調べる .md に、すぐ後ろに全角の字が続く URL がある（incidents/2026-11-08-link-check-wide-char-after-url.md）
 //   - Playwright を入れるジョブの timeout-minutes が 20 より短い（ファイル名によらず全部のワークフローを見る。入れる段階だけで9分かかる日がある。incidents/2026-11-05-qa-timeout-slow-install.md・2026-11-07-tenbin-check-timeout.md）
 //   - scripts/setup.sh にひな形の <> が残っている（埋め忘れ）
 //   - scripts/setup.sh の「ひな形の版」が template/scripts/setup.sh より古い（ひな形を直しても写しに届かない。incidents/2026-11-03-setup-false-ready.md）
@@ -40,6 +41,7 @@ import { fileURLToPath } from 'node:url';
 import { formProblems } from './check-issue-forms.mjs';
 import { readRepos, repoNames } from './repos.mjs';
 import { cutMoves, starsBare, leftFixed } from './game-patterns.mjs';
+import { bareUrls, linkFiles, checkedMd } from './link-text.mjs';
 
 const OWNER = process.env.OWNER || 'satou-aaaaa';
 // 見るリポジトリは repos.txt の game・app（shared-workflows 自身は部品の置き場なので見ない）
@@ -363,6 +365,13 @@ for (const r of REPOS) {
         // 見回り（schedule）が無いと、GITHUB_TOKEN で起こした実行（Pages・AI content など）の失敗に気づけない（carcassonne-research #83）
         if (m[1] === 'ci-failure-issue' && !/^\s*schedule:/m.test(live)) flag('ci-failure-issue:sweep', `${p} に見回りの schedule が無い（template/.github/workflows/ci-failure-issue.yml を写す）`);
         // 直した設定がマージされても main で動き直さないと、赤のまま残り Issue が開き直す（incidents/2026-11-05-link-check-not-rerun-on-main.md）
+        // Link check が調べる .md に、すぐ後ろに全角の字が続く URL がある（lychee がそこまで URL と読んで 404 で落ちる。incidents/2026-11-08-link-check-wide-char-after-url.md）
+        if (m[1] === 'link-check') {
+          for (const f of checkedMd(linkFiles(live), paths)) {
+            const hits = bareUrls(await src.read(f));
+            if (hits.length) flag('link-check:bare-url', `${f} の ${hits.map((h) => h.line).join('・')} 行目の URL のすぐ後ろに全角の字がある（Link check が落ちる。<https://…> か [名前](https://…) で書く）`);
+          }
+        }
         if (m[1] === 'link-check' && !/^\s*push:/m.test(live)) flag('link-check:push', `${p} に main への push で動き直す設定が無い（template/.github/workflows/link-check.yml を写す）`);
         // 呼び出し側のひな形の版10（2026-11-07 shared-workflows #219 にためた CodeRabbit の指摘）
         // on: の push: の中身（次の2字下げのきっかけまで）
