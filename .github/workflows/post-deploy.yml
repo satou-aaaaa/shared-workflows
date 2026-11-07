@@ -24,11 +24,19 @@ on:
         description: '差し戻した後に GitHub Pages の公開（ブランチから公開する設定のとき）を起こす'
         type: boolean
         default: false
+      hold_paths:
+        description: '差し戻しがこの正規表現に当たるファイルを変えるときは、マージせずラベル「自動マージしない」を付けて人の点検に回す（Auto merge の hold_paths と同じ値）'
+        type: string
+        default: ''
+      recheck:
+        description: 'main に必須チェックがあってすぐマージできないとき、差し戻しのブランチで起こす検査のワークフロー（空白区切り）。例 "qa.yml secret-scan.yml"'
+        type: string
+        default: ''
 
 jobs:
   check:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30  # 開いてみる段階で最大4分、必須チェックを待つのに最大15分
     concurrency:
       group: post-deploy
       cancel-in-progress: false
@@ -89,6 +97,8 @@ jobs:
         env:
           DISPATCH: ${{ inputs.dispatch }}
           PAGES_BUILD: ${{ inputs.pages_build }}
+          HOLD_PATHS: ${{ inputs.hold_paths }}
+          RECHECK: ${{ inputs.recheck }}
         run: |
           set -euo pipefail
           head=$(git rev-parse origin/main)
@@ -125,7 +135,25 @@ jobs:
             echo "担当エージェントへ: 原因を直して、元の変更を新しい PR で出し直してください。"
           } > "$RUNNER_TEMP/body.md"
           url=$(gh pr create -R "$R" --base main --head "$br" --title "差し戻し: 公開後の確認で壊れていた ${SHA:0:7}（自動）" --body-file "$RUNNER_TEMP/body.md")
-          gh pr merge "$url" -R "$R" --squash --delete-branch
+          # 人が点検する決まりのファイル（sw.js など）を戻すときは、ほかの PR と同じく自動ではマージしない（2026-11-07 CodeRabbit）
+          if [ -n "$HOLD_PATHS" ] && git diff --name-only "$good" "$head" -- . ':(exclude).github' | grep -qE -- "$HOLD_PATHS"; then
+            gh pr edit "$url" -R "$R" --add-label "自動マージしない" || true
+            echo "::error title=公開後の確認で壊れていました（差し戻しは人の点検待ち）::$url は点検の要るファイル（$HOLD_PATHS）を戻すので、自動ではマージしません。中身を見て手でマージしてください"
+            echo "差し戻しの PR（点検待ち）: $url" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          if ! gh pr merge "$url" -R "$R" --squash --delete-branch; then
+            # main のルールセットに必須チェック（QA・Secret scan）があると、検査が通るまでマージできない。
+            # GITHUB_TOKEN で作った PR では pull_request の検査が動かないので、ブランチで検査を起こし、自動マージを予約して待つ
+            for wf in $RECHECK; do gh workflow run "$wf" -R "$R" --ref "$br"; done
+            gh pr merge "$url" -R "$R" --squash --auto --delete-branch || { echo "::error title=差し戻しをマージできません::$url（必須チェックとリポジトリ設定の Allow auto-merge を確かめ、手でマージしてください）"; exit 1; }
+            merged=""
+            for _ in $(seq 1 45); do
+              sleep 20
+              [ "$(gh pr view "$url" -R "$R" --json state --jq .state)" = MERGED ] && { merged=1; break; }
+            done
+            [ -n "$merged" ] || { echo "::error title=差し戻しがまだマージされていません::$url（自動マージは予約済み。検査の結果を見てください）"; exit 1; }
+          fi
           for wf in $DISPATCH; do gh workflow run "$wf" -R "$R" --ref main; done
           if [ "$PAGES_BUILD" = true ]; then
             gh api -X POST "repos/$R/pages/builds" --jq .status || echo "::warning::公開を起こせませんでした"

@@ -159,7 +159,8 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 3. リポジトリは [onboarding.md](onboarding.md) 手順0で AI が作る（A：Actions「Create repo」を起こす。だめなら B：Chrome。そのときはこのスレッドに satou さんの一言を頼む）。リンクを渡すのは両方使えないときだけ。
 4. はじめの commit は README だけ。workflows・`qa/`・本体は同じ PR #1 で入れる（incidents/2026-11-04-new-repo-main-qa-without-qa-dir.md）。
 5. 上の「共通の形」と「だれでも遊べるように」を全部入れる。AGENTS.md は既存のゲーム（kippu-10 など）を写して直す。
-   `.github/workflows/` は既存のゲームからでなく `template/.github/workflows/` から写す（古いゲームの写しはひな形の直しが届いていない。QA も `template/.github/workflows/qa.yml`（時間切れ20分）を写す）。PR #1 を出す前に、shared-workflows で `LOCAL_ROOT=<clone の親> REPOS=<リポジトリ> node scripts/drift-check.mjs` を回し、出た行を直す（2026-11-05 あみだ配達・ことばならべ・ひかり道が、前の日に直した link-check の設定なしで出た）。
+   `.github/workflows/` は既存のゲームからでなく `template/.github/workflows/` から写す（古いゲームの写しはひな形の直しが届いていない。QA も `template/.github/workflows/qa.yml`（共通部品 game-qa を呼ぶ。検査の名前は `qa / qa` で、main の必須チェックと Auto merge の `require_checks` に書く）を写す）。PR #1 を出す前に、shared-workflows で `LOCAL_ROOT=<clone の親> REPOS=<リポジトリ> node scripts/drift-check.mjs` を回し、出た行を直す（2026-11-05 あみだ配達・ことばならべ・ひかり道が、前の日に直した link-check の設定なしで出た）。
+   レビュー（CodeRabbit）がひな形の写し（transfer.js・qa/a11y.mjs・qa/transfer-check.mjs・scripts/setup.sh・共通部品の呼び出し）に指摘したら、ゲームでは直さず、その日のうちに shared-workflows でひな形を直す PR を出し（直さない指摘は理由を返す）、直したら版を上げて全部のゲームへ配る。ゲームの PR は待たずに進めてよい（2026-11-07 同じ指摘が新作ごとに繰り返された。`incidents/2026-11-07-game-template-review-gaps.md`）。
 6. `node qa/run.mjs` が全部通ってから PR。`sw.js` を含む PR は `@coderabbitai review` とコメントし、レビューを読んでから手でマージする。
 7. Pages を main のルートで公開する（[onboarding.md](onboarding.md) 手順5の1）。`node scripts/drift-check.mjs` に `pages` の行が出ないこと、Actions の Post-deploy check が緑になったことを見るまで、X などで紹介しない（2026-11-04 3本が 404 のまま紹介された。incidents/2026-11-04-pages-never-enabled.md）。
 8. shared-workflows に PR を1つ出し、一覧に足す（[onboarding.md](onboarding.md) 手順3）。足すのは次の3か所だけで、どれも**名前の ABC 順の位置**に1行入れる（末尾に足さない。並行の新作の PR が同じ所に足すとぶつかる。2026-11-07 #184 が3つの PR とぶつかった。incidents/2026-11-07-repo-list-conflicts.md）。

@@ -9,14 +9,15 @@
 //   - AGENTS.md の節（「push する前の確認」「共通のきまり」）と、CLAUDE.md が AGENTS.md を指すこと（4KB 超を @ で取り込まない）
 //   - 全リポジトリで呼ぶはずの共通部品（ci-failure-issue・secret-scan・branch-cleanup・labels・setup-check）
 //   - 共通部品の呼び出しが @main 以外を指している・もう無い部品を呼んでいる
-//   - ci-failure-issue の呼び出しに見回り（schedule）が無い
+//   - ci-failure-issue の呼び出しに見回り（schedule）が無い・main で動くワークフローの名前が workflows: に無い
+//   - ゲーム（index.html・sw.js・qa/run.mjs がある）の QA が共通部品 game-qa を呼んでいない
 //   - link-check の呼び出しに、main への push で動き直す設定が無い（incidents/2026-11-05-link-check-not-rerun-on-main.md）
 //   - Playwright を入れるジョブの timeout-minutes が 20 より短い（ファイル名によらず全部のワークフローを見る。入れる段階だけで9分かかる日がある。incidents/2026-11-05-qa-timeout-slow-install.md・2026-11-07-tenbin-check-timeout.md）
 //   - scripts/setup.sh にひな形の <> が残っている（埋め忘れ）
 //   - scripts/setup.sh の「ひな形の版」が template/scripts/setup.sh より古い（ひな形を直しても写しに届かない。incidents/2026-11-03-setup-false-ready.md）
 //   - scripts/setup.sh が渡す CHROMIUM_PATH を、検査のスクリプト（qa/・tools/ など）が読んでいない
 //   - 依存の置き場（package.json・requirements.txt・pyproject.toml）を Dependabot が見ていない
-//   - 公開リポジトリの既定のブランチに、削除と force push を止めるルールが無い（API で読むときだけ。incidents/2026-11-04-new-repos-no-ruleset.md）
+//   - 公開リポジトリの既定のブランチに、削除と force push を止めるルールが無い（API で読むときだけ。incidents/2026-11-04-new-repos-no-ruleset.md）・ゲームの必須チェックに QA と Secret scan が無い
 //   - 感想の Issue フォーム（.github/ISSUE_TEMPLATE/feedback.yml）の name がひな形とちがう・形が GitHub の決まりに合わない（incidents/2026-11-05-feedback-form-not-shown.md）
 //   - 公開の見張り（post-deploy・site-watch）があるのに GitHub Pages が有効でない（API で読むときだけ。incidents/2026-11-04-pages-never-enabled.md）
 //   - 記録を localStorage に置く PWA のゲームに、引き継ぎコード（transfer.js）が無い・版が template/transfer.js より古い・sw.js が保存していない（routines/game-dev.md「引き継ぎコード」）
@@ -43,6 +44,8 @@ const FILES = ['AGENTS.md', 'CLAUDE.md', 'scripts/setup.sh', '.claude/settings.j
 const SECTIONS = ['## push する前の確認', '## 共通のきまり'];
 const QA_MIN = 20;
 const CALLS = ['ci-failure-issue', 'secret-scan', 'branch-cleanup', 'labels', 'setup-check'];
+// main で動いても、落ちたときに Issue を立てなくてよいもの（ci-failure-issue.yml の workflows: に無くてよい）
+const UNWATCHED = ['CI failure issue', 'Branch cleanup', 'Labels', 'CodeQL', 'Scorecard', 'Weekly summary'];
 
 // 部品の一覧（このリポジトリの .github/workflows で workflow_call を持つもの）
 const wfDir = join(here, '..', '.github', 'workflows');
@@ -184,6 +187,13 @@ for (const r of REPOS) {
       const types = new Set((Array.isArray(rules) ? rules : []).map((x) => x.type));
       const miss = ['deletion', 'non_fast_forward'].filter((t) => !types.has(t));
       if (miss.length) flag('ruleset', `${src.repo.default_branch} のルールセットに ${miss.join('・')} が無い（routines/onboarding.md 手順5の2。…/settings/rules → New branch ruleset →「Restrict deletions」「Block force pushes」）`);
+      // ゲーム（QA と Secret scan がある）は、両方を必須チェックにする。無いと Dependabot の自動マージ（--auto）が検査の前にマージする
+      // （2026-11-07 CodeRabbit が bousai-handan #1 で指摘。incidents/2026-11-07-game-template-review-gaps.md）
+      if (paths.has('.github/workflows/qa.yml') && paths.has('.github/workflows/secret-scan.yml') && paths.has('sw.js')) {
+        const need = (Array.isArray(rules) ? rules : []).filter((x) => x.type === 'required_status_checks').flatMap((x) => (x.parameters?.required_status_checks || []).map((c) => c.context));
+        const lack = ['qa / qa', 'scan / scan'].filter((c) => !need.includes(c));
+        if (lack.length) flag('ruleset:checks', `${src.repo.default_branch} の必須チェックに ${lack.join('・')} が無い（shared-workflows の Actions「Add ruleset」を name=${r} で起こす。routines/onboarding.md 手順5）`);
+      }
     }
 
     // 公開の見張り（post-deploy・site-watch）を入れているのに Pages が切れている。site-watch は前は「切れているので何もしない」で緑だった
@@ -269,11 +279,16 @@ for (const r of REPOS) {
       if (/addAll\(/.test(sw) && !/cache:\s*["']reload["']/.test(sw)) flag('sw:reload', 'sw.js の install が SHELL を HTTP の保存から取る（addAll(SHELL.map((u) => new Request(u, { cache: "reload" }))) にする）');
     }
     const called = new Set();
+    const onMain = []; let watched = null; // main で動くワークフローの名前・ci-failure-issue が見張る名前
     for (const p of paths) {
       if (!/^\.github\/workflows\/[^/]+\.ya?ml$/.test(p)) continue;
       const text = await src.read(p);
       // コメントの行は数えない。値の引用符（' "）は外して読む
       const live = text.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
+      const wfName = (live.match(/^name:\s*["']?(.+?)["']?\s*$/m) || [])[1];
+      if (wfName && /^\s*(schedule|push):/m.test(live)) onMain.push(wfName);
+      const wl = live.match(/^\s*workflows:\s*\[(.*)\]/m);
+      if (/shared-workflows\/\.github\/workflows\/ci-failure-issue\.ya?ml@/.test(live) && wl) watched = wl[1].split(',').map((x) => x.trim().replace(/^["']|["']$/g, ''));
       for (const m of live.matchAll(/^\s*(?:-\s*)?uses:\s*["']?satou-aaaaa\/shared-workflows\/\.github\/workflows\/([\w.-]+?)\.ya?ml@([^\s#"']+)["']?/gm)) {
         called.add(m[1]);
         if (m[2] !== 'main') flag(`ref:${m[1]}`, `${p} が ${m[1]} を @${m[2]} で呼んでいる（共通部品は @main）`);
@@ -293,6 +308,13 @@ for (const r of REPOS) {
       }
     }
     for (const c of CALLS) if (!called.has(c)) flag(`call:${c}`, `共通部品 ${c} を呼んでいない（template/.github/workflows/${c}.yml を写す）`);
+    // main で動くのに見張っていないワークフロー（2026-11-07 Setup check が抜けていて、月1の失敗で Issue が立たなかった。incidents/2026-11-07-game-template-review-gaps.md）
+    if (watched) {
+      const miss = onMain.filter((n) => !watched.includes(n) && !UNWATCHED.includes(n));
+      if (miss.length) flag('ci-failure-issue:list', `ci-failure-issue.yml の workflows: に、main で動く ${miss.join('・')} が無い（落ちても Issue が立たない）`);
+    }
+    // ゲームの QA は共通部品 game-qa を呼ぶ（写しだと、版の固定・時間切れの直しが届かない。同じ incident）
+    if (paths.has('index.html') && paths.has('sw.js') && paths.has('qa/run.mjs') && !called.has('game-qa')) flag('call:game-qa', 'ゲームの QA が共通部品 game-qa を呼んでいない（template/.github/workflows/qa.yml を写す。検査の名前は qa / qa になる）');
 
     for (const o of out) lines.push(`[${r}] ${o}`);
   } catch (e) { skipped.push(`${r}（${e.message}）`); }
