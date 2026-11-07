@@ -6,7 +6,7 @@
 // ずれてよい理由があれば scripts/drift-allow.json に理由つきで足す（理由の無い許しは置かない）。
 // 見るもの:
 //   - 全リポジトリにあるはずのファイル（AGENTS.md・CLAUDE.md・scripts/setup.sh・.claude/settings.json・.coderabbit.yaml）
-//   - AGENTS.md の節（「push する前の確認」「共通のきまり」）と、CLAUDE.md が AGENTS.md を読み込むこと
+//   - AGENTS.md の節（「push する前の確認」「共通のきまり」）と、CLAUDE.md が AGENTS.md を指すこと（4KB 超を @ で取り込まない）
 //   - 全リポジトリで呼ぶはずの共通部品（ci-failure-issue・secret-scan・branch-cleanup・labels・setup-check）
 //   - 共通部品の呼び出しが @main 以外を指している・もう無い部品を呼んでいる
 //   - ci-failure-issue の呼び出しに見回り（schedule）が無い
@@ -123,7 +123,11 @@ for (const r of REPOS) {
     }
     if (paths.has('CLAUDE.md')) {
       const claude = await src.read('CLAUDE.md');
-      if (!/^@AGENTS\.md\s*$/m.test(claude)) flag('claude:import', 'CLAUDE.md が @AGENTS.md を読み込んでいない（AGENTS.md と二重に書いている）');
+      const imports = /^@AGENTS\.md\s*$/m.test(claude);
+      if (!imports && !/AGENTS\.md/.test(claude)) flag('claude:import', 'CLAUDE.md が AGENTS.md を指していない（template/CLAUDE.md の形に）');
+      // 4KB を超える AGENTS.md を @ で取り込むと、全リポジトリを入れたクラウドの会話で毎回全文が読まれる（2026-11-07 トークン節約。routines/game-dev.md「トークンを節約する」）
+      if (imports && paths.has('AGENTS.md') && Buffer.byteLength(await src.read('AGENTS.md')) > 4096) flag('claude:big-import', 'CLAUDE.md が 4KB を超える AGENTS.md を @ で取り込んでいる（毎回の会話で全文が読まれる。template/CLAUDE.md の1行に替える）');
+      if (Buffer.byteLength(claude) > 1024) flag('claude:long', 'CLAUDE.md が 1KB を超えている（決まりは AGENTS.md に書く）');
     }
 
     if (paths.has('scripts/setup.sh')) {
