@@ -10,6 +10,8 @@
 //          写しまちがい・別のゲーム・知らないキー・HTML の印の文字・大きく膨らむコードは弾く、ボタンは高さ44px以上、エラーが出ない。
 //          版10: 書き込みが失敗しても記録が消えない（取り込み・控えに戻す）・保存に失敗したままなら入れ替えない・
 //                入れ替えの前に開いたタブが古い記録で上書きしない・コードの後ろに言葉が続いても読む・大きく膨らむコードは途中で広げるのをやめる。
+// 待ち方の決まり: 読み込み・読み直しのあとに記録を比べるときは、決まった時間（300ms）で比べず settle()（記録が落ち着くまで待つ）を使う。
+//   読み直しを起こす操作の結果は、その場で sessionStorage に書き、読み直しのあとに読む（重い PC・CI で揺れない。incidents/2026-11-07-transfer-check-flaky-under-load.md）
 import { deflateRawSync } from "node:zlib";
 
 const CRC = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
@@ -24,6 +26,8 @@ export async function checkTransfer({ browser, url, game, sample, check, open })
   const errors = [];
   const watch = (p) => { p.on("pageerror", (e) => errors.push(String(e))); return p; };
   const dump = (page) => page.evaluate((keys) => Object.fromEntries(Object.keys(localStorage).filter((k) => keys.includes(k)).sort().map((k) => [k, localStorage.getItem(k)])), Object.keys(sample));
+  // ゲームが読み込みのあとに記録を書き直し終えるまで待つ（重いと 300ms では終わらず、戻す直前の記録と控えが食いちがう）
+  const settle = async (page) => { let a = JSON.stringify(await dump(page)); for (let i = 0; i < 30; i++) { await page.waitForTimeout(100); const b = JSON.stringify(await dump(page)); if (b === a) return b; a = b; } return a; };
   const openBox = async (page) => {
     if (open) await open(page);
     const h = page.locator("[data-hk]").filter({ visible: true }).first();
@@ -241,7 +245,7 @@ export async function checkTransfer({ browser, url, game, sample, check, open })
   await openBox(pd);
   await pd.click("#hk-undo");
   // ゲームは読み込みのあと記録を整えて書き直すので、戻す直前の記録と比べる
-  const nb = JSON.stringify(await dump(pd));
+  const nb = await settle(pd);
   await Promise.all([pd.waitForEvent("load"), pd.click("#hk-yes")]);
   await pd.waitForTimeout(300);
   const bk1 = await pd.evaluate((g) => { try { return JSON.parse(localStorage.getItem("hk-backup:" + g) || "null"); } catch (e) { return null; } }, game);
@@ -253,7 +257,7 @@ export async function checkTransfer({ browser, url, game, sample, check, open })
   if (await pd.locator("#hk-toast-close").count()) await pd.click("#hk-toast-close");
   await openBox(pd);
   await pd.click("#hk-undo");
-  const nb2 = JSON.stringify(await dump(pd));
+  const nb2 = await settle(pd);
   await Promise.all([pd.waitForEvent("load"), pd.click("#hk-yes")]);
   await pd.waitForTimeout(300);
   const bk2 = await pd.evaluate((g) => JSON.parse(localStorage.getItem("hk-backup:" + g) || "null"), game);
@@ -263,7 +267,7 @@ export async function checkTransfer({ browser, url, game, sample, check, open })
   await pd.reload();
   await pd.waitForTimeout(300);
   if (await pd.locator("#hk-toast-close").count()) await pd.click("#hk-toast-close");
-  const nb3 = JSON.stringify(await dump(pd));
+  const nb3 = await settle(pd);
   await pd.evaluate((c) => { location.hash = "hk=" + c; }, code);
   await pd.waitForSelector("#hk-yes");
   await Promise.all([pd.waitForEvent("load"), pd.click("#hk-yes")]);
@@ -343,7 +347,11 @@ export async function checkTransfer({ browser, url, game, sample, check, open })
   await old2.goto(url);
   await old2.waitForTimeout(300);
   await pd.evaluate((g) => localStorage.setItem("hk-sync:" + g, "ほかのタブで入れ替えた." + Date.now()), game);
-  const band = await old2.evaluate((k) => { try { localStorage.setItem(k, "{}"); } catch (e) { /* なし */ } const b = document.getElementById("hk-stale-tab"); return !!b && b.getAttribute("role") === "alert" && b.querySelector("button").getBoundingClientRect().height >= 44; }, firstKey).catch(() => false);
+  // 帯を出すと同時に読み直しが始まるので、見た結果は読み直しても残る sessionStorage に書き、読み直しのあとに読む（重いと evaluate の返事より先に画面が消える）
+  await old2.evaluate((k) => { try { localStorage.setItem(k, "{}"); } catch (e) { /* なし */ } const b = document.getElementById("hk-stale-tab"); sessionStorage.setItem("hk-qa-band", String(!!b && b.getAttribute("role") === "alert" && b.querySelector("button").getBoundingClientRect().height >= 44)); }, firstKey).catch(() => {});
+  await old2.waitForLoadState("load").catch(() => {});
+  await old2.waitForTimeout(300);
+  const band = (await old2.evaluate(() => sessionStorage.getItem("hk-qa-band")).catch(() => null)) === "true";
   check("引き継ぎ：古いタブの保存を捨てたら、「保存できない・読み直して」の帯を出す（ボタンは44px以上）", band);
   await D.close();
 
