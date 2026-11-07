@@ -77,6 +77,7 @@ sentaku-hyoji game
 setsuden-kotsu game
 shiritori-saitan game
 shokuhin-hyoji game
+shukujitsu-yurai game
 taiyokei-kurabe game
 tani-kankaku game
 teate-junban game
