@@ -214,6 +214,25 @@ ok('知らせる印は書き出しに入れない', !Object.keys((await w.HK.dec
   ok(`とても長い貼りつけはすぐ弾く（結果 ${k}・${Date.now() - t0}ms）`, k === 'big' && Date.now() - t0 < 1500);
 }
 
+// 版8：HK0 は base64 を戻す前に長さで弾く（MAX_CODE より短くても、戻すと MAX_JSON を超えるもの）
+{
+  const t0 = Date.now();
+  const k = await kind(w.HK.decode('HK0.' + 'A'.repeat(6 * 1024 * 1024) + '.0'));
+  ok(`HK0 の大きすぎる中身は base64 を戻す前に弾く（結果 ${k}・${Date.now() - t0}ms）`, k === 'big' && Date.now() - t0 < 1500);
+}
+// 版8：控えに戻したとき、戻す前が空でも空の記録を控えに残し、もう一度押せば行き来できる
+{
+  const bk = JSON.stringify({ at: '2026-11-01T00:00:00Z', d: { 'kippu-v1': rec } });
+  const l = store({ 'hk-backup:kippu-10': bk });
+  const ss = store({ 'hk-pending:kippu-10': JSON.stringify({ d: JSON.parse(bk).d, undo: true }) });
+  boot({ game: 'kippu-10', keys: 'kippu-v1', local: l, session: ss });
+  const nb = JSON.parse(l.getItem('hk-backup:kippu-10') || 'null');
+  ok('戻す前が空でも、空の記録を控えに残す（控えが消えない）', l.getItem('kippu-v1') === rec && nb && nb.d && Object.keys(nb.d).length === 0);
+  const s2 = store({ 'hk-pending:kippu-10': JSON.stringify({ d: nb.d, undo: true }) });
+  boot({ game: 'kippu-10', keys: 'kippu-v1', local: l, session: s2 });
+  ok('もう一度戻すと空に戻り、控えは前の記録になる', l.getItem('kippu-v1') === null && JSON.parse(l.getItem('hk-backup:kippu-10')).d['kippu-v1'] === rec);
+}
+
 const bad = boot({ game: 'x', keys: '*', local: store(), session: store() });
 ok('data-keys に分け合う a11y-v1 があるときは動かない', !boot({ game: 'x', keys: 'x-v1,a11y-v1', local: store(), session: store() }).HK && !boot({ game: 'x', keys: 'x-v1,a11y*', local: store(), session: store() }).HK);
 ok('data-keys が * だけのときは動かない（同じサイトのほかのゲームの記録まで持ち出さない）', !bad.HK);
