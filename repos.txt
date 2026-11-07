@@ -54,6 +54,7 @@ sandbox app
 seiza-tsunagi game
 sentaku-hyoji game
 shiritori-saitan game
+shokuhin-hyoji game
 tani-kankaku game
 teate-junban game
 teko-tsuriai game
