@@ -18,3 +18,4 @@
 ## 対策
 - [x] 直す: `LEGACY_TLS_HOSTS` に挙げたサイトだけ、robots.txt（Python）と本文（curl の `OPENSSL_CONF`）で古い再ネゴシエーションを許す（この PR、`.github/workflows/fetch-page.yml`）
 - [x] 防ぐ: `routines/known-limits.md` に「古い TLS で落ちたら `LEGACY_TLS_HOSTS` に1行足す（ほかの検証は弱めない）」を足した（この PR）
+- [x] 防ぐ: Shift_JIS のページ（国土地理院の CSV）が文字化けし、ログに先頭2万字しか出ず成果物も落とせなかったので、charset→UTF-8→cp932 の順で読み、ログの字数を入力 `max_chars`（上限20万字）で増やせるようにした（`.github/workflows/fetch-page.yml`）

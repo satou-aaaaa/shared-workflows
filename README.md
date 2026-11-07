@@ -1,6 +1,6 @@
 # shared-workflows
 
-satou-aaaaa の各リポジトリ（last-tell・tenbin・carcassonne-research・sandbox・dungeon-boardgame・naitei-no-michi・local-kanban・articles・last-tell-godot・usotsuki-roppo・wagamama-burger・kabu-news・batsu-doko・kasane-zome・rosen-hitofude・seiza-tsunagi・mannaka-kanji・kippu-10・bento-zume・todofuken-relay・shiritori-saitan・madori-puzzle・tenkizu-yomi・bushu-tashizan・amida-haitatsu・kotoba-narabe・jobun-tobatsu・machi-michijun・hikari-michi・otsukai-memo・bunshi-tsukuri・kimari-sagashi・kenko-minuki・denki-kairo）で共通に使う部品。
+satou-aaaaa の各リポジトリ（last-tell・tenbin・carcassonne-research・sandbox・dungeon-boardgame・naitei-no-michi・local-kanban・articles・last-tell-godot・usotsuki-roppo・wagamama-burger・kabu-news・batsu-doko・kasane-zome・rosen-hitofude・seiza-tsunagi・mannaka-kanji・kippu-10・bento-zume・todofuken-relay・shiritori-saitan・madori-puzzle・tenkizu-yomi・bushu-tashizan・amida-haitatsu・kotoba-narabe・jobun-tobatsu・machi-michijun・hikari-michi・otsukai-memo・bunshi-tsukuri・kimari-sagashi・kenko-minuki・denki-kairo・kengen-check）で共通に使う部品。
 security-toolkit（非公開）は CI を置かない方針なので部品は呼ばず、`AGENTS.md` などのひな形だけを使う。
 同じ処理をリポジトリごとにコピーせず、ここを1か所直せば全部に効くようにするためのもの。Claude は使わない（GitHub Actions だけで動く）。
 
