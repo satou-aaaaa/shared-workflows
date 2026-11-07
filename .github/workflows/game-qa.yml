@@ -48,7 +48,13 @@ jobs:
           persist-credentials: false
           sparse-checkout: |
             scripts/sync-template.mjs
+            scripts/link-text.mjs
             template
+      # Link check（週1）が調べる .md に、すぐ後ろに全角の字が続く URL が無いか。lychee はそこまで URL と読んで 404 で落ちる。
+      # 週1の検査で初めて落ちていた（2026-11-07 rosen-hitofude・seiza-tsunagi。incidents/2026-11-08-link-check-wide-char-after-url.md）
+      - name: リンクの書き方
+        if: github.event_name == 'pull_request'
+        run: node .shared-workflows/scripts/link-text.mjs .
       - name: ひな形の写し
         if: github.event_name == 'pull_request'
         env:

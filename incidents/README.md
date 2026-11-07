@@ -80,6 +80,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-11-08 | 検査の見逃し | [Link check が、AGENTS.md の「Ko-fi（URL）へ…」を全角の続きまで URL と読んで2本とも落ちた](2026-11-08-link-check-wide-char-after-url.md) | 対策済み |
 | 2026-11-07 | 手順の抜け | [ひな形を配る PR の本文から、写すコマンドの文が消えた](2026-11-07-pr-body-backtick-ran.md) | 対策済み |
 | 2026-11-07 | 検査の見逃し | [引き継ぎの検査が、PC が重いときだけときどき落ちた](2026-11-07-transfer-check-flaky-under-load.md) | 対策済み |
 | 2026-11-07 | 検査の見逃し | [ヒント2で消した選び肢が、まちがいを選ぶと戻ってきた](2026-11-07-hint-cut-comes-back.md) | 対策済み |
