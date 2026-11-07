@@ -258,6 +258,22 @@ export async function checkTransfer({ browser, url, game, sample, check, open })
   await pd.waitForTimeout(300);
   const bk2 = await pd.evaluate((g) => JSON.parse(localStorage.getItem("hk-backup:" + g) || "null"), game);
   check("引き継ぎ：止まったあとに遊んだ記録は、残った記録へ戻しても控えに残る（上書きで消えない）", JSON.stringify(await dump(pd)) === want && !!bk2 && sorted(bk2.d) === nb2, JSON.stringify(bk2).slice(0, 80));
+  // 止まって戻す前の記録が残ったまま、別の記録を取り込んだら、「控えに戻す」はその取り込みの前の記録へ戻す（版11。akushitsu-miyaburi #4 の CodeRabbit）
+  await putRec(pd, before, { ["hk-prev:" + game]: JSON.stringify({ at: new Date(Date.now() - 3600e3).toISOString(), d: {} }) });
+  await pd.reload();
+  await pd.waitForTimeout(300);
+  if (await pd.locator("#hk-toast-close").count()) await pd.click("#hk-toast-close");
+  const nb3 = JSON.stringify(await dump(pd));
+  await pd.evaluate((c) => { location.hash = "hk=" + c; }, code);
+  await pd.waitForSelector("#hk-yes");
+  await Promise.all([pd.waitForEvent("load"), pd.click("#hk-yes")]);
+  await pd.waitForTimeout(300);
+  if (await pd.locator("#hk-toast-close").count()) await pd.click("#hk-toast-close");
+  await openBox(pd);
+  await pd.click("#hk-undo");
+  await Promise.all([pd.waitForEvent("load"), pd.click("#hk-yes")]);
+  await pd.waitForTimeout(300);
+  check("引き継ぎ：止まって残った記録があっても、あとで取り込んだら、控えに戻すとその前の記録になる", sorted(await dump(pd)) === sorted(JSON.parse(nb3)), JSON.stringify(await dump(pd)).slice(0, 80));
   // 入れ替えの番号は、入れ替えに失敗したら元に戻す（記録は変わらないのに、ほかのタブの保存が捨てられる。版11）
   await putRec(pd, before, {});
   await pd.reload();

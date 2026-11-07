@@ -139,7 +139,13 @@
     try { var b = JSON.parse(localStorage.getItem(key) || "null"); return b && b.d && typeof b.d === "object" ? b : null; } catch (e) { return null; }
   }
   // 控えに戻す途中で止まったときは、戻す前の記録（PREV）を控えとして出す（それがただ1つの写し。版10）
-  function readBackup() { return readKey(PREV) || readKey(BACKUP); }
+  // 両方あるときは新しいほう（止まったあとに別の記録を取り込んだら、その取り込みの前の記録へ戻す。版11、akushitsu-miyaburi #4 の CodeRabbit）
+  function readBackup() {
+    var p = readKey(PREV), b = readKey(BACKUP);
+    if (!p || !b) return p || b;
+    var tp = Date.parse(p.at) || 0, tb = Date.parse(b.at) || 0;
+    return tb > tp ? b : p;
+  }
   function syncNo() { try { return localStorage.getItem(SYNC) || ""; } catch (e) { return ""; } }
   // 記録の印（キーの順によらない）。途中で止まったあとに記録が変わったかを見る（版11）
   function fp(d) {
@@ -348,7 +354,8 @@
         // 止まったあとに記録が変わっていたら（あとから遊んだ分がある）、戻すときにいまの記録を控えにする（版11）
         var moved = false;
         if (toHeld) { var was = null; try { was = localStorage.getItem(PREVFP); } catch (e) { /* なし */ } moved = was !== fp(cur); }
-        var mine = moved ? JSON.stringify({ at: new Date().toISOString(), d: cur }) : stamp;
+        // 残った記録とはちがう控え（そのあと取り込んだ記録の控え）へ戻すときも、いまの記録を控えにする（版11）
+        var mine = moved || (heldB && !toHeld) ? JSON.stringify({ at: new Date().toISOString(), d: cur }) : stamp;
         try { replaceAll(job.d); } catch (e) {
           partial = e.rolledBack === false;
           if (!partial && held == null) { try { localStorage.removeItem(PREV); } catch (e2) { /* なし */ } }
