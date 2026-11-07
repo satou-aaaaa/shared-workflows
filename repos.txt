@@ -18,6 +18,7 @@ dema-tashikame game
 denki-kairo game
 dungeon-boardgame app
 gogen-suiri game
+gurafu-minuki game
 haku-uchi game
 hikari-michi game
 jobun-tobatsu game
