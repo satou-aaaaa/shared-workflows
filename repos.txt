@@ -26,6 +26,7 @@ hyoshiki-yomi game
 jobun-tobatsu game
 kabu-news game
 kasane-zome game
+keigo-naoshi game
 kengen-check game
 kenko-minuki game
 kikigaki-techo game
@@ -37,6 +38,8 @@ kotoba-honrai game
 kotoba-narabe game
 kotowaza-awase game
 kotowaza-bamen game
+kusuri-yomi game
+kyuyo-meisai game
 last-tell app
 last-tell-godot private
 local-kanban app
@@ -54,11 +57,14 @@ sandbox app
 seiza-tsunagi game
 sentaku-hyoji game
 shiritori-saitan game
+shokuhin-hyoji game
 tani-kankaku game
 teate-junban game
 teko-tsuriai game
 tenbin app
+tenji-yomi game
 tenkizu-yomi game
 todofuken-relay game
 usotsuki-roppo game
 wagamama-burger game
+wareki-yomi game
