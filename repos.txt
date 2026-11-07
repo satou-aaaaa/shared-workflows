@@ -18,6 +18,7 @@ chizu-kigo game
 dashisugi-check game
 dema-tashikame game
 denki-kairo game
+dento-kogei game
 dungeon-boardgame app
 gamen-no-wana game
 genso-kigo game
