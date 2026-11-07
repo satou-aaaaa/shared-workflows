@@ -27,6 +27,7 @@ kenko-minuki game
 kikigaki-techo game
 kimari-sagashi game
 kippu-10 game
+kokoku-minuki game
 kondate-koma game
 kotoba-narabe game
 last-tell app

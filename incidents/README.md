@@ -80,6 +80,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-11-07 | 権限・設定 | [並行で起こした Create repo が、ほかのスレッドの実行に取り消された](2026-11-07-create-repo-cancelled-by-parallel.md) | 対策済み |
 | 2026-11-07 | 手順の抜け | [新作を1本公開したあと、次の新作に進まず約10時間止まっていた](2026-11-07-new-game-stopped-after-publish.md) | 対策1つ残り |
 | 2026-11-07 | 手順の抜け | [新作を一覧に足す PR どうしが、毎回ぶつかっていた](2026-11-07-repo-list-conflicts.md) | 一部対策済み |
 | 2026-11-07 | 権限・設定 | [Fetch page が国土地理院のページを古い TLS のせいで読めなかった](2026-11-07-fetch-page-gsi-legacy-tls.md) | 対策済み |
