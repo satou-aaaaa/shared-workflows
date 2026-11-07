@@ -220,6 +220,12 @@ for (const r of REPOS) {
       if (gate) flag('free:gate', `index.html に遊ぶ前の鍵がある「${gate[0].trim()}」（どのモードも最初から遊べるように。routines/game-dev.md「好きなだけ遊べるように」）`);
     }
 
+    // 遊び方の「見た」は dialog の close で残す（ボタンの中だけだと Esc で閉じた人に毎回出る。2026-11-07 incidents/2026-11-07-howto-esc-not-saved.md）
+    if (paths.has('index.html') && paths.has('sw.js')) {
+      const page = await src.read('index.html');
+      if (/\$\("howto-ok"\)\.onclick\s*=\s*\(\)\s*=>\s*\{\s*const d = \$\("howto"\); d\.close \? d\.close\(\) : d\.removeAttribute\("open"\); save\(/.test(page) && !/\$\("howto"\)\.addEventListener\("close"/.test(page)) flag('howto:close', 'index.html が遊び方の「見た」を「わかった」のボタンの中だけで残している（Esc で閉じた人に毎回出る。$("howto").addEventListener("close", …) で残す。routines/game-dev.md「共通の形」の遊び方）');
+    }
+
     // 引き継ぎコード：記録が端末の中だけにあるゲームは、機種変更で記録が消える（2026-11-05 satou さん「PWA 型のゲームでデータの引継ぎを」）。
     // 新しいゲームに入れ忘れないよう、PWA（sw.js と manifest）で AGENTS.md が localStorage に記録を置くと書いているリポジトリを見る
     // AGENTS.md に書いていなくても、index.html が localStorage を使っていれば見る
