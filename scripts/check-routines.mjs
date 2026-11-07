@@ -2,7 +2,7 @@
 // 使い方: node scripts/check-routines.mjs   （リポジトリの一番上で）
 // 調べること:
 //   1. `<!-- style: v1 -->` を書いた手順書に、決まった見出し（目的・使う道具・手順・完了条件・やってはいけないこと）がこの順にある
-//   2. AGENTS.md と template/AGENTS.md があり、CLAUDE.md と template/CLAUDE.md が `@AGENTS.md` で取り込んでいる
+//   2. AGENTS.md と template/AGENTS.md があり、CLAUDE.md と template/CLAUDE.md が AGENTS.md を指している（4KB 超を @ で取り込まない）
 //   3. まだ新しい形になっていない手順書の名前を知らせる（失敗にはしない。少しずつ直す）
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 
@@ -35,7 +35,11 @@ for (const dir of ['.', 'template']) {
   const agents = `${dir}/AGENTS.md`;
   const claude = `${dir}/CLAUDE.md`;
   if (!existsSync(agents)) errors.push(`${agents} がない`);
-  if (!existsSync(claude) || !/^@AGENTS\.md\s*$/m.test(read(claude))) errors.push(`${claude} の先頭に @AGENTS.md の1行がない`);
+  // CLAUDE.md は AGENTS.md を指すだけ。4KB を超える AGENTS.md を @ で取り込むと、全リポジトリを入れた会話で毎回読まれる（2026-11-07 トークン節約）
+  const c = existsSync(claude) ? read(claude) : '';
+  const imports = /^@AGENTS\.md\s*$/m.test(c);
+  if (!imports && !/AGENTS\.md/.test(c)) errors.push(`${claude} が AGENTS.md を指していない（template/CLAUDE.md の形に）`);
+  if (imports && existsSync(agents) && Buffer.byteLength(read(agents)) > 4096) errors.push(`${claude} が 4KB を超える AGENTS.md を @ で取り込んでいる（template/CLAUDE.md の形に）`);
 }
 
 for (const n of notices) console.log(`::notice::${n}`);

@@ -13,10 +13,8 @@ permissions:
   contents: read
   issues: write
 
-# 公開リポジトリは全部見る（scripts/drift-check.mjs の REPOS ＋ shared-workflows）。リポジトリを足したらここにも足す。
+# 公開リポジトリは全部見る（repos.txt の game・app ＋ shared-workflows）。
 # 2026-11-05 まで最初の6つだけで、11/1 からのゲーム15本が集計に入っていなかった。非公開（ops-backup など）は github.token で読めないので入れない。
-env:
-  REPOS: last-tell tenbin carcassonne-research sandbox local-kanban shared-workflows dungeon-boardgame naitei-no-michi articles usotsuki-roppo wagamama-burger kabu-news batsu-doko kasane-zome rosen-hitofude seiza-tsunagi mannaka-kanji kippu-10 bento-zume todofuken-relay shiritori-saitan madori-puzzle tenkizu-yomi bushu-tashizan amida-haitatsu kotoba-narabe jobun-tobatsu machi-michijun hikari-michi otsukai-memo bunshi-tsukuri kimari-sagashi kenko-minuki kondate-koma denki-kairo akushitsu-miyaburi chikei-ate dashisugi-check kikigaki-techo bousai-handan
 
 jobs:
   report:
@@ -32,6 +30,9 @@ jobs:
           OWNER: ${{ github.repository_owner }}
         run: |
           set -euo pipefail
+          # 見るリポジトリは repos.txt（ここに一覧を書かない。incidents/2026-11-07-repo-list-conflicts.md）
+          REPOS="$(node scripts/repos.mjs) shared-workflows"
+          export REPOS
           day=$(TZ=Asia/Tokyo date +%Y-%m-%d)
           body="$RUNNER_TEMP/body.md"
           node scripts/ci-time.mjs > "$body"

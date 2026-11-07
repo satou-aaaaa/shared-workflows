@@ -13,9 +13,6 @@ permissions:
   contents: read
   issues: write
 
-env:
-  REPOS: sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban articles carcassonne-research usotsuki-roppo wagamama-burger kabu-news batsu-doko kasane-zome rosen-hitofude seiza-tsunagi mannaka-kanji kippu-10 bento-zume todofuken-relay shiritori-saitan madori-puzzle tenkizu-yomi bushu-tashizan amida-haitatsu kotoba-narabe jobun-tobatsu machi-michijun hikari-michi otsukai-memo bunshi-tsukuri kimari-sagashi kenko-minuki kondate-koma denki-kairo akushitsu-miyaburi chikei-ate dashisugi-check kikigaki-techo bousai-handan shared-workflows
-
 jobs:
   summary:
     runs-on: ubuntu-latest
@@ -37,6 +34,9 @@ jobs:
           OWNER: ${{ github.repository_owner }}
         run: |
           set -euo pipefail
+          # 見るリポジトリは repos.txt（ここに一覧を書かない。incidents/2026-11-07-repo-list-conflicts.md）
+          REPOS="$(node scripts/repos.mjs) shared-workflows"
+          export REPOS
           now=$(date -u +%s)
           day=$(TZ=Asia/Tokyo date +%Y-%m-%d)
           body="$RUNNER_TEMP/body.md"
