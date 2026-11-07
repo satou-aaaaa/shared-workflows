@@ -1,4 +1,5 @@
-// ヒント2の cutOf が「まちがいの数で消す選び肢を変える」形かを見る（drift-check の hint:cut-moves と、その検査 check-hint-cut.mjs が使う）
+// ゲームの index.html の作りの見分け（drift-check と、その検査 check-game-patterns.mjs が使う）
+// cutMoves：ヒント2の cutOf が「まちがいの数で消す選び肢を変える」形か
 // まちがい（cur.wrong）を除いてから「最後の1つ以外」を消すと、しぼったあとにまちがいを選んだとき、消した選び肢が戻る（incidents/2026-11-07-hint-cut-comes-back.md）
 
 // コメントを除く（文字列の中の https:// は残す）
@@ -25,4 +26,14 @@ export function cutMoves(page) {
   const skipsWrong = /wrong\s*\.\s*(?:includes|indexOf|has)\s*\(/.test(body);
   const keepsLast = /\.length\s*(?:-\s*1|>\s*1)|\.slice\s*\(\s*0\s*,\s*-\s*1\s*\)/.test(body);
   return skipsWrong && keepsLast;
+}
+
+// 星の表示（class="stars"）が role="img" を持たない、または取れなかった星も ★ で色だけで分ける形かを見る（drift-check の stars:role）
+// span に role が無いと aria-label が読まれないことがあり、★ の色だけでは色の見分けにくい人に星の数が伝わらない（2026-11-07 食中毒よぼうの CodeRabbit）
+export function starsBare(page) {
+  const s = stripComments(page);
+  const tags = s.match(/<span\b[^>]*\bclass=["'`]stars["'`][^>]*>/g) || [];
+  const noRole = tags.some((t) => !/\brole=["'`]img["'`]/.test(t));
+  const offStar = /class=["'`]off["'`][^>]*>\$\{\s*["'`]★["'`]\.repeat/.test(s);
+  return noRole || offStar;
 }

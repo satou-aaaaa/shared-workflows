@@ -20,4 +20,4 @@
 ## 対策
 - [x] 直す: 消すのを「正解でない選び肢のうち最後の1つ以外」に固定し（まちがいの数で変えない）、次の問題で問題の枠にフォーカスを移した。QA に「ヒント2のあとに残ったまちがいを選ぶと正解だけが残る」「次の問題でフォーカスが問題に移る」を足した（saibanin-shikumi #1・kenko-minuki #5。ほかのゲームは各担当で）
 - [x] 防ぐ: `routines/game-dev.md`「共通の形」に「ヒント」の行を足した（この PR）
-- [x] 見つける: `scripts/drift-check.mjs` に `hint:cut-moves` を足し、まちがいの数で消す数が変わる `cutOf` が残るゲームを週次まとめに出す。見分けは `scripts/hint-cut.mjs`（コメントを除き、複数行・`slice(0, -1)` の形も見る）で、事故の形を出し直した形を出さないかを `scripts/check-hint-cut.mjs`（Lint）が確かめる（この PR）
+- [x] 見つける: `scripts/drift-check.mjs` に `hint:cut-moves` を足し、まちがいの数で消す数が変わる `cutOf` が残るゲームを週次まとめに出す。見分けは `scripts/game-patterns.mjs`（コメントを除き、複数行・`slice(0, -1)` の形も見る）で、事故の形を出し直した形を出さないかを `scripts/check-game-patterns.mjs`（Lint）が確かめる（この PR）

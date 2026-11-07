@@ -1,5 +1,6 @@
-// hint:cut-moves（scripts/hint-cut.mjs）が、事故の形を見つけ、直した形・コメントに残った古い形では出さないかを確かめる（Lint）
-import { cutMoves } from './hint-cut.mjs';
+// ゲームの作りの見分け（scripts/game-patterns.mjs）が、事故の形を見つけ、直した形・コメントに残った古い形では出さないかを確かめる（Lint）
+// hint:cut-moves（ヒント2で消した選び肢が戻る）と stars:role（星の表示が読まれない・色だけで分ける）
+import { cutMoves, starsBare } from './game-patterns.mjs';
 
 const cases = [
   ['事故の形（1行・left.length - 1）', true, 'const cutOf = () => { if (cur.hints < 2) return []; const left = P.opts.map((_, i) => i).filter((i) => i !== P.ans && !cur.wrong.includes(i)); return left.slice(0, Math.max(0, left.length - 1)); };'],
@@ -17,5 +18,17 @@ for (const [name, want, src] of cases) {
   console.log(`${got === want ? '✓' : '✗'} ${name}（${want ? '出す' : '出さない'}）`);
   if (got !== want) bad++;
 }
-if (bad) { console.error(`✗ hint:cut-moves の見分けが ${bad} 件ちがう`); process.exit(1); }
-console.log('✓ hint:cut-moves の見分けが通った');
+const stars = [
+  ['星：role も ☆ も無い形', true, 'const starStr = (s) => `<span class="stars" aria-label="星${s}つ">${"★".repeat(s)}<span class="off">${"★".repeat(3 - s)}</span></span>`;'],
+  ['星：role はあるが取れない星も ★', true, 'const starStr = (s) => `<span class="stars" role="img" aria-label="星${s}つ">${"★".repeat(s)}<span class="off">${"★".repeat(3 - s)}</span></span>`;'],
+  ['星：直した形', false, 'const starStr = (s) => `<span class="stars" role="img" aria-label="星${s}つ">${"★".repeat(s)}<span class="off" aria-hidden="true">${"☆".repeat(3 - s)}</span></span>`;'],
+  ['星：コメントの古い形は見ない', false, '// 前は <span class="stars" aria-label="x">\nconst starStr = (s) => `<span class="stars" role="img" aria-label="星${s}つ">${"★".repeat(s)}${"☆".repeat(3 - s)}</span>`;'],
+  ['星：星の表示が無い', false, 'const x = 1;'],
+];
+for (const [name, want, src] of stars) {
+  const got = starsBare(src);
+  console.log(`${got === want ? '✓' : '✗'} ${name}（${want ? '出す' : '出さない'}）`);
+  if (got !== want) bad++;
+}
+if (bad) { console.error(`✗ ゲームの作りの見分けが ${bad} 件ちがう`); process.exit(1); }
+console.log('✓ hint:cut-moves・stars:role の見分けが通った');
