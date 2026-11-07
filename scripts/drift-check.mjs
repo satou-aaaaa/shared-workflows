@@ -21,6 +21,7 @@
 //   - 感想の Issue フォーム（.github/ISSUE_TEMPLATE/feedback.yml）の name がひな形とちがう・形が GitHub の決まりに合わない（incidents/2026-11-05-feedback-form-not-shown.md）
 //   - 公開の見張り（post-deploy・site-watch）があるのに GitHub Pages が有効でない（API で読むときだけ。incidents/2026-11-04-pages-never-enabled.md）
 //   - 記録を localStorage に置く PWA のゲームに、引き継ぎコード（transfer.js）が無い・版が template/transfer.js より古い・sw.js が保存していない（routines/game-dev.md「引き継ぎコード」）
+//   - ゲームの qa/run.mjs の例外を待つ検査（try { make("0:y40|…") }）に、問題 id を文字で書いている（incidents/2026-11-07-qa-copied-question-id.md）
 //   - ゲーム（index.html と sw.js がある）に、見やすさの設定（template/a11y/a11y.html）と検査（template/qa/a11y.mjs）が無い・ひな形とちがう・qa/run.mjs が回していない（routines/game-dev.md「だれでも遊べるように」）
 //   - ゲーム（index.html と sw.js がある）に、遊ぶ量を縛るチケット🎫や「○○すると開く」のモードの鍵がある（routines/game-dev.md「好きなだけ遊べるように」。satou さん 2026-11-06）
 //   - 公開リポジトリなのに repos.txt に無い（一覧の足し忘れ。API で読むときだけ。incidents/2026-11-07-repo-list-conflicts.md）
@@ -237,6 +238,14 @@ for (const r of REPOS) {
         if ((await src.read('qa/a11y.mjs')) !== A11Y_QA) flag('a11y:qa', 'qa/a11y.mjs がひな形とちがう（template/qa/a11y.mjs をもう一度写す。ゲームごとの許しは qa/a11y.json に理由つきで）');
         if (paths.has('qa/run.mjs') && !(await src.read('qa/run.mjs')).includes('a11y.mjs')) flag('a11y:run', 'qa/run.mjs が qa/a11y.mjs を回していない（CI の QA で見やすさが見られない）');
       }
+    }
+
+    // QA の「この問題は作れない」検査に、問題 id を文字で書かない。別のゲームから写した id がそのゲームに無いと、
+    // 「無い問題」で例外が出て、確かめたいこと（難しさの照合など）を見ないまま通る（2026-11-07 shukujitsu-yurai #1。incidents/2026-11-07-qa-copied-question-id.md）
+    if (paths.has('qa/run.mjs')) {
+      const qa = await src.read('qa/run.mjs');
+      const lit = qa.match(/try\s*\{[^}]*\bmake\(\s*["'][0-9]:[a-z]+[0-9]+/);
+      if (lit) flag('qa:literal-id', `qa/run.mjs の例外を待つ検査に、問題 id を文字で書いている「${lit[0].slice(-24)}」（G.POOL などデータから選ぶ。routines/game-dev.md の QA の行）`);
     }
 
     let pageCache = null; // 同じ index.html を何度も取りに行かない（API の読み込みが途中で失敗しても、それまでのずれを出せるように）
