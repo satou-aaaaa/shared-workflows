@@ -14,6 +14,7 @@
 | --- | --- | --- | --- |
 | `laws.e-gov.go.jp` がクラウドのセッションからも GitHub Actions からも 403（「ただいまシステムメンテナンス中です」の画面） | e-Gov 側が海外のサーバー（クラウド・Actions）を拒んでいるとみられる。日本の家の回線からは同じ時刻に開けた。Actions からは 10/19 までは読めていた。10/22 は夜（2:14）も朝（9:30）も 403 で、時間帯では変わらない。許可ドメインに足しても直らない | satou さんの PC で読む（Remote Control のセッション、または PC のフォルダ＋device_bash）。sandbox の Law watch の e-Gov の行が「取得失敗」になるのはこのため（10/21 の回で 19 件）。`fetch-page.yml` は e-Gov を `DENIED_HOSTS` に入れて送らずに止める（拒まれたサイトを Actions から叩き直さない。`incidents/2026-11-03-fetch-page-egov-refused.md`） | 2026-10-22 |
 | `docs.github.com` を WebFetch すると `ENOTFOUND` | クラウドの名前解決で引けない | WebSearch の要約で要点をとり、出典にその URL を書く。全文が要るときは `fetch-page.yml` | 2026-10-22 |
+| `www.gsi.go.jp`（国土地理院）を Fetch page で読むと `UNSAFE_LEGACY_RENEGOTIATION_DISABLED` | サーバーが古い TLS の再ネゴシエーションしか話さず、OpenSSL 3 が断る。クラウドのセッションからはそもそも届かない | `fetch-page.yml` の `LEGACY_TLS_HOSTS` に挙げたサイトだけ許す。古い TLS で落ちるサイトが増えたら、そこに1行足す（証明書の検証などほかは弱めない） | 2026-11-07 |
 | `*.github.io`（公開ページ）がクラウドから開けない | 同上 | 公開の確認は Post-deploy check と Site watch に任せる（`onboarding.md`） | 2026-10-18 |
 | 許可ドメインを足したのに届かない | 環境の設定は、そのあとに始まったスレッドにだけ効く | 新しいスレッドで試す（コーディネーターに頼む） | 2026-10-21 |
 | `playwright install` が失敗する・時間がかかる | クラウドにはブラウザが入っている | `CHROMIUM_PATH`（/opt/pw-browsers/chromium）を使う。各リポジトリの `scripts/setup.sh` が設定する | 2026-10-19 |
