@@ -265,6 +265,16 @@ for (const r of REPOS) {
       }
     }
 
+    // ホームの題（h1.title）は、上の帯の h1{flex:1} を受け継ぐと、縦に並べた画面で余った高さを全部取って伸びる（820×1180 で 277〜450px のすき間。2026-11-07 incidents/2026-11-07-title-stretched.md）
+    if (paths.has('index.html')) {
+      const page = pageCache ?? await src.read('index.html');
+      const css = page.replace(/\/\*[\s\S]*?\*\//g, '');
+      const h1Grow = /(?:^|[\s};])h1\s*\{[^}]*\bflex\s*:\s*1/.test(css);
+      const titleH1 = /<h1[^>]*class="[^"]*\btitle\b/.test(page);
+      const t = css.match(/\.title\s*\{([^}]*)\}/);
+      if (h1Grow && titleH1 && !(t && /\bflex\s*:\s*(?:none|0)/.test(t[1]))) flag('title:flex', 'index.html のホームの題（h1.title）が h1{flex:1} を受け継いで縦に伸びる（iPad の縦などで題の下に大きなすき間。.title に flex:none。routines/game-dev.md「共通の形」のホームの題）');
+    }
+
     // 引き継ぎコード：記録が端末の中だけにあるゲームは、機種変更で記録が消える（2026-11-05 satou さん「PWA 型のゲームでデータの引継ぎを」）。
     // 新しいゲームに入れ忘れないよう、PWA（sw.js と manifest）で AGENTS.md が localStorage に記録を置くと書いているリポジトリを見る
     // AGENTS.md に書いていなくても、index.html が localStorage を使っていれば見る
