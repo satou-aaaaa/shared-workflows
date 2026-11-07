@@ -21,6 +21,7 @@
 //   - 記録を localStorage に置く PWA のゲームに、引き継ぎコード（transfer.js）が無い・版が template/transfer.js より古い・sw.js が保存していない（routines/game-dev.md「引き継ぎコード」）
 //   - ゲーム（index.html と sw.js がある）に、見やすさの設定（template/a11y/a11y.html）と検査（template/qa/a11y.mjs）が無い・ひな形とちがう・qa/run.mjs が回していない（routines/game-dev.md「だれでも遊べるように」）
 //   - ゲーム（index.html と sw.js がある）に、遊ぶ量を縛るチケット🎫や「○○すると開く」のモードの鍵がある（routines/game-dev.md「好きなだけ遊べるように」。satou さん 2026-11-06）
+//   - 公開リポジトリなのに repos.txt に無い（一覧の足し忘れ。API で読むときだけ。incidents/2026-11-07-repo-list-conflicts.md）
 //   - ゲームの sw.js が、入れるとき（install）に HTTP の保存を通して SHELL を取る（cache: 'reload' が無い。古い画面が新しい版に入る。routines/game-dev.md「PWA」）
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
@@ -28,10 +29,11 @@ import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formProblems } from './check-issue-forms.mjs';
+import { readRepos, repoNames } from './repos.mjs';
 
 const OWNER = process.env.OWNER || 'satou-aaaaa';
-// weekly-summary.yml の REPOS と同じ並び（shared-workflows 自身は部品の置き場なので見ない）
-const REPOS = (process.env.REPOS || 'sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban articles carcassonne-research usotsuki-roppo wagamama-burger kabu-news batsu-doko kasane-zome rosen-hitofude seiza-tsunagi mannaka-kanji kippu-10 bento-zume todofuken-relay shiritori-saitan madori-puzzle tenkizu-yomi bushu-tashizan amida-haitatsu kotoba-narabe jobun-tobatsu machi-michijun hikari-michi otsukai-memo bunshi-tsukuri kimari-sagashi okane-kihon kenko-minuki kondate-koma denki-kairo akushitsu-miyaburi chikei-ate dashisugi-check kikigaki-techo bousai-handan')
+// 見るリポジトリは repos.txt の game・app（shared-workflows 自身は部品の置き場なので見ない）
+const REPOS = (process.env.REPOS || repoNames().join(' '))
   .split(/\s+/).filter((r) => r && r !== 'shared-workflows');
 const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || '';
 const here = dirname(fileURLToPath(import.meta.url));
@@ -274,6 +276,23 @@ for (const r of REPOS) {
 
     for (const o of out) lines.push(`[${r}] ${o}`);
   } catch (e) { skipped.push(`${r}（${e.message}）`); }
+}
+
+// 公開リポジトリなのに repos.txt に無いもの（新作を一覧に足し忘れると、週次まとめ・成績表・CI 時間・このずれの検査のどれにも出ない。
+// 2026-11-07 kengen-check が README にはあるのにワークフローの一覧から抜けていた。incidents/2026-11-07-repo-list-conflicts.md）
+if (!LOCAL_ROOT) {
+  try {
+    const known = new Set([...readRepos().map((x) => x.name), 'shared-workflows']);
+    for (let page = 1; page <= 10; page++) {
+      const list = await api(`users/${OWNER}/repos?type=owner&per_page=100&page=${page}`);
+      if (!Array.isArray(list) || !list.length) break;
+      for (const x of list) {
+        if (x.fork || x.archived || x.private || known.has(x.name)) continue;
+        lines.push(`[${x.name}] repos.txt に無い公開リポジトリ（名前の順の位置に「${x.name} game」などを1行足す。見ないなら ignore と理由）`);
+      }
+      if (list.length < 100) break;
+    }
+  } catch (e) { skipped.push(`repos.txt との突き合わせ（${e.message}）`); }
 }
 
 if (lines.length) console.log(lines.join('\n'));

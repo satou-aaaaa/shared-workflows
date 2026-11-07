@@ -4,9 +4,10 @@
 // 出た行の対応のしかたは routines/without-claude.md の B の分岐表。
 // 見るもの: 自動マージ停止の Issue・main の CI 失敗 Issue・CI が赤の PR・3日以上動きの無い PR・needs-decision の Issue、
 //           起きた問題の記録（incidents/）の残っている対策と、30日に2件以上あった種類（再発防止。incidents/README.md）。
+import { repoNames } from './repos.mjs';
 const OWNER = process.env.OWNER || 'satou-aaaaa';
-// weekly-summary.yml・scorecard.yml の REPOS と同じ並び（リポジトリを足したらここにも足す）
-const REPOS = (process.env.REPOS || 'sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban carcassonne-research usotsuki-roppo shared-workflows').split(/\s+/).filter(Boolean);
+// 見るリポジトリは repos.txt の game・app ＋ shared-workflows（週次まとめは REPOS で渡す）
+const REPOS = (process.env.REPOS || [...repoNames(), 'shared-workflows'].join(' ')).split(/\s+/).filter(Boolean);
 const STALE_DAYS = 3;
 // main の CI 失敗は1日で「直されていない」に上げる（2026-10-24 local-kanban の Link check が担当の無いまま3日開いていた）
 const CI_STALE_DAYS = 1;
