@@ -19,5 +19,6 @@
 
 ## 対策
 - [x] 直す: 保存に失敗したら遊んでいる途中でも1回だけ知らせるようにし、QA に検査を足した（atsusa-shisu #1・setsuden-kotsu #4・jitensha-rule #3・kotowaza-awase #5・mukashi-narabe #4・seiza-tsunagi #21・otsukai-memo #10・kimari-sagashi #7・kippu-10 #23・jobun-tobatsu #14・machi-michijun #8・kasane-zome #26・rosen-hitofude #23・bento-zume #21）
+- [x] 直す: 1回目の直しの toast は1.8秒で消え、2回目からは知らせなかった（CodeRabbit が atsusa-shisu #1 で指摘）。保存できるまで消えない帯に替えた（atsusa-shisu #1・ほか13本の PR）
 - [x] 防ぐ: `routines/game-dev.md`「共通の形」に「記録の保存」の行を足した（この PR）
 - [x] 見つける: `scripts/drift-check.mjs` に `save:silent` を足し、黙って続ける `save` が残るゲームを週次まとめに出す（この PR）
