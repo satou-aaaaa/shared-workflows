@@ -70,6 +70,7 @@
 | dashisugi-check（出しすぎチェック） | 学習ゲーム（SNS の投稿の写真・文から、住所・学校・予定がばれる手がかりを見つける） | dashisugi-check `AGENTS.md`・`README.md` | 今日の5つ（全員同じ）・上級・練習・とことん・手がかり帳・QA（4つの難しさ×6場面×1500投稿：手がかりの数・置き場所・出典） | 手がかりの説明は公的な資料（総務省・京都府警察・北九州市教育委員会）から書き、出典を付ける。人・町・学校・店・電話番号は作り話 |
 | kikigaki-techo（ききがき手帳） | 学習ゲーム（妖怪・日本の神話・世界の神話を、手がかりを1つずつ開いて4枚の札から当てる） | kikigaki-techo `AGENTS.md`・`README.md` | 今日の5問（全員同じ・前の日と重ねない）・上級・練習・とことん・手帳（図鑑）・QA（札の選び方300通り・3年分の今日の5問・120日の写し） | 手がかりは古事記・日本書紀・鳥山石燕・各地の伝承などの出典と照らし、`src` に書く。`data.js` を変える PR は自動マージしない（hold_paths） |
 | denki-kairo（でんき回路） | 学習ゲーム（理科・小4「電流のはたらき」） | denki-kairo `AGENTS.md`・`README.md` | 今日の3問（全員同じ）・上級・練習・QA（直列・並列・ショートの見本で回路の計算を別の解き方と照らす・いちばん少ない導線の数を総当たりで数え直す） | 回路のきまりを変えたら遊び方・README と QA の見本もそろえる。ショートは色だけで分けない |
+| akushitsu-miyaburi（悪質商法みやぶり） | 学習ゲーム（くらし・悪質商法とクーリング・オフ） | akushitsu-miyaburi `AGENTS.md`・`README.md` | 今日の5件（全員同じ）・上級・練習・とことん・QA（日付の問題を別の数え方で3000問・今日の5件と上級を3年分・出典が公的機関か） | 手口と決まりは消費者庁・国民生活センター・自治体のページで確かめ、`data.js` の `SRC` に出典。法律相談にしない。詐欺みぬき（sagi-minuki）と題材を重ねない |
 | tenbin（天秤の書） | 学習アプリ | tenbin `CLAUDE.md`、スキル add-ronbun-questions・law-app-ui-check | 間隔反復の復習ドリル・一次資料での確認 | 問題を足すときに「思い出させる形（答える前に考えさせる）」になっているかを見る点に加える |
 | carcassonne-research | 研究（ゲームAI） | carcassonne-research `CLAUDE.md`・`.claude/skills/steward/`・`docs/EXPERIMENTS.md` | シードを決めた先後入替の対戦・信頼区間・再現コマンド | 強さの判定に SPRT を使い、対戦数を減らしつつ誤りの率をそろえる |
 | sandbox（許可申請ツール） | 業務ツール | sandbox `CLAUDE.md`・`docs/DEVELOPMENT_GUIDE.md`・`docs/routines/` | 小さな PR・多層の検査・運用エージェント | ダミー案件で端から端まで通す確認を定期の作業に入れ、詰まった所を Issue にする |
