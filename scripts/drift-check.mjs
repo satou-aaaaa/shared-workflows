@@ -220,10 +220,16 @@ for (const r of REPOS) {
       if (gate) flag('free:gate', `index.html に遊ぶ前の鍵がある「${gate[0].trim()}」（どのモードも最初から遊べるように。routines/game-dev.md「好きなだけ遊べるように」）`);
     }
 
-    // 遊び方の「見た」は dialog の close で残す（ボタンの中だけだと Esc で閉じた人に毎回出る。2026-11-07 incidents/2026-11-07-howto-esc-not-saved.md）
+    // 遊び方の「見た」は「わかった」を押したらすぐ残し、dialog の close でも残す（ボタンだけだと Esc で閉じた人に毎回出る。close だけだと知らせが遅れて届き、押した直後に読み直すとまた出る。2026-11-07 incidents/2026-11-07-howto-esc-not-saved.md）
     if (paths.has('index.html') && paths.has('sw.js')) {
       const page = await src.read('index.html');
-      if (/\$\("howto-ok"\)\.onclick\s*=\s*\(\)\s*=>\s*\{\s*const d = \$\("howto"\); d\.close \? d\.close\(\) : d\.removeAttribute\("open"\); save\(/.test(page) && !/\$\("howto"\)\.addEventListener\("close"/.test(page)) flag('howto:close', 'index.html が遊び方の「見た」を「わかった」のボタンの中だけで残している（Esc で閉じた人に毎回出る。$("howto").addEventListener("close", …) で残す。routines/game-dev.md「共通の形」の遊び方）');
+      const ok = page.match(/\$\("howto-ok"\)\.onclick\s*=\s*\(\)\s*=>\s*\{[^\n]*/);
+      if (ok) {
+        const onClose = /\$\("howto"\)\.addEventListener\("close"[^\n]*tut\s*=\s*true/.test(page);
+        const atOnce = /^\$\("howto-ok"\)\.onclick\s*=\s*\(\)\s*=>\s*\{\s*save\(/.test(ok[0]);
+        if (!onClose) flag('howto:close', 'index.html が遊び方の「見た」を dialog の close で残していない（Esc で閉じた人に毎回出る。$("howto").addEventListener("close", () => { if (!load().tut) save(…) })。routines/game-dev.md「共通の形」の遊び方）');
+        else if (!atOnce) flag('howto:close', 'index.html の「わかった」が「見た」をすぐ残していない（close の知らせは遅れて届き、押した直後に読み直すとまた出る。onclick の最初で save(…)。routines/game-dev.md「共通の形」の遊び方）');
+      }
     }
 
     // 引き継ぎコード：記録が端末の中だけにあるゲームは、機種変更で記録が消える（2026-11-05 satou さん「PWA 型のゲームでデータの引継ぎを」）。

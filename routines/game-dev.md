@@ -68,7 +68,7 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 | PWA・OGP | `sw.js`・`manifest.webmanifest`・アイコン・`og.png`（答えを入れない）。`sw.js` の install は `c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))` で取り直す（普通に取ると、GitHub Pages が10分ほど保存させる古い画面が新しい版に入る。drift-check の `sw:reload` が見る）。`sw.js` の取り方・保存の仕方を変えたら `CACHE` の版も上げる（名前が同じだと、古い worker が `?付き` の URL で保存した画面が残り、オフラインで `ignoreSearch` により返る。2026-11-06 CodeRabbit） | どのゲームも |
 | 見やすさ | 見やすさの設定（`template/a11y/a11y.html`）と検査（`template/qa/a11y.mjs`）。下の「だれでも遊べるように」 | kippu-10 |
 | 引き継ぎ | 記録を別の端末へ移す「引き継ぎコード」と QR（`template/transfer.js`）と検査（`template/qa/transfer-check.mjs`）。下の「引き継ぎコード」 | kippu-10 |
-| 遊び方 | はじめて開いたときに `<dialog>` で出し、「見た」の記録（`tut`）は dialog の `close` イベントで残す（ボタンの中だけで残すと、Esc や戻る操作で閉じた人に毎回出る。2026-11-07 `incidents/2026-11-07-howto-esc-not-saved.md`）。QA は「わかった」を押す道に加えて、Esc で閉じて開き直しても出ないかを見る。dialog で記録を残すものはどれも同じ | kippu-10 |
+| 遊び方 | はじめて開いたときに `<dialog>` で出し、「見た」の記録（`tut`）は「わかった」を押したらすぐ残し、dialog の `close` イベントでも、まだ残していなければ残す（ボタンの中だけだと Esc や戻る操作で閉じた人に毎回出る。`close` だけだと知らせが少し遅れて届き、押した直後に読み直すとまた出る。2026-11-07 `incidents/2026-11-07-howto-esc-not-saved.md`）。QA は「わかった」を押してすぐ読み直しても、Esc で閉じて開き直しても出ないかを見る。dialog で記録を残すものはどれも同じ | kippu-10 |
 | 好きなだけ | チケット・鍵なし。とことん・練習は何回でも。問題は300種類以上。下の「好きなだけ遊べるように」 | どのゲームも（2026-11-06 から） |
 | QA | `qa/run.mjs`。乱数で作る所は何百日分も作って確かめる。とことんのように `Math.random` で並べる所も、何百回作って重なり・作れない問題が無いかを見る（5回では0.1%の重なりに当たらない）。押せる所は44px以上、幅320px。キーボードで選んだボタンに枠が出る（`all:unset` で消えるので、枠の規則は style の最後に `:is(button,a):focus-visible{outline:…!important}`） | どのゲームも |
 
