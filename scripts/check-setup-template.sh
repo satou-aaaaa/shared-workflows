@@ -167,5 +167,16 @@ cat "$tmp/out1" "$tmp/out2" > "$tmp/out"
 if [ $r1 = 0 ] && [ $r2 = 0 ] && grep -q '^✓ 準備できた' "$tmp/out1" && grep -q '^✓ 準備できた' "$tmp/out2" && [ ! -d "$repo/app/.setup-lock" ]; then ok "2つ同時に動いても両方通り、ロックを残さない"
 else ng "17. 同時に動かすと落ちる・ロックが残る"; fi
 
+# 18. 強制終了で残ったロック（持ち主がもう動いていない）は外して進む。動いている持ち主のロックは外さない（#259 の CodeRabbit）
+mkdir -p "$repo/app/.setup-lock" && echo "$(hostname 2>/dev/null || echo local) 999999" > "$repo/app/.setup-lock/owner"
+if run CLAUDE_ENV_FILE="$envf" && grep -q '残したロックを外す' "$tmp/out" && [ ! -d "$repo/app/.setup-lock" ]; then ok "強制終了で残ったロックを外して進む"
+else ng "18. 残ったロックで止まる・外さない"; fi
+sleep 30 & live=$!
+mkdir -p "$repo/app/.setup-lock" && echo "$(hostname 2>/dev/null || echo local) $live" > "$repo/app/.setup-lock/owner"
+( cd "$repo" && timeout 4 env CLAUDE_ENV_FILE="$envf" bash scripts/setup.sh ) > "$tmp/out" 2>&1 || true
+if [ -f "$repo/app/.setup-lock/owner" ] && ! grep -q '残したロックを外す' "$tmp/out"; then ok "動いている持ち主のロックは外さない"
+else ng "18. 動いている持ち主のロックを外した"; fi
+kill $live 2>/dev/null || true; rm -rf "$repo/app/.setup-lock"
+
 [ "$bad" = 0 ] || { echo "✗ ひな形 template/scripts/setup.sh の検査が落ちた" >&2; exit 1; }
 echo "✓ ひな形の準備スクリプトの検査が通った"
