@@ -25,10 +25,12 @@
 //   - ゲーム（index.html と sw.js がある）に、遊ぶ量を縛るチケット🎫や「○○すると開く」のモードの鍵がある（routines/game-dev.md「好きなだけ遊べるように」。satou さん 2026-11-06）
 //   - 公開リポジトリなのに repos.txt に無い（一覧の足し忘れ。API で読むときだけ。incidents/2026-11-07-repo-list-conflicts.md）
 //   - ゲームの sw.js が、入れるとき（install）に HTTP の保存を通して SHELL を取る（cache: 'reload' が無い。古い画面が新しい版に入る。routines/game-dev.md「PWA」）
+//   - ゲームの sw.js・qa/sw-check.mjs がひな形（template/sw.js の game:begin〜game:end の外）とちがう（scripts/sync-template.mjs で写す）
+//   - とことんの「ここで降りる」が正解の直後に効かない形がある・manifest がふつうのアイコンを maskable にも使い回す
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { checkSwStall } from '../template/qa/sw-check.mjs';
+import { makeSw } from './sync-template.mjs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formProblems } from './check-issue-forms.mjs';
@@ -69,6 +71,7 @@ const FEEDBACK_NAME = formProblems(readFileSync(join(here, '..', 'template', '.g
 const A11Y_BLOCK = (t) => (t.match(/<!-- a11y:begin[\s\S]*?<!-- a11y:end -->/) || [''])[0];
 const A11Y_HTML = A11Y_BLOCK(readFileSync(join(here, '..', 'template', 'a11y', 'a11y.html'), 'utf8'));
 const A11Y_QA = readFileSync(join(here, '..', 'template', 'qa', 'a11y.mjs'), 'utf8');
+const SW_QA = readFileSync(join(here, '..', 'template', 'qa', 'sw-check.mjs'), 'utf8');
 
 const allowPath = join(here, 'drift-allow.json');
 const allow = existsSync(allowPath) ? JSON.parse(readFileSync(allowPath, 'utf8')) : {};
@@ -296,12 +299,21 @@ for (const r of REPOS) {
     if (paths.has('index.html') && paths.has('sw.js')) {
       const sw = (await src.read('sw.js')).replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
       if (/addAll\(/.test(sw) && !/cache:\s*["']reload["']/.test(sw)) flag('sw:reload', 'sw.js の install が SHELL を HTTP の保存から取る（addAll(SHELL.map((u) => new Request(u, { cache: "reload" }))) にする）');
-      // 4秒で保存したものへ切り替える書き方なら、本文の途中で止まる返事でも切り替わるかを動かして確かめる（2026-11-07 CodeRabbit が kotowaza-awase で指摘）
-      if (/const slow\s*=\s*setTimeout/.test(sw)) {
-        const st = await checkSwStall(await src.read('sw.js')).catch((e) => ({ ok: false, error: String(e) }));
-        if (!st.ok) flag('sw:stall', 'sw.js が本文を読む前に4秒の切り替えを外す（本文の途中で通信が止まると読み込み中のまま。template/qa/sw-check.mjs を写し、ok の返事は本文を読み終えてから返す）');
-        // 返したあとも60秒の見張りが残ると、worker が止まれず保存したものをあとから送ろうとする（2026-11-07 mukashi-narabe #1 の CodeRabbit）
-        if (/setTimeout\([^;]*60000\)/.test(sw) && !/clearTimeout\(deadline\)/.test(sw)) flag('sw:deadline', 'sw.js が返したあとも60秒の見張りを止めない（send の中で clearTimeout(deadline)。kotowaza-awase の sw.js の形）');
+      // sw.js はひな形（template/sw.js）を写し、ゲームごとに書くのは game:begin〜game:end の間だけ（28本が28通りになっていた。incidents/2026-11-07-template-copies-drift.md）
+      const raw = await src.read('sw.js');
+      const next = makeSw(raw);
+      if (next === null) flag('sw:template', 'sw.js に const CACHE と const SHELL が無い（template/sw.js を写し、game:begin〜game:end に書く）');
+      else if (next !== raw) flag('sw:template', 'sw.js がひな形とちがう（node scripts/sync-template.mjs <ゲームのフォルダ> で写す。ゲームの所は game:begin〜game:end の間に書く）');
+      if (!paths.has('qa/sw-check.mjs')) flag('sw:qa', 'qa/sw-check.mjs が無い（template/qa/sw-check.mjs を写し、qa/run.mjs から checkSwStall を呼ぶ）');
+      else if ((await src.read('qa/sw-check.mjs')) !== SW_QA) flag('sw:qa', 'qa/sw-check.mjs がひな形とちがう（node scripts/sync-template.mjs で写す）');
+      // とことんで正解した直後に「ここで降りる」が効かない形（2026-11-07 kyuyo-meisai #1 の CodeRabbit。同じ行が8本にあった）
+      if (paths.has('index.html') && /if\s*\(\s*cur\s*&&\s*cur\.done\s*\)\s*return;\s*finish\(\)/.test(await src.read('index.html'))) flag('endless:stuck', 'index.html の「ここで降りる」が正解した直後に効かない（if (cur && cur.done) return; finish(); の行。kyuyo-meisai 1bebfdc の直し方）');
+      // ふつうのアイコンを maskable にも使い回すと、Android で丸く切られて絵の端が欠ける（2026-11-07 tani-kankaku #1 の CodeRabbit）
+      if (paths.has('manifest.webmanifest')) {
+        let icons = [];
+        try { icons = JSON.parse(await src.read('manifest.webmanifest')).icons || []; } catch { /* 形の検査は QA */ }
+        const anyUse = new Set(icons.filter((i) => !/maskable/.test(i.purpose || 'any') || /any/.test(i.purpose || 'any')).map((i) => i.src));
+        if (icons.some((i) => /maskable/.test(i.purpose || '') && (/any/.test(i.purpose) || anyUse.has(i.src)))) flag('pwa:maskable', 'manifest.webmanifest がふつうのアイコンを maskable にも使っている（中央の半径40％に絵を収めた icon-maskable-512.png を作り、purpose: "maskable" で別に書く。tani-kankaku・wareki-yomi の形）');
       }
     }
     const called = new Set();
