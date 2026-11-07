@@ -40,9 +40,11 @@ okane-kihon game
 otsukai-memo game
 rekishi-narabe game
 rosen-hitofude game
+sagi-minuki game
 sandbox app
 seiza-tsunagi game
 shiritori-saitan game
+teko-tsuriai game
 tenbin app
 tenkizu-yomi game
 todofuken-relay game
