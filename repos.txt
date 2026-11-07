@@ -46,6 +46,7 @@ kotoba-narabe game
 kotowaza-awase game
 kotowaza-bamen game
 kusuri-yomi game
+kyukoku-mei game
 kyuyo-meisai game
 last-tell app
 last-tell-godot private
