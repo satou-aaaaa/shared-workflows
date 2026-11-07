@@ -34,6 +34,7 @@ kenko-minuki game
 kikigaki-techo game
 kimari-sagashi game
 kippu-10 game
+kokki-shuto game
 kokoku-minuki game
 kondate-koma game
 kotoba-honrai game
