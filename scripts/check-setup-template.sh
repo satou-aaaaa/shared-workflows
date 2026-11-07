@@ -178,5 +178,15 @@ if [ -f "$repo/app/.setup-lock/owner" ] && ! grep -q '残したロックを外�
 else ng "18. 動いている持ち主のロックを外した"; fi
 kill $live 2>/dev/null || true; rm -rf "$repo/app/.setup-lock"
 
+# 19. 名札の無いロックは、1分より古ければ外して進む。新しいものは外さない（版12）
+mkdir -p "$repo/app/.setup-lock" && touch -d '2 minutes ago' "$repo/app/.setup-lock"
+if run CLAUDE_ENV_FILE="$envf" && grep -q '残したロックを外す（（名札なし））' "$tmp/out" && [ ! -d "$repo/app/.setup-lock" ]; then ok "名札の無い古いロックを外して進む"
+else ng "19. 名札の無い古いロックで止まる"; fi
+mkdir -p "$repo/app/.setup-lock"
+( cd "$repo" && timeout 4 env CLAUDE_ENV_FILE="$envf" bash scripts/setup.sh ) > "$tmp/out" 2>&1 || true
+if [ -d "$repo/app/.setup-lock" ] && ! grep -q '残したロックを外す' "$tmp/out"; then ok "名札の無い新しいロックは外さない"
+else ng "19. 作ったばかりの名札の無いロックを外した"; fi
+rm -rf "$repo/app/.setup-lock"
+
 [ "$bad" = 0 ] || { echo "✗ ひな形 template/scripts/setup.sh の検査が落ちた" >&2; exit 1; }
 echo "✓ ひな形の準備スクリプトの検査が通った"

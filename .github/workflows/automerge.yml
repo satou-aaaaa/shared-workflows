@@ -158,6 +158,28 @@ jobs:
           if [ "${reverts:-0}" -ge 2 ]; then echo "直近24時間に差し戻しが ${reverts} 回あったので、自動ではマージしません（原因を直す PR は担当がマージする）"; exit 0; fi
           gh api -X PUT "repos/$REPO/pulls/$pr/merge" -f merge_method=squash -f sha="$SHA" --jq .message
           echo "merged=true" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$new_files" > "$RUNNER_TEMP/changed.txt"
+      # CI failure issue は、この手順が動いた成功だけで「Auto merge の失敗」の Issue を閉じる（マージしないで終わった成功では閉じない）
+      - name: マージした（成功の印）
+        if: steps.merge.outputs.merged == 'true'
+        run: echo "マージしました"
+      # GITHUB_TOKEN のマージでは main への push で検査が動かないので、変えたファイルに合わせて Link check・Setup check を起こす
+      # （呼び出し元の push: の paths と同じ。dispatch に書いてあれば二重に起こさない。各ゲームの PR の CodeRabbit、2026-11-07）
+      - name: 変えたファイルの検査を main で起こす
+        if: steps.merge.outputs.merged == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DISPATCH: ${{ inputs.dispatch }}
+        run: |
+          changed="$RUNNER_TEMP/changed.txt"
+          want=()
+          if grep -qE '^[^/]+\.html$|^README\.md$' "$changed"; then want+=(link-check.yml); fi
+          if grep -qE '^scripts/setup\.sh$|^\.nvmrc$|^\.python-version$|(^|/)package(-lock)?\.json$|^requirements\.txt$|^pyproject\.toml$|(^|/)\.npmrc$' "$changed"; then want+=(setup-check.yml); fi
+          for wf in "${want[@]}"; do
+            if grep -qw -- "$wf" <<<"$DISPATCH"; then continue; fi
+            if ! gh api "repos/$GITHUB_REPOSITORY/actions/workflows/$wf" >/dev/null 2>&1; then echo "$wf は無い"; continue; fi
+            gh workflow run "$wf" -R "$GITHUB_REPOSITORY" --ref main || echo "::warning::$wf を main で起こせませんでした（on: に workflow_dispatch があるか、呼び出し側の permissions に actions: write があるか確かめる）"
+          done
       - name: 公開などを起こす
         if: steps.merge.outputs.merged == 'true' && inputs.dispatch != ''
         env:

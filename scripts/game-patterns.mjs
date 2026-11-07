@@ -28,6 +28,13 @@ export function cutMoves(page) {
   return skipsWrong && keepsLast;
 }
 
+// leftFixed：ヒント2のあとの「のこりは2つです」が、いま押せる選び肢の数でなく決まった数か（drift-check の hint:left-fixed）
+// 最後のまちがいを先に選んでからヒントを2回使うと、押せるのは正解だけなのに「のこりは2つ」と出た（2026-11-07 bousai-handan #3・okane-kihon #6 の CodeRabbit）
+export function leftFixed(page) {
+  if (!cutOfBody(page)) return false;
+  return /のこりは\s*[2２二]\s*つ/.test(stripComments(page));
+}
+
 // 星の表示（class="stars"）が role="img" を持たない、または取れなかった星も ★ で色だけで分ける形かを見る（drift-check の stars:role）
 // span に role が無いと aria-label が読まれないことがあり、★ の色だけでは色の見分けにくい人に星の数が伝わらない（2026-11-07 食中毒よぼうの CodeRabbit）
 export function starsBare(page) {
