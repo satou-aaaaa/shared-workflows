@@ -80,7 +80,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
-| 2026-11-07 | 操作の反応 | [遊び方を Esc で閉じると「見た」が残らず、ホームに戻るたびに遊び方が開いた](2026-11-07-howto-esc-not-saved.md) | 対策済み |
+| 2026-11-07 | 操作の反応 | [遊び方を Esc で閉じると「見た」が残らず、ホームに戻るたびに遊び方が開いた](2026-11-07-howto-esc-not-saved.md) | 対策中 |
 | 2026-11-07 | 権限・設定 | [Fetch page が国土地理院のページを古い TLS のせいで読めなかった](2026-11-07-fetch-page-gsi-legacy-tls.md) | 対策済み |
 | 2026-11-07 | 公開・CI | [天秤の書の Check が、Playwright を入れる段階の遅さで10分の時間切れになった](2026-11-07-tenbin-check-timeout.md) | 対策済み |
 | 2026-11-06 | 動作 | [carcassonne-research の selfplay が、試行番号が 1000 を超えたとたん学習データを消して落ちた](2026-11-06-selfplay-attempt-1000-digits.md) | 対策済み |
