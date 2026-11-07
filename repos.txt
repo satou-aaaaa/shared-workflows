@@ -13,6 +13,7 @@ bunshi-tsukuri game
 bushu-tashizan game
 carcassonne-research app
 chikei-ate game
+chizu-kigo game
 dashisugi-check game
 dema-tashikame game
 denki-kairo game
