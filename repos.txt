@@ -16,6 +16,7 @@ chikei-ate game
 dashisugi-check game
 denki-kairo game
 dungeon-boardgame app
+gogen-suiri game
 hikari-michi game
 jobun-tobatsu game
 kabu-news game
