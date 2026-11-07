@@ -147,7 +147,9 @@ for (const r of REPOS) {
       // 要らない節の消し忘れ：無いファイルを読む節が残ると、準備が途中で止まる（2026-11-07 haku-uchi。Python の節が requirements.txt を探して落ちた）
       for (const f of ['requirements.txt', '.python-version', '.nvmrc']) {
         const used = setup.split('\n').some((l) => !/^\s*#/.test(l) && l.includes(f));
-        if (used && !paths.has(f)) flag('setup:unused-section', `scripts/setup.sh が ${f} を読むが、リポジトリに無い（ひな形の要らない節を消す）`);
+        // 版6 の Python の節は if [ -f requirements.txt ] で守られ、ファイルが無ければ動かないので数えない（2026-11-07 標識よみ）
+        const guarded = f !== '.nvmrc' && /^\s*if \[ -f requirements\.txt \]; then/m.test(setup);
+        if (used && !guarded && !paths.has(f)) flag('setup:unused-section', `scripts/setup.sh が ${f} を読むが、リポジトリに無い（ひな形の要らない節を消す）`);
       }
       if (v < SETUP_VER) flag('setup:version', `scripts/setup.sh がひな形の版 ${v}（今は ${SETUP_VER}。template/scripts/setup.sh の版の行の下にある変わったところを写し、版の行も上げる）`);
       // 準備が渡すブラウザの場所（CHROMIUM_PATH）を、検査が読んでいるか。読んでいないと「✓ 準備できた」のあと検査がブラウザを見つけられない
