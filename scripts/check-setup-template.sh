@@ -132,8 +132,9 @@ else ng "12. 読み込めない理由を出さない"; fi
 
 # 13. 相対パスの CHROMIUM_PATH（起動の試しは npm_dir に移って動く。2026-11-07 dema-tashikame #1 の CodeRabbit）
 mkdir -p "$repo/bin2"; cp "$tmp/bin/chromium" "$repo/bin2/chromium"
-if run CLAUDE_ENV_FILE="$envf" CHROMIUM_PATH=bin2/chromium && grep -q '^✓ 準備できた' "$tmp/out"; then
-  ok "相対パスの CHROMIUM_PATH でも起動の試しが通る"
+: > "$envf"
+if run CLAUDE_ENV_FILE="$envf" CHROMIUM_PATH=bin2/chromium && grep -q '^✓ 準備できた' "$tmp/out" && (set +u; . "$envf"; [ "$CHROMIUM_PATH" = "$repo/bin2/chromium" ]); then
+  ok "相対パスの CHROMIUM_PATH でも起動の試しが通り、絶対パスを CLAUDE_ENV_FILE に書く（版9）"
 else ng "13. 相対パスの CHROMIUM_PATH で起動の試しが落ちる"; fi
 
 [ "$bad" = 0 ] || { echo "✗ ひな形 template/scripts/setup.sh の検査が落ちた" >&2; exit 1; }
