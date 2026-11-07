@@ -70,6 +70,7 @@ recycle-mark game
 rekishi-narabe game
 rosen-hitofude game
 sagi-minuki game
+saibanin-shikumi game
 sandbox app
 seiza-tsunagi game
 sekai-isan game
