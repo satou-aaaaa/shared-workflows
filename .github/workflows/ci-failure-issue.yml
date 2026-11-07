@@ -17,6 +17,9 @@ name: CI failure issue (共通部品)
 # timed_out として知らせる。手で止めた・concurrency で取り消された実行は今までどおり数えない
 # （sandbox の Weekly mutation が4週続けて2時間で止まっていたのに Issue にならなかった、2026-10-28）。
 # 注記は公開リポジトリなら権限なしで読める。非公開リポジトリは呼び出し元に checks: read が要る（無いと数えない・警告を出す）。
+#
+# 閉じない成功: 試しの実行（ジョブ名に「(dry run)」）・「（成功の印）」の手順が動かなかった実行（Auto merge がマージしなかったときなど）・
+# 失敗したコミットより古いコミットの成功・ジョブを読めない実行。新しいコミットでもう成功していれば、古いコミットの失敗は知らせない。
 on:
   workflow_call:
     inputs:
@@ -82,19 +85,44 @@ jobs:
           report() {
             local wf=$1 conclusion=$2 url=$3 sha=$4 event=$5 rid=${6:-}
             local title="CI失敗: ${wf}（main）" num
-            # 試しの実行（Branch cleanup の dry run など、ジョブ名に「(dry run)」）の成功では閉じない。本番と同じことをしていないため（2026-11-07 CodeRabbit）
-            if [ "$conclusion" = "success" ] && [ -n "$rid" ] &&
-              gh api "repos/${GH_REPO}/actions/runs/${rid}/jobs?per_page=100" --jq '.jobs[].name' 2>/dev/null | grep -qF '(dry run)'; then
-              echo "${wf}: 試しの実行の成功なので数えない"
-              return 0
-            fi
             num=$(gh issue list --state open --label ci-failure --limit 50 --json number,title \
               --jq ".[] | select(.title == \"${title}\") | .number" | head -n1)
             if [ "$conclusion" = "success" ]; then
-              if [ -n "$num" ]; then
-                gh issue close "$num" --comment "成功した実行が出たので閉じます: ${url}"
+              [ -n "$num" ] || return 0
+              if [ -n "$rid" ]; then
+                local jobs
+                # ジョブを読めないときは閉じない（試しの実行か分からない。2026-11-07 kenko-minuki #5 の CodeRabbit）
+                if ! jobs=$(gh api "repos/${GH_REPO}/actions/runs/${rid}/jobs?per_page=100" 2>/dev/null); then
+                  echo "${wf}: 実行 ${rid} のジョブを読めないので、閉じずに次の成功を待つ"; return 0
+                fi
+                # 試しの実行（Branch cleanup の dry run など、ジョブ名に「(dry run)」）の成功では閉じない。本番と同じことをしていないため（2026-11-07 CodeRabbit）
+                if jq -r '.jobs[].name' <<<"$jobs" | grep -qF '(dry run)'; then
+                  echo "${wf}: 試しの実行の成功なので数えない"; return 0
+                fi
+                # 「（成功の印）」の手順があるワークフロー（Auto merge など）は、その手順が動いた成功だけを数える。
+                # マージしないで終わった成功（下書きの PR など）で、マージの失敗の Issue を閉じない（kimari-sagashi #9 の CodeRabbit）
+                if jq -e '[.jobs[].steps[]? | select(.name | contains("（成功の印）"))] | length > 0' <<<"$jobs" >/dev/null &&
+                  ! jq -e '[.jobs[].steps[]? | select((.name | contains("（成功の印）")) and .conclusion == "success")] | length > 0' <<<"$jobs" >/dev/null; then
+                  echo "${wf}: 本番の手順（成功の印）が動かなかった成功なので数えない"; return 0
+                fi
               fi
+              # 失敗したコミットより古いコミットの成功では閉じない（あとから終わった古い実行の成功で、新しい失敗を閉じていた。gurafu-minuki #5 の CodeRabbit）
+              local failed rel
+              failed=$(gh issue view "$num" --json body,comments --jq '[.body] + [.comments[].body] | join("\n")' 2>/dev/null | grep -oE 'コミット [0-9a-f]{7,40}' | tail -n1 | cut -d' ' -f2) || failed=""
+              if [ -n "$failed" ] && rel=$(gh api "repos/${GH_REPO}/compare/${failed}...${sha}" --jq .status 2>/dev/null) && [ "$rel" = behind ]; then
+                echo "${wf}: 失敗したコミット ${failed} より古いコミットの成功なので閉じない"; return 0
+              fi
+              gh issue close "$num" --comment "成功した実行が出たので閉じます: ${url}"
               return 0
+            fi
+            # 新しいコミットでもう成功しているなら、あとから終わった古いコミットの失敗は知らせない（akushitsu-miyaburi #4 の CodeRabbit）
+            if [ -n "$head" ] && [ "$head" != "$sha" ]; then
+              local ok_sha rel2
+              ok_sha=$(gh run list --workflow "$wf" --branch "$DEFAULT_BRANCH" --status success --limit 20 --json headSha,event \
+                --jq '[.[] | select(.event | startswith("pull_request") | not)][0].headSha // empty' 2>/dev/null) || ok_sha=""
+              if [ -n "$ok_sha" ] && [ "$ok_sha" != "$sha" ] && rel2=$(gh api "repos/${GH_REPO}/compare/${sha}...${ok_sha}" --jq .status 2>/dev/null) && [ "$rel2" = ahead ]; then
+                echo "${wf}: 新しいコミット ${ok_sha:0:7} でもう成功しているので、古いコミット ${sha:0:7} の失敗は知らせない"; return 0
+              fi
             fi
             # 同じ実行を2回知らせない（見回りと workflow_run の両方が同じ失敗を見ることがある）
             if [ -n "$num" ] && gh issue view "$num" --json body,comments --jq '[.body] + [.comments[].body] | join("\n")' | grep -qF "$url"; then

@@ -4,7 +4,7 @@
 # Claude Code のクラウドセッションでは .claude/settings.json の SessionStart フックが自動で呼ぶ。
 # CI の Setup check（共通部品）が、まっさらな環境でこれが通るかを確かめる。
 # ひな形: satou-aaaaa/shared-workflows の template/scripts/setup.sh。ゲームはそのまま写せば動く（npm_dir と next だけ、ちがえば書き換える）。
-# ひな形の版: 11（上げたら写しの版も上げる。scripts/drift-check.mjs が古い写しを週次まとめに出す）
+# ひな形の版: 12（上げたら写しの版も上げる。scripts/drift-check.mjs が古い写しを週次まとめに出す）
 #   2: 依存は毎回 npm ci・ブラウザが無ければ止める・このシェルで要る操作（nvm use・export）を最後に出す（shared-workflows incidents/2026-11-03-setup-false-ready.md）
 #   3: nvm.sh を --no-use で読む（.nvmrc の版が入っていないと、読んだだけで何も言わずに止まっていた。incidents/2026-11-04-setup-nvm-silent-stop.md）
 #   4: ブラウザの場所はファイルかも見る（-x だけだとフォルダでも通った。2026-11-05 CodeRabbit が bunshi-tsukuri #1 で指摘）
@@ -20,6 +20,7 @@
 #      依存を使い回すのは QA と同じ import() で Playwright を読めるときだけ（ESM の入口が欠けても通っていた）・
 #      2つ同時に動いても npm ci を重ねない（ロック）・Git Bash では CHROMIUM_PATH を Windows の形に直す（2026-11-07 shared-workflows #219）
 #  11: 強制終了で残ったロックは、同じ機械で持ち主が動いていなければ外す（10分待って止まっていた。#259）
+#  12: 起動の試しは package.json に書いた Playwright を先に使う・ブラウザの置き場も QA と同じ import() で探す（各ゲームの PR の CodeRabbit、2026-11-07）
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -107,7 +108,8 @@ if [ "${PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD:-}" = 1 ]; then
   elif runnable "$pre"; then
     session_env "CHROMIUM_PATH=$(q "$pre")"; export CHROMIUM_PATH="$pre"
   else
-    def=$(cd "$npm_dir" && node -e 'try{process.stdout.write(require("playwright").chromium.executablePath())}catch{}' 2>/dev/null || true)
+    # QA と同じ import() で探す（require では ESM の入口だけがあるとき見つからない。版12、kokoku-minuki #2 の CodeRabbit）
+    def=$(cd "$npm_dir" && node --input-type=module -e 'for (const m of ["playwright", "playwright-core", "@playwright/test"]) { try { const pw = await import(m); const c = pw.chromium || (pw.default && pw.default.chromium); process.stdout.write(c.executablePath()); break; } catch {} }' 2>/dev/null || true)
     [ -n "$def" ] && runnable "$def" || fail "使えるブラウザが無い（PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 で取ってこない設定）。CHROMIUM_PATH にブラウザの場所を入れるか、PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD を外して入れ直す"
   fi
 else
@@ -124,7 +126,8 @@ if ! err=$(cd "$npm_dir" && node --input-type=module -e '
   import { readFileSync } from "node:fs";
   const names = ["playwright", "playwright-core", "@playwright/test"];
   const pkg = JSON.parse(readFileSync("package.json", "utf8")), want = names.filter((m) => (pkg.dependencies || {})[m] || (pkg.devDependencies || {})[m]);
-  let pw; for (const m of names) { try { pw = await import(m); break; } catch {} }   // QA と同じ import()（版10）
+  // package.json に書いたものを先に試す（書いていない別の版が間接に入っていても、そちらで「✓」を出さない。版12、akushitsu-miyaburi #4 の CodeRabbit）
+  let pw; for (const m of [...want, ...names.filter((n) => !want.includes(n))]) { try { pw = await import(m); break; } catch {} }   // QA と同じ import()（版10）
   if (!pw && want.length) { console.error("package.json に " + want.join("・") + " があるのに読み込めない（npm ci が入れ損ねた。node_modules を消して入れ直す）"); process.exit(1); }
   if (!pw) process.exit(0);
   const chromium = pw.chromium || (pw.default && pw.default.chromium);
