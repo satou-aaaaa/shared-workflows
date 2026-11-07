@@ -26,6 +26,7 @@ hyoshiki-yomi game
 jobun-tobatsu game
 kabu-news game
 kasane-zome game
+keigo-naoshi game
 kengen-check game
 kenko-minuki game
 kikigaki-techo game
