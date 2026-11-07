@@ -32,6 +32,7 @@ jobun-tobatsu game
 kabu-news game
 kakuritsu-dotchi game
 kasane-zome game
+keigen-zeiritsu game
 keigo-naoshi game
 kengen-check game
 kenko-minuki game
