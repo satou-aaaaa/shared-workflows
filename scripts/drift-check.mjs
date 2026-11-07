@@ -292,7 +292,7 @@ for (const r of REPOS) {
     // 黙っていると遊ぶ人は気づけない（2026-11-07 暑さ指数よみの PR のレビューで見つけ、同じ作りのゲーム14本を直した。incidents/2026-11-07-save-failure-silent.md）
     if (paths.has('index.html')) {
       const page = pageCache ?? await src.read('index.html');
-      if (/catch\s*\(e\)\s*\{\s*mem\s*=\s*j;\s*\}/.test(page)) flag('save:silent', 'index.html の save が、保存に失敗しても黙っている（開き直すと記録が消える。catch の中で1回だけ toast で知らせ、QA に検査を足す。routines/game-dev.md「共通の形」の記録）');
+      if (/catch\s*\(e\)\s*\{\s*mem\s*=\s*j;\s*\}/.test(page)) flag('save:silent', 'index.html の save が、保存に失敗しても黙っている（開き直すと記録が消える。保存できないあいだは帯 #savewarn を出したままにし、QA に検査を足す。routines/game-dev.md「共通の形」の記録）');
     }
 
     // 引き継ぎコード：記録が端末の中だけにあるゲームは、機種変更で記録が消える（2026-11-05 satou さん「PWA 型のゲームでデータの引継ぎを」）。
