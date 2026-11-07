@@ -132,6 +132,16 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 - iPhone はブラウザ（Safari）とホーム画面のアプリで記録が別。ホーム画面のアプリで遊ぶ人は、アプリの中の「引き継ぎ」にコードを貼る（画面にも書いてある）。
 - `node scripts/drift-check.mjs` が、PWA のゲームに `transfer.js` が無い・版が古いのを知らせる。
 
+## トークンを節約する（satou さん 2026-11-07「トークンを節約するための改善も」）
+
+ゲームのスレッドは十数本が同時に動くので、1本の読みすぎが全部の利用枠を減らす。出典：[Claude Code: Manage costs](https://code.claude.com/docs/en/costs)（CLAUDE.md は短く・長い出力はしぼる）、[Memory](https://code.claude.com/docs/en/memory)（`@` で取り込んだファイルは全文が毎回読まれる）。
+
+- `index.html`（100〜230KB）・共有フォルダの `preview.html` は丸ごと読まない。`grep -n '関数名\|id名' index.html` で場所を探し、`sed -n '開始,終わりp'` で要る所だけ読む。直すのは Edit で（書き直しで全文を出さない）。
+- ほかのゲームを見本にするときも、同じ仕組み（例：`endlessList`・`merge`・`lateDays`）の所だけ grep して読む。
+- QA は失敗だけ見る：`node qa/run.mjs 2>&1 | grep -v '^✓' | tail -40`。全部通った回の ✓ の行を会話に流さない。
+- この手順書も、要る節だけ読む（`grep -n '^##' routines/game-dev.md` で見出しを見てから）。
+- 各リポジトリの `CLAUDE.md` は `AGENTS.md` を `@` で取り込まず、「作業の前に AGENTS.md を読む」の1行にする（`template/CLAUDE.md`）。全リポジトリを入れたクラウドの会話では、`@` だと関係ないゲームの AGENTS.md（1本 8〜12KB、16本で約130KB）まで毎回読まれていた。drift-check が `claude:big-import` で見る。
+
 ## 使う道具
 
 - GitHub の道具（PR を作る・読む・マージ）。検索は `gh api -X GET search/...`。
@@ -176,7 +186,7 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 
 ## 一覧（磨く対象）
 
-usotsuki-roppo・wagamama-burger・kabu-news・batsu-doko・kasane-zome・rosen-hitofude・seiza-tsunagi・mannaka-kanji・kippu-10・bento-zume・todofuken-relay・shiritori-saitan・madori-puzzle・tenkizu-yomi・bushu-tashizan・amida-haitatsu・kotoba-narabe・jobun-tobatsu・machi-michijun・hikari-michi・otsukai-memo・bunshi-tsukuri・kimari-sagashi・kenko-minuki・kokoku-minuki・kondate-koma・denki-kairo・akushitsu-miyaburi・chikei-ate・dashisugi-check・kikigaki-techo・bousai-handan・kengen-check（新しく作ったら足す）
+usotsuki-roppo・wagamama-burger・kabu-news・batsu-doko・kasane-zome・rosen-hitofude・seiza-tsunagi・mannaka-kanji・kippu-10・bento-zume・todofuken-relay・shiritori-saitan・madori-puzzle・tenkizu-yomi・bushu-tashizan・amida-haitatsu・kotoba-narabe・jobun-tobatsu・machi-michijun・hikari-michi・otsukai-memo・bunshi-tsukuri・kimari-sagashi・okane-kihon・kenko-minuki・kokoku-minuki・kondate-koma・denki-kairo・akushitsu-miyaburi・chikei-ate・dashisugi-check・kikigaki-techo・bousai-handan・kengen-check（新しく作ったら足す）
 
 ## 完了条件
 
