@@ -10,7 +10,7 @@
 #   4: ブラウザの場所はファイルかも見る（-x だけだとフォルダでも通った。2026-11-05 CodeRabbit が bunshi-tsukuri #1 で指摘）
 #   5: 依存は lock と Node の版が同じで npm ls が通れば入れ直さない（QA の最中に npm ci が node_modules を消していた）・
 #      渡すブラウザの場所を空白があっても切れないよう引用する・最後にブラウザを本当に起動してみる（Linux のライブラリ不足・
-#      合わない版・ダウンロード後の CHROMIUM_PATH を見逃していた）（incidents/2026-11-07-game-template-review-gaps.md）
+#      合わない版・ダウンロード後の CHROMIUM_PATH を見逃していた）・nvm use の前に nvm.sh を読み込む案内を出す（incidents/2026-11-07-game-template-review-gaps.md）
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -38,7 +38,7 @@ if ! node_ok; then
     set +u; export NVM_DIR; . "$NVM_DIR/nvm.sh" --no-use; nvm install "$want" >/dev/null; set -u
     if node_ok; then
       # nvm の切り替えはこのスクリプトの中だけに効く（親のシェルは古い Node のまま）
-      if [ -n "${CLAUDE_ENV_FILE:-}" ]; then session_env "PATH=\"$(dirname "$(command -v node)"):\$PATH\""; else todo+=("nvm use $want"); fi
+      if [ -n "${CLAUDE_ENV_FILE:-}" ]; then session_env "PATH=\"$(dirname "$(command -v node)"):\$PATH\""; else todo+=(". $(q "$NVM_DIR/nvm.sh") && nvm use $want"); fi   # nvm はシェルの関数なので、先に読み込む（新しいシェルには無い。版5）
     fi
   fi
 fi

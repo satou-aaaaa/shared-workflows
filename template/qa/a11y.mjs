@@ -234,11 +234,17 @@ for (const sc of screens) {
   check("名前の無いボタン・リンクが無い（記号だけのものは aria-label。WCAG 4.1.2）", r.noname.length === 0, r.noname.join(" / "));
   check("絵に alt がある（飾りは alt=\"\"。WCAG 1.1.1）", r.noalt.length === 0, r.noalt.join(","));
   check("斜体の日本語が無い（BDA Dyslexia Style Guide）", r.italic.length === 0, r.italic.join(","));
-  // Tab で10回動かし、選んだ所に枠（outline か box-shadow）が見えるか
+  // Tab で10回動かし、選んだ所に枠（outline か box-shadow）が見えるか。
+  // 選ぶ前と後を比べる（いつも付いている影だけで通っていた。2026-11-07 CodeRabbit が chikei-ate #1 で指摘）
   const noRing = [];
   for (let i = 0; i < 10; i++) {
     await page.keyboard.press("Tab");
-    const f = await page.evaluate(() => { const el = document.activeElement; if (!el || el === document.body) return null; const cs = getComputedStyle(el); return { ok: (cs.outlineStyle !== "none" && parseFloat(cs.outlineWidth) >= 2) || (cs.boxShadow && cs.boxShadow !== "none"), name: el.tagName.toLowerCase() + (el.id ? "#" + el.id : "") }; });
+    const f = await page.evaluate(() => {
+      const el = document.activeElement; if (!el || el === document.body) return null;
+      const look = () => { const cs = getComputedStyle(el); return { ol: cs.outlineStyle !== "none" && parseFloat(cs.outlineWidth) >= 2 ? `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor} ${cs.outlineOffset}` : "", bs: cs.boxShadow && cs.boxShadow !== "none" ? cs.boxShadow : "" }; };
+      const on = look(); el.blur(); const off = look(); el.focus(); // キーボードで動かしたあとの focus() は focus-visible のまま
+      return { ok: !!((on.ol && on.ol !== off.ol) || (on.bs && on.bs !== off.bs)), name: el.tagName.toLowerCase() + (el.id ? "#" + el.id : "") };
+    });
     if (f && !f.ok) noRing.push(f.name);
   }
   check("キーボード（Tab）で選んだ所に枠が見える（WCAG 2.4.7）", noRing.length === 0, noRing.join(","));

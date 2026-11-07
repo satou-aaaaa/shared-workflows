@@ -203,6 +203,10 @@ ok('控えを書けないときは入れ替えず、元の記録のまま', full
   ok('縮めないコード（HK0）を作れる', /^HK0\./.test(c0));
   ok('縮めないコードも読み戻せる', (await w.HK.decode(c0)).d['kippu-v1'] === rec);
 }
+// 版7：URL のコードの途中に空白が入っても読める・入れ替えたらほかのタブへ知らせる
+ok('URL のコードの途中の空白をまたいでも読める', (await kind(w.HK.decode(`https://example.test/game/#hk=${c.slice(0, 15)} ${c.slice(15, 30)}  ${c.slice(30)} keep`))) === 'ok');
+ok('入れ替えたら、ほかのタブへ知らせる印（hk-sync:）を書く', !!local2.getItem('hk-sync:kippu-10'));
+ok('知らせる印は書き出しに入れない', !Object.keys((await w.HK.decode(await boot({ game: 'kippu-10', keys: 'kippu-v1,h*', local: store({ 'kippu-v1': rec, 'hk-sync:kippu-10': '1' }), session: store() }).HK.encode())).d).some((k) => k.startsWith('hk-')));
 // 版7：とても長い貼りつけは、CRC を計る前にすぐ弾く
 {
   const t0 = Date.now();

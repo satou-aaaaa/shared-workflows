@@ -18,7 +18,8 @@
 //   - 版7（2026-11-07 CodeRabbit。shared-workflows incidents/2026-11-07-game-template-review-gaps.md）:
 //     記録の保存（localStorage.setItem）に失敗したままのキーがあると、古い記録のコードを作らず知らせる・
 //     とても長い貼りつけは、CRC や広げる前に弾く・縮めないコード（HK0）も選べる（広げられない古いブラウザへ送るとき）・
-//     コピーの代わりの道（execCommand）のあと、押したボタンに戻る。
+//     コピーの代わりの道（execCommand）のあと、押したボタンに戻る・コードの途中の空白も読む・
+//     入れ替えたら同じゲームのほかのタブを読み直させる（古いタブの手元の記録で上書きしない）。
 (function () {
   "use strict";
   var VERSION = 4; // コードの形の版（形を変えたときだけ上げる。上の「引き継ぎの版」とは別）
@@ -29,6 +30,7 @@
   var BACKUP = "hk-backup:" + GAME;
   var PENDING = "hk-pending:" + GAME;
   var DONE = "hk-done:" + GAME;
+  var SYNC = "hk-sync:" + GAME; // 入れ替えたことをほかのタブへ知らせる印（記録には入れない）
   var MAX_JSON = 4 * 1024 * 1024; // localStorage はおおよそ 5MB まで
   var MAX_CODE = MAX_JSON * 2; // 貼りつけの長さの上限（HK0 の base64 でも MAX_JSON の 4/3 倍。URL・改行の分を足しても収まる）
   var QR_MAX = 2300; // QR（誤り訂正 L・40型）に入る URL の長さのめやす
@@ -138,14 +140,16 @@
   function clean(text) {
     var s = String(text || "");
     // URL の途中で改行されていても（改行のあとの字下げも）、コードに使う文字が続くあいだは1つのコードとして取る
-    var m = s.match(/[#&]hk=([A-Za-z0-9_.%-]+(?:[ \t]*[\r\n]+[ \t]*[A-Za-z0-9_.%-]+)*)/);
+    // 行の中の空白で切れていても（メールやチャットの折り返し）、つなげて CRC が合うところを使う（版7）
+    var m = s.match(/[#&]hk=([A-Za-z0-9_.%-]+(?:\s+[A-Za-z0-9_.%-]+)*)/);
     var src = m ? m[1] : s;
     var un = function (x) { if (!m) return x; try { return decodeURIComponent(x); } catch (e) { return x; } };
     // 行をつなぐと、コードのあとの行（「  Note: keep」など）の字まで入ることがある。
     // 長いほうから順に、終わりの3行までを外して CRC が合うところを使う（合わなければ全部つないで、写しまちがいとして知らせる。
     // 外すのを3行までにするのは、とても長いコードで CRC を何度も計り直さないため。版6）
-    var lines = src.split(/[\r\n]+/);
-    for (var k = lines.length; k >= 1 && k >= lines.length - 3; k--) {
+    // 区切りは改行と空白（版7。前は改行だけ）。外すのは終わりの8つまで
+    var lines = src.split(/\s+/).filter(Boolean);
+    for (var k = lines.length; k >= 1 && k >= lines.length - 8; k--) {
       var c = un(lines.slice(0, k).join("")).replace(/\s+/g, "");
       if (whole(c)) return c;
     }
@@ -275,6 +279,8 @@
         }
       }
       msg = job.undo ? "取り込む前の記録に戻しました" : "記録を引き継ぎました";
+      // ほかのタブに入れ替えを知らせる（古いタブが手元の記録で上書きしないよう、読み直させる。版7、2026-11-07 CodeRabbit）
+      try { localStorage.setItem(SYNC, String(Date.now())); } catch (e) { /* なし */ }
       undo = !job.undo && count(cur) > 0;
     } catch (e) {
       undo = partial;
@@ -534,6 +540,8 @@
     }
     checkHash();
     window.addEventListener("hashchange", checkHash);
+    // 別のタブで記録を入れ替えたら、このタブも読み直す（手元に残った古い記録で、取り込んだ記録を上書きしない。版7）
+    window.addEventListener("storage", function (e) { if (e.key === SYNC && e.newValue) location.reload(); });
   }
   // QR の URL（#hk=コード）で開かれたら、取り込みの確認を出す（開いている画面で URL が変わったときも）
   function checkHash() {
