@@ -71,8 +71,9 @@ pw_loads() {
 deps_ok() { [ -f "$stamp" ] && [ "$(cat "$stamp")" = "$sum" ] && (cd "$npm_dir" && npm ls --all --include=dev >/dev/null 2>&1) && pw_loads; }
 # 2つのセッションが同時に動いても npm ci を重ねない（片方が入れている node_modules をもう片方が消す。版10）
 lock="$npm_dir/.setup-lock"
-for _ in $(seq 1 600); do mkdir "$lock" 2>/dev/null && break; sleep 1; done
-[ -d "$lock" ] || fail "$lock が10分消えない（ほかの setup.sh が止まったまま。動いていなければ rmdir $lock）"
+got=""
+for _ in $(seq 1 600); do if mkdir "$lock" 2>/dev/null; then got=1; break; fi; sleep 1; done
+[ -n "$got" ] || fail "$lock が10分消えない（ほかの setup.sh が止まったまま。動いていなければ rmdir $lock）"   # 取れなかったら進まない・人のロックを消さない
 trap 'rmdir "$lock" 2>/dev/null || true' EXIT
 if deps_ok; then
   echo "依存は lock どおりに入っている（入れ直さない）"
@@ -81,6 +82,7 @@ else
   echo "$sum" > "$stamp"
 fi
 rmdir "$lock" 2>/dev/null || true
+trap - EXIT   # 返したあとは、あとから来た setup.sh のロックを終わりに消さない
 
 # Playwright のブラウザ。検査は CHROMIUM_PATH があればそれを、無ければ Playwright の置き場のものを使う
 # 相対パスはここで絶対パスにする（起動の試しは "$npm_dir" に移って動く。Playwright は相対の executablePath をいまの場所から探す。版8）

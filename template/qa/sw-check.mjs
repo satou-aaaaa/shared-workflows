@@ -4,6 +4,7 @@
 //   stalled: 本文の途中で通信が止まっても、4秒ほどで保存したものへ切り替わる（2026-11-07 CodeRabbit）
 //   normal:  少し遅い通信（1秒）はネットの返事のまま（amida-haitatsu #14 の CodeRabbit）
 //   trickle: 本文が少しずつ（1秒ごとに）届くあいだは待ち、ネットの返事を返す（合計の時間で切らない。chikei-ate #2・pikuto-yomi #1）
+//   long:    保存したものが無く、本文が3秒ごとに届いて合わせて75秒かかっても、打ち切らずにネットの返事を返す（#252 の CodeRabbit）
 //   nocache: 保存したものも無く通信も止まり、控えの検索まで止まっても、60秒で Response.error() を返す（sekai-jikoku #1・meirei-narabe #1）
 import vm from "node:vm";
 
@@ -20,10 +21,11 @@ export async function checkSwStall(code) {
     caches: { match, open: async () => ({ match, put: async () => {}, keys: async () => [], addAll: async () => {} }), keys: async () => [], delete: async () => true },
     fetch: async () => {
       if (mode === "ok") { await new Promise((r) => setTimeout(r, 1000 / S)); return new Response("net-page", { status: 200 }); }
-      if (mode === "trickle") {
+      if (mode === "trickle" || mode === "long") {
         let n = 0;
+        const [count, gap] = mode === "long" ? [24, 3000] : [8, 1000];
         return new Response(new ReadableStream({
-          pull(c) { return new Promise((r) => setTimeout(() => { if (n++ < 8) c.enqueue(new TextEncoder().encode("net-")); else { c.enqueue(new TextEncoder().encode("page")); c.close(); } r(); }, 1000 / S)); },
+          pull(c) { return new Promise((r) => setTimeout(() => { if (n++ < count) c.enqueue(new TextEncoder().encode("net-")); else { c.enqueue(new TextEncoder().encode("page")); c.close(); } r(); }, gap / S)); },
         }), { status: 200 });
       }
       // 見出しは届くが本文が終わらない返事
@@ -43,7 +45,9 @@ export async function checkSwStall(code) {
   const normal = await within(30000, (r) => r.text());
   mode = "trickle";
   const trickle = await within(30000, (r) => r.text());
-  mode = "stall"; store = "hang";
+  mode = "long"; store = "hang";
+  const long = await within(120000, (r) => (r.type === "error" ? "error" : r.text()));
+  mode = "stall";
   const nocache = await within(75000, (r) => r.type);
-  return { stalled, normal, trickle, nocache, ok: stalled === "cached-page" && normal === "net-page" && trickle === "net-net-net-net-net-net-net-net-page" && nocache === "error" };
+  return { stalled, normal, trickle, long, nocache, ok: stalled === "cached-page" && normal === "net-page" && trickle === "net-net-net-net-net-net-net-net-page" && long === "net-".repeat(24) + "page" && nocache === "error" };
 }

@@ -21,6 +21,7 @@ jobs:
       # 「次にやること」（scripts/next-actions.mjs）を一緒に載せるため。Claude が止まっていても、この Issue のメールで次の一手が分かる
       # incidents/ は再発防止の点検（残っている対策・同じ種類の繰り返し）に使う
       # .github/workflows は、ひな形のずれの検査（drift-check.mjs）が「もう無い部品を呼んでいないか」を見るのに使う
+      # template は、drift-check.mjs がひな形（setup.sh・transfer.js・sw.js・a11y など）と写しを比べるのに使う（無いと検査の前に止まっていた。2026-11-07 #252 の CodeRabbit）
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -28,6 +29,7 @@ jobs:
             scripts
             incidents
             .github/workflows
+            template
       - name: まとめを作って Issue にする
         env:
           GH_TOKEN: ${{ github.token }}

@@ -29,7 +29,7 @@ on:
         type: string
         default: ''
       present_checks:
-        description: '動いたときだけ成功を待つ check run の名前（改行区切り）。例 "setup / setup"（Setup check は準備のファイルを変えた PR でしか動かない。動いたのに失敗・実行中ならマージしない。2026-11-07 atsusa-shisu #1・sekai-jikoku #1 の CodeRabbit）'
+        description: '動いたときだけ成功を待つ check run の名前（改行区切り）。例 "setup / setup"（Setup check は準備のファイルを変えた PR でしか動かない。動いたのに失敗・実行中ならマージしない。終わったときに判定し直すので、呼び出し側の workflows: にその Actions のワークフロー名を入れる。外のアプリの検査は書かない。2026-11-07 atsusa-shisu #1・sekai-jikoku #1 の CodeRabbit）'
         type: string
         default: ''
       require_paths:

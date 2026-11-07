@@ -27,6 +27,10 @@ export function swRegion(old) {
   const cache = old.match(/^const CACHE\s*=.*$/m);
   const shell = old.match(/^const SHELL\s*=[\s\S]*?\];.*$/m);
   if (!cache || !shell) return null;
+  // SHELL が文字の並びだけでないとき（...ASSETS など別の定数を使う）は、写すとその定数が消えるので写さない（#252 の CodeRabbit）
+  const items = shell[0].replace(/\/\/.*$/, '').replace(/^const SHELL\s*=\s*\[/, '').replace(/\];\s*$/, '');
+  if (!/^\s*(?:"[^"]*"|'[^']*')(?:\s*,\s*(?:"[^"]*"|'[^']*'))*\s*,?\s*$/.test(items)) return null;
+  if (!/^const CACHE\s*=\s*["'][\w-]+-v\d+["'];/.test(cache[0])) return null;
   return `// game:begin\n${cache[0]}\n${shell[0]}\n// game:end\n`;
 }
 

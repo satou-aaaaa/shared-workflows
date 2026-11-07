@@ -16,6 +16,7 @@ html:not(.a11y-ruby) ruby.a11y-rb>rt{display:none}
 /* 設定の画面（どのゲームでも同じ見た目・同じ濃さ。白地に黒で 15:1） */
 .a11y-dlg{max-width:min(420px,calc(100vw - 32px));width:100%;box-sizing:border-box;border:2px solid #1d2320;border-radius:14px;padding:18px 16px 14px;background:#fffdf8;color:#1d2320;font:500 16px/1.6 "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif;letter-spacing:0}
 .a11y-dlg::backdrop{background:#0008}
+.a11y-dlg:not([open]){display:none}
 .a11y-dlg h2{font-size:19px;margin:0 0 4px;font-weight:700;line-height:1.4}
 .a11y-dlg p{margin:4px 0 10px;font-size:14px;color:#3d4440;line-height:1.6}
 .a11y-dlg label{display:flex;gap:12px;align-items:center;min-height:48px;padding:6px 4px;border-top:1px solid #1d232022;cursor:pointer;line-height:1.4}

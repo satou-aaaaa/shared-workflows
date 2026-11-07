@@ -18,7 +18,7 @@ const base = self.location.href || self.location.origin + "/";
 const KEEP = new Set(SHELL.map((u) => new URL(u, base).pathname)); // 保存し直すのは画面のファイルだけ
 const INDEX = new URL("./index.html", base).pathname;
 const IDLE = 4000; // 本文がこれだけ止まったら保存したものに切り替える（少しずつでも届いていれば待つ）
-const LIMIT = 60000; // 保存したものも無く、これだけたっても終わらなければ Response.error() を返す
+const LIMIT = 60000; // 保存したものも無く、これだけ何も届かなければ Response.error() を返す（少しずつでも届いていれば待つ）
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 self.addEventListener("install", (e) => {
@@ -33,8 +33,8 @@ self.addEventListener("activate", (e) => {
     .then(() => self.clients.claim()));
 });
 
-// 本文を読み切る。かたまりが届くたびに止まりの時計を戻す（合計の時間では見ない）。止まったら idle() を呼ぶ
-function readAll(res, idle) {
+// 本文を読み切る。かたまりが届くたびに止まりの時計を戻す（合計の時間では見ない）。止まったら idle()、届くたびに moved() を呼ぶ
+function readAll(res, idle, moved) {
   if (!res.body || !res.body.getReader) return res.arrayBuffer();
   const reader = res.body.getReader();
   const parts = [];
@@ -46,7 +46,7 @@ function readAll(res, idle) {
       let at = 0; for (const p of parts) { out.set(p, at); at += p.length; }
       return out.buffer;
     }
-    parts.push(value); timer = setTimeout(idle, IDLE);
+    parts.push(value); moved(); timer = setTimeout(idle, IDLE);
     return pump();
   }, (err) => { clearTimeout(timer); throw err; });
   return pump();
@@ -65,13 +65,16 @@ self.addEventListener("fetch", (e) => {
   e.waitUntil(Promise.race([new Promise((r) => { saved = r; }), wait(LIMIT)])); // 保存し直しが終わるまで（60秒まで）待つ
   e.respondWith(new Promise((resolve) => {
     let sent = false;
+    let cap = 0;
     const send = (r) => { if (sent) return; sent = true; clearTimeout(cap); clearTimeout(first); resolve(r); };
+    // 最後の返事。控えの検索も待たない（どちらも止まっても返す）。何か届くたびに時計を戻す（大きなファイルの受信を打ち切らない。#252 の CodeRabbit）
+    const arm = () => { clearTimeout(cap); cap = setTimeout(() => send(Response.error()), LIMIT); };
     const fallback = () => fromCache().then((hit) => hit && send(hit)); // 保存したものがあれば切り替える（無ければネットを待ち続ける）
     const first = setTimeout(fallback, IDLE); // 見出しが4秒届かないとき
-    const cap = setTimeout(() => send(Response.error()), LIMIT); // 最後の返事。控えの検索も待たない（どちらも止まっても返す）
+    arm();
     fetch(req).then((res) => {
-      clearTimeout(first);
-      return readAll(res, fallback).then((buf) => {
+      clearTimeout(first); arm();
+      return readAll(res, fallback, arm).then((buf) => {
         const make = () => new Response(buf, { status: res.status, statusText: res.statusText, headers: res.headers });
         if (res.ok) {
           send(make());

@@ -204,6 +204,14 @@ export async function checkTransfer({ browser, url, game, sample, check, open })
   await Promise.all([pd.waitForEvent("load"), pd.click("#hk-yes")]);
   await pd.waitForTimeout(300);
   check("引き継ぎ：取り込みの書き込みが失敗したら、記録は元のまま", wantVal === undefined || JSON.stringify(await dump(pd)) === dBefore, JSON.stringify(await dump(pd)).slice(0, 80));
+  // 入れ替えの番号（hk-sync:）を書けなければ入れ替えない（古いタブが上書きしうる。#252 の CodeRabbit）
+  await pd.evaluate(() => sessionStorage.setItem("hk-fail", JSON.stringify({ k: "hk-sync:" })));
+  await pd.evaluate((c) => { location.hash = "hk=" + c; }, code);
+  await pd.waitForSelector("#hk-yes");
+  await Promise.all([pd.waitForEvent("load"), pd.click("#hk-yes")]);
+  await pd.waitForTimeout(300);
+  check("引き継ぎ：入れ替えの番号を書けなければ、記録は元のまま", JSON.stringify(await dump(pd)) === dBefore, JSON.stringify(await dump(pd)).slice(0, 80));
+  if (await pd.locator("#hk-toast-close").count()) await pd.click("#hk-toast-close");
   // 控えに戻す途中の書き込み（hk-prev:）が失敗したら、戻さない（いまの記録が消えない）
   await pd.evaluate(() => sessionStorage.removeItem("hk-fail"));
   await pd.evaluate((c) => { location.hash = "hk=" + c; }, code);

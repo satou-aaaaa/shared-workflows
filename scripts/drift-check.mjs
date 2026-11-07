@@ -306,6 +306,7 @@ for (const r of REPOS) {
       else if (next !== raw) flag('sw:template', 'sw.js がひな形とちがう（node scripts/sync-template.mjs <ゲームのフォルダ> で写す。ゲームの所は game:begin〜game:end の間に書く）');
       if (!paths.has('qa/sw-check.mjs')) flag('sw:qa', 'qa/sw-check.mjs が無い（template/qa/sw-check.mjs を写し、qa/run.mjs から checkSwStall を呼ぶ）');
       else if ((await src.read('qa/sw-check.mjs')) !== SW_QA) flag('sw:qa', 'qa/sw-check.mjs がひな形とちがう（node scripts/sync-template.mjs で写す）');
+      else if (!paths.has('qa/run.mjs') || !/checkSwStall\(/.test(await src.read('qa/run.mjs'))) flag('sw:run', 'qa/run.mjs が checkSwStall を呼んでいない（sw.js の検査が CI で走らない）');
       // とことんで正解した直後に「ここで降りる」が効かない形（2026-11-07 kyuyo-meisai #1 の CodeRabbit。同じ行が8本にあった）
       if (paths.has('index.html') && /if\s*\(\s*cur\s*&&\s*cur\.done\s*\)\s*return;\s*finish\(\)/.test(await src.read('index.html'))) flag('endless:stuck', 'index.html の「ここで降りる」が正解した直後に効かない（if (cur && cur.done) return; finish(); の行。kyuyo-meisai 1bebfdc の直し方）');
       // ふつうのアイコンを maskable にも使い回すと、Android で丸く切られて絵の端が欠ける（2026-11-07 tani-kankaku #1 の CodeRabbit）
@@ -337,11 +338,15 @@ for (const r of REPOS) {
         // 直した設定がマージされても main で動き直さないと、赤のまま残り Issue が開き直す（incidents/2026-11-05-link-check-not-rerun-on-main.md）
         if (m[1] === 'link-check' && !/^\s*push:/m.test(live)) flag('link-check:push', `${p} に main への push で動き直す設定が無い（template/.github/workflows/link-check.yml を写す）`);
         // 呼び出し側のひな形の版10（2026-11-07 shared-workflows #219 にためた CodeRabbit の指摘）
-        const pushPart = (live.split(/^\s*push:\s*$/m)[1] || '').split(/^\s{2}\w[\w-]*:/m)[0];
-        if (m[1] === 'link-check' && /^\s*push:/m.test(live) && !/\*\.html/.test(pushPart)) flag('link-check:paths', `${p} の push の paths に "*.html" と README.md が無い（リンクを直してマージしても main で動き直さない）`);
-        if (m[1] === 'setup-check' && !/^\s*push:/m.test(live)) flag('setup-check:push', `${p} に main への push が無い（直した setup.sh をマージしても、失敗の Issue が次の月まで閉じない。template/.github/workflows/setup-check.yml を写す）`);
+        // on: の push: の中身（次の2字下げのきっかけまで）
+        const pushPart = (live.split(/^ {2}push:\s*$/m)[1] || '').split(/^ {2}\w[\w-]*:/m)[0];
+        const pushPaths = (pushPart.split(/^\s*paths:\s*$/m)[1] || '').split(/^\s*[\w-]+:/m)[0];
+        const onMainPush = /branches:\s*\[\s*["']?main["']?\s*\]/.test(pushPart) && !/paths-ignore:/.test(pushPart);
+        if (m[1] === 'link-check' && /^ {2}push:/m.test(live) && !(onMainPush && /["']\*\.html["']/.test(pushPaths) && /README\.md/.test(pushPaths))) flag('link-check:paths', `${p} の push（main）の paths に "*.html" と README.md が無い（paths-ignore も使わない。リンクを直してマージしても main で動き直さない）`);
+        if (m[1] === 'setup-check' && !(onMainPush && /scripts\/setup\.sh/.test(pushPaths))) flag('setup-check:push', `${p} に main への push（paths に scripts/setup.sh）が無い（直した setup.sh をマージしても、失敗の Issue が次の月まで閉じない。template/.github/workflows/setup-check.yml を写す）`);
         if (m[1] === 'ci-failure-issue' && !/^\s*contents:\s*read/m.test(live)) flag('ci-failure-issue:contents', `${p} の permissions に contents: read が無い（非公開にすると見回りが main を読めない）`);
-        if (m[1] === 'game-qa' && /cancel-in-progress/.test(live) && !/run_id/.test(live)) flag('qa:concurrency', `${p} の concurrency が main の実行も同じグループにまとめる（待っている main の QA が取り消される。group を template/.github/workflows/qa.yml の形に）`);
+        const group = (live.match(/^\s*group:\s*(.+)$/m) || [, ''])[1];
+        if (m[1] === 'game-qa' && /cancel-in-progress/.test(live) && !/run_id/.test(group)) flag('qa:concurrency', `${p} の concurrency の group が main の実行も同じグループにまとめる（待っている main の QA が取り消される。template/.github/workflows/qa.yml の形に）`);
       }
       // Playwright を入れる段階（apt）が9分かかる日があり、10分の時間切れで QA が止まった（incidents/2026-11-05-qa-timeout-slow-install.md）
       // ジョブごとに見る（ファイル全体の最小だと、別のジョブの短い時間切れまで数えてしまう）。ジョブに書いていなければ GitHub の既定の360分

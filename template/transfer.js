@@ -296,22 +296,32 @@
       if (!count(d) && count(job.d || {})) throw new Error("data-keys の外のキーだけ");
       job.d = d;
       var cur = snapshot();
+      // 入れ替える前に番号を進める。前の番号で開いたタブは、ここから先ゲームの保存を書かない（watchSaves）。
+      // 書けなければ入れ替えない（古いタブが、取り込んだ記録を手元の古い記録で上書きしうる。版10、#252 の CodeRabbit）
+      localStorage.setItem(SYNC, String(Date.now()) + "." + Math.random().toString(36).slice(2));
       if (job.undo) {
         // 控えに戻す：控え（job.d と同じ中身）は入れ替えが済むまで上書きしない。途中で止まっても、もう一度「控えに戻す」で戻せる（版5）
         // 先に、戻す前の記録を PREV に書く。書けなければ戻さない（入れ替えも元に戻すのも失敗すると、いまの記録がどこにも残らない。版10）
-        var stamp = JSON.stringify({ at: new Date().toISOString(), d: cur });
-        localStorage.setItem(PREV, stamp);
+        // 前に途中で止まって PREV が残っていれば、それが元の記録のただ1つの写しなので上書きしない（#252 の CodeRabbit）
+        var held = localStorage.getItem(PREV);
+        var stamp = held != null ? held : JSON.stringify({ at: new Date().toISOString(), d: cur });
+        if (held == null) localStorage.setItem(PREV, stamp);
+        var heldB = held != null ? readKey(PREV) : null;
+        var same = function (a, b) { var k = Object.keys(a).sort(); return JSON.stringify(k) === JSON.stringify(Object.keys(b).sort()) && k.every(function (x) { return a[x] === b[x]; }); };
+        var toHeld = !!heldB && same(heldB.d, job.d); // 残っていた PREV（元の記録）へ戻す
         try { replaceAll(job.d); } catch (e) {
           partial = e.rolledBack === false;
-          if (!partial) { try { localStorage.removeItem(PREV); } catch (e2) { /* なし */ } }
+          if (!partial && held == null) { try { localStorage.removeItem(PREV); } catch (e2) { /* なし */ } }
           throw e;
         }
-        // 済んだら、戻す前の記録を控えにする（もう一度押すと戻る）。控えを書けなければ入れ替えを戻す。
-        // 戻すのも失敗したら PREV を残す（readBackup が控えとして出す）。戻す前が空でも、空の記録を控えにする（版8）
-        try { localStorage.setItem(BACKUP, stamp); } catch (e) {
-          try { replaceAll(cur); } catch (e2) { partial = true; throw e2; }
-          try { localStorage.removeItem(PREV); } catch (e3) { /* なし */ }
-          throw e;
+        if (!toHeld) {
+          // 済んだら、戻す前の記録を控えにする（もう一度押すと戻る）。控えを書けなければ入れ替えを戻す。
+          // 戻すのも失敗したら PREV を残す（readBackup が控えとして出す）。戻す前が空でも、空の記録を控えにする（版8）
+          try { localStorage.setItem(BACKUP, stamp); } catch (e) {
+            try { replaceAll(cur); } catch (e2) { partial = true; throw e2; }
+            if (held == null) { try { localStorage.removeItem(PREV); } catch (e3) { /* なし */ } }
+            throw e;
+          }
         }
         try { localStorage.removeItem(PREV); } catch (e) { /* なし */ }
       } else {
@@ -326,8 +336,7 @@
         }
       }
       msg = job.undo ? "取り込む前の記録に戻しました" : "記録を引き継ぎました";
-      // ほかのタブに入れ替えを知らせる（古いタブが手元の記録で上書きしないよう、読み直させる。版7、2026-11-07 CodeRabbit）
-      try { localStorage.setItem(SYNC, String(Date.now()) + "." + Math.random().toString(36).slice(2)); } catch (e) { /* なし */ }
+      // ほかのタブへの知らせは、上で進めた番号の storage イベント（古いタブは読み直す。版7）
       undo = !job.undo && count(cur) > 0;
     } catch (e) {
       undo = partial;
