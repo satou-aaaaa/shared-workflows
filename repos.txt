@@ -28,6 +28,7 @@ haku-uchi game
 hikari-michi game
 hyakunin-awase game
 hyoshiki-yomi game
+jintai-shikumi game
 jitensha-rule game
 jobun-tobatsu game
 kabu-news game
