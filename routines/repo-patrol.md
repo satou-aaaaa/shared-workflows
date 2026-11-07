@@ -38,6 +38,7 @@ A. **新しい対象の自動検出**（毎回。軽い比較だけ）: チー�
      - chikei-ate: data.js（山の値）に触れる PR は国土地理院の CSV から作り直したものか（手で直していないか）見る。
      - dashisugi-check: gen.js（手がかりの説明・出典）に触れる直しは公的な資料で確かめる。
      - denki-kairo: 回路の計算・盤の作り方（gen.js）に触れる PR は QA の見本（直列・並列・ショート）と総当たりの数え直しが通っているか見る。
+     - hyoshiki-yomi: gen.js の標識（名前・番号・意味・絵）に触れる PR は、e-Gov の標識令 別表第一・第二と照らす。
      - kenko-minuki: data.js（見分け方の中身）に触れる PR は、src の公的な資料と照らす。
      - kikigaki-techo: data.js（手がかり・出典）に触れる直しは出典の資料で確かめる。
      - kimari-sagashi: 問題の作り方（gen.js）に触れる PR は QA の解き直しが通っているか、言い方に触れる PR は README の出典と照らす。
