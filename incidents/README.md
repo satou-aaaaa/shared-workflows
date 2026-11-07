@@ -80,6 +80,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-11-07 | 権限・設定 | [Fetch page が国土地理院のページを古い TLS のせいで読めなかった](2026-11-07-fetch-page-gsi-legacy-tls.md) | 対策済み |
 | 2026-11-07 | 公開・CI | [天秤の書の Check が、Playwright を入れる段階の遅さで10分の時間切れになった](2026-11-07-tenbin-check-timeout.md) | 対策済み |
 | 2026-11-06 | 動作 | [carcassonne-research の selfplay が、試行番号が 1000 を超えたとたん学習データを消して落ちた](2026-11-06-selfplay-attempt-1000-digits.md) | 対策済み |
 | 2026-11-06 | 検査の見逃し | [辞書から作った問題に、性別に寄った言葉（看護婦・主婦・嫁など）が入っていた](2026-11-06-dictionary-gendered-words.md) | 対策済み |

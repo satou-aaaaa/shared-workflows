@@ -25,6 +25,9 @@ env:
   # 拒まれていると分かっているサイト（送らずに止める）。laws.e-gov.go.jp: Actions（海外のサーバー）を 403 で拒む（2026-10-22 known-limits.md）。
   # 拒まなくなったかは satou さんの PC から確かめ、確かめたらここから外す（Actions から叩いて確かめない）
   DENIED_HOSTS: "laws.e-gov.go.jp"
+  # 古い TLS（再ネゴシエーション）しか話さないサイト。OpenSSL 3 は既定で断るので、ここに挙げたサイトだけ許す（読むだけ・秘密は送らない）。
+  # www.gsi.go.jp: 国土地理院。2026-11-07 robots.txt で UNSAFE_LEGACY_RENEGOTIATION_DISABLED（incidents/2026-11-07-fetch-page-gsi-legacy-tls.md）
+  LEGACY_TLS_HOSTS: "www.gsi.go.jp"
   # 名乗り（ブラウザのふりをしない。誰が何のために読んでいるかと連絡先を書く）
   USER_AGENT: "satou-aaaaa-fetch-page/1.0 (+https://github.com/satou-aaaaa/shared-workflows/blob/main/.github/workflows/fetch-page.yml)"
 
@@ -59,8 +62,12 @@ jobs:
           robots = f"https://{u.netloc}/robots.txt"
           ua = os.environ["USER_AGENT"]
           rp = urllib.robotparser.RobotFileParser()
+          import ssl
+          ctx = ssl.create_default_context()
+          if (u.hostname or "").lower() in os.environ["LEGACY_TLS_HOSTS"].split():
+              ctx.options |= getattr(ssl, "OP_LEGACY_SERVER_CONNECT", 0x4)
           try:
-              with urllib.request.urlopen(urllib.request.Request(robots, headers={"User-Agent": ua}), timeout=30) as r:
+              with urllib.request.urlopen(urllib.request.Request(robots, headers={"User-Agent": ua}), timeout=30, context=ctx) as r:
                   rp.parse(r.read().decode("utf-8", "replace").splitlines())
           except urllib.error.HTTPError as e:
               if e.code in (401, 403) or e.code >= 500:
@@ -76,6 +83,10 @@ jobs:
           print("robots.txt: 読んでよい")
           PY
           mkdir -p page
+          if python3 -c 'import os,sys,urllib.parse;sys.exit(0 if (urllib.parse.urlsplit(os.environ["URL"]).hostname or "").lower() in os.environ["LEGACY_TLS_HOSTS"].split() else 1)'; then
+            printf 'openssl_conf = c\n[c]\nssl_conf = s\n[s]\nsystem_default = d\n[d]\nOptions = UnsafeLegacyServerConnect\n' > "$RUNNER_TEMP/legacy.cnf"
+            export OPENSSL_CONF="$RUNNER_TEMP/legacy.cnf"
+          fi
           # 転送（3xx）は追わない。転送先が ALLOWED_HOSTS の外かもしれないため。転送先を出すので、許すならその URL で起こし直す
           code=$(curl -sS --max-time 60 --max-filesize 5000000 -A "$USER_AGENT" -o page/raw -D page/headers -w '%{http_code}' -- "$URL")
           echo "HTTP $code"
