@@ -9,6 +9,7 @@
 #   5. CLAUDE_ENV_FILE が無いと、このシェルで打つ export を出し、「✓」を出さない
 #   6. nvm で Node を入れたときは「nvm use」を出し、「✓」を出さない
 #   7. ブラウザを起動できない（Linux のライブラリ不足など）と止まり、「✓」を出さない（ひな形の版 5）
+#   13. 相対パスの CHROMIUM_PATH でも起動の試しが通る（ひな形の版 8）
 #   8. 空白のあるブラウザの場所を、引用して CLAUDE_ENV_FILE に書く（版 5）
 #   9. lock も依存も変わっていなければ入れ直さない（QA の最中に node_modules を消さない。版 5）
 #  10. NODE_ENV=production でも devDependencies を入れる・11. requirements.txt が無ければ Python を飛ばす（版 6）
@@ -34,7 +35,7 @@ python3 -c 'import sys; print(f"{sys.version_info[0]}.{sys.version_info[1]}")' >
 echo '{"name":"dep","version":"1.0.0"}' > "$repo/app/dep/package.json"
 # 作り物の Playwright：FAKE_LAUNCH_FAIL があると起動に失敗する（ライブラリが足りない Linux の代わり）
 echo '{"name":"playwright","version":"1.0.0"}' > "$repo/app/pw/package.json"
-echo 'if(process.env.FAKE_REQUIRE_FAIL)throw new Error("Cannot find module playwright-core");exports.chromium={executablePath:()=>"",launch:async()=>{if(process.env.FAKE_LAUNCH_FAIL)throw new Error("libnss3.so: cannot open shared object file");return{close:async()=>{}}}};' > "$repo/app/pw/index.js"
+echo 'if(process.env.FAKE_REQUIRE_FAIL)throw new Error("Cannot find module playwright-core");exports.chromium={executablePath:()=>"",launch:async(o)=>{if(o&&o.executablePath&&!require("fs").existsSync(o.executablePath))throw new Error("Failed to launch: "+o.executablePath+" not found");if(process.env.FAKE_LAUNCH_FAIL)throw new Error("libnss3.so: cannot open shared object file");return{close:async()=>{}}}};' > "$repo/app/pw/index.js"
 echo '{"name":"fx","version":"1.0.0","private":true,"dependencies":{"dep":"file:./dep"},"devDependencies":{"playwright":"file:./pw"}}' > "$repo/app/package.json"
 (cd "$repo/app" && npm install --package-lock-only --no-audit --no-fund >/dev/null)
 printf '#!/bin/sh\nexit 0\n' > "$tmp/bin/chromium"; chmod +x "$tmp/bin/chromium"   # 作り物のブラウザ
@@ -128,6 +129,12 @@ if run CLAUDE_ENV_FILE="$envf" FAKE_REQUIRE_FAIL=1; then ng "12. Playwright を�
 elif grep -q '^✓' "$tmp/out"; then ng "12. Playwright を読み込めないのに ✓ を出した"
 elif grep -q '読み込めない' "$tmp/out"; then ok "package.json にある Playwright を読み込めないと止まる"
 else ng "12. 読み込めない理由を出さない"; fi
+
+# 13. 相対パスの CHROMIUM_PATH（起動の試しは npm_dir に移って動く。2026-11-07 dema-tashikame #1 の CodeRabbit）
+mkdir -p "$repo/bin2"; cp "$tmp/bin/chromium" "$repo/bin2/chromium"
+if run CLAUDE_ENV_FILE="$envf" CHROMIUM_PATH=bin2/chromium && grep -q '^✓ 準備できた' "$tmp/out"; then
+  ok "相対パスの CHROMIUM_PATH でも起動の試しが通る"
+else ng "13. 相対パスの CHROMIUM_PATH で起動の試しが落ちる"; fi
 
 [ "$bad" = 0 ] || { echo "✗ ひな形 template/scripts/setup.sh の検査が落ちた" >&2; exit 1; }
 echo "✓ ひな形の準備スクリプトの検査が通った"
