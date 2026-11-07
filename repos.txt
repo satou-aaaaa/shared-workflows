@@ -63,3 +63,4 @@ tenkizu-yomi game
 todofuken-relay game
 usotsuki-roppo game
 wagamama-burger game
+wareki-yomi game
