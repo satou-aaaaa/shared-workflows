@@ -151,7 +151,11 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
    `.github/workflows/` は既存のゲームからでなく `template/.github/workflows/` から写す（古いゲームの写しはひな形の直しが届いていない。QA も `template/.github/workflows/qa.yml`（時間切れ20分）を写す）。PR #1 を出す前に、shared-workflows で `LOCAL_ROOT=<clone の親> REPOS=<リポジトリ> node scripts/drift-check.mjs` を回し、出た行を直す（2026-11-05 あみだ配達・ことばならべ・ひかり道が、前の日に直した link-check の設定なしで出た）。
 6. `node qa/run.mjs` が全部通ってから PR。`sw.js` を含む PR は `@coderabbitai review` とコメントし、レビューを読んでから手でマージする。
 7. Pages を main のルートで公開する（[onboarding.md](onboarding.md) 手順5の1）。`node scripts/drift-check.mjs` に `pages` の行が出ないこと、Actions の Post-deploy check が緑になったことを見るまで、X などで紹介しない（2026-11-04 3本が 404 のまま紹介された。incidents/2026-11-04-pages-never-enabled.md）。
-8. 新しいリポジトリを [project-practices.md](project-practices.md) の表と README.md の一覧に足す。
+8. shared-workflows に PR を1つ出し、一覧に足す（[onboarding.md](onboarding.md) 手順3）。足すのは次の3か所だけで、どれも**名前の ABC 順の位置**に1行入れる（末尾に足さない。並行の新作の PR が同じ所に足すとぶつかる。2026-11-07 #184 が3つの PR とぶつかった。incidents/2026-11-07-repo-list-conflicts.md）。
+   - [repos.txt](../repos.txt) に `<名前> game`（ワークフロー・巡回・監督・週次まとめはここを読む。ほかのファイルに一覧を書かない）
+   - [project-practices.md](project-practices.md) の「ゲーム」の表に1行
+   - 中身に事実・出典があり、巡回で特に照らすことがあれば [repo-patrol.md](repo-patrol.md) の「ゲームで特に照らすこと」に1行（無ければ足さない）
+   Lint（`node scripts/check-repo-lists.mjs`）が、並び・ゲームの表の抜け・ほかのファイルに書いた一覧を見る。
 
 ### B. 公開中のゲームを1本磨く（週1・水曜）
 
@@ -176,7 +180,7 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 
 ## 一覧（磨く対象）
 
-usotsuki-roppo・wagamama-burger・kabu-news・batsu-doko・kasane-zome・rosen-hitofude・seiza-tsunagi・mannaka-kanji・kippu-10・bento-zume・todofuken-relay・shiritori-saitan・madori-puzzle・tenkizu-yomi・bushu-tashizan・amida-haitatsu・kotoba-narabe・jobun-tobatsu・machi-michijun・hikari-michi・otsukai-memo・bunshi-tsukuri・kimari-sagashi・kenko-minuki・kondate-koma・denki-kairo・akushitsu-miyaburi・dashisugi-check・kikigaki-techo・bousai-handan・kengen-check（新しく作ったら足す）
+[repos.txt](../repos.txt) の種類が `game` の行（`node scripts/repos.mjs game` で出る）。新しく作ったら A の手順8で足す。
 
 ## 完了条件
 
