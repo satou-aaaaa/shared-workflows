@@ -27,11 +27,13 @@ on:
 
 jobs:
   report:
-    # フォークの「main」という名前のブランチの PR を、このリポジトリの main と取り違えない
+    # フォークの「main」という名前のブランチの PR を、このリポジトリの main と取り違えない。
+    # PR で動いた実行（CodeQL など）も main の結果として数えない（2026-11-07 CodeRabbit）
     if: >-
       github.event_name != 'workflow_run' || (
       github.event.workflow_run.head_branch == github.event.repository.default_branch &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
+      !startsWith(github.event.workflow_run.event, 'pull_request') &&
       contains(fromJSON('["failure","success","timed_out","cancelled"]'), github.event.workflow_run.conclusion))
     runs-on: ${{ fromJSON(inputs.runner) }}
     timeout-minutes: 5
@@ -78,8 +80,14 @@ jobs:
 
           # 1つのワークフローの1回の実行について、Issue を立てる・コメントする・閉じる
           report() {
-            local wf=$1 conclusion=$2 url=$3 sha=$4 event=$5
+            local wf=$1 conclusion=$2 url=$3 sha=$4 event=$5 rid=${6:-}
             local title="CI失敗: ${wf}（main）" num
+            # 試しの実行（Branch cleanup の dry run など、ジョブ名に「(dry run)」）の成功では閉じない。本番と同じことをしていないため（2026-11-07 CodeRabbit）
+            if [ "$conclusion" = "success" ] && [ -n "$rid" ] &&
+              gh api "repos/${GH_REPO}/actions/runs/${rid}/jobs?per_page=100" --jq '.jobs[].name' 2>/dev/null | grep -qF '(dry run)'; then
+              echo "${wf}: 試しの実行の成功なので数えない"
+              return 0
+            fi
             num=$(gh issue list --state open --label ci-failure --limit 50 --json number,title \
               --jq ".[] | select(.title == \"${title}\") | .number" | head -n1)
             if [ "$conclusion" = "success" ]; then
@@ -131,7 +139,7 @@ jobs:
             c=$RUN_CONCLUSION
             if [ "$c" = "cancelled" ]; then c=$(timeout_or_cancelled "$RUN_ID"); fi
             if [ "$c" = "cancelled" ]; then echo "${WF_NAME}: cancelled（時間切れではないので数えない）"; exit 0; fi
-            report "$WF_NAME" "$c" "$RUN_URL" "$SHA" "$RUN_EVENT"
+            report "$WF_NAME" "$c" "$RUN_URL" "$SHA" "$RUN_EVENT" "$RUN_ID"
             exit 0
           fi
 
@@ -144,13 +152,14 @@ jobs:
             exit 1
           fi
           while IFS= read -r wf; do
-            run=$(gh run list --workflow "$wf" --branch "$DEFAULT_BRANCH" --status completed --limit 1 \
-              --json conclusion,url,headSha,event,databaseId --jq '.[0] // empty | [.conclusion, .url, .headSha, .event, .databaseId] | @tsv' 2>/dev/null) || run=""
+            # PR で動いた実行は飛ばす（main の結果ではない）
+            run=$(gh run list --workflow "$wf" --branch "$DEFAULT_BRANCH" --status completed --limit 20 \
+              --json conclusion,url,headSha,event,databaseId --jq '[.[] | select(.event | startswith("pull_request") | not)][0] // empty | [.conclusion, .url, .headSha, .event, .databaseId] | @tsv' 2>/dev/null) || run=""
             if [ -z "$run" ]; then echo "${wf}: main の実行が無い"; continue; fi
             IFS=$'\t' read -r c u s e id <<<"$run"
             if [ "$c" = "cancelled" ]; then c=$(timeout_or_cancelled "$id"); fi
             case "$c" in
-              failure|success|timed_out) echo "${wf}: ${c}"; report "$wf" "$c" "$u" "$s" "$e" ;;
+              failure|success|timed_out) echo "${wf}: ${c}"; report "$wf" "$c" "$u" "$s" "$e" "$id" ;;
               *) echo "${wf}: ${c}（数えない）" ;;
             esac
           done <<<"$names"
