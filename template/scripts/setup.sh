@@ -21,7 +21,7 @@
 #      2つ同時に動いても npm ci を重ねない（ロック）・Git Bash では CHROMIUM_PATH を Windows の形に直す（2026-11-07 shared-workflows #219）
 #  11: 強制終了で残ったロックは、同じ機械で持ち主が動いていなければ外す（10分待って止まっていた。#259）
 #  12: 起動の試しは package.json に書いた Playwright を先に使う・ブラウザの置き場も QA と同じ import() で探す・
-#      古いロックは自分だけの名前へ移してから消す（2つ同時に外して新しいロックを消さない）・名札の無い1分より古いロックも外す（各ゲームの PR の CodeRabbit、2026-11-07）
+#      古いロックは自分だけの名前へ移してから消す（2つ同時に外して新しいロックを消さない）・名札の無い1分より古いロックも外す・ほかの人の動いているプロセスのロックは外さない（各ゲームの PR の CodeRabbit、2026-11-07）
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -78,10 +78,12 @@ got=""
 me="$(hostname 2>/dev/null || echo local) $$"
 # 持ち主（同じ機械で、もう動いていない）が強制終了で残したロックだけを外す。別の機械のロックは外さない（版11の CodeRabbit）。
 # 名札の無いロック（作った直後に止まった）は、1分より古ければ外す（版12）
+# 動いているか。ほかの人のプロセスは kill -0 が「権限が無い」で失敗するので、それも動いているとみなす（版12、setsuden-kotsu #7 の CodeRabbit）
+alive() { kill -0 "$1" 2>/dev/null && return 0; kill -0 "$1" 2>&1 | grep -qi 'not permitted'; }
 stale() {
   local o
   if ! o=$(cat "$lock/owner" 2>/dev/null); then [ -d "$lock" ] && [ -n "$(find "$lock" -maxdepth 0 -mmin +1 2>/dev/null)" ] && echo "（名札なし）"; return; fi
-  [ "${o% *}" = "${me% *}" ] && ! kill -0 "${o##* }" 2>/dev/null && echo "$o"
+  [ "${o% *}" = "${me% *}" ] && ! alive "${o##* }" && echo "$o"
 }
 # 外すときは、まず自分だけの名前へ移す（移せるのは1つだけ）。移したものが見たときと同じ持ち主のときだけ消し、ちがえば戻す。
 # 2つの setup.sh が同じ古いロックを同時に外して、あとから取った新しいロックまで消すのを防ぐ（版12、shokuhin-hyoji #3 などの CodeRabbit）
