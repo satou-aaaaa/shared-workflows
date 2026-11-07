@@ -6,6 +6,7 @@
 akushitsu-miyaburi game
 amida-haitatsu game
 articles app
+atsusa-shisu game
 batsu-doko game
 bento-zume game
 bousai-handan game
