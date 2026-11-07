@@ -18,6 +18,7 @@ dashisugi-check game
 dema-tashikame game
 denki-kairo game
 dungeon-boardgame app
+gamen-no-wana game
 gogen-suiri game
 gurafu-minuki game
 haku-uchi game
