@@ -6,12 +6,13 @@
 // ずれてよい理由があれば scripts/drift-allow.json に理由つきで足す（理由の無い許しは置かない）。
 // 見るもの:
 //   - 全リポジトリにあるはずのファイル（AGENTS.md・CLAUDE.md・scripts/setup.sh・.claude/settings.json・.coderabbit.yaml）
-//   - AGENTS.md の節（「push する前の確認」「共通のきまり」）と、CLAUDE.md が AGENTS.md を読み込むこと
+//   - AGENTS.md の節（「push する前の確認」「共通のきまり」）と、CLAUDE.md が AGENTS.md を指すこと（4KB 超を @ で取り込まない）
 //   - 全リポジトリで呼ぶはずの共通部品（ci-failure-issue・secret-scan・branch-cleanup・labels・setup-check）
 //   - 共通部品の呼び出しが @main 以外を指している・もう無い部品を呼んでいる
 //   - ci-failure-issue の呼び出しに見回り（schedule）が無い
 //   - link-check の呼び出しに、main への push で動き直す設定が無い（incidents/2026-11-05-link-check-not-rerun-on-main.md）
 //   - Playwright を入れるジョブの timeout-minutes が 20 より短い（ファイル名によらず全部のワークフローを見る。入れる段階だけで9分かかる日がある。incidents/2026-11-05-qa-timeout-slow-install.md・2026-11-07-tenbin-check-timeout.md）
+//   - scripts/setup.sh にひな形の <> が残っている（埋め忘れ）
 //   - scripts/setup.sh の「ひな形の版」が template/scripts/setup.sh より古い（ひな形を直しても写しに届かない。incidents/2026-11-03-setup-false-ready.md）
 //   - scripts/setup.sh が渡す CHROMIUM_PATH を、検査のスクリプト（qa/・tools/ など）が読んでいない
 //   - 依存の置き場（package.json・requirements.txt・pyproject.toml）を Dependabot が見ていない
@@ -21,6 +22,7 @@
 //   - 記録を localStorage に置く PWA のゲームに、引き継ぎコード（transfer.js）が無い・版が template/transfer.js より古い・sw.js が保存していない（routines/game-dev.md「引き継ぎコード」）
 //   - ゲーム（index.html と sw.js がある）に、見やすさの設定（template/a11y/a11y.html）と検査（template/qa/a11y.mjs）が無い・ひな形とちがう・qa/run.mjs が回していない（routines/game-dev.md「だれでも遊べるように」）
 //   - ゲーム（index.html と sw.js がある）に、遊ぶ量を縛るチケット🎫や「○○すると開く」のモードの鍵がある（routines/game-dev.md「好きなだけ遊べるように」。satou さん 2026-11-06）
+//   - 公開リポジトリなのに repos.txt に無い（一覧の足し忘れ。API で読むときだけ。incidents/2026-11-07-repo-list-conflicts.md）
 //   - ゲームの sw.js が、入れるとき（install）に HTTP の保存を通して SHELL を取る（cache: 'reload' が無い。古い画面が新しい版に入る。routines/game-dev.md「PWA」）
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
@@ -28,10 +30,11 @@ import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formProblems } from './check-issue-forms.mjs';
+import { readRepos, repoNames } from './repos.mjs';
 
 const OWNER = process.env.OWNER || 'satou-aaaaa';
-// weekly-summary.yml の REPOS と同じ並び（shared-workflows 自身は部品の置き場なので見ない）
-const REPOS = (process.env.REPOS || 'sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban articles carcassonne-research usotsuki-roppo wagamama-burger kabu-news batsu-doko kasane-zome rosen-hitofude seiza-tsunagi mannaka-kanji kippu-10 bento-zume todofuken-relay shiritori-saitan madori-puzzle tenkizu-yomi bushu-tashizan amida-haitatsu kotoba-narabe jobun-tobatsu machi-michijun hikari-michi otsukai-memo bunshi-tsukuri kimari-sagashi kenko-minuki kondate-koma denki-kairo akushitsu-miyaburi dashisugi-check kikigaki-techo')
+// 見るリポジトリは repos.txt の game・app（shared-workflows 自身は部品の置き場なので見ない）
+const REPOS = (process.env.REPOS || repoNames().join(' '))
   .split(/\s+/).filter((r) => r && r !== 'shared-workflows');
 const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || '';
 const here = dirname(fileURLToPath(import.meta.url));
@@ -123,12 +126,19 @@ for (const r of REPOS) {
     }
     if (paths.has('CLAUDE.md')) {
       const claude = await src.read('CLAUDE.md');
-      if (!/^@AGENTS\.md\s*$/m.test(claude)) flag('claude:import', 'CLAUDE.md が @AGENTS.md を読み込んでいない（AGENTS.md と二重に書いている）');
+      const imports = /^@AGENTS\.md\s*$/m.test(claude);
+      if (!imports && !/AGENTS\.md/.test(claude)) flag('claude:import', 'CLAUDE.md が AGENTS.md を指していない（template/CLAUDE.md の形に）');
+      // 4KB を超える AGENTS.md を @ で取り込むと、全リポジトリを入れたクラウドの会話で毎回全文が読まれる（2026-11-07 トークン節約。routines/game-dev.md「トークンを節約する」）
+      if (imports && paths.has('AGENTS.md') && Buffer.byteLength(await src.read('AGENTS.md')) > 4096) flag('claude:big-import', 'CLAUDE.md が 4KB を超える AGENTS.md を @ で取り込んでいる（毎回の会話で全文が読まれる。template/CLAUDE.md の1行に替える）');
+      if (Buffer.byteLength(claude) > 1024) flag('claude:long', 'CLAUDE.md が 1KB を超えている（決まりは AGENTS.md に書く）');
     }
 
     if (paths.has('scripts/setup.sh')) {
       const setup = await src.read('scripts/setup.sh');
       const v = setupVer(setup);
+      // ひな形の「<…>」を埋め忘れると、bash が構文エラーで止まる（2026-11-07 haku-uchi #1 の Setup check。drift-check は通っていた）
+      const hole = setup.split('\n').find((l) => !/^\s*#/.test(l) && /=<[^>\n]*>/.test(l));
+      if (hole) flag('setup:placeholder', `scripts/setup.sh にひな形の <> が残っている「${hole.trim().slice(0, 40)}」（埋めないと構文エラーで止まる）`);
       if (v < SETUP_VER) flag('setup:version', `scripts/setup.sh がひな形の版 ${v}（今は ${SETUP_VER}。template/scripts/setup.sh の版の行の下にある変わったところを写し、版の行も上げる）`);
       // 準備が渡すブラウザの場所（CHROMIUM_PATH）を、検査が読んでいるか。読んでいないと「✓ 準備できた」のあと検査がブラウザを見つけられない
       // （2026-11-04 dungeon-boardgame の qa/run.mjs は PW_CHROMIUM しか読んでいなかった。incidents/2026-11-04-setup-nvm-silent-stop.md）
@@ -284,6 +294,23 @@ for (const r of REPOS) {
 
     for (const o of out) lines.push(`[${r}] ${o}`);
   } catch (e) { skipped.push(`${r}（${e.message}）`); }
+}
+
+// 公開リポジトリなのに repos.txt に無いもの（新作を一覧に足し忘れると、週次まとめ・成績表・CI 時間・このずれの検査のどれにも出ない。
+// 2026-11-07 kengen-check が README にはあるのにワークフローの一覧から抜けていた。incidents/2026-11-07-repo-list-conflicts.md）
+if (!LOCAL_ROOT) {
+  try {
+    const known = new Set([...readRepos().map((x) => x.name), 'shared-workflows']);
+    for (let page = 1; page <= 10; page++) {
+      const list = await api(`users/${OWNER}/repos?type=owner&per_page=100&page=${page}`);
+      if (!Array.isArray(list) || !list.length) break;
+      for (const x of list) {
+        if (x.fork || x.archived || x.private || known.has(x.name)) continue;
+        lines.push(`[${x.name}] repos.txt に無い公開リポジトリ（名前の順の位置に「${x.name} game」などを1行足す。見ないなら ignore と理由）`);
+      }
+      if (list.length < 100) break;
+    }
+  } catch (e) { skipped.push(`repos.txt との突き合わせ（${e.message}）`); }
 }
 
 if (lines.length) console.log(lines.join('\n'));
