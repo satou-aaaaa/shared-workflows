@@ -26,6 +26,11 @@
 - [x] 直す: ひな形を直した（setup.sh 版5・transfer.js 引き継ぎの版7・a11y.mjs・qa.yml を共通部品 game-qa の呼び出しに・ci-failure-issue に Setup check・secret-scan と qa に workflow_dispatch・post-deploy に hold_paths と recheck）。フォーカス枠は選ぶ前と後を比べる、SessionStart は startup|resume、引き継いだらほかのタブを読み直させる。Add ruleset・Create repo が必須チェック（qa / qa・scan / scan）と Allow auto-merge を入れ、あるルールセットにも足せるようにした（この PR）。公開中のゲームへ配り、必須チェックを入れた。
 - [x] 直す: （2回目）setup.sh 版6（埋める `<>` を無くし、そのまま写して動く・Python の節は requirements.txt があるときだけ・`npm ci --include=dev`）、ci-failure の見張りに CodeQL・Labels・Branch cleanup、引き継ぎの版8（HK0 の長さ・空の控え）、a11y.mjs（span の中の字・Tab が届くか・隠れた知らせを数えない・壊れた設定のあと開くか）、post-deploy（ファイルがあるのに 4xx なら差し戻さない）。公開中の26本へ配った
 - [x] 見つける: （2回目）drift-check の `setup:placeholder` が引用符の中の `<…>` も、`setup:python` が requirements.txt の無い Python の節を出す。`check-setup-template.sh` に NODE_ENV=production と requirements.txt 無しを、`check-transfer.mjs` に HK0 の長さと空の控えを、`template/qa/transfer-check.mjs` に HK0 を取り込んで中身が同じか・保存に失敗したらコードを作らないかを足した
+- [x] 直す: （3回目）setup.sh 版7：package.json に Playwright があるのに読み込めないときは止める（起動の試しを黙って飛ばして「✓」を出していた。kotowaza-awase #1 の CodeRabbit）。公開中の26本の PR にも入れた
+- [x] 見つける: （3回目）`check-setup-template.sh` の 12 番で、読み込めない Playwright に「✓」を出さないかを見る。版を7に上げたので drift-check が古い写しを出す
+- [x] 直す: （4回目）a11y.mjs：壊れた設定のあと押せないボタンも例外で止めずに ✗ と数える。sw-check.mjs：ふつうの通信に1秒の遅れを入れ、切り替えの期限を10秒までに狭めた（amida-haitatsu #14 の CodeRabbit）
+- [x] 見つける: （4回目）`scripts/check-sw-check.mjs` に切り替えが20秒の sw.js（`fixtures/sw-slow.js`）を足し、落ちることを見る
+- [x] 直す: （5回目）引き継ぎの版9（行が分かれたコードを試す whole() でも HK0 を戻す前に長さで弾く）。ci-failure-issue は PR で動いた実行を数えず、試しの実行（ジョブ名に「(dry run)」）の成功では Issue を閉じない。Branch cleanup の試しの実行はジョブ名に「(dry run)」を付ける（sagi-minuki #2・tenkizu-yomi #25 の CodeRabbit）
 - [x] 防ぐ: AGENTS.md に `@main` で呼ぶ理由を書いた。ゲームの QA は写しでなく共通部品で呼ぶ（版の固定・時間切れの直しが一度で届く）。
 - [x] 見つける: `scripts/check-setup-template.sh` に起動の失敗・空白の場所・入れ直さない場合を、`scripts/check-transfer.mjs` に保存の失敗・HK0・長すぎる貼りつけを足した。`scripts/check-a11y-contrast.mjs`（Selftest）が親の opacity の見本で測り方を確かめる。`scripts/check-template-watch.mjs`（Lint）がひな形の見張りの一覧の抜けを、`scripts/drift-check.mjs` が各リポジトリの見張りの抜け・game-qa を呼ばない QA・ゲームの必須チェックの抜けを出す。
 - [x] 見つける: （追記・haku-uchi の写し直し）写すときに setup.sh の引用つきの `next="<…>"` と、使わない Python の節（無い requirements.txt を読んで準備が落ちる）が残った。`scripts/drift-check.mjs` が引用つきの `<…>` と、リポジトリに無いファイル（requirements.txt・.python-version・.nvmrc）を読む節を出す。
