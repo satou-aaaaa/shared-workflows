@@ -34,6 +34,7 @@ kokoku-minuki game
 kondate-koma game
 kotoba-honrai game
 kotoba-narabe game
+kotowaza-awase game
 kotowaza-bamen game
 last-tell app
 last-tell-godot private
@@ -41,6 +42,7 @@ local-kanban app
 machi-michijun game
 madori-puzzle game
 mannaka-kanji game
+mukashi-narabe game
 naitei-no-michi app
 okane-kihon game
 otsukai-memo game
