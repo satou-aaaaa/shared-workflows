@@ -4,8 +4,14 @@
 # main への push・タグだけの push でも回す（ここが壊れると全リポジトリの CI が止まるため）。
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
-echo "pre-push: bash scripts/check.sh を回す（CI の Lint と同じ）"
-if ! bash scripts/check.sh; then
-  echo "✗ pre-push: 確認が通らないので push を止めた。直してからもう一度 push する（道具が無いときは bash scripts/setup.sh）" >&2
+# 通ったときは1行だけ出す（AI の会話に何十行も流さない。2026-11-07 トークン節約）。全部見たいときは PREPUSH_VERBOSE=1
+log="$(mktemp)"
+if [ "${PREPUSH_VERBOSE:-}" = 1 ]; then bash scripts/check.sh && ok=0 || ok=$?; else bash scripts/check.sh >"$log" 2>&1 && ok=0 || ok=$?; fi
+if [ "$ok" -ne 0 ]; then
+  grep -v '^ INFO\|::notice::\|^✓' "$log" | tail -40 >&2
+  rm -f "$log"
+  echo "✗ pre-push: 確認が通らないので push を止めた。直してからもう一度 push する（全部の出力は bash scripts/check.sh。道具が無いときは bash scripts/setup.sh）" >&2
   exit 1
 fi
+rm -f "$log"
+echo "✓ pre-push: scripts/check.sh が通った"
