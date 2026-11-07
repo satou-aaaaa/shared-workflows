@@ -33,6 +33,7 @@ kippu-10 game
 kokoku-minuki game
 kondate-koma game
 kotoba-narabe game
+kotowaza-bamen game
 last-tell app
 last-tell-godot private
 local-kanban app
