@@ -59,6 +59,7 @@ sagi-minuki game
 sandbox app
 seiza-tsunagi game
 sekai-jikoku game
+senkyo-shikumi game
 sentaku-hyoji game
 setsuden-kotsu game
 shiritori-saitan game
