@@ -31,7 +31,7 @@ import { formProblems } from './check-issue-forms.mjs';
 
 const OWNER = process.env.OWNER || 'satou-aaaaa';
 // weekly-summary.yml の REPOS と同じ並び（shared-workflows 自身は部品の置き場なので見ない）
-const REPOS = (process.env.REPOS || 'sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban articles carcassonne-research usotsuki-roppo wagamama-burger kabu-news batsu-doko kasane-zome rosen-hitofude seiza-tsunagi mannaka-kanji kippu-10 bento-zume todofuken-relay shiritori-saitan madori-puzzle tenkizu-yomi bushu-tashizan amida-haitatsu kotoba-narabe jobun-tobatsu machi-michijun hikari-michi otsukai-memo bunshi-tsukuri kimari-sagashi kenko-minuki denki-kairo akushitsu-miyaburi dashisugi-check')
+const REPOS = (process.env.REPOS || 'sandbox last-tell tenbin dungeon-boardgame naitei-no-michi local-kanban articles carcassonne-research usotsuki-roppo wagamama-burger kabu-news batsu-doko kasane-zome rosen-hitofude seiza-tsunagi mannaka-kanji kippu-10 bento-zume todofuken-relay shiritori-saitan madori-puzzle tenkizu-yomi bushu-tashizan amida-haitatsu kotoba-narabe jobun-tobatsu machi-michijun hikari-michi otsukai-memo bunshi-tsukuri kimari-sagashi kenko-minuki denki-kairo akushitsu-miyaburi dashisugi-check bousai-handan')
   .split(/\s+/).filter((r) => r && r !== 'shared-workflows');
 const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || '';
 const here = dirname(fileURLToPath(import.meta.url));
