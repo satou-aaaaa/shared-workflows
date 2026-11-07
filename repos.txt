@@ -23,6 +23,7 @@ gurafu-minuki game
 haku-uchi game
 hikari-michi game
 hyoshiki-yomi game
+jitensha-rule game
 jobun-tobatsu game
 kabu-news game
 kasane-zome game
