@@ -5,7 +5,7 @@ name: Auto merge
 # （QA が先に終わると scan 待ちで止まり、後から scan が通っても再実行されないため。2026-10-31。下の例）。
 on:
   workflow_run:
-    workflows: [QA]   # Secret scan を入れたら [QA, Secret scan]
+    workflows: [QA]   # Secret scan を入れたら [QA, Secret scan]。Setup check も待つなら [QA, Secret scan, Setup check]
     types: [completed]
 
 permissions:
@@ -29,3 +29,6 @@ jobs:
       #   scan / scan
       # dispatch: qa.yml
       # recheck_main: false
+      # Setup check（準備のファイルを変えた PR だけで動く）が動いたら、成功まで待つ（workflows: に Setup check も入れる。2026-11-07 atsusa-shisu #1）
+      # present_checks: |
+      #   setup / setup

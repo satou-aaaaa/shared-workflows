@@ -325,6 +325,7 @@ for (const r of REPOS) {
       const live = text.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
       const wfName = (live.match(/^name:\s*["']?(.+?)["']?\s*$/m) || [])[1];
       if (wfName && /^\s*(schedule|push):/m.test(live)) onMain.push(wfName);
+      if (wfName === 'Auto merge') onMain.push(wfName); // workflow_run で main の上で動く（マージの失敗に気づくため見張る。2026-11-07 setsuden-kotsu #1 の CodeRabbit）
       const wl = live.match(/^\s*workflows:\s*\[(.*)\]/m);
       if (/shared-workflows\/\.github\/workflows\/ci-failure-issue\.ya?ml@/.test(live) && wl) watched = wl[1].split(',').map((x) => x.trim().replace(/^["']|["']$/g, ''));
       for (const m of live.matchAll(/^\s*(?:-\s*)?uses:\s*["']?satou-aaaaa\/shared-workflows\/\.github\/workflows\/([\w.-]+?)\.ya?ml@([^\s#"']+)["']?/gm)) {
@@ -335,6 +336,12 @@ for (const r of REPOS) {
         if (m[1] === 'ci-failure-issue' && !/^\s*schedule:/m.test(live)) flag('ci-failure-issue:sweep', `${p} に見回りの schedule が無い（template/.github/workflows/ci-failure-issue.yml を写す）`);
         // 直した設定がマージされても main で動き直さないと、赤のまま残り Issue が開き直す（incidents/2026-11-05-link-check-not-rerun-on-main.md）
         if (m[1] === 'link-check' && !/^\s*push:/m.test(live)) flag('link-check:push', `${p} に main への push で動き直す設定が無い（template/.github/workflows/link-check.yml を写す）`);
+        // 呼び出し側のひな形の版10（2026-11-07 shared-workflows #219 にためた CodeRabbit の指摘）
+        const pushPart = (live.split(/^\s*push:\s*$/m)[1] || '').split(/^\s{2}\w[\w-]*:/m)[0];
+        if (m[1] === 'link-check' && /^\s*push:/m.test(live) && !/\*\.html/.test(pushPart)) flag('link-check:paths', `${p} の push の paths に "*.html" と README.md が無い（リンクを直してマージしても main で動き直さない）`);
+        if (m[1] === 'setup-check' && !/^\s*push:/m.test(live)) flag('setup-check:push', `${p} に main への push が無い（直した setup.sh をマージしても、失敗の Issue が次の月まで閉じない。template/.github/workflows/setup-check.yml を写す）`);
+        if (m[1] === 'ci-failure-issue' && !/^\s*contents:\s*read/m.test(live)) flag('ci-failure-issue:contents', `${p} の permissions に contents: read が無い（非公開にすると見回りが main を読めない）`);
+        if (m[1] === 'game-qa' && /cancel-in-progress/.test(live) && !/run_id/.test(live)) flag('qa:concurrency', `${p} の concurrency が main の実行も同じグループにまとめる（待っている main の QA が取り消される。group を template/.github/workflows/qa.yml の形に）`);
       }
       // Playwright を入れる段階（apt）が9分かかる日があり、10分の時間切れで QA が止まった（incidents/2026-11-05-qa-timeout-slow-install.md）
       // ジョブごとに見る（ファイル全体の最小だと、別のジョブの短い時間切れまで数えてしまう）。ジョブに書いていなければ GitHub の既定の360分

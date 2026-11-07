@@ -7,6 +7,8 @@
 //   sw.js …… ひな形を写し、// game:begin〜// game:end の間（CACHE・SHELL）はゲームのものを残す。
 //            まだ枠の無い古い sw.js からは const CACHE と const SHELL の行を拾って枠に入れる
 //   scripts/setup.sh …… ひな形を写し、npm_dir= と next= の行はゲームのものを残す
+//   .github/workflows/{qa,setup-check,link-check,ci-failure-issue}.yml …… jobs: から下（呼び出しと設定値）がひな形と同じときだけ写す
+//            （きっかけ・権限・concurrency だけを直す。設定値を変えているゲームは手で。.github/ を変える PR は自動マージされないので手でマージ）
 // きっかけ: 2026-11-07 sw.js が28本で28通りになり、同じ直しを1本ずつ手で入れていた（incidents/2026-11-07-template-copies-drift.md）。
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -45,6 +47,10 @@ export function makeSetup(old) {
   return out;
 }
 
+// ワークフローの jobs: から下（コメントを除く）。ここが同じなら、上（きっかけ・権限）をひな形にそろえてよい
+const jobsPart = (t) => (t.split(/^jobs:\s*$/m)[1] || '').split('\n').filter((l) => !/^\s*#/.test(l) && l.trim()).join('\n');
+export const CALLERS = ['qa', 'setup-check', 'link-check', 'ci-failure-issue'].map((n) => `.github/workflows/${n}.yml`);
+
 // 1つのゲームについて、写したあとの中身を返す（ちがう所だけ）
 export function plan(dir) {
   const has = (p) => existsSync(join(dir, p));
@@ -66,6 +72,12 @@ export function plan(dir) {
     else want('sw.js', next);
   }
   if (has('scripts/setup.sh')) want('scripts/setup.sh', makeSetup(read('scripts/setup.sh')));
+  for (const p of CALLERS) {
+    if (!has(p)) continue;
+    const t = tpl(p);
+    if (jobsPart(read(p)) === jobsPart(t)) want(p, t);
+    else if (read(p) !== t) out.push({ path: p, next: null, note: '呼び出しの設定値がひな形とちがうので写さない（きっかけ・権限は手でひな形にそろえる）' });
+  }
   return out;
 }
 
