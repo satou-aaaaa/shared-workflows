@@ -24,6 +24,8 @@ on:
 
 jobs:
   cleanup:
+    # 試しの実行は名前で分かるようにする（ci-failure-issue が、試しの成功で失敗の Issue を閉じないように。2026-11-07 CodeRabbit）
+    name: ${{ inputs.dry_run && 'cleanup (dry run)' || 'cleanup' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
