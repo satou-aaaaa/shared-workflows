@@ -46,6 +46,7 @@ local-kanban app
 machi-michijun game
 madori-puzzle game
 mannaka-kanji game
+meirei-narabe game
 mukashi-narabe game
 naitei-no-michi app
 okane-kihon game
