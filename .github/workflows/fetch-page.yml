@@ -15,6 +15,11 @@ on:
         description: "読む https の URL（ALLOWED_HOSTS のどれかに当たるもの）"
         required: true
         type: string
+      max_chars:
+        description: "ログに出す本文の字数（成果物を落とせないときは大きくする。上限 200000）"
+        required: false
+        default: "20000"
+        type: string
 
 permissions:
   contents: read
@@ -39,6 +44,7 @@ jobs:
       - name: URL を確かめて読む
         env:
           URL: ${{ inputs.url }}
+          MAX_CHARS: ${{ inputs.max_chars }}
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -96,14 +102,28 @@ jobs:
           fi
           python3 - <<'PY'
           import html, re
-          raw = open("page/raw", "rb").read().decode("utf-8", "replace")
+          import os
+          data = open("page/raw", "rb").read()
+          # 文字コード：見出しの charset → UTF-8 → Shift_JIS（cp932）の順。国土地理院の CSV は Shift_JIS（2026-11-07）
+          m = re.search(r"charset=([\w-]+)", open("page/headers", encoding="latin-1").read(), re.I)
+          raw = None
+          for enc in ([m.group(1)] if m else []) + ["utf-8", "cp932"]:
+              try:
+                  raw = data.decode(enc)
+                  print(f"文字コード: {enc}")
+                  break
+              except (LookupError, UnicodeDecodeError):
+                  continue
+          if raw is None:
+              raw = data.decode("utf-8", "replace")
           text = re.sub(r"(?is)<(script|style)\b.*?</\1>", "", raw)
           text = re.sub(r"(?i)<br\s*/?>|</(p|div|li|tr|h[1-6])>", "\n", text)
           text = html.unescape(re.sub(r"<[^>]+>", "", text))
           text = "\n".join(l.strip() for l in text.splitlines() if l.strip())
           open("page/text.txt", "w").write(text)
-          print("----- 本文（先頭 20000 字。全文は成果物 page の text.txt）-----")
-          print(text[:20000])
+          n = max(1, min(int(os.environ.get("MAX_CHARS") or 20000), 200000))
+          print(f"----- 本文（先頭 {n} 字・全 {len(text)} 字。全文は成果物 page の text.txt）-----")
+          print(text[:n])
           PY
           case "$code" in
             401|403|429) echo "::error::HTTP $code（サイトに拒まれた）。再試行・名乗りの変更・別の経路での回り込みはしない。routines/known-limits.md に1行足し、DENIED_HOSTS に足す PR を出す"; exit 1 ;;
