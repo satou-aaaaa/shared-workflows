@@ -49,10 +49,10 @@
 
 | 仕組み | 見つけるもの | どこ | 立ち上げで要るもの |
 | --- | --- | --- | --- |
-| 週次まとめ Issue | 開いたままの PR・CI 失敗・Dependabot の更新待ち（監督・巡回が最初に読む） | `weekly-summary.yml`（月曜 06:17 JST） | `repos.txt` に全リポジトリ |
+| 週次まとめ Issue | 開いたままの PR・CI 失敗・Dependabot の更新待ち（監督・巡回が最初に読む） | `weekly-summary.yml`（月曜 06:17 JST）。全リポジトリを読む定期の検査（週次まとめ・成績表・CI時間）は `scripts/gh-api.mjs` で並べて読み、予算（BUDGET_SEC）で止まって Issue を必ず出し、予算の6割を超えたら ⏱ を出す。形は `scripts/check-budgets.mjs`（Lint）が見る | `repos.txt` に全リポジトリ |
 | ひな形を写す | ひな形（sw.js・setup.sh・transfer.js・qa/*.mjs・見やすさの設定）の直しが、写し忘れで一部のゲームにしか届かない | `scripts/sync-template.mjs`（写す・`--check` でちがいを出す）。道具そのものは `scripts/check-sw-check.mjs`（Lint） | 新作は先に `template/sw.js` を写して `CACHE`・`SHELL` を書き、shared-workflows のルートで `node scripts/sync-template.mjs <ゲームのフォルダ>` を回す（無いファイルは作らない） |
 | ひな形からのずれ | 全リポジトリにあるはずのファイル・AGENTS.md の節・共通部品の呼び出し・@main 以外や無い部品の呼び出し（新しい部品の配り忘れ） | `scripts/drift-check.mjs`（週次まとめの節）。ずれてよいものは `scripts/drift-allow.json` に理由つき。ヒント2・星の表示の見分け（`scripts/game-patterns.mjs`）の検査は `scripts/check-game-patterns.mjs`（Lint）。Link check が読み違える URL（すぐ後ろに全角の字）は `scripts/link-text.mjs`（ゲームの PR の QA と週次まとめ）、その検査は `scripts/check-link-text.mjs`（Lint） | `repos.txt` に全リポジトリ |
-| 成績表 Issue とブレーキ | マージ数・壊れた割合・直るまでの時間。壊れた割合 30% 超・4件以上で「自動マージ停止: <repo>」Issue → Auto merge が止まる | `scorecard.yml`（月曜 06:07 JST）、autonomy.md「ブレーキ」 | `REPOS`、ラベル「成績表」「自動マージ停止」（Labels で揃う） |
+| 成績表 Issue とブレーキ | マージ数・壊れた割合・直るまでの時間。壊れた割合 30% 超・4件以上で「自動マージ停止: <repo>」Issue → Auto merge が止まる | `scorecard.yml`（月曜 04:07 JST）、autonomy.md「ブレーキ」 | `REPOS`、ラベル「成績表」「自動マージ停止」（Labels で揃う） |
 | 不安定な検査 Issue | 3つ以上の別々の PR で落ちた検査 → 「不安定な検査: <repo>」（自動で開閉）→ 監督が担当へ1回渡す | `scripts/pr-quality.mjs`（成績表の中で動く）、supervisor.md 7b | 同上 |
 | CI時間 Issue | CI の実行時間（遅い検査） | `ci-time-report.yml`（木曜 05:29 JST）、ルーティン CI の時間短縮 | `repos.txt` |
 | このリポジトリの定期実行の失敗 | 週次まとめ・CI時間・成績表・Lint が main で落ちた → ci-failure の Issue（次に成功したら閉じる） | `watch-failures.yml`（中身は `ci-failure-issue.yml`） | なし |

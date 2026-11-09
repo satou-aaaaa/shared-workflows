@@ -14,8 +14,9 @@ name: Scorecard
 # 監督・見直しのルーティンは、ここに書かれた数字を読むだけにする。
 on:
   schedule:
-    # 毎週月曜 06:07 JST（= 日曜 21:07 UTC）。Weekly summary の少し前
-    - cron: "7 21 * * 0"
+    # 毎週月曜 04:07 JST（= 日曜 19:07 UTC）。Weekly summary（06:17 JST）と2時間ずらす。
+    # GITHUB_TOKEN の API は「このリポジトリで1時間1,000回」を分け合うため、同じ時間に重ねない（incidents/2026-11-09-weekly-jobs-timeout.md）
+    - cron: "7 19 * * 0"
   workflow_dispatch:
 
 permissions:
@@ -30,7 +31,9 @@ env:
 jobs:
   scorecard:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 読む数が増えても Issue は必ず出す：中の node は BUDGET_SEC（ジョブの上限より短い）で読むのをやめ、読めなかった分を表に書く。
+    # 予算の6割を超えたら Issue の本文と注記に ⏱ を出す（2026-11-09 1週間のマージが1,064件で15分の時間切れ。incidents/2026-11-09-weekly-jobs-timeout.md）
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -44,7 +47,6 @@ jobs:
           # 見るリポジトリは repos.txt（ここに一覧を書かない。incidents/2026-11-07-repo-list-conflicts.md）
           REPOS="$(node scripts/repos.mjs) shared-workflows"
           export REPOS
-          since=$(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%SZ)
           day=$(TZ=Asia/Tokyo date +%Y-%m-%d)
           body="$RUNNER_TEMP/body.md"
           gh label create 成績表 --color 5319E7 --description "Scorecard が作る週1の成績表（自動）" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
@@ -56,21 +58,26 @@ jobs:
             echo "| --- | ---: | ---: | ---: | ---: | ---: |"
           } > "$body"
           brakes=""
+          flaky="$RUNNER_TEMP/flaky.json"
+          score="$RUNNER_TEMP/score.json"
+          quality="$RUNNER_TEMP/quality.md"
+          # 数えるのは pr-quality.mjs（1本ずつ gh で読むのをやめ、4本ずつ並べて読む。読めないときも成績表は出す）
+          REPOS="$REPOS" FLAKY_OUT="$flaky" SCORE_OUT="$score" BUDGET_SEC=1200 API_MAX=1500 node scripts/pr-quality.mjs > "$quality" \
+            || { echo "（PR の質は今回読めませんでした）" > "$quality"; echo '{}' > "$flaky"; echo '{}' > "$score"; }
+          stops=$(gh issue list -R "$GITHUB_REPOSITORY" --label 自動マージ停止 --state open --limit 200 --json number,title)
           for r in $REPOS; do
-            prs=$(gh api --paginate "repos/$OWNER/$r/pulls?state=closed&base=main&sort=updated&direction=desc&per_page=100" \
-              --jq ".[] | select(.merged_at != null and .merged_at >= \"$since\") | [.user.login, .title] | @tsv" || true)
-            merged=$(grep -vc $'^dependabot\[bot\]\t' <<<"$prs" || true)
-            [ -n "$prs" ] || merged=0
-            reverts=$(cut -f2 <<<"$prs" | grep -c '^差し戻し' || true)
-            fails=$(gh api "repos/$OWNER/$r/issues?labels=ci-failure&state=all&since=$since&per_page=100" \
-              --jq ".[] | select(.created_at >= \"$since\") | .title" | grep -vcE "$EXTERNAL" || true)
-            mttr=$(gh api "repos/$OWNER/$r/issues?labels=ci-failure&state=closed&since=$since&per_page=100" \
-              --jq "[.[] | select(.closed_at >= \"$since\") | select(.title | test(\"$EXTERNAL\") | not) | ((.closed_at|fromdate) - (.created_at|fromdate))] | if length>0 then (add/length/3600*10|round/10|tostring) + \" 時間\" else \"—\" end" || echo "—")
+            row=$(jq -c --arg r "$r" '.[$r] // {"error":"数が無い"}' "$score")
+            open=$(jq -r --arg t "自動マージ停止: $r" '.[] | select(.title == $t) | .number' <<<"$stops" | head -1)
+            err=$(jq -r '.error // empty' <<<"$row")
+            if [ -n "$err" ]; then
+              # 読めなかったリポジトリは、止める・再開するを決めない（前の週のまま）
+              echo "| $r | 読めず | — | — | — | ${err} |" >> "$body"
+              continue
+            fi
+            merged=$(jq -r .merged <<<"$row"); reverts=$(jq -r .reverts <<<"$row"); fails=$(jq -r .fails <<<"$row"); mttr=$(jq -r .mttr <<<"$row")
             bad=$((reverts + fails))
             if [ "$merged" -gt 0 ]; then rate=$((bad * 100 / merged)); rtxt="${rate}%"; else rate=0; rtxt="—"; fi
             echo "| $r | $merged | $reverts | $fails | $rtxt | $mttr |" >> "$body"
-            open=$(gh issue list -R "$GITHUB_REPOSITORY" --label 自動マージ停止 --state open --limit 200 --json number,title \
-              --jq ".[] | select(.title == \"自動マージ停止: $r\") | .number" | head -1)
             if [ "$merged" -ge "$BRAKE_MIN" ] && [ "$rate" -gt "$BRAKE_RATE" ]; then
               brakes="$brakes $r"
               if [ -z "$open" ]; then
@@ -90,14 +97,14 @@ jobs:
             echo
             echo "数え方: マージは main に入った PR（Dependabot を除く）。CI失敗は外の都合で落ちやすいもの（${EXTERNAL}）を除く。"
             echo
+            cat "$quality"
           } >> "$body"
-          flaky="$RUNNER_TEMP/flaky.json"
-          # PR の質。読めないときも成績表は出す
-          REPOS="$REPOS" FLAKY_OUT="$flaky" node scripts/pr-quality.mjs >> "$body" || { echo "（PR の質は今回読めませんでした）" >> "$body"; echo '{}' > "$flaky"; }
           gh label create 不安定な検査 --color FBCA04 --description "3つ以上の PR で同じ検査が落ちた（Scorecard が自動で開け閉めする）" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
+          flakies=$(gh issue list -R "$GITHUB_REPOSITORY" --label 不安定な検査 --state open --limit 200 --json number,title)
           for r in $REPOS; do
-            open=$(gh issue list -R "$GITHUB_REPOSITORY" --label 不安定な検査 --state open --limit 200 --json number,title \
-              --jq ".[] | select(.title == \"不安定な検査: $r\") | .number" | head -1)
+            open=$(jq -r --arg t "不安定な検査: $r" '.[] | select(.title == $t) | .number' <<<"$flakies" | head -1)
+            # 読めなかったリポジトリは、開け閉めを決めない
+            jq -e --arg r "$r" '.[$r] and (.[$r].error | not)' "$score" >/dev/null || continue
             list=$(jq -r --arg r "$r" --arg o "$OWNER" '.[$r] // [] | .[] | "- \(.check)（\(.prs | length) PR: \(.prs | map("https://github.com/\($o)/\($r)/pull/\(.)") | join(" "))）"' "$flaky")
             if [ -n "$list" ]; then
               text=$(printf '%s\n\n%s\n\n%s\n' \
