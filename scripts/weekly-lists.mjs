@@ -8,11 +8,11 @@ const OWNER = process.env.OWNER || 'satou-aaaaa';
 const api = makeApi();
 const out = { prs: [], fails: [], errors: [] };
 try {
-  out.prs = (await searchIssues(api, `user:${OWNER} is:pr is:open archived:false`))
+  out.prs = (await searchIssues(api, `user:${OWNER} is:pr is:open archived:false`, 'pr'))
     .map((p) => ({ repo: p.repo, number: p.number, draft: Boolean(p.draft), user: p.user.login, created_at: p.created_at, title: p.title }));
 } catch (e) { out.errors.push(`開いた PR（${e.message}）`); }
 try {
-  out.fails = (await searchIssues(api, `user:${OWNER} is:issue is:open label:ci-failure archived:false`))
+  out.fails = (await searchIssues(api, `user:${OWNER} is:issue is:open label:ci-failure archived:false`, 'issue'))
     .sort((a, b) => a.number - b.number)
     .map((i) => ({ repo: i.repo, number: i.number, title: i.title }));
 } catch (e) { out.errors.push(`ci-failure の Issue（${e.message}）`); }

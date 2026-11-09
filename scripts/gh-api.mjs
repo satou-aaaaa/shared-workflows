@@ -109,14 +109,19 @@ export function reportUsage(name) {
 }
 
 // 検索（search/issues）で全リポジトリをまとめて読む。リポジトリごとに読むより回数がずっと少ない（検索は1分30回の別の枠）。
-// 1,000件を超えると読み切れないので投げる（呼ぶ側は「確かめられなかった」にする）。返す各件に repo（名前）を足す
-export async function searchIssues(api, q) {
+// 1,000件を超えると読み切れないので投げる（呼ぶ側は「確かめられなかった」にする）。返す各件に repo（名前）を足す。
+// Actions の GITHUB_TOKEN に pull-requests: read が無いと、is:pr で探しても PR は返らず Issue だけが返った（2026-11-09 の手の実行）。
+// kind（'pr' か 'issue'）を渡すと、ちがう種類がまざったときに投げる（黙って「PR は無い」と言わない）
+export async function searchIssues(api, q, kind) {
   const items = [];
   for (let page = 1; page <= 10; page++) {
     const j = await api(`search/issues?q=${encodeURIComponent(q)}&per_page=100&page=${page}`);
     if (j.incomplete_results) throw new Error(`検索が途中で切れた ${q}`);
-    for (const it of j.items) items.push({ ...it, repo: it.repository_url.split('/').pop() });
-    if (items.length >= j.total_count || j.items.length < 100) return items;
+    for (const it of j.items) {
+      if (kind && (kind === 'pr') !== Boolean(it.pull_request)) throw new Error(`検索が ${kind === 'pr' ? 'PR' : 'Issue'} 以外を返した（ワークフローの permissions に pull-requests: read があるか確かめる）`);
+      items.push({ ...it, repo: it.repository_url.split('/').pop() });
+    }
+    if (page * 100 >= j.total_count || j.items.length < 100) return items;
   }
   throw new Error(`検索が1,000件を超えた ${q}`);
 }

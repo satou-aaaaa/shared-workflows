@@ -25,4 +25,8 @@
 - [x] 防ぐ: 成績表を月曜 04:07 JST に動かし、週次まとめ（06:17）と2時間離した。同じ1時間の枠を分け合わない（この PR）
 - [x] 見つける: 毎回かかった時間と API の回数をログの注記に出し、予算の6割を超えたら Issue の本文に ⏱ の行と ::warning:: を出す（`gh-api.mjs` の reportUsage）。リポジトリが増えて時間切れが近いことを、止まる前に週次まとめ・成績表で知らせる（この PR）
 - [x] 防ぐ: Lint に `scripts/check-budgets.mjs` を足した。全リポジトリを読む定期のワークフローで、`for r in $REPOS` の中の gh api・gh issue list、BUDGET_SEC の無い node、gh-api.mjs を使わないスクリプト、予算の合計がジョブの上限の8割を超えるもの、60分以内に重なる定期実行を落とす（この PR）
-- [x] 直す: 止まった週の成績表と週次まとめを、直したあと手で1回ずつ流して作った（Actions の Run workflow）
+- [x] 直す: 止まった週の成績表と週次まとめを、直したあと手で1回ずつ流して作った（Actions の Run workflow。成績表 #270 は 3分32秒・API 673回で、全88本を読めた）
+
+## 調べてわかったこと
+- 11-09 の手の実行では、GitHub が返す残りの回数（x-ratelimit-remaining）は 4,939 だった。文書の「1,000回」より多い枠が当たっているが、文書どおりの小さい枠になっても、残りが30を切れば読むのをやめて Issue を出す（`gh-api.mjs` の checkBudget）。
+- 週次まとめの手の実行（#271）で、検索の is:pr が PR を返さず Issue だけを返した。ワークフローの permissions に pull-requests: read が無かったため。permissions に足し、`searchIssues` はちがう種類がまざれば投げる（黙って「PR は無い」と言わない）ようにした（この PR）。

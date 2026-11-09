@@ -33,7 +33,7 @@ try {
 // CI 失敗・needs-decision・開いた PR は検索でまとめて読み、PR の検査だけ1本ずつ読む
 const want = new Set(REPOS);
 try {
-  for (const i of (await searchIssues(api, `user:${OWNER} is:issue is:open label:ci-failure`)).filter((x) => want.has(x.repo))) {
+  for (const i of (await searchIssues(api, `user:${OWNER} is:issue is:open label:ci-failure`, 'issue')).filter((x) => want.has(x.repo))) {
     // 週1の定期実行は次の回まで成功で閉じないので、日数を出して止まったものを目立たせる（2026-10-22 Law watch が3週落ち続けた件）
     const days = Math.floor((now - Date.parse(i.created_at)) / 86400000);
     if (days >= CI_STALE_DAYS) add(1, `${days}日直されていない CI 失敗（main）[${i.repo}] ${i.title} → 担当に渡っていない。監督が直すスレッドを立てる ${i.html_url}`);
@@ -42,14 +42,14 @@ try {
 } catch (e) { skipped.push(`CI 失敗の Issue（${e.message}）`); }
 
 try {
-  for (const i of (await searchIssues(api, `user:${OWNER} is:issue is:open label:needs-decision`)).filter((x) => want.has(x.repo))) {
+  for (const i of (await searchIssues(api, `user:${OWNER} is:issue is:open label:needs-decision`, 'issue')).filter((x) => want.has(x.repo))) {
     add(5, `needs-decision [${i.repo}] ${i.title} → 読んで選ぶ ${i.html_url}`);
   }
 } catch (e) { skipped.push(`needs-decision の Issue（${e.message}）`); }
 
 let open = [];
 try {
-  open = (await searchIssues(api, `user:${OWNER} is:pr is:open archived:false`)).filter((x) => want.has(x.repo));
+  open = (await searchIssues(api, `user:${OWNER} is:pr is:open archived:false`, 'pr')).filter((x) => want.has(x.repo));
 } catch (e) { skipped.push(`開いた PR（${e.message}）`); }
 await pool(open, 4, async (p) => {
   const r = p.repo;

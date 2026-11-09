@@ -12,6 +12,8 @@ on:
 permissions:
   contents: read
   issues: write
+  # 検索（search/issues）で開いた PR を読むのに要る。無いと is:pr でも Issue だけが返った（2026-11-09）
+  pull-requests: read
 
 jobs:
   summary:

@@ -62,7 +62,7 @@ jobs:
           score="$RUNNER_TEMP/score.json"
           quality="$RUNNER_TEMP/quality.md"
           # 数えるのは pr-quality.mjs（1本ずつ gh で読むのをやめ、4本ずつ並べて読む。読めないときも成績表は出す）
-          REPOS="$REPOS" FLAKY_OUT="$flaky" SCORE_OUT="$score" BUDGET_SEC=1200 API_MAX=800 node scripts/pr-quality.mjs > "$quality" \
+          REPOS="$REPOS" FLAKY_OUT="$flaky" SCORE_OUT="$score" BUDGET_SEC=1200 API_MAX=1500 node scripts/pr-quality.mjs > "$quality" \
             || { echo "（PR の質は今回読めませんでした）" > "$quality"; echo '{}' > "$flaky"; echo '{}' > "$score"; }
           stops=$(gh issue list -R "$GITHUB_REPOSITORY" --label 自動マージ停止 --state open --limit 200 --json number,title)
           for r in $REPOS; do
