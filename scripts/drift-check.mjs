@@ -33,8 +33,10 @@
 //   - ゲームのヒント2（cutOf）が、まちがいの数で消す数を変える（しぼったあとにまちがいを選ぶと、消した選び肢が戻る。incidents/2026-11-07-hint-cut-comes-back.md）
 //   - 星の表示（class="stars"）に role="img" が無い・取れなかった星も ★（読まれない・色だけで分ける）
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
-import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { readFileSync, existsSync, readdirSync, mkdirSync } from 'node:fs';
+import { execFileSync, execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { makeApi, pool, nextLink, reportUsage, OverBudget } from './gh-api.mjs';
 import { makeSw } from './sync-template.mjs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -87,14 +89,9 @@ for (const [repo, list] of Object.entries(allow)) {
 }
 const allowed = (repo, id) => (allow[repo] || []).some((a) => a.id === id);
 
-async function api(path, raw = false) {
-  const res = await fetch(`https://api.github.com/${path}`, {
-    headers: { Accept: raw ? 'application/vnd.github.raw+json' : 'application/vnd.github+json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-  });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`${res.status} ${path}`);
-  return raw ? res.text() : res.json();
-}
+// 読み方は gh-api.mjs にそろえる（1回の時間の上限・同時に読む数・予算。incidents/2026-11-09-weekly-jobs-timeout.md）
+const getApi = makeApi(token);
+const api = (path, raw = false) => getApi(path, { raw, nullOn404: true });
 
 // ワークフローの jobs: の下を、ジョブ（2字下げの名前）ごとに切り分ける
 function qaJobs(text) {
@@ -103,6 +100,30 @@ function qaJobs(text) {
 }
 
 const LOCAL_ROOT = process.env.LOCAL_ROOT || '';
+// CLONE_ROOT: ファイルの中身は浅い clone（git clone --depth 1）から読み、ルールセット・Pages などだけ API で読む。
+// API で1ファイルずつ読むと1本25回ほど・88本で2,000回を超え、週次まとめが時間切れになり、GITHUB_TOKEN の
+// 1時間1,000回（Rate limits for the REST API）も超えた（2026-11-09、incidents/2026-11-09-weekly-jobs-timeout.md）
+const CLONE_ROOT = LOCAL_ROOT ? '' : process.env.CLONE_ROOT || '';
+const sh = promisify(execFile);
+
+const listed = (dir) => new Set(execFileSync('git', ['-C', dir, 'ls-files'], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 }).split('\n').filter((p) => p && existsSync(join(dir, p))));
+
+// 持ち主の全リポジトリ（名前 → 中身）。CLONE_ROOT のときは、1本ずつ repos/<name> を読む代わりにこれを使う
+let ownerRepos = null; // 4本が同時に頼んでも1回だけ読むように、約束（Promise）を取っておく
+function allOwnerRepos() {
+  ownerRepos ??= (async () => {
+    const map = new Map();
+    let url = `users/${OWNER}/repos?type=owner&per_page=100`;
+    for (let n = 0; url && n < 10; n++) {
+      const { body, headers } = await getApi(url, { full: true });
+      for (const x of body) map.set(x.name, x);
+      url = nextLink(headers);
+    }
+    return map;
+  })();
+  return ownerRepos;
+}
+
 // リポジトリの中身の読み方（GitHub の API か、手元の clone か）をそろえる
 async function source(r) {
   if (LOCAL_ROOT) {
@@ -110,8 +131,16 @@ async function source(r) {
     if (!existsSync(join(dir, '.git'))) return null;
     // 追跡していても作業ツリーで消したものは「無い」と数える
     // 大きいリポジトリ（last-tell-godot は数万ファイル）は既定の 1MB を超えて ENOBUFS で落ちていた（2026-11-04）
-    const list = execFileSync('git', ['-C', dir, 'ls-files'], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 }).split('\n').filter((p) => p && existsSync(join(dir, p)));
-    return { paths: new Set(list), read: async (p) => readFileSync(join(dir, p), 'utf8') };
+    return { paths: listed(dir), read: async (p) => readFileSync(join(dir, p), 'utf8') };
+  }
+  if (CLONE_ROOT) {
+    const repo = (await allOwnerRepos()).get(r);
+    if (!repo || repo.archived) return repo ? { archived: true } : null;
+    const dir = join(CLONE_ROOT, r);
+    if (!existsSync(join(dir, '.git'))) {
+      await sh('git', ['clone', '--quiet', '--depth', '1', '--no-tags', `https://github.com/${OWNER}/${r}.git`, dir], { timeout: 120000 });
+    }
+    return { repo, paths: listed(dir), read: async (p) => readFileSync(join(dir, p), 'utf8') };
   }
   const repo = await api(`repos/${OWNER}/${r}`);
   if (!repo || repo.archived) return repo ? { archived: true } : null;
@@ -119,14 +148,18 @@ async function source(r) {
   if (tree?.truncated) throw new Error('ファイルが多すぎて一覧が途中で切れた');
   return { repo, paths: new Set((tree?.tree || []).map((t) => t.path)), read: (p) => api(`repos/${OWNER}/${r}/contents/${p}`, true) };
 }
+if (CLONE_ROOT) mkdirSync(CLONE_ROOT, { recursive: true });
 
 const lines = [];
 const skipped = [];
-for (const r of REPOS) {
+// 4本ずつ並べて読む（gh-api.mjs の pool）。出す順は REPOS の順のまま
+const results = await pool(REPOS, 4, async (r) => {
+  const lines = [];
+  const skipped = [];
   try {
     const src = await source(r);
-    if (!src) { skipped.push(`${r}（見つからない）`); continue; }
-    if (src.archived) continue;
+    if (!src) { skipped.push(`${r}（見つからない）`); return { lines, skipped }; }
+    if (src.archived) return { lines, skipped };
     const { paths } = src;
     const out = [];
     const flag = (id, text) => { if (!allowed(r, id)) out.push(text); };
@@ -403,22 +436,19 @@ for (const r of REPOS) {
     if (paths.has('index.html') && paths.has('sw.js') && paths.has('qa/run.mjs') && !called.has('game-qa')) flag('call:game-qa', 'ゲームの QA が共通部品 game-qa を呼んでいない（template/.github/workflows/qa.yml を写す。検査の名前は qa / qa になる）');
 
     for (const o of out) lines.push(`[${r}] ${o}`);
-  } catch (e) { skipped.push(`${r}（${e.message}）`); }
-}
+  } catch (e) { skipped.push(`${r}（${e instanceof OverBudget ? `${e.message}ので見なかった` : e.message}）`); }
+  return { lines, skipped };
+});
+for (const x of results) { lines.push(...x.lines); skipped.push(...x.skipped); }
 
 // 公開リポジトリなのに repos.txt に無いもの（新作を一覧に足し忘れると、週次まとめ・成績表・CI 時間・このずれの検査のどれにも出ない。
 // 2026-11-07 kengen-check が README にはあるのにワークフローの一覧から抜けていた。incidents/2026-11-07-repo-list-conflicts.md）
 if (!LOCAL_ROOT) {
   try {
     const known = new Set([...readRepos().map((x) => x.name), 'shared-workflows']);
-    for (let page = 1; page <= 10; page++) {
-      const list = await api(`users/${OWNER}/repos?type=owner&per_page=100&page=${page}`);
-      if (!Array.isArray(list) || !list.length) break;
-      for (const x of list) {
-        if (x.fork || x.archived || x.private || known.has(x.name)) continue;
-        lines.push(`[${x.name}] repos.txt に無い公開リポジトリ（名前の順の位置に「${x.name} game」などを1行足す。見ないなら ignore と理由）`);
-      }
-      if (list.length < 100) break;
+    for (const x of (await allOwnerRepos()).values()) {
+      if (x.fork || x.archived || x.private || known.has(x.name)) continue;
+      lines.push(`[${x.name}] repos.txt に無い公開リポジトリ（名前の順の位置に「${x.name} game」などを1行足す。見ないなら ignore と理由）`);
     }
   } catch (e) { skipped.push(`repos.txt との突き合わせ（${e.message}）`); }
 }
@@ -426,3 +456,7 @@ if (!LOCAL_ROOT) {
 if (lines.length) console.log(lines.join('\n'));
 else console.log('ずれは見つかりませんでした');
 if (skipped.length) console.log(`\n確かめられなかった: ${skipped.join('、')}`);
+if (!LOCAL_ROOT) {
+  const u = reportUsage('ひな形からのずれ');
+  if (u.warn) console.log(`\n⏱ ${u.text}。時間切れが近い（予算の ${u.rate}%）`);
+}

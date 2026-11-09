@@ -46,6 +46,9 @@ jobs:
       # Link check が読み違える URL の書き方（すぐ後ろに全角の字）を見分けるか（incidents/2026-11-08-link-check-wide-char-after-url.md）
       - name: リンクの書き方の見分け
         run: node scripts/check-link-text.mjs
+      # 全リポジトリを読む定期のワークフローが、本数が増えても予算で止まって Issue を出す形か（incidents/2026-11-09-weekly-jobs-timeout.md）
+      - name: 全リポジトリを読む検査の予算
+        run: node scripts/check-budgets.mjs
 
   # 立ち上げ直しの手順書（bootstrap/）に、ルーティンの手順書・共通部品の抜けや内部 ID の混入が無いかを調べる。
   bootstrap:
@@ -90,6 +93,7 @@ jobs:
           # Issue の重なりを見るのに検索（--search）を使わない。索引が遅れて、閉じた・作ったばかりの Issue を取りちがえる（incidents/2026-11-05-ci-time-report-missing-repos.md）
           if grep -rn 'gh issue list.*-[-]search' .github/workflows template/.github/workflows; then echo "✗ Issue の一覧で検索の索引を使わない（--json と --jq で題を見る）" >&2; exit 1; fi
           node --check scripts/next-actions.mjs
+          node --check scripts/weekly-lists.mjs
       # ひな形の準備スクリプトが「準備できた」と言うとき本当に使えるか（壊れた依存・ブラウザ無し・nvm）を作り物の環境で確かめる
       - name: setup template
         run: bash scripts/check-setup-template.sh
