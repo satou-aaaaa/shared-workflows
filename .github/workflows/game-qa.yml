@@ -95,7 +95,8 @@ jobs:
           if compgen -G "$APT_KEEP/*.deb" >/dev/null; then
             if sudo dpkg -i --skip-same-version "$APT_KEEP"/*.deb; then kept=1; else echo "::warning::apt の取り置きを入れられなかった。ふだんどおり apt で入れる"; fi
           fi
-          if ! npx playwright install --with-deps chromium; then
+          # apt が名前を引けないと1件ごとに待ち、時間切れまで止まる（2026-11-11 は20分で取り消し）。10分で打ち切る（ふだんは約1分、遅い日で9分）
+          if ! timeout 10m npx playwright install --with-deps chromium; then
             # apt に届かなくても、取り置きで部品がそろっていればブラウザだけ入れて続ける（足りなければ検査で起動に失敗して分かる）
             if [ "$kept" = 1 ] && npx playwright install chromium; then
               echo "::warning::Ubuntu の置き場に届かなかったので、apt の取り置きの部品で続けた（incidents/2026-11-11-qa-apt-dns-outage.md）"
