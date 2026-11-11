@@ -16,5 +16,5 @@
 - これまで Pages は無いページに必ず 404 を返していて、片側だけが 5xx になることが無かった。
 
 ## 対策
-- [x] 直す: 無いページが unreachable のときは警告を出して通す（`.github/workflows/selftest.yml`、この PR）
+- [x] 直す: 無いページそのものが 5xx・つながらないときだけ警告を出して通す（全体の結果でなく、そのページの status を見る）（`.github/workflows/selftest.yml`、この PR）
 - [x] 防ぐ: 試しの検査の見分けを、正常なページ・無いページの両方で「Pages の障害なら見分けられないので通す」にそろえた（`.github/workflows/selftest.yml` のコメント、この PR）

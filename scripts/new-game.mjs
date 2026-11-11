@@ -40,7 +40,7 @@ export const TODO = [
   'PR #1 の前に: LOCAL_ROOT=<親> REPOS=<名前> node scripts/drift-check.mjs と node scripts/sync-template.mjs --check <フォルダ>',
 ];
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const to = process.argv[2];
   if (!to) { console.error('使い方: node scripts/new-game.mjs <新しいゲームのフォルダ>'); process.exit(2); }
   const { copied, kept } = scaffold(to);
