@@ -87,13 +87,28 @@ jobs:
         env:
           APT_KEEP: ${{ runner.temp }}/qa-apt
         run: |
-          if compgen -G "$APT_KEEP/*.deb" >/dev/null; then sudo cp "$APT_KEEP"/*.deb /var/cache/apt/archives/; fi
-          if ! npx playwright install --with-deps chromium; then
-            echo "::error::Playwright を入れられなかった。ログに Temporary failure resolving 〜ubuntu.com が並ぶなら GitHub の機械から Ubuntu の置き場が引けていない（コードのせいではない）。しばらくして Re-run する（incidents/2026-11-11-qa-apt-dns-outage.md）"
-            exit 1
+          # 取り置きがあれば、apt を通さず先に dpkg で入れる（apt の索引が古くても版がずれない）
+          kept=0
+          if compgen -G "$APT_KEEP/*.deb" >/dev/null; then
+            if sudo dpkg -i --skip-same-version "$APT_KEEP"/*.deb; then kept=1; else echo "::warning::apt の取り置きを入れられなかった。ふだんどおり apt で入れる"; fi
           fi
+          if ! npx playwright install --with-deps chromium; then
+            # apt に届かなくても、取り置きで部品がそろっていればブラウザだけ入れて続ける（足りなければ検査で起動に失敗して分かる）
+            if [ "$kept" = 1 ] && npx playwright install chromium; then
+              echo "::warning::Ubuntu の置き場に届かなかったので、apt の取り置きの部品で続けた（incidents/2026-11-11-qa-apt-dns-outage.md）"
+            else
+              echo "::error::Playwright を入れられなかった。ログに Temporary failure resolving 〜ubuntu.com が並ぶなら GitHub の機械から Ubuntu の置き場が引けていない（コードのせいではない）。しばらくして Re-run する（incidents/2026-11-11-qa-apt-dns-outage.md）"
+              exit 1
+            fi
+          fi
+          # 今回 apt が落とした .deb を取り置きに足す。同じ名前の古い版は消す（dpkg -i で版が混ざらないように）
           mkdir -p "$APT_KEEP"
-          if compgen -G "/var/cache/apt/archives/*.deb" >/dev/null; then cp /var/cache/apt/archives/*.deb "$APT_KEEP"/; fi
+          for f in /var/cache/apt/archives/*.deb; do
+            [ -e "$f" ] || continue
+            name=$(dpkg-deb -f "$f" Package)
+            find "$APT_KEEP" -name "${name}_*.deb" -delete
+            cp "$f" "$APT_KEEP"/
+          done
           echo "apt の取り置き: $(find "$APT_KEEP" -name '*.deb' | wc -l) 個"
       - name: apt の取り置きをしまう
         if: steps.apt-cache.outputs.cache-hit != 'true' && github.event_name != 'pull_request'
