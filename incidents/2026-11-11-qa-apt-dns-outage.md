@@ -7,6 +7,7 @@
 
 ## 起きたこと
 - `npx playwright install --with-deps chromium` の apt の段階で、`Temporary failure resolving 'archive.ubuntu.com'`（azure.archive・security も）が並び、字の部品（fonts-ipafont-gothic など9個・21.9MB）を落とせずに止まった。1回に約10分かかって落ちた。
+- 14:38 の試しでは名前の待ちがさらに長くなり、入れる段階のまま20分の時間切れで取り消された。
 - 13:41 の同じ PR の QA は、同じ機械の版（ubuntu-26.04、20261101.186.1）で通っていた。packages.microsoft.com は引けていた。
 
 ## 原因
@@ -18,5 +19,5 @@
 
 ## 対策
 - [x] 直す: 障害が明けたあと、赤だった QA を動き直した（yarikuri-shotengai）
-- [x] 防ぐ: game-qa.yml が、apt が落とした .deb を actions/cache に取っておき、次からはそれを使う（main の実行で保存。置き場に届かない日も、取り置きがあれば入れられる）（この PR）
+- [x] 防ぐ: game-qa.yml が、apt が落とした .deb を actions/cache に取っておき、次からはそれを使う（main の実行で保存。置き場に届かない日も、取り置きがあれば dpkg で入れ、ブラウザだけ入れて続ける）。入れる段階は10分で打ち切り、時間切れまで止まらない（この PR）
 - [x] 見つける: 入れる段階で落ちたら「Ubuntu の置き場が引けていないならコードのせいではない、しばらくして Re-run」と注釈を出す。つまずき台帳（routines/known-limits.md）にも1行（この PR）
