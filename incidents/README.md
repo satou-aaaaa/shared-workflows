@@ -80,6 +80,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-11-11 | 公開・CI | [Selftest の公開後の確認の試しが、Pages の 503 で関係の無い PR を赤にした](2026-11-11-selftest-pages-503.md) | 対策済み |
 | 2026-11-11 | 検査の見逃し | [標識よみの PR #1 が、QA の出典 URL の検査を CodeQL が high と見て、赤のまま2日止まった](2026-11-11-codeql-url-includes-in-qa.md) | 対策済み |
 | 2026-11-09 | 公開・CI | [リポジトリが88本に増え、Weekly summary と Scorecard が時間切れで止まって週1の Issue が出なかった](2026-11-09-weekly-jobs-timeout.md) | 対策済み |
 | 2026-11-09 | 検査の見逃し | [天秤の書の週1の Lighthouse で、速さが 36 点（下限 53 点）に落ちた](2026-11-09-tenbin-lighthouse-cls.md) | 対策1つ残り |
