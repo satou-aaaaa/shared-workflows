@@ -58,7 +58,7 @@ for (const [name, want, src] of urls) {
 }
 // 深さの部品：つないだ形では何も出さず、足りない所だけを出す（id の並びで見る）
 const GOOD = {
-  page: '<script src="transfer.js" data-game="g" data-keys="g-v1,g-depth"></script>\n<script src="depth.js" data-game="g" data-key="g-depth"></script>\n<script>Depth.setValid((t) => true); const a = Depth.sureHtml(); Depth.judge(true); Depth.mark(t, 1, "x"); const l = Depth.due();</script>',
+  page: '<script src="transfer.js" data-game="g" data-keys="g-v1,g-depth"></script>\n<script src="depth.js" data-game="g" data-key="g-depth"></script>\n<script>Depth.setValid((t) => true); const a = Depth.sureHtml(); Depth.judge(true); Depth.mark(t, 1, "x"); function early() { Depth.mark(t, 1, "x"); } const l = Depth.due();</script>',
   sw: 'const CACHE = "g-v2";\nconst SHELL = ["./", "./index.html", "./transfer.js", "./depth.js"];',
   run: 'import { checkDepth } from "./depth-check.mjs";\nconst e = await checkDepth(src);',
 };
@@ -67,7 +67,8 @@ const depthCases = [
   ['深さ：depth.js を読んでいない', 'depth:script', { ...GOOD, page: GOOD.page.replace(/<script src="depth\.js"[^>]*><\/script>/, '') }],
   ['深さ：引き継ぎに復習の記録が無い', 'depth:keys', { ...GOOD, page: GOOD.page.replace('g-v1,g-depth', 'g-v1') }],
   ['深さ：setValid を呼ばない', 'depth:valid', { ...GOOD, page: GOOD.page.replace('Depth.setValid((t) => true); ', '') }],
-  ['深さ：復習をつながない', 'depth:review', { ...GOOD, page: GOOD.page.replace('Depth.mark(t, 1, "x"); ', '') }],
+  ['深さ：復習をつながない', 'depth:review', { ...GOOD, page: GOOD.page.replace(/Depth\.mark\(t, 1, "x"\); /g, '') }],
+  ['深さ：解き終えたときしか復習に入れない', 'depth:early', { ...GOOD, page: GOOD.page.replace('function early() { Depth.mark(t, 1, "x"); } ', '') }],
   ['深さ：自信のボタンを出さない', 'depth:sure', { ...GOOD, page: GOOD.page.replace('const a = Depth.sureHtml(); ', '') }],
   ['深さ：SHELL に無い（コメントにだけある）', 'depth:sw', { ...GOOD, sw: 'const CACHE = "g-v2";\n// "./depth.js" も入れる\nconst SHELL = ["./", "./index.html", "./transfer.js"];' }],
   ['深さ：2段目のヒントが、まちがえた分け方を除いて消す', '', { ...GOOD, page: GOOD.page + '\n<script>const left2Of = () => GK.filter((x) => x !== cur.P.grp && !cur.w2.includes(x));\nconst cut2Of = () => (cur.h2 ? left2Of().slice(0, 1) : []);</script>' }],

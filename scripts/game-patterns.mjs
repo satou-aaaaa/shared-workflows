@@ -56,6 +56,7 @@ export function urlIncludes(src) {
 }
 
 // depthGaps：深さの部品（depth.js）を写したのに、つなぎが足りない所（drift-check の depth:*）
+// depth:early：Depth.mark を解き終えたときだけ呼び、まちがえてから降りた問題が復習に入らない（2026-11-11 dema-tashikame #8 の CodeRabbit）
 // depth:hint2：2段目のヒント（cut2Of）が、もうまちがえた分け方（cur.w2）を除かずに消す（2026-11-11 kenko-minuki #7 の CodeRabbit）
 // 新作は new-game.mjs で depth.js が写るので、つなぎ忘れるとボタンも復習も出ないまま公開される（routines/game-dev.md「1問を深くする」、2026-11-11）
 // files：{ page: index.html, sw: sw.js, run: qa/run.mjs }（無いものは空文字）。返すのは [id, 説明] の並び
@@ -70,6 +71,7 @@ export function depthGaps({ page = '', sw = '', run = '' }) {
   }
   if (!/Depth\.setValid\s*\(/.test(p)) out.push(['depth:valid', 'index.html が Depth.setValid を呼んでいない（引き継ぎで入った鍵・消えた種類の鍵が復習に数えられる）']);
   if (!/Depth\.mark\s*\(/.test(p) || !/Depth\.due\s*\(/.test(p)) out.push(['depth:review', 'index.html が Depth.mark・Depth.due を呼んでいない（まちがえた問題が復習に戻らない）']);
+  else if ((p.match(/Depth\.mark\s*\(/g) || []).length < 2) out.push(['depth:early', 'index.html が Depth.mark を問題を終えたときにしか呼んでいない（まちがえた・ヒントを使ったその時にも呼ぶ。とことんで降りる・閉じると復習に入らない。incidents/2026-11-11-depth-mark-on-quit.md）']);
   if (!/Depth\.sureHtml\s*\(/.test(p) || !/Depth\.judge\s*\(/.test(p)) out.push(['depth:sure', 'index.html が Depth.sureHtml・Depth.judge を呼んでいない（「🎯 自信あり？」が出ない）']);
   const shell = (stripComments(sw).match(/SHELL\s*=\s*\[([\s\S]*?)\]/) || [, ''])[1];
   if (sw && !/["']\.\/depth\.js["']/.test(shell)) out.push(['depth:sw', 'sw.js の SHELL に ./depth.js が無い（電波が無いと開かない）']);

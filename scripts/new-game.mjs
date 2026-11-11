@@ -35,7 +35,7 @@ export const TODO = [
   'sw.js の // game:begin〜// game:end に CACHE と SHELL を書く',
   'scripts/setup.sh の npm_dir= と next= を確かめる',
   'index.html：</head> の前に template/a11y/a11y.html の中身と transfer.js の <script>（data-game・data-keys に <名前>-depth も）、その次に depth.js の <script>（data-game・data-key="<名前>-depth"）',
-  '深さ（routines/game-dev.md「1問を深くする」）：Depth.setValid・自信のボタン（Depth.sureHtml・bindSure・judge。答えを選ばないパズルは置かず、drift-allow.json に depth:sure と理由）・2つ目の判断（2段・ひねり・挑戦条件のどれか）・復習（Depth.mark・ホームの「復習 N問」で Depth.due）。sw.js の SHELL に ./depth.js、qa/run.mjs から checkDepth と画面の検査（見本は kenko-minuki・gurafu-minuki）',
+  '深さ（routines/game-dev.md「1問を深くする」）：Depth.setValid・自信のボタン（Depth.sureHtml・bindSure・judge。答えを選ばないパズルは置かず、drift-allow.json に depth:sure と理由）・2つ目の判断（2段・ひねり・挑戦条件のどれか）・復習（解き終えたときと、まちがえた・ヒントを使ったその時（keep の頭の early()）に Depth.mark・ホームの「復習 N問」で Depth.due）。sw.js の SHELL に ./depth.js、qa/run.mjs から checkDepth と画面の検査（見本は kenko-minuki・gurafu-minuki）',
   'qa/package.json と qa/run.mjs（見本のゲームの同じ所を grep して必要な所だけ写す）',
   'manifest.webmanifest・アイコン・og.png（tools/make-icons.cjs・make-og.cjs）・.github/ISSUE_TEMPLATE/feedback.yml',
   'PR #1 の前に: LOCAL_ROOT=<親> REPOS=<名前> node scripts/drift-check.mjs と node scripts/sync-template.mjs --check <フォルダ>',
