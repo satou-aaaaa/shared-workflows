@@ -1,4 +1,4 @@
-# ゲームを作る・磨く（新作は頼まれたとき／磨くのは週1・水曜 10:17 JST）
+# ゲームを作る・磨く（新作は毎日 10:37 JST の game-factory.md から／磨くのは週1・水曜 10:17 JST）
 <!-- style: v1 -->
 
 先に `common.md` と `autonomy.md` を読むこと。（satou さんの依頼 2026-11-04「それぞれのゲームを、さらにおもしろく」「やりこみ要素も」「ゲームとしてのおもしろさも」「ゲーム作成agentも良いですね」）
@@ -162,7 +162,7 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
    題材を決めたら、作り始める前に shared-workflows に Issue「題材: <日本語の題名>（<題材の言葉>）」を立てる（例「題材: 祝日の由来（祝日）」）。同じ題材の言葉を題に持つ「題材:」Issue（not planned で閉じたものを除く）のうち、**番号のいちばん小さいものが担当**。立てたあとで一覧（`gh api "repos/satou-aaaaa/shared-workflows/issues?state=all&per_page=100" --paginate`。検索は索引が遅れるので使わない）を見て、自分より小さい番号があれば作らず、自分の Issue を not planned で閉じる。メモリ game-queue にも1行書くが、担当の正は Issue（メモリは後から書いたほうが勝ち、先の行が消えることがある。2026-11-07「祝日の由来」が2本並行で作られた。incidents/2026-11-07-topic-claim-overwritten.md）。公開したら Issue に公開先を書いて completed で閉じ、やめたら not planned で閉じる。
 2. 動く見本（単体の HTML）を Artifact で出し、satou さんに選んでもらう（カード）。
 3. リポジトリは [onboarding.md](onboarding.md) 手順0で AI が作る（A：Actions「Create repo」を、担当の Issue 番号 `claim` と題材の言葉 `topic` を付けて起こす。先の担当・公開済みの表にあれば止まる。だめなら B：Chrome。そのときはこのスレッドに satou さんの一言を頼む）。リンクを渡すのは両方使えないときだけ。
-4. はじめの commit は README だけ。workflows・`qa/`・本体は同じ PR #1 で入れる（incidents/2026-11-04-new-repo-main-qa-without-qa-dir.md）。
+4. はじめの commit は README だけ。workflows・`qa/`・本体は同じ PR #1 で入れる（incidents/2026-11-04-new-repo-main-qa-without-qa-dir.md）。PR #1 の中身は `node scripts/new-game.mjs ../<名前>` で、いまのひな形から始める（古いゲームのフォルダから写さない。出た「このあと書くもの」の順に書く）。
 5. 上の「共通の形」と「だれでも遊べるように」を全部入れる。AGENTS.md は既存のゲーム（kippu-10 など）を写して直す。
    `.github/workflows/` は既存のゲームからでなく `template/.github/workflows/` から写す（古いゲームの写しはひな形の直しが届いていない。QA も `template/.github/workflows/qa.yml`（共通部品 game-qa を呼ぶ。検査の名前は `qa / qa` で、main の必須チェックと Auto merge の `require_checks` に書く）を写す）。PR #1 を出す前に、shared-workflows で `LOCAL_ROOT=<clone の親> REPOS=<リポジトリ> node scripts/drift-check.mjs` を回し、出た行を直す（2026-11-05 あみだ配達・ことばならべ・ひかり道が、前の日に直した link-check の設定なしで出た）。PR #1 が1日以上止まったあとでマージするときも、まず shared-workflows を `git pull origin main` で新しくし（古いままだと新しい検査が動かない）、`node scripts/sync-template.mjs <ゲームのフォルダ>` で写し直し、drift-check をもう一度回してから（2026-11-11 標識よみは2日のあいだに共通の決まりが7つ増えていた。`incidents/2026-11-11-codeql-url-includes-in-qa.md`）。
    あわせて shared-workflows を `git pull` してから `node scripts/sync-template.mjs --check ../<ゲーム>` を回し、ちがえば `node scripts/sync-template.mjs ../<ゲーム>` で写す（作っているあいだにひな形の版が上がる。PR の QA の「ひな形の写し」も見る。incidents/2026-11-07-new-game-old-template.md）。
@@ -174,7 +174,7 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
    - [project-practices.md](project-practices.md) の「ゲーム」の表に1行
    - 中身に事実・出典があり、巡回で特に照らすことがあれば [repo-patrol.md](repo-patrol.md) の「ゲームで特に照らすこと」に1行（無ければ足さない）
    Lint（`node scripts/check-repo-lists.mjs`）が、並び・ゲームの表の抜け・ほかのファイルに書いた一覧を見る。
-9. 公開を知らせたら、同じターンで次の候補（プロジェクトのメモリ game-queue の順）の手順1に入る。satou さんの返事を待たない（2026-11-07「止めずに、進め続けてください」）。レビュー待ちなどで止まるときは、再開の予約（send_later など。ほかの AI は [tool-map.md](tool-map.md)）を入れてからターンを終える。予約なしで終えない（incidents/2026-11-07-new-game-stopped-after-publish.md）。
+9. 公開を知らせたら、同じターンで次の候補（「題材:」Issue の候補の列の番号順。作りかけが2本あれば始めない：game-factory.md）の手順1に入る。satou さんの返事を待たない（2026-11-07「止めずに、進め続けてください」）。レビュー待ちなどで止まるときは、再開の予約（send_later など。ほかの AI は [tool-map.md](tool-map.md)）を入れてからターンを終える。予約なしで終えない（incidents/2026-11-07-new-game-stopped-after-publish.md）。
 
 ### B. 公開中のゲームを1本磨く（週1・水曜）
 
