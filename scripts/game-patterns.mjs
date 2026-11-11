@@ -6,9 +6,9 @@
 const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:"'`\\])\/\/[^\n]*/g, '$1');
 
 // cutOf の定義を、複数行でも終わり（かっこの外の ; か、function の閉じ }）まで取り出す
-export function cutOfBody(page) {
+export function cutOfBody(page, name = 'cutOf') {
   const s = stripComments(page);
-  const m = /(?:const|let|var)\s+cutOf\s*=|function\s+cutOf\s*\(/.exec(s);
+  const m = new RegExp(`(?:const|let|var)\\s+${name}\\s*=|function\\s+${name}\\s*\\(`).exec(s);
   if (!m) return null;
   let depth = 0, seen = false;
   for (let i = m.index; i < s.length; i++) {
@@ -56,6 +56,7 @@ export function urlIncludes(src) {
 }
 
 // depthGaps：深さの部品（depth.js）を写したのに、つなぎが足りない所（drift-check の depth:*）
+// depth:hint2：2段目のヒント（cut2Of）が、もうまちがえた分け方（cur.w2）を除かずに消す（2026-11-11 kenko-minuki #7 の CodeRabbit）
 // 新作は new-game.mjs で depth.js が写るので、つなぎ忘れるとボタンも復習も出ないまま公開される（routines/game-dev.md「1問を深くする」、2026-11-11）
 // files：{ page: index.html, sw: sw.js, run: qa/run.mjs }（無いものは空文字）。返すのは [id, 説明] の並び
 export function depthGaps({ page = '', sw = '', run = '' }) {
@@ -72,6 +73,12 @@ export function depthGaps({ page = '', sw = '', run = '' }) {
   if (!/Depth\.sureHtml\s*\(/.test(p) || !/Depth\.judge\s*\(/.test(p)) out.push(['depth:sure', 'index.html が Depth.sureHtml・Depth.judge を呼んでいない（「🎯 自信あり？」が出ない）']);
   const shell = (stripComments(sw).match(/SHELL\s*=\s*\[([\s\S]*?)\]/) || [, ''])[1];
   if (sw && !/["']\.\/depth\.js["']/.test(shell)) out.push(['depth:sw', 'sw.js の SHELL に ./depth.js が無い（電波が無いと開かない）']);
+  const cut2 = cutOfBody(page, 'cut2Of');
+  if (cut2) {
+    const used = [...cut2.matchAll(/\b([A-Za-z_$][\w$]*Of)\s*\(/g)].map((x) => x[1]).filter((n) => n !== 'cut2Of');
+    const all = [cut2, ...used.map((n) => cutOfBody(page, n) || '')].join('\n');
+    if (!/\bw2\b/.test(all)) out.push(['depth:hint2', 'index.html の cut2Of（2段目のヒントで消す分け方）が、もうまちがえた分け方（cur.w2）を除いていない（まちがえたあとにヒントを押すと★だけ減って何も消えない。incidents/2026-11-11-depth-hint2-no-cut.md）']);
+  }
   if (!/checkDepth\s*\(/.test(stripComments(run))) out.push(['depth:run', 'qa/run.mjs が checkDepth を呼んでいない（template/qa/depth-check.mjs の検査が走らない）']);
   return out;
 }

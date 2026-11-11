@@ -70,6 +70,8 @@ const depthCases = [
   ['深さ：復習をつながない', 'depth:review', { ...GOOD, page: GOOD.page.replace('Depth.mark(t, 1, "x"); ', '') }],
   ['深さ：自信のボタンを出さない', 'depth:sure', { ...GOOD, page: GOOD.page.replace('const a = Depth.sureHtml(); ', '') }],
   ['深さ：SHELL に無い（コメントにだけある）', 'depth:sw', { ...GOOD, sw: 'const CACHE = "g-v2";\n// "./depth.js" も入れる\nconst SHELL = ["./", "./index.html", "./transfer.js"];' }],
+  ['深さ：2段目のヒントが、まちがえた分け方を除いて消す', '', { ...GOOD, page: GOOD.page + '\n<script>const left2Of = () => GK.filter((x) => x !== cur.P.grp && !cur.w2.includes(x));\nconst cut2Of = () => (cur.h2 ? left2Of().slice(0, 1) : []);</script>' }],
+  ['深さ：2段目のヒントが、まちがえた分け方も消す先に選ぶ', 'depth:hint2', { ...GOOD, page: GOOD.page + '\n<script>const cut2Of = () => (cur.h2 ? [GK.filter((x) => x !== cur.P.grp)[0]] : []); // w2 は見ない</script>' }],
   ['深さ：QA が checkDepth を呼ばない（コメントにだけある）', 'depth:run', { ...GOOD, run: '// checkDepth(src) はあとで\nconst x = 1;' }],
 ];
 for (const [name, want, files] of depthCases) {
