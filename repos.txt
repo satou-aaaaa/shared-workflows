@@ -79,6 +79,7 @@ senkyo-shikumi game
 sentaku-hyoji game
 setsuden-kotsu game
 shiritori-saitan game
+shokuchudoku-yobo game
 shokuhin-hyoji game
 shukujitsu-yurai game
 taiyokei-kurabe game
