@@ -9,10 +9,13 @@
 #   5. CLAUDE_ENV_FILE が無いと、このシェルで打つ export を出し、「✓」を出さない
 #   6. nvm で Node を入れたときは「nvm use」を出し、「✓」を出さない
 #   7. ブラウザを起動できない（Linux のライブラリ不足など）と止まり、「✓」を出さない（ひな形の版 5）
+#   13. 相対パスの CHROMIUM_PATH でも起動の試しが通る（ひな形の版 8）
 #   8. 空白のあるブラウザの場所を、引用して CLAUDE_ENV_FILE に書く（版 5）
 #   9. lock も依存も変わっていなければ入れ直さない（QA の最中に node_modules を消さない。版 5）
 #  10. NODE_ENV=production でも devDependencies を入れる・11. requirements.txt が無ければ Python を飛ばす（版 6）
 #  12. package.json にある Playwright を読み込めないと止まり、「✓」を出さない（版 7）
+#  14. .nvmrc が v22.1.0 の形でも読める・15. nvm install が失敗したら止まって知らせる・
+#  16. require では読めても import() で読めない Playwright（ESM の入口の欠け）で止まる・17. 2つ同時に動いても両方通る（版 10）
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
@@ -33,8 +36,10 @@ python3 -c 'import sys; print(f"{sys.version_info[0]}.{sys.version_info[1]}")' >
 : > "$repo/requirements.txt"
 echo '{"name":"dep","version":"1.0.0"}' > "$repo/app/dep/package.json"
 # 作り物の Playwright：FAKE_LAUNCH_FAIL があると起動に失敗する（ライブラリが足りない Linux の代わり）
-echo '{"name":"playwright","version":"1.0.0"}' > "$repo/app/pw/package.json"
-echo 'if(process.env.FAKE_REQUIRE_FAIL)throw new Error("Cannot find module playwright-core");exports.chromium={executablePath:()=>"",launch:async()=>{if(process.env.FAKE_LAUNCH_FAIL)throw new Error("libnss3.so: cannot open shared object file");return{close:async()=>{}}}};' > "$repo/app/pw/index.js"
+echo '{"name":"playwright","version":"1.0.0","exports":{"import":"./index.mjs","require":"./index.js"}}' > "$repo/app/pw/package.json"
+# ESM の入口（QA は import で読む）。FAKE_IMPORT_FAIL があると import だけ失敗する（index.mjs の欠けの代わり。版 10）
+echo 'import { createRequire } from "node:module"; if (process.env.FAKE_IMPORT_FAIL) throw new Error("Cannot find module index.mjs"); const pw = createRequire(import.meta.url)("./index.js"); export const chromium = pw.chromium; export default pw;' > "$repo/app/pw/index.mjs"
+echo 'if(process.env.FAKE_REQUIRE_FAIL)throw new Error("Cannot find module playwright-core");exports.chromium={executablePath:()=>"",launch:async(o)=>{if(o&&o.executablePath&&!require("fs").existsSync(o.executablePath))throw new Error("Failed to launch: "+o.executablePath+" not found");if(process.env.FAKE_LAUNCH_FAIL)throw new Error("libnss3.so: cannot open shared object file");return{close:async()=>{}}}};' > "$repo/app/pw/index.js"
 echo '{"name":"fx","version":"1.0.0","private":true,"dependencies":{"dep":"file:./dep"},"devDependencies":{"playwright":"file:./pw"}}' > "$repo/app/package.json"
 (cd "$repo/app" && npm install --package-lock-only --no-audit --no-fund >/dev/null)
 printf '#!/bin/sh\nexit 0\n' > "$tmp/bin/chromium"; chmod +x "$tmp/bin/chromium"   # 作り物のブラウザ
@@ -128,6 +133,60 @@ if run CLAUDE_ENV_FILE="$envf" FAKE_REQUIRE_FAIL=1; then ng "12. Playwright を�
 elif grep -q '^✓' "$tmp/out"; then ng "12. Playwright を読み込めないのに ✓ を出した"
 elif grep -q '読み込めない' "$tmp/out"; then ok "package.json にある Playwright を読み込めないと止まる"
 else ng "12. 読み込めない理由を出さない"; fi
+
+# 13. 相対パスの CHROMIUM_PATH（起動の試しは npm_dir に移って動く。2026-11-07 dema-tashikame #1 の CodeRabbit）
+mkdir -p "$repo/bin2"; cp "$tmp/bin/chromium" "$repo/bin2/chromium"
+: > "$envf"
+if run CLAUDE_ENV_FILE="$envf" CHROMIUM_PATH=bin2/chromium && grep -q '^✓ 準備できた' "$tmp/out" && (set +u; . "$envf"; [ "$CHROMIUM_PATH" = "$repo/bin2/chromium" ]); then
+  ok "相対パスの CHROMIUM_PATH でも起動の試しが通り、絶対パスを CLAUDE_ENV_FILE に書く（版9）"
+else ng "13. 相対パスの CHROMIUM_PATH で起動の試しが落ちる"; fi
+
+# 14. .nvmrc が v22.1.0 の形（数字を全部つなぐと 2210 になっていた。版 10）
+cp "$repo/.nvmrc" "$tmp/nvmrc.bak"; echo "v$want.1.0" > "$repo/.nvmrc"
+if run CLAUDE_ENV_FILE="$envf" && grep -q '^✓ 準備できた' "$tmp/out"; then ok ".nvmrc が v$want.1.0 の形でも読める"
+else ng "14. .nvmrc の v$want.1.0 を読めない"; fi
+cp "$tmp/nvmrc.bak" "$repo/.nvmrc"
+
+# 15. nvm install が失敗する（nvm が版の一覧を取れないとき。前は何も言わずに止まった）
+printf 'nvm() { return 3; }\n' > "$tmp/nvm/nvm.sh"
+if run CHROMIUM_PATH="$tmp/bin/chromium" NVM_DIR="$tmp/nvm" PATH="$tmp/old:$PATH"; then ng "15. nvm install が失敗したのに止まらない"
+elif grep -q 'nvm install .* に失敗した' "$tmp/out"; then ok "nvm install が失敗したら止まって知らせる"
+else ng "15. nvm install の失敗を知らせない"; fi
+
+# 16. require では読めるが import() で読めない（ESM の入口 index.mjs の欠け。chikei-ate #1・kabu-news の CodeRabbit）
+if run CLAUDE_ENV_FILE="$envf" FAKE_IMPORT_FAIL=1; then ng "16. import() で読めない Playwright で止まらない"
+elif grep -q '^✓' "$tmp/out"; then ng "16. import() で読めないのに ✓ を出した"
+else ok "import() で読めない Playwright で止まる（QA と同じ読み方）"; fi
+
+# 17. 2つ同時に動いても npm ci を重ねず、両方通る（hyakunin-awase #1 の CodeRabbit）
+rm -rf "$repo/app/node_modules"
+( cd "$repo" && env -u CHROMIUM_PATH CLAUDE_ENV_FILE="$envf" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 PLAYWRIGHT_BROWSERS_PATH="$tmp/none" PW_PREINSTALLED="$tmp/bin/chromium" bash scripts/setup.sh ) > "$tmp/out1" 2>&1 & p1=$!
+( cd "$repo" && env -u CHROMIUM_PATH CLAUDE_ENV_FILE="$envf" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 PLAYWRIGHT_BROWSERS_PATH="$tmp/none" PW_PREINSTALLED="$tmp/bin/chromium" bash scripts/setup.sh ) > "$tmp/out2" 2>&1 & p2=$!
+r1=0; r2=0; wait $p1 || r1=$?; wait $p2 || r2=$?
+cat "$tmp/out1" "$tmp/out2" > "$tmp/out"
+if [ $r1 = 0 ] && [ $r2 = 0 ] && grep -q '^✓ 準備できた' "$tmp/out1" && grep -q '^✓ 準備できた' "$tmp/out2" && [ ! -d "$repo/app/.setup-lock" ]; then ok "2つ同時に動いても両方通り、ロックを残さない"
+else ng "17. 同時に動かすと落ちる・ロックが残る"; fi
+
+# 18. 強制終了で残ったロック（持ち主がもう動いていない）は外して進む。動いている持ち主のロックは外さない（#259 の CodeRabbit）
+mkdir -p "$repo/app/.setup-lock" && echo "$(hostname 2>/dev/null || echo local) 999999" > "$repo/app/.setup-lock/owner"
+if run CLAUDE_ENV_FILE="$envf" && grep -q '残したロックを外す' "$tmp/out" && [ ! -d "$repo/app/.setup-lock" ]; then ok "強制終了で残ったロックを外して進む"
+else ng "18. 残ったロックで止まる・外さない"; fi
+sleep 30 & live=$!
+mkdir -p "$repo/app/.setup-lock" && echo "$(hostname 2>/dev/null || echo local) $live" > "$repo/app/.setup-lock/owner"
+( cd "$repo" && timeout 4 env CLAUDE_ENV_FILE="$envf" bash scripts/setup.sh ) > "$tmp/out" 2>&1 || true
+if [ -f "$repo/app/.setup-lock/owner" ] && ! grep -q '残したロックを外す' "$tmp/out"; then ok "動いている持ち主のロックは外さない"
+else ng "18. 動いている持ち主のロックを外した"; fi
+kill $live 2>/dev/null || true; rm -rf "$repo/app/.setup-lock"
+
+# 19. 名札の無いロックは、1分より古ければ外して進む。新しいものは外さない（版12）
+mkdir -p "$repo/app/.setup-lock" && touch -d '2 minutes ago' "$repo/app/.setup-lock"
+if run CLAUDE_ENV_FILE="$envf" && grep -q '残したロックを外す（（名札なし））' "$tmp/out" && [ ! -d "$repo/app/.setup-lock" ]; then ok "名札の無い古いロックを外して進む"
+else ng "19. 名札の無い古いロックで止まる"; fi
+mkdir -p "$repo/app/.setup-lock"
+( cd "$repo" && timeout 4 env CLAUDE_ENV_FILE="$envf" bash scripts/setup.sh ) > "$tmp/out" 2>&1 || true
+if [ -d "$repo/app/.setup-lock" ] && ! grep -q '残したロックを外す' "$tmp/out"; then ok "名札の無い新しいロックは外さない"
+else ng "19. 作ったばかりの名札の無いロックを外した"; fi
+rm -rf "$repo/app/.setup-lock"
 
 [ "$bad" = 0 ] || { echo "✗ ひな形 template/scripts/setup.sh の検査が落ちた" >&2; exit 1; }
 echo "✓ ひな形の準備スクリプトの検査が通った"

@@ -37,6 +37,37 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: ${{ inputs.npm_dir }}/package-lock.json
+      # PR で足した写し（新作の PR #1 は全部）と、直接直した写し（transfer.js・qa/*.mjs・setup.sh）が、いまの main のひな形と同じか。
+      # 古いゲームから写した新作が、ひな形の直しの無いまま公開された（2026-11-07 裁判員のしくみが版9。incidents/2026-11-07-new-game-old-template.md）
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: github.event_name == 'pull_request'
+        with:
+          repository: satou-aaaaa/shared-workflows
+          ref: main
+          path: .shared-workflows
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/sync-template.mjs
+            scripts/link-text.mjs
+            template
+      # Link check（週1）が調べる .md に、すぐ後ろに全角の字が続く URL が無いか。lychee はそこまで URL と読んで 404 で落ちる。
+      # 週1の検査で初めて落ちていた（2026-11-07 rosen-hitofude・seiza-tsunagi。incidents/2026-11-08-link-check-wide-char-after-url.md）
+      - name: リンクの書き方
+        if: github.event_name == 'pull_request'
+        run: node .shared-workflows/scripts/link-text.mjs .
+      - name: ひな形の写し
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch -q --depth=1 origin "$BASE"
+          added=$(git diff --name-only --diff-filter=A "$BASE" HEAD)
+          edited=$(git diff --name-only --diff-filter=M "$BASE" HEAD | grep -xE 'transfer\.js|qa/(a11y|transfer-check|sw-check)\.mjs|scripts/setup\.sh' || true)
+          list=$(printf '%s\n%s\n' "$added" "$edited" | grep . | paste -sd, - || true)
+          status=0
+          if [ -n "$list" ]; then node .shared-workflows/scripts/sync-template.mjs --check --only="$list" . || status=$?; fi
+          rm -rf .shared-workflows
+          if [ "$status" != 0 ]; then echo "::error::写しがひな形とちがう。shared-workflows のルートで node scripts/sync-template.mjs ../<ゲーム> を回して写す（ゲームの写しは直さない）"; exit 1; fi
       - run: npm ci --no-audit --no-fund
         working-directory: ${{ inputs.npm_dir }}
       - run: npx playwright install --with-deps chromium

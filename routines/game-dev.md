@@ -14,7 +14,7 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 - 漢字・言葉を答えるゲームは、選択肢でなく入力して答える形にする（satou さん 2026-11-04）。変換中の Enter で送らない（`e.isComposing || e.keyCode === 229`）・`normalize("NFKC")` と空白のゆれを許す・かなだけはまちがいに数えない・別解も正解。候補から選ぶのはヒントの最後の段だけ（[Chrome: IME セーフな Enter 送信](https://developer.chrome.com/docs/modern-web-guidance/guides/forms/ime-safe-enter-submit?hl=ja)）。
 - ほかの作品の名前・キャラ・見た目・既存ゲームの再現は使わない。実在の会社名・ロゴもまねない。
 - お金をかけない。外へ通信しない（外から読むのは Google Fonts の文字だけ）。記録は遊ぶ人のブラウザ（localStorage）だけ。名前・メールを聞かない。
-- 応援は Ko-fi（https://ko-fi.com/satouaaaaa）へのただのリンクを、結果の画面に1行だけ（共有フォルダ `kofi/app-guide.md`）。有料版は置かない。
+- 応援は Ko-fi（<https://ko-fi.com/satouaaaaa>）へのただのリンクを、結果の画面に1行だけ（共有フォルダ `kofi/app-guide.md`）。有料版は置かない。
 
 ## 考え方（調べた要点と出典）
 
@@ -65,13 +65,16 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 | カレンダー | 遊んだ日に★の印。連続日数は1以上のときだけ | seiza-tsunagi #4 |
 | 取りこぼした日 | 過去7日のお題をあとから。連続・今日の記録・Ko-fi に数えない | wagamama-burger #5・seiza-tsunagi #4 |
 | 感想 | Issue フォームへのただのリンク | [game-feedback.md](game-feedback.md) |
-| PWA・OGP | `sw.js`・`manifest.webmanifest`・アイコン・`og.png`（答えを入れない）。`sw.js` の install は `c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))` で取り直す（普通に取ると、GitHub Pages が10分ほど保存させる古い画面が新しい版に入る。drift-check の `sw:reload` が見る）。`template/qa/sw-check.mjs` を `qa/` に写し、`qa/run.mjs` から `checkSwStall(sw.jsの中身)` を呼ぶ（本文の途中で通信が止まっても4秒で保存したものを返すか。ok の返事は本文を読み終えてから返し、返したら60秒の見張りも止める。drift-check の `sw:stall`・`sw:deadline` が見る。`incidents/2026-11-07-sw-body-stall.md`）。`sw.js` の取り方・保存の仕方を変えたら `CACHE` の版も上げる（名前が同じだと、古い worker が `?付き` の URL で保存した画面が残り、オフラインで `ignoreSearch` により返る。2026-11-06 CodeRabbit） | どのゲームも |
+| PWA・OGP | `sw.js`・`manifest.webmanifest`・アイコン・`og.png`（答えを入れない）。`sw.js` は `template/sw.js` を写し、ゲームで書くのは `// game:begin`〜`// game:end` の間（`CACHE`・`SHELL`）だけ。ほかを直すときはひな形を直し、shared-workflows のルートで `node scripts/sync-template.mjs ../<ゲームのフォルダ>` を回して写す（transfer.js・qa/*.mjs・見やすさの設定・setup.sh も同じ道具で写る。drift-check の `sw:template` が見る。`incidents/2026-11-07-template-copies-drift.md`）。`sw.js` の install は `c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))` で取り直す（普通に取ると、GitHub Pages が10分ほど保存させる古い画面が新しい版に入る。drift-check の `sw:reload` が見る）。`template/qa/sw-check.mjs` を `qa/` に写し、`qa/run.mjs` から `checkSwStall(sw.jsの中身)` を呼ぶ（本文の途中で通信が止まっても4秒で保存したものを返すか。ok の返事は本文を読み終えてから返し、返したら60秒の見張りも止める。drift-check の `sw:stall`・`sw:deadline` が見る。`incidents/2026-11-07-sw-body-stall.md`）。`sw.js` の取り方・保存の仕方を変えたら `CACHE` の版も上げる（名前が同じだと、古い worker が `?付き` の URL で保存した画面が残り、オフラインで `ignoreSearch` により返る。2026-11-06 CodeRabbit） | どのゲームも |
 | 見やすさ | 見やすさの設定（`template/a11y/a11y.html`）と検査（`template/qa/a11y.mjs`）。下の「だれでも遊べるように」 | kippu-10 |
 | 引き継ぎ | 記録を別の端末へ移す「引き継ぎコード」と QR（`template/transfer.js`）と検査（`template/qa/transfer-check.mjs`）。下の「引き継ぎコード」 | kippu-10 |
 | 遊び方 | はじめて開いたときに `<dialog>` で出し、「見た」の記録（`tut`）は「わかった」を押したらすぐ残し、dialog の `cancel`（Esc を押したその場で届く）と `close` イベントでも、まだ残していなければ残す（ボタンの中だけだと Esc や戻る操作で閉じた人に毎回出る。`close` だけだと知らせが少し遅れて届き、押した直後・Esc の直後に読み直すとまた出る。2026-11-07 `incidents/2026-11-07-howto-esc-not-saved.md`）。QA は「わかった」を押したその場で記録が残るか、Esc で閉じてすぐ読み直しても（10回）出ないかを見る。dialog で記録を残すものはどれも同じ | kippu-10 |
 | ホームの題 | 上の帯の `h1{flex:1}` を題（`h1.title`）が受け継ぐと、縦に並べた画面で余った高さを取って伸び、iPad の縦などで題の下に大きなすき間が出る。`.title` に `flex:none` を書く。QA は 820×1180・390×844・1280×800 で、題の高さが伸びない形（flex:none）と同じかを見る（2026-11-07 `incidents/2026-11-07-title-stretched.md`） | kimari-sagashi |
+| 記録の保存 | 記録は localStorage。書けないとき（容量いっぱい・保存を切ったブラウザ）は開いているあいだだけ覚え、保存できないあいだは画面の上に帯（`#savewarn`、`saveWarn(true)`）を出したままにし、保存できたら消す（toast は数秒で消えて見落とす。黙っていると開き直したとき記録が消える）。QA は `Storage.prototype.setItem` を失敗させ、帯が1つ・数秒後も残る・保存できたら消えるかを見る。drift-check の `save:silent` が見る | atsusa-shisu・kippu-10 |
+| ヒント | 1回目は「見るところ」、2回目は（選び肢のある問題なら）まちがいを消して2つにしぼる。選び肢の無い入力式の問題は、2回目も言葉のヒント（答えの一部など）にし、下の「消す」決まりと QA は使わない。消すのは正解でない選び肢のうち最後の1つ以外に決め、まちがいの数で変えない（`cur.wrong` を除いてから数えると、しぼったあとにまちがいを選んだとき消した選び肢が戻る）。画面を作り直したら問題の枠に `tabindex=-1` を付けて `focus({preventScroll:true})`。QA は「ヒント2のあとに残ったまちがいを選ぶと正解だけが残る」「次の問題でフォーカスが問題に移る」を見る。「のこりは○つ」は決まった数でなく、いま押せる選び肢の数を出す（先に最後のまちがいを選んでいると、のこりは正解の1つ）。drift-check の `hint:cut-moves`・`hint:left-fixed` が見る（`incidents/2026-11-07-hint-cut-comes-back.md`） | kenko-minuki |
+| 星 | ★の数は `<span class="stars" role="img" aria-label="星Nつ">` に入れ、取れなかった星は ☆（`aria-hidden`）。span に role が無いと aria-label が読まれないことがあり、取れなかった星も ★ だと色だけで分ける。drift-check の `stars:role` が見る（2026-11-07 食中毒よぼうの CodeRabbit） | 食中毒よぼう（作り中） |
 | 好きなだけ | チケット・鍵なし。とことん・練習は何回でも。問題は300種類以上。下の「好きなだけ遊べるように」 | どのゲームも（2026-11-06 から） |
-| QA | `qa/run.mjs`。乱数で作る所は何百日分も作って確かめる。とことんのように `Math.random` で並べる所も、何百回作って重なり・作れない問題が無いかを見る（5回では0.1%の重なりに当たらない）。押せる所は44px以上、幅320px。キーボードで選んだボタンに枠が出る（`all:unset` で消えるので、枠の規則は style の最後に `:is(button,a):focus-visible{outline:…!important}`） | どのゲームも |
+| QA | `qa/run.mjs`。乱数で作る所は何百日分も作って確かめる。とことんのように `Math.random` で並べる所も、何百回作って重なり・作れない問題が無いかを見る（5回では0.1%の重なりに当たらない）。押せる所は44px以上、幅320px。キーボードで選んだボタンに枠が出る（`all:unset` で消えるので、枠の規則は style の最後に `:is(button,a):focus-visible{outline:…!important}`）。検査で使う問題 id は文字で書かず、データから選ぶ（`G.POOL[2].find(...)`）。別のゲームから写した id はそのゲームに無いことがあり、例外を待つ検査が何も見ないまま通る（drift-check `qa:literal-id`。`incidents/2026-11-07-qa-copied-question-id.md`） | どのゲームも |
 
 ## 好きなだけ遊べるように（寄付で成り立たせる。satou さん 2026-11-06）
 
@@ -155,15 +158,17 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 
 ### A. 新しいゲームを作る（satou さんに頼まれたとき）
 
-1. 案を3つ出す。どれも上の「好み」に当てはまるか表で確かめる。
+1. 案を3つ出す。どれも上の「好み」に当てはまるか表で確かめる。題材がもう無いかを、[project-practices.md](project-practices.md) のゲームの表を**日本語の題材**（例：`grep -n "防災" routines/project-practices.md`）で探して確かめる。リポジトリ名のローマ字（bousai / bosai）で探さない。プロジェクトのメモリ game-queue に無くても、表にあれば作らない（2026-11-07 「防災の判断」を2本作りかけた。incidents/2026-11-07-same-game-different-romaji.md）。
+   題材を決めたら、作り始める前に shared-workflows に Issue「題材: <日本語の題名>（<題材の言葉>）」を立てる（例「題材: 祝日の由来（祝日）」）。同じ題材の言葉を題に持つ「題材:」Issue（not planned で閉じたものを除く）のうち、**番号のいちばん小さいものが担当**。立てたあとで一覧（`gh api "repos/satou-aaaaa/shared-workflows/issues?state=all&per_page=100" --paginate`。検索は索引が遅れるので使わない）を見て、自分より小さい番号があれば作らず、自分の Issue を not planned で閉じる。メモリ game-queue にも1行書くが、担当の正は Issue（メモリは後から書いたほうが勝ち、先の行が消えることがある。2026-11-07「祝日の由来」が2本並行で作られた。incidents/2026-11-07-topic-claim-overwritten.md）。公開したら Issue に公開先を書いて completed で閉じ、やめたら not planned で閉じる。
 2. 動く見本（単体の HTML）を Artifact で出し、satou さんに選んでもらう（カード）。
-3. リポジトリは [onboarding.md](onboarding.md) 手順0で AI が作る（A：Actions「Create repo」を起こす。だめなら B：Chrome。そのときはこのスレッドに satou さんの一言を頼む）。リンクを渡すのは両方使えないときだけ。
+3. リポジトリは [onboarding.md](onboarding.md) 手順0で AI が作る（A：Actions「Create repo」を、担当の Issue 番号 `claim` と題材の言葉 `topic` を付けて起こす。先の担当・公開済みの表にあれば止まる。だめなら B：Chrome。そのときはこのスレッドに satou さんの一言を頼む）。リンクを渡すのは両方使えないときだけ。
 4. はじめの commit は README だけ。workflows・`qa/`・本体は同じ PR #1 で入れる（incidents/2026-11-04-new-repo-main-qa-without-qa-dir.md）。
 5. 上の「共通の形」と「だれでも遊べるように」を全部入れる。AGENTS.md は既存のゲーム（kippu-10 など）を写して直す。
    `.github/workflows/` は既存のゲームからでなく `template/.github/workflows/` から写す（古いゲームの写しはひな形の直しが届いていない。QA も `template/.github/workflows/qa.yml`（共通部品 game-qa を呼ぶ。検査の名前は `qa / qa` で、main の必須チェックと Auto merge の `require_checks` に書く）を写す）。PR #1 を出す前に、shared-workflows で `LOCAL_ROOT=<clone の親> REPOS=<リポジトリ> node scripts/drift-check.mjs` を回し、出た行を直す（2026-11-05 あみだ配達・ことばならべ・ひかり道が、前の日に直した link-check の設定なしで出た）。
+   あわせて shared-workflows を `git pull` してから `node scripts/sync-template.mjs --check ../<ゲーム>` を回し、ちがえば `node scripts/sync-template.mjs ../<ゲーム>` で写す（作っているあいだにひな形の版が上がる。PR の QA の「ひな形の写し」も見る。incidents/2026-11-07-new-game-old-template.md）。
    レビュー（CodeRabbit）がひな形の写し（transfer.js・qa/a11y.mjs・qa/transfer-check.mjs・qa/sw-check.mjs・scripts/setup.sh・共通部品の呼び出し）に指摘したら、ゲームでは直さず、その日のうちに shared-workflows でひな形を直す PR を出し（直さない指摘は理由を返す）、直したら版を上げて全部のゲームへ配る。ゲームの PR は待たずに進めてよい（2026-11-07 同じ指摘が新作ごとに繰り返された。`incidents/2026-11-07-game-template-review-gaps.md`）。
 6. `node qa/run.mjs` が全部通ってから PR。`sw.js` を含む PR は `@coderabbitai review` とコメントし、レビューを読んでから手でマージする。
-7. Pages を main のルートで公開する（[onboarding.md](onboarding.md) 手順5の1）。`node scripts/drift-check.mjs` に `pages` の行が出ないこと、Actions の Post-deploy check が緑になったことを見るまで、X などで紹介しない（2026-11-04 3本が 404 のまま紹介された。incidents/2026-11-04-pages-never-enabled.md）。
+7. マージの直前にもう一度 `node scripts/sync-template.mjs --check ../<ゲーム>` を回す（PR を出したあとにひな形の版が上がることがある。ちがえば写して push し直す）。Pages を main のルートで公開する（[onboarding.md](onboarding.md) 手順5の1）。`node scripts/drift-check.mjs` に `pages` の行が出ないこと、Actions の Post-deploy check が緑になったことを見るまで、X などで紹介しない（2026-11-04 3本が 404 のまま紹介された。incidents/2026-11-04-pages-never-enabled.md）。
 8. shared-workflows に PR を1つ出し、一覧に足す（[onboarding.md](onboarding.md) 手順3）。足すのは次の3か所だけで、どれも**名前の ABC 順の位置**に1行入れる（末尾に足さない。並行の新作の PR が同じ所に足すとぶつかる。2026-11-07 #184 が3つの PR とぶつかった。incidents/2026-11-07-repo-list-conflicts.md）。
    - [repos.txt](../repos.txt) に `<名前> game`（ワークフロー・巡回・監督・週次まとめはここを読む。ほかのファイルに一覧を書かない）
    - [project-practices.md](project-practices.md) の「ゲーム」の表に1行

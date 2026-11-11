@@ -28,6 +28,10 @@ on:
         description: '同じコミットで成功していなければマージしない check run の名前（改行区切り）。例 "scan / scan"'
         type: string
         default: ''
+      present_checks:
+        description: '動いたときだけ成功を待つ check run の名前（改行区切り）。例 "setup / setup"（Setup check は準備のファイルを変えた PR でしか動かない。動いたのに失敗・実行中ならマージしない。終わったときに判定し直すので、呼び出し側の workflows: にその Actions のワークフロー名を入れる。外のアプリの検査は書かない。2026-11-07 atsusa-shisu #1・sekai-jikoku #1 の CodeRabbit）'
+        type: string
+        default: ''
       require_paths:
         description: 'この正規表現（grep -E）に当てはまるファイルを変える PR だけマージする。空ならすべて'
         type: string
@@ -77,6 +81,7 @@ jobs:
           REQUIRE_PATHS: ${{ inputs.require_paths }}
           HOLD_PATHS: ${{ inputs.hold_paths }}
           REQUIRE_CHECKS: ${{ inputs.require_checks }}
+          PRESENT_CHECKS: ${{ inputs.present_checks }}
           WF_NAME: ${{ github.event.workflow_run.name }}
         run: |
           pr=$(gh api "repos/$REPO/pulls?state=open&head=${REPO%%/*}:$BRANCH" --jq '.[0].number // empty')
@@ -110,11 +115,21 @@ jobs:
             fi
           fi
           if [ -z "$manual" ] && [ -n "$REQUIRE_PATHS" ] && ! printf '%s\n' "$new_files" | grep -qE -- "$REQUIRE_PATHS"; then echo "#$pr は対象のファイルを変えないので手でマージ"; exit 0; fi
+          # 名前は jq の --arg で渡す（式に埋めると、名前に " があるとき式が壊れて止まる。#252 の CodeRabbit）。見つからなければ空
+          state_of() { jq -r --arg n "$1" '[.check_runs[] | select(.name == $n)] | sort_by(.started_at) | last | if . == null then empty else (.conclusion // .status) end' <<<"$runs"; }
+          runs=''
+          if [ -n "$REQUIRE_CHECKS$PRESENT_CHECKS" ]; then runs=$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100"); fi
           while IFS= read -r c; do
             [ -n "$c" ] || continue
-            st=$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100" --jq "[.check_runs[] | select(.name == \"$c\")] | sort_by(.started_at) | last | (.conclusion // .status // \"なし\")")
+            st=$(state_of "$c")
             if [ "$st" != success ]; then echo "#$pr は「$c」が ${st:-なし} なのでマージしません（通ったら手でマージ）"; exit 0; fi
           done <<<"$REQUIRE_CHECKS"
+          # 動いたときだけ待つ検査：無ければ通す。あれば成功まで待つ（呼び出し側の workflows: にその名前を入れ、終わったときにもう一度判定する）
+          while IFS= read -r c; do
+            [ -n "$c" ] || continue
+            st=$(state_of "$c")
+            if [ -n "$st" ] && [ "$st" != success ] && [ "$st" != skipped ]; then echo "#$pr は「$c」が $st なのでマージしません（終われば、もう一度判定します）"; exit 0; fi
+          done <<<"$PRESENT_CHECKS"
           if [ "$(jq -r .head.sha <<<"$info")" != "$SHA" ]; then echo "#$pr に新しいコミットがあるので、その検査を待ちます"; exit 0; fi
           if [ -n "$manual" ]; then
             echo "#$pr は .github/ を変えるので手でマージ"
@@ -143,6 +158,28 @@ jobs:
           if [ "${reverts:-0}" -ge 2 ]; then echo "直近24時間に差し戻しが ${reverts} 回あったので、自動ではマージしません（原因を直す PR は担当がマージする）"; exit 0; fi
           gh api -X PUT "repos/$REPO/pulls/$pr/merge" -f merge_method=squash -f sha="$SHA" --jq .message
           echo "merged=true" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$new_files" > "$RUNNER_TEMP/changed.txt"
+      # CI failure issue は、この手順が動いた成功だけで「Auto merge の失敗」の Issue を閉じる（マージしないで終わった成功では閉じない）
+      - name: マージした（成功の印）
+        if: steps.merge.outputs.merged == 'true'
+        run: echo "マージしました"
+      # GITHUB_TOKEN のマージでは main への push で検査が動かないので、変えたファイルに合わせて Link check・Setup check を起こす
+      # （呼び出し元の push: の paths と同じ。dispatch に書いてあれば二重に起こさない。各ゲームの PR の CodeRabbit、2026-11-07）
+      - name: 変えたファイルの検査を main で起こす
+        if: steps.merge.outputs.merged == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DISPATCH: ${{ inputs.dispatch }}
+        run: |
+          changed="$RUNNER_TEMP/changed.txt"
+          want=()
+          if grep -qE '^[^/]+\.html$|^README\.md$' "$changed"; then want+=(link-check.yml); fi
+          if grep -qE '^scripts/setup\.sh$|^\.nvmrc$|^\.python-version$|(^|/)package(-lock)?\.json$|^requirements\.txt$|^pyproject\.toml$|(^|/)\.npmrc$' "$changed"; then want+=(setup-check.yml); fi
+          for wf in "${want[@]}"; do
+            if grep -qw -- "$wf" <<<"$DISPATCH"; then continue; fi
+            if ! gh api "repos/$GITHUB_REPOSITORY/actions/workflows/$wf" >/dev/null 2>&1; then echo "$wf は無い"; continue; fi
+            gh workflow run "$wf" -R "$GITHUB_REPOSITORY" --ref main || echo "::warning::$wf を main で起こせませんでした（on: に workflow_dispatch があるか、呼び出し側の permissions に actions: write があるか確かめる）"
+          done
       - name: 公開などを起こす
         if: steps.merge.outputs.merged == 'true' && inputs.dispatch != ''
         env:

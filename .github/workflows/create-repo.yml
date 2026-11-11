@@ -1,4 +1,6 @@
 name: Create repo
+# 一覧で、どの名前の実行か分かるように（2026-11-07 incidents/2026-11-07-repo-not-created-assumed-permission.md）
+run-name: "Create repo: ${{ inputs.name }}"
 
 # 新作のリポジトリを作る（Claude は使わない）。エージェントが workflow_dispatch で name と description を渡して起こす。
 # 公開・README だけの main で作り、Pages（main の /）と main のルールセット（削除・force push 禁止・必須チェック QA と Secret scan）も入れる。
@@ -18,6 +20,19 @@ on:
         required: false
         type: string
         default: ""
+      claim:
+        description: "題材の担当の Issue 番号（shared-workflows に立てた「題材: 〇〇」。routines/game-dev.md 手順A の1）"
+        required: true
+        type: string
+      topic:
+        description: "題材の言葉（日本語2字以上。例 祝日）。先に立った担当の Issue・公開済みのゲームの表にあれば止める"
+        required: true
+        type: string
+      similar_ok:
+        description: "似た名前のリポジトリがあっても作る（ローマ字の書き方ちがいの重なりでないと確かめたときだけ）"
+        required: false
+        type: boolean
+        default: false
 
 permissions: {}
 
@@ -32,7 +47,42 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment: repo-create
+    permissions:
+      issues: read
+      contents: read
     steps:
+      - name: 題材の担当を確かめる（先に担当がいる題材は作らない）
+        # メモリの game-queue は後から書いたほうが勝ち、先の担当の行が消えることがある。Issue の番号は先に立てたほうが小さい
+        # ので、担当はいちばん小さい番号の「題材:」Issue とする（incidents/2026-11-07-topic-claim-overwritten.md）
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          CLAIM: ${{ inputs.claim }}
+          TOPIC: ${{ inputs.topic }}
+          SIMILAR_OK: ${{ inputs.similar_ok }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$CLAIM" =~ ^[0-9]+$ ]]; then echo "::error::claim は題材の Issue の番号（routines/game-dev.md 手順A の1）"; exit 1; fi
+          if [ "${#TOPIC}" -lt 2 ]; then echo "::error::topic は題材の言葉（日本語2字以上）"; exit 1; fi
+          title=$(gh api "repos/$REPO/issues/$CLAIM" --jq 'if .pull_request then "" else .title end')
+          case "$title" in "題材:"*) ;; *) echo "::error::#$CLAIM は「題材:」の Issue でない"; exit 1;; esac
+          case "$title" in *"$TOPIC"*) ;; *) echo "::error::#$CLAIM の題（$title）に topic「$TOPIC」が無い"; exit 1;; esac
+          # 検索（--search）は索引が遅れるので使わず、一覧を全部見る（incidents/2026-11-05-ci-time-report-missing-repos.md）
+          gh api "repos/$REPO/issues?state=all&per_page=100" --paginate \
+            --jq '.[] | select(.pull_request == null) | select(.title | startswith("題材:")) | select(.state_reason != "not_planned") | "\(.number)\t\(.title)"' > claims.tsv
+          while IFS=$'\t' read -r n t; do
+            if [ "$n" -lt "$CLAIM" ] && [[ "$t" == *"$TOPIC"* ]]; then
+              echo "::error::同じ題材「$TOPIC」に先の担当がいる：#$n $t（作らない。別の題材を選ぶ）"; exit 1
+            fi
+          done < claims.tsv
+          if [ "$SIMILAR_OK" != "true" ]; then
+            gh api "repos/$REPO/contents/routines/project-practices.md" --jq '.content' | base64 -d > practices.md
+            if grep -F -- "$TOPIC" practices.md | grep -q '^| '; then
+              echo "::error::「$TOPIC」がゲームの表（routines/project-practices.md）にもうある。別の題材なら similar_ok を付けて起こし直す"; exit 1
+            fi
+          fi
+          echo "担当 #$CLAIM（$title）"
+
       - name: 名前を確かめる
         env:
           NAME: ${{ inputs.name }}
@@ -51,11 +101,22 @@ jobs:
           OWNER: ${{ github.repository_owner }}
           NAME: ${{ inputs.name }}
           DESC: ${{ inputs.description }}
+          SIMILAR_OK: ${{ inputs.similar_ok }}
         run: |
           set -euo pipefail
           if [ -z "$GH_TOKEN" ]; then echo "::error::環境 repo-create に REPO_CREATE_TOKEN が無い（routines/onboarding.md 手順0）"; exit 1; fi
           if gh api "repos/$OWNER/$NAME" --silent 2>/dev/null; then
             echo "::error::$OWNER/$NAME はもうある（消したり上書きしたりしない）"; exit 1
+          fi
+          # ローマ字の書き方ちがい（bousai / bosai など）の同じ題材を作らない（incidents/2026-11-07-same-game-different-romaji.md）
+          norm() { printf '%s' "$1" | tr -d '-' | sed -E 's/ou/o/g; s/oo/o/g; s/uu/u/g; s/aa/a/g; s/ii/i/g; s/ee/e/g'; }
+          if [ "$SIMILAR_OK" != "true" ]; then
+            want=$(norm "$NAME")
+            while read -r r; do
+              if [ "$(norm "$r")" = "$want" ]; then
+                echo "::error::似た名前の $OWNER/$r がもうある（同じ題材かもしれない）。shared-workflows の routines/project-practices.md のゲームの表を見て、別の題材なら similar_ok を付けて起こし直す"; exit 1
+              fi
+            done < <(gh api "users/$OWNER/repos?per_page=100" --paginate --jq '.[].name')
           fi
           jq -n --arg n "$NAME" --arg d "$DESC" \
             '{name:$n, description:$d, private:false, auto_init:true, has_wiki:false}' \

@@ -14,7 +14,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | --- | --- | --- |
 | 監督の巡回 | [supervisor.md](supervisor.md) | 見回りの中で1日2回（8:07・20:07 JST。2026-10-28 から） |
 | 全リポジトリ・全プロジェクト巡回 | [repo-patrol.md](repo-patrol.md) | 平日 22:38 JST |
-| ルーティンとスキルの定期見直し | [routine-review.md](routine-review.md) | 土曜 9:53 JST |
+| ルーティンとスキルの定期見直し（G：トークン節約の点検 [token-check.md](token-check.md)） | [routine-review.md](routine-review.md) | 土曜 9:53 JST |
 | CI の時間短縮 | [ci-speedup.md](ci-speedup.md) | 木曜 10:26 JST |
 | ゲームの感想を読んで直す | [game-feedback.md](game-feedback.md) | 日曜 10:41 JST |
 | ゲームを作る・1本磨く | [game-dev.md](game-dev.md) | 磨くのは水曜 10:17 JST・新作は頼まれたとき |
@@ -49,7 +49,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | 週次まとめ Issue（開いた PR・CI 失敗・次にやること・再発防止の残った対策と繰り返し・ひな形からのずれ） | このリポジトリ `weekly-summary.yml`（ずれは `scripts/drift-check.mjs`） | 月曜の朝 |
 | 控えの見張り（毎朝の書き出しが止まったら Issue。Claude が止まった合図） | satou-aaaaa/ops-backup（非公開）`watch.yml` | 毎日 12:23 JST |
 | CI時間 Issue | このリポジトリ `ci-time-report.yml` | 木曜 05:29 JST |
-| 成績表 Issue | このリポジトリ `scorecard.yml` | 月曜 06:07 JST |
+| 成績表 Issue | このリポジトリ `scorecard.yml` | 月曜 04:07 JST（週次まとめと2時間ずらす） |
 | 死活監視・Lighthouse・リンク切れ・ブランチ片付け・ラベル・CodeQL | 各リポジトリの `.github/workflows/`（中身はこのリポジトリの共通部品） | 毎日〜週1 |
 | CI 失敗 Issue・自動マージ・更新情報・公開後の確認 | 同上 | PR・push のたび |
 | 共通部品の試運転・権限の表の見張り | このリポジトリ `selftest.yml`・`permission-guard.yml` | PR のたび |

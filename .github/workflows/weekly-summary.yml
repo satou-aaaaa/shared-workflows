@@ -12,15 +12,20 @@ on:
 permissions:
   contents: read
   issues: write
+  # 検索（search/issues）で開いた PR を読むのに要る。無いと is:pr でも Issue だけが返った（2026-11-09）
+  pull-requests: read
 
 jobs:
   summary:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # 中の node は BUDGET_SEC（ジョブの上限より短い）で読むのをやめ、読めなかった分を本文に書く。Issue は必ず出す。
+    # 予算の6割を超えたら本文と注記に ⏱ を出す（2026-11-09 リポジトリ88本で5分の時間切れ。incidents/2026-11-09-weekly-jobs-timeout.md）
+    timeout-minutes: 15
     steps:
       # 「次にやること」（scripts/next-actions.mjs）を一緒に載せるため。Claude が止まっていても、この Issue のメールで次の一手が分かる
       # incidents/ は再発防止の点検（残っている対策・同じ種類の繰り返し）に使う
       # .github/workflows は、ひな形のずれの検査（drift-check.mjs）が「もう無い部品を呼んでいないか」を見るのに使う
+      # template は、drift-check.mjs がひな形（setup.sh・transfer.js・sw.js・a11y など）と写しを比べるのに使う（無いと検査の前に止まっていた。2026-11-07 #252 の CodeRabbit）
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -28,6 +33,7 @@ jobs:
             scripts
             incidents
             .github/workflows
+            template
       - name: まとめを作って Issue にする
         env:
           GH_TOKEN: ${{ github.token }}
@@ -44,12 +50,13 @@ jobs:
             echo "${day} 時点（自動）。各リポジトリの開いたままの PR（古い順）と、ラベル ci-failure の Issue です。"
             echo
           } > "$body"
+          # 開いた PR と ci-failure の Issue は検索でまとめて読む（1本ずつ2回読むと88本で176回。2026-11-09 時間切れ）
+          lists="$RUNNER_TEMP/lists.json"
+          BUDGET_SEC=60 node scripts/weekly-lists.mjs > "$lists"
           total=0
           for r in $REPOS; do
-            prs=$(gh api "repos/$OWNER/$r/pulls?state=open&sort=created&direction=asc&per_page=50" \
-              --jq ".[] | \"\(.number)\t\(.draft)\t\(.user.login)\t\(.created_at)\t\(.title)\"" || true)
-            fails=$(gh api "repos/$OWNER/$r/issues?state=open&labels=ci-failure&per_page=20" \
-              --jq '.[] | "\(.number)\t\(.title)"' || true)
+            prs=$(jq -r --arg r "$r" '.prs | map(select(.repo == $r)) | sort_by(.created_at) | .[] | "\(.number)\t\(.draft)\t\(.user)\t\(.created_at)\t\(.title)"' "$lists")
+            fails=$(jq -r --arg r "$r" '.fails | map(select(.repo == $r)) | .[] | "\(.number)\t\(.title)"' "$lists")
             if [ -z "$prs" ] && [ -z "$fails" ]; then echo "- **$r**: 何もありません" >> "$body"; continue; fi
             echo "### $r" >> "$body"
             while IFS=$'\t' read -r n draft user created title; do
@@ -68,10 +75,11 @@ jobs:
             echo >> "$body"
           done
           {
+            jq -r '.errors[] | "（確かめられなかった: \(.)）"' "$lists"
             echo "### 次にやること（急ぐ順。Claude が止まっているときは routines/without-claude.md の B の表で対応する）"
             echo
             echo '```'
-            GITHUB_TOKEN="$GH_TOKEN" REPOS="$REPOS" node scripts/next-actions.mjs || echo "（次にやることを出せなかった）"
+            GITHUB_TOKEN="$GH_TOKEN" REPOS="$REPOS" BUDGET_SEC=180 node scripts/next-actions.mjs || echo "（次にやることを出せなかった）"
             echo '```'
           } >> "$body"
           {
@@ -79,7 +87,7 @@ jobs:
             echo "### ひな形からのずれ（各リポジトリで直す PR を作るか、ずれてよい理由を scripts/drift-allow.json に書く）"
             echo
             echo '```'
-            GITHUB_TOKEN="$GH_TOKEN" REPOS="$REPOS" node scripts/drift-check.mjs || echo "（ずれを確かめられなかった）"
+            GITHUB_TOKEN="$GH_TOKEN" REPOS="$REPOS" CLONE_ROOT="$RUNNER_TEMP/clones" BUDGET_SEC=420 API_MAX=600 node scripts/drift-check.mjs || echo "（ずれを確かめられなかった）"
             echo '```'
           } >> "$body"
           gh label create 週次まとめ --color 0E8A16 --description "Weekly summary が作る週1のまとめ（自動）" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
