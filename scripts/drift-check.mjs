@@ -32,6 +32,7 @@
 //   - ゲームの save が、localStorage に書けなかったときに黙っている（開き直すと記録が消える。incidents/2026-11-07-save-failure-silent.md）
 //   - ゲームのヒント2（cutOf）が、まちがいの数で消す数を変える（しぼったあとにまちがいを選ぶと、消した選び肢が戻る。incidents/2026-11-07-hint-cut-comes-back.md）
 //   - 星の表示（class="stars"）に role="img" が無い・取れなかった星も ★（読まれない・色だけで分ける）
+//   - ゲームの qa/run.mjs が URL を文字のまま includes・indexOf で探している（CodeQL が赤になる。incidents/2026-11-11-codeql-url-includes-in-qa.md）
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync, mkdirSync } from 'node:fs';
 import { execFileSync, execFile } from 'node:child_process';
@@ -42,7 +43,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formProblems } from './check-issue-forms.mjs';
 import { readRepos, repoNames } from './repos.mjs';
-import { cutMoves, starsBare, leftFixed } from './game-patterns.mjs';
+import { cutMoves, starsBare, leftFixed, urlIncludes } from './game-patterns.mjs';
 import { bareUrls, linkFiles, checkedMd } from './link-text.mjs';
 
 const OWNER = process.env.OWNER || 'satou-aaaaa';
@@ -287,6 +288,7 @@ const results = await pool(REPOS, 4, async (r) => {
     if (paths.has('qa/run.mjs')) {
       const qa = await src.read('qa/run.mjs');
       const lit = qa.match(/try\s*\{[^}]*\bmake\(\s*["'][0-9]:[a-z]+[0-9]+/);
+      if (urlIncludes(qa)) flag('qa:url-includes', 'qa/run.mjs が URL を文字のまま includes・indexOf で探している（CodeQL が high の警告にして PR が赤のまま止まる。出典の定義を正規表現で見る。routines/game-dev.md の QA の行。incidents/2026-11-11-codeql-url-includes-in-qa.md）');
       if (lit) flag('qa:literal-id', `qa/run.mjs の例外を待つ検査に、問題 id を文字で書いている「${lit[0].slice(-24)}」（G.POOL などデータから選ぶ。routines/game-dev.md の QA の行）`);
     }
 
