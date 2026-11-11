@@ -54,3 +54,24 @@ const URL_ARG = new RegExp(`\\.(?:includes|indexOf|lastIndexOf)\\(\\s*(["'\`])(?
 export function urlIncludes(src) {
   return URL_ARG.test(stripComments(src));
 }
+
+// depthGaps：深さの部品（depth.js）を写したのに、つなぎが足りない所（drift-check の depth:*）
+// 新作は new-game.mjs で depth.js が写るので、つなぎ忘れるとボタンも復習も出ないまま公開される（routines/game-dev.md「1問を深くする」、2026-11-11）
+// files：{ page: index.html, sw: sw.js, run: qa/run.mjs }（無いものは空文字）。返すのは [id, 説明] の並び
+export function depthGaps({ page = '', sw = '', run = '' }) {
+  const p = stripComments(page), out = [];
+  const tag = /<script\b[^>]*\bsrc=["']depth\.js["'][^>]*>/.exec(p);
+  const key = tag && (/\bdata-key=["']([^"']+)["']/.exec(tag[0]) || [])[1];
+  if (!tag) out.push(['depth:script', 'index.html が depth.js を読んでいない（</head> の前、transfer.js の次に <script src="depth.js" data-game="<名前>" data-key="<名前>-depth">）']);
+  else {
+    const keys = ((/<script\b[^>]*\bsrc=["']transfer\.js["'][^>]*\bdata-keys=["']([^"']*)["']/.exec(p) || [])[1] || '').split(',').map((x) => x.trim());
+    if (!key || !keys.includes(key)) out.push(['depth:keys', `引き継ぎ（transfer.js の data-keys）に復習の記録 ${key || '<名前>-depth'} が無い（機種変更で復習が消える）`]);
+  }
+  if (!/Depth\.setValid\s*\(/.test(p)) out.push(['depth:valid', 'index.html が Depth.setValid を呼んでいない（引き継ぎで入った鍵・消えた種類の鍵が復習に数えられる）']);
+  if (!/Depth\.mark\s*\(/.test(p) || !/Depth\.due\s*\(/.test(p)) out.push(['depth:review', 'index.html が Depth.mark・Depth.due を呼んでいない（まちがえた問題が復習に戻らない）']);
+  if (!/Depth\.sureHtml\s*\(/.test(p) || !/Depth\.judge\s*\(/.test(p)) out.push(['depth:sure', 'index.html が Depth.sureHtml・Depth.judge を呼んでいない（「🎯 自信あり？」が出ない）']);
+  const shell = (stripComments(sw).match(/SHELL\s*=\s*\[([\s\S]*?)\]/) || [, ''])[1];
+  if (sw && !/["']\.\/depth\.js["']/.test(shell)) out.push(['depth:sw', 'sw.js の SHELL に ./depth.js が無い（電波が無いと開かない）']);
+  if (!/checkDepth\s*\(/.test(stripComments(run))) out.push(['depth:run', 'qa/run.mjs が checkDepth を呼んでいない（template/qa/depth-check.mjs の検査が走らない）']);
+  return out;
+}
