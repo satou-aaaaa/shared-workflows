@@ -73,6 +73,10 @@ const depthCases = [
   ['深さ：SHELL に無い（コメントにだけある）', 'depth:sw', { ...GOOD, sw: 'const CACHE = "g-v2";\n// "./depth.js" も入れる\nconst SHELL = ["./", "./index.html", "./transfer.js"];' }],
   ['深さ：2段目のヒントが、まちがえた分け方を除いて消す', '', { ...GOOD, page: GOOD.page + '\n<script>const left2Of = () => GK.filter((x) => x !== cur.P.grp && !cur.w2.includes(x));\nconst cut2Of = () => (cur.h2 ? left2Of().slice(0, 1) : []);</script>' }],
   ['深さ：2段目のヒントが、まちがえた分け方も消す先に選ぶ', 'depth:hint2', { ...GOOD, page: GOOD.page + '\n<script>const cut2Of = () => (cur.h2 ? [GK.filter((x) => x !== cur.P.grp)[0]] : []); // w2 は見ない</script>' }],
+  ['深さ：keep が same のあとで early・2段目も合わせる・続きから戻れる', '', { ...GOOD, page: GOOD.page + '\n<script>function keep() { let ok = false; const st0 = cur.step; save((s) => { const r = s.runs[MODE]; if (!same(r)) return; ok = true; cur.step = Math.max(cur.step, was.step || 1); }); if (ok) early(); if (ok && cur.step === 2 && st0 !== 2) setTimeout(() => askWhy(), 0); }\nconst h = `${s.runs.r ? `<button id="go-r">復習の続きから</button>` : rv ? `<button id="go-r">復習</button>` : ""}`;</script>' }],
+  ['深さ：keep が same を確かめる前に early', 'depth:early-same', { ...GOOD, page: GOOD.page + '\n<script>function keep() { early(); save((s) => { const r = s.runs[MODE]; if (!same(r)) return; r.cur = cur; }); }</script>' }],
+  ['深さ：keep が別のタブの2段目を合わせても画面を変えない', 'depth:step-sync', { ...GOOD, page: GOOD.page + '\n<script>function keep() { let ok = false; save((s) => { const r = s.runs[MODE]; if (!same(r)) return; ok = true; cur.step = Math.max(cur.step, was.step || 1); }); if (ok) early(); }</script>' }],
+  ['深さ：復習のボタンが日の来た数だけで出る', 'depth:resume', { ...GOOD, page: GOOD.page + '\n<script>const h = `${rv ? `<button id="go-r">復習 ${rv}問</button>` : ""}`;</script>' }],
   ['深さ：QA が checkDepth を呼ばない（コメントにだけある）', 'depth:run', { ...GOOD, run: '// checkDepth(src) はあとで\nconst x = 1;' }],
 ];
 for (const [name, want, files] of depthCases) {

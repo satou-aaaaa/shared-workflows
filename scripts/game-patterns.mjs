@@ -57,6 +57,9 @@ export function urlIncludes(src) {
 
 // depthGaps：深さの部品（depth.js）を写したのに、つなぎが足りない所（drift-check の depth:*）
 // depth:early：Depth.mark を解き終えたときだけ呼び、まちがえてから降りた問題が復習に入らない（2026-11-11 dema-tashikame #8 の CodeRabbit）
+// depth:early-same：途中保存 keep が、同じ問題か（same）を確かめる前に early() で復習へ入れる（古いタブが復習の段を戻す）
+// depth:resume：ホームの「復習」ボタンが、日の来た数（Depth.count）だけで出て、途中の復習（runs.r）に戻れない（まちがえると日が先へずれて0になる）
+// depth:step-sync：keep が別のタブの2段目（was.step）を合わせても、画面を2段目（askWhy）にしない（3つとも 2026-11-11 gurafu-minuki #7 の CodeRabbit）
 // depth:hint2：2段目のヒント（cut2Of）が、もうまちがえた分け方（cur.w2）を除かずに消す（2026-11-11 kenko-minuki #7 の CodeRabbit）
 // 新作は new-game.mjs で depth.js が写るので、つなぎ忘れるとボタンも復習も出ないまま公開される（routines/game-dev.md「1問を深くする」、2026-11-11）
 // files：{ page: index.html, sw: sw.js, run: qa/run.mjs }（無いものは空文字）。返すのは [id, 説明] の並び
@@ -72,6 +75,13 @@ export function depthGaps({ page = '', sw = '', run = '' }) {
   if (!/Depth\.setValid\s*\(/.test(p)) out.push(['depth:valid', 'index.html が Depth.setValid を呼んでいない（引き継ぎで入った鍵・消えた種類の鍵が復習に数えられる）']);
   if (!/Depth\.mark\s*\(/.test(p) || !/Depth\.due\s*\(/.test(p)) out.push(['depth:review', 'index.html が Depth.mark・Depth.due を呼んでいない（まちがえた問題が復習に戻らない）']);
   else if ((p.match(/Depth\.mark\s*\(/g) || []).length < 2) out.push(['depth:early', 'index.html が Depth.mark を問題を終えたときにしか呼んでいない（まちがえた・ヒントを使ったその時にも呼ぶ。とことんで降りる・閉じると復習に入らない。incidents/2026-11-11-depth-mark-on-quit.md）']);
+  const keep = cutOfBody(page, 'keep');
+  if (keep && /\bearly\s*\(\s*\)/.test(keep)) {
+    const e = keep.search(/\bearly\s*\(\s*\)/), sm = keep.search(/\bsame\s*\(/);
+    if (sm < 0 || e < sm) out.push(['depth:early-same', 'index.html の keep が、保存した回が同じ問題か（same）を確かめる前に early() を呼んでいる（別のタブで先に進んだ古い画面が、復習の段を最初に戻す。same のあとで ok を立て、save のあとに if (ok) early()。incidents/2026-11-11-depth-review-resume.md）']);
+    if (/\bwas\.step\b/.test(keep) && !/\baskWhy\s*\(/.test(keep)) out.push(['depth:step-sync', 'index.html の keep が別のタブの2段目（was.step）を合わせても、画面を2段目（askWhy）にしない（読み直すまで答えられない。incidents/2026-11-11-depth-review-resume.md）']);
+  }
+  if (/id=["']go-r["']/.test(p) && !p.split('\n').some((l) => /id=["']go-r["']/.test(l) && /\bruns\.r\b/.test(l))) out.push(['depth:resume', 'ホームの「復習」ボタンが日の来た数（Depth.count）だけで出る（復習の途中でまちがえると日が先へずれて0になり、途中の復習 runs.r に戻れない。同じ行で runs.r の続きを先に見る。incidents/2026-11-11-depth-review-resume.md）']);
   if (!/Depth\.sureHtml\s*\(/.test(p) || !/Depth\.judge\s*\(/.test(p)) out.push(['depth:sure', 'index.html が Depth.sureHtml・Depth.judge を呼んでいない（「🎯 自信あり？」が出ない）']);
   const shell = (stripComments(sw).match(/SHELL\s*=\s*\[([\s\S]*?)\]/) || [, ''])[1];
   if (sw && !/["']\.\/depth\.js["']/.test(shell)) out.push(['depth:sw', 'sw.js の SHELL に ./depth.js が無い（電波が無いと開かない）']);
