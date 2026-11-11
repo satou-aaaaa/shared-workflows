@@ -70,8 +70,37 @@ jobs:
           if [ "$status" != 0 ]; then echo "::error::写しがひな形とちがう。shared-workflows のルートで node scripts/sync-template.mjs ../<ゲーム> を回して写す（ゲームの写しは直さない）"; exit 1; fi
       - run: npm ci --no-audit --no-fund
         working-directory: ${{ inputs.npm_dir }}
-      - run: npx playwright install --with-deps chromium
+      # Playwright が apt で入れる字など（約22MB の .deb）を取っておき、次からはそれを使う。
+      # 2026-11-11 に Ubuntu の置き場（archive.ubuntu.com など）の名前が引けず、入れる段階で QA が全部落ちた（incidents/2026-11-11-qa-apt-dns-outage.md）
+      - name: apt の取り置きの名前
+        id: apt-key
+        run: echo "key=qa-apt-$ImageOS-$ImageVersion" >> "$GITHUB_OUTPUT"
+      - name: apt の取り置きを戻す
+        id: apt-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/qa-apt
+          key: ${{ steps.apt-key.outputs.key }}
+          restore-keys: qa-apt-
+      - name: Playwright を入れる
         working-directory: ${{ inputs.npm_dir }}
+        env:
+          APT_KEEP: ${{ runner.temp }}/qa-apt
+        run: |
+          if compgen -G "$APT_KEEP/*.deb" >/dev/null; then sudo cp "$APT_KEEP"/*.deb /var/cache/apt/archives/; fi
+          if ! npx playwright install --with-deps chromium; then
+            echo "::error::Playwright を入れられなかった。ログに Temporary failure resolving 〜ubuntu.com が並ぶなら GitHub の機械から Ubuntu の置き場が引けていない（コードのせいではない）。しばらくして Re-run する（incidents/2026-11-11-qa-apt-dns-outage.md）"
+            exit 1
+          fi
+          mkdir -p "$APT_KEEP"
+          if compgen -G "/var/cache/apt/archives/*.deb" >/dev/null; then cp /var/cache/apt/archives/*.deb "$APT_KEEP"/; fi
+          echo "apt の取り置き: $(find "$APT_KEEP" -name '*.deb' | wc -l) 個"
+      - name: apt の取り置きをしまう
+        if: steps.apt-cache.outputs.cache-hit != 'true' && github.event_name != 'pull_request'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/qa-apt
+          key: ${{ steps.apt-key.outputs.key }}
       - name: 検査
         env:
           QA_COMMAND: ${{ inputs.command }}

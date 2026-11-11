@@ -17,6 +17,7 @@
 | `www.gsi.go.jp`（国土地理院）を Fetch page で読むと `UNSAFE_LEGACY_RENEGOTIATION_DISABLED` | サーバーが古い TLS の再ネゴシエーションしか話さず、OpenSSL 3 が断る。クラウドのセッションからはそもそも届かない | `fetch-page.yml` の `LEGACY_TLS_HOSTS` に挙げたサイトだけ許す。成果物はクラウドから落とせない（blob が 403）ので、全文が要るときは入力 `max_chars` を大きくしてログで読む。古い TLS で落ちるサイトが増えたら、そこに1行足す（証明書の検証などほかは弱めない） | 2026-11-07 |
 | `*.github.io`（公開ページ）がクラウドから開けない | 同上 | 公開の確認は Post-deploy check と Site watch に任せる（`onboarding.md`） | 2026-10-18 |
 | 許可ドメインを足したのに届かない | 環境の設定は、そのあとに始まったスレッドにだけ効く | 新しいスレッドで試す（コーディネーターに頼む） | 2026-10-21 |
+| GitHub Actions の QA で `npx playwright install --with-deps` が `Temporary failure resolving 'archive.ubuntu.com'` で落ちる | GitHub の機械から Ubuntu の置き場が引けない一時的な障害（コードのせいではない） | 何も直さず、しばらくして Re-run。game-qa.yml は apt の .deb を取り置くので、main で一度通ったリポジトリは置き場に届かなくても入れられる（`incidents/2026-11-11-qa-apt-dns-outage.md`） | 2026-11-11 |
 | `playwright install` が失敗する・時間がかかる | クラウドにはブラウザが入っている | `CHROMIUM_PATH`（/opt/pw-browsers/chromium）を使う。各リポジトリの `scripts/setup.sh` が設定する | 2026-10-19 |
 
 ## GitHub
