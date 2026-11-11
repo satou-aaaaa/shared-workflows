@@ -233,6 +233,15 @@ const results = await pool(REPOS, 4, async (r) => {
       }
     }
 
+    // 自動マージ：require_checks に scan / scan があるのに、Secret scan が後に終わったときに判定し直さない。
+    // QA が先に終わると scan 待ちで止まり、すべて ✅ でもマージされないまま残る（2026-11-11 ひな形の automerge.yml がこの形で、
+    // yarikuri-shotengai #1 で CodeRabbit が指摘。incidents/2026-11-11-automerge-secret-scan-trigger.md）
+    if (paths.has('.github/workflows/automerge.yml')) {
+      const am = await src.read('.github/workflows/automerge.yml');
+      const on = (am.match(/^\s*workflows:\s*\[([^\]]*)\]/m) || [, ''])[1].split(',').map((x) => x.trim().replace(/^["']|["']$/g, ''));
+      if (/^\s*scan \/ scan\s*$/m.test(am) && !on.includes('Secret scan')) flag('automerge:scan', '.github/workflows/automerge.yml の require_checks に scan / scan があるのに、on.workflow_run.workflows に Secret scan が無い（Secret scan が後に終わるとマージされない。workflows に Secret scan を足す）');
+    }
+
     // main の守り（削除と force push の禁止）。設定画面でしか入れられず、Chrome が無い日の受け入れで抜けたまま気づかれなかった
     // （2026-11-04 公開ゲーム14本で0件。incidents/2026-11-04-new-repos-no-ruleset.md）。無料プランの非公開リポジトリは入れられないので見ない
     if (src.repo && !src.repo.private) {
