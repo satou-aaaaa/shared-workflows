@@ -48,6 +48,9 @@ export function starsBare(page) {
 // urlIncludes：URL を文字のまま includes・indexOf で探している（drift-check の qa:url-includes）
 // CodeQL の js/incomplete-url-substring-sanitization が high の警告にし、PR の CodeQL が赤のまま止まる。手元の検査では分からない
 // （2026-11-07 hyoshiki-yomi #1 が2日止まった。incidents/2026-11-11-codeql-url-includes-in-qa.md）。出典の定義を正規表現で見る
+// ホスト名だけ（"laws.e-gov.go.jp"）を探す形も同じ警告になる。ファイル名（"gen.js"）は出さないよう、よくある最後の名前（TLD）で終わるものだけを見る
+const HOST = /[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|org|net|edu|gov|jp|io|co|info|dev|app|me|uk|us)(?:[\/:?#][^"'`]*)?/;
+const URL_ARG = new RegExp(`\\.(?:includes|indexOf|lastIndexOf)\\(\\s*(["'\`])(?:https?:\\/\\/|${HOST.source}\\1)`);
 export function urlIncludes(src) {
-  return /\.(?:includes|indexOf|lastIndexOf)\(\s*["'`]https?:\/\//.test(stripComments(src));
+  return URL_ARG.test(stripComments(src));
 }
