@@ -55,6 +55,17 @@ export function urlIncludes(src) {
   return URL_ARG.test(stripComments(src));
 }
 
+// waitCounted：回数で区切るくり返し（for (let k = 0; k < N; k++)）の中に、待つだけの回 { await p.waitForTimeout(…); continue; } があり、時間（Date.now()）で区切っていない所の行番号（drift-check の qa:wait-count）
+// 2026-11-11 yarikuri-shotengai #4：店主の番を待つ回まで80回に数え、遅い CI で増築できる日まで進まずに落ちた（incidents/2026-11-11-qa-loop-counts-waits.md）
+export function waitCounted(qa) {
+  const out = [], re = /for \(let (\w+) = 0; \1 < [^;]+; \1\+\+\) \{/g;
+  let m;
+  while ((m = re.exec(qa))) {
+    const body = qa.slice(m.index, m.index + 600), end = body.indexOf('\n}'), b = end > 0 ? body.slice(0, end) : body;
+    if (/\{\s*await \w+\.waitForTimeout\(\d+\);\s*continue;\s*\}/.test(b) && !/Date\.now\(\)/.test(b)) out.push(qa.slice(0, m.index).split('\n').length);
+  }
+  return out;
+}
 // depthGaps：深さの部品（depth.js）を写したのに、つなぎが足りない所（drift-check の depth:*）
 // depth:early：Depth.mark を解き終えたときだけ呼び、まちがえてから降りた問題が復習に入らない（2026-11-11 dema-tashikame #8 の CodeRabbit）
 // depth:early-same：途中保存 keep が、同じ問題か（same）を確かめる前に early() で復習へ入れる（古いタブが復習の段を戻す）

@@ -1,6 +1,6 @@
 // ゲームの作りの見分け（scripts/game-patterns.mjs）が、事故の形を見つけ、直した形・コメントに残った古い形では出さないかを確かめる（Lint）
 // depth:*（depth.js を写したのにつないでいない）・hint:cut-moves（ヒント2で消した選び肢が戻る）・hint:left-fixed（のこりの数が決まった数）・stars:role（星の表示が読まれない・色だけで分ける）・qa:url-includes（URL を includes で探して CodeQL が赤）
-import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps } from './game-patterns.mjs';
+import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted } from './game-patterns.mjs';
 
 const cases = [
   ['事故の形（1行・left.length - 1）', true, 'const cutOf = () => { if (cur.hints < 2) return []; const left = P.opts.map((_, i) => i).filter((i) => i !== P.ans && !cur.wrong.includes(i)); return left.slice(0, Math.max(0, left.length - 1)); };'],
@@ -53,6 +53,16 @@ const urls = [
 ];
 for (const [name, want, src] of urls) {
   const got = urlIncludes(src);
+  console.log(`${got === want ? '✓' : '✗'} ${name}（${want ? '出す' : '出さない'}）`);
+  if (got !== want) bad++;
+}
+const waits = [
+  ['待つ回まで数える（遅い CI で尽きる）', true, 'for (let k = 0; k < 80 && !up; k++) {\n  const st = await p.evaluate(() => 1);\n  if (st.t !== "a") { await p.waitForTimeout(120); continue; }\n  await step1(p);\n}'],
+  ['時間で区切る', false, 'const t0 = Date.now();\nfor (let k = 0; k < 80 && Date.now() - t0 < 9e4; k++) {\n  if (st.t !== "a") { await p.waitForTimeout(120); continue; }\n}'],
+  ['手を打ったあとに待つ（待つだけの回ではない）', false, 'for (let k = 0; k < 3000; k++) {\n  if (await adOpen(p)) { await solve(p); await p.waitForTimeout(60); continue; }\n}'],
+];
+for (const [name, want, src] of waits) {
+  const got = waitCounted(src).length > 0;
   console.log(`${got === want ? '✓' : '✗'} ${name}（${want ? '出す' : '出さない'}）`);
   if (got !== want) bad++;
 }
