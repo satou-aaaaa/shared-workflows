@@ -44,3 +44,10 @@ export function starsBare(page) {
   const offStar = /class=["'`]off["'`][^>]*>\$\{\s*["'`]★["'`]\.repeat/.test(s);
   return noRole || offStar;
 }
+
+// urlIncludes：URL を文字のまま includes・indexOf で探している（drift-check の qa:url-includes）
+// CodeQL の js/incomplete-url-substring-sanitization が high の警告にし、PR の CodeQL が赤のまま止まる。手元の検査では分からない
+// （2026-11-07 hyoshiki-yomi #1 が2日止まった。incidents/2026-11-11-codeql-url-includes-in-qa.md）。出典の定義を正規表現で見る
+export function urlIncludes(src) {
+  return /\.(?:includes|indexOf|lastIndexOf)\(\s*["'`]https?:\/\//.test(stripComments(src));
+}
