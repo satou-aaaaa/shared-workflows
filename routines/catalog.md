@@ -17,7 +17,8 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | ルーティンとスキルの定期見直し（G：トークン節約の点検 [token-check.md](token-check.md)） | [routine-review.md](routine-review.md) | 土曜 9:53 JST |
 | CI の時間短縮 | [ci-speedup.md](ci-speedup.md) | 木曜 10:26 JST |
 | ゲームの感想を読んで直す | [game-feedback.md](game-feedback.md) | 日曜 10:41 JST |
-| ゲームを作る・1本磨く | [game-dev.md](game-dev.md) | 磨くのは水曜 10:17 JST・新作は頼まれたとき |
+| ゲームを作る・1本磨く | [game-dev.md](game-dev.md) | 磨くのは水曜 10:17 JST・新作は下の毎日の回 |
+| 新作ゲームを毎日1本ずつ進める（同時2本まで） | [game-factory.md](game-factory.md) | 毎日 10:37 JST |
 | X（@coedogameclub）の運用 | [x-account.md](x-account.md) | 土曜 10:47 JST |
 | ダンジョンボドゲ issue 自動対応 | [dungeon-issue.md](dungeon-issue.md) | 毎朝 9:54 JST |
 | LAST TELL ソースの控え | [last-tell-backup.md](last-tell-backup.md) | 日曜 8:52 JST |

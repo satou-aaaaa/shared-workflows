@@ -1,6 +1,6 @@
 // ゲームの作りの見分け（scripts/game-patterns.mjs）が、事故の形を見つけ、直した形・コメントに残った古い形では出さないかを確かめる（Lint）
-// hint:cut-moves（ヒント2で消した選び肢が戻る）・hint:left-fixed（のこりの数が決まった数）・stars:role（星の表示が読まれない・色だけで分ける）
-import { cutMoves, starsBare, leftFixed } from './game-patterns.mjs';
+// hint:cut-moves（ヒント2で消した選び肢が戻る）・hint:left-fixed（のこりの数が決まった数）・stars:role（星の表示が読まれない・色だけで分ける）・qa:url-includes（URL を includes で探して CodeQL が赤）
+import { cutMoves, starsBare, leftFixed, urlIncludes } from './game-patterns.mjs';
 
 const cases = [
   ['事故の形（1行・left.length - 1）', true, 'const cutOf = () => { if (cur.hints < 2) return []; const left = P.opts.map((_, i) => i).filter((i) => i !== P.ans && !cur.wrong.includes(i)); return left.slice(0, Math.max(0, left.length - 1)); };'],
@@ -41,5 +41,20 @@ for (const [name, want, src] of left) {
   console.log(`${got === want ? '✓' : '✗'} ${name}（${want ? '出す' : '出さない'}）`);
   if (got !== want) bad++;
 }
+const urls = [
+  ['URL：includes で探す（CodeQL が赤）', true, 'check("出典がある", html.includes("https://laws.e-gov.go.jp/law/335M50004002003"));'],
+  ['URL：indexOf で探す', true, "const ok = html.indexOf('https://www.caa.go.jp/') >= 0;"],
+  ['URL：定義を正規表現で見る', false, 'check("出典がある", /const SRC = "https:\\/\\/laws\\.e-gov\\.go\\.jp\\/law\\/335M50004002003";/.test(html));'],
+  ['URL：URL でない文字の includes は見ない', false, "const ok = html.indexOf('src=\"transfer.js\"') < html.indexOf('src=\"gen.js\"') && html.includes(\"https\");"],
+  ['URL：ホスト名だけを includes で探す', true, 'const ok = html.includes("laws.e-gov.go.jp");'],
+  ['URL：ホスト名とパスを indexOf で探す', true, "const ok = html.indexOf('ko-fi.com/satouaaaaa') >= 0;"],
+  ['URL：ファイル名の includes は見ない', false, 'const ok = sw.includes("gen.js") && shell.includes("./icon-512.png") && html.includes("manifest.webmanifest");'],
+  ['URL：コメントの古い形は見ない', false, '// 前は html.includes("https://example.jp/")\nconst x = 1;'],
+];
+for (const [name, want, src] of urls) {
+  const got = urlIncludes(src);
+  console.log(`${got === want ? '✓' : '✗'} ${name}（${want ? '出す' : '出さない'}）`);
+  if (got !== want) bad++;
+}
 if (bad) { console.error(`✗ ゲームの作りの見分けが ${bad} 件ちがう`); process.exit(1); }
-console.log('✓ hint:cut-moves・hint:left-fixed・stars:role の見分けが通った');
+console.log('✓ hint:cut-moves・hint:left-fixed・stars:role・qa:url-includes の見分けが通った');
