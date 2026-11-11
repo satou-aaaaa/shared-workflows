@@ -74,7 +74,10 @@ jobs:
       # 2026-11-11 に Ubuntu の置き場（archive.ubuntu.com など）の名前が引けず、入れる段階で QA が全部落ちた（incidents/2026-11-11-qa-apt-dns-outage.md）
       - name: apt の取り置きの名前
         id: apt-key
-        run: echo "key=qa-apt-$ImageOS-$ImageVersion" >> "$GITHUB_OUTPUT"
+        # Playwright の版が変わると要る部品も変わりうるので、package-lock.json も鍵に入れる
+        env:
+          LOCK_HASH: ${{ hashFiles(format('{0}/package-lock.json', inputs.npm_dir)) }}
+        run: echo "key=qa-apt-$ImageOS-$ImageVersion-$LOCK_HASH" >> "$GITHUB_OUTPUT"
       - name: apt の取り置きを戻す
         id: apt-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
