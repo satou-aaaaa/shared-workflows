@@ -160,12 +160,16 @@ else ok "import() で読めない Playwright で止まる（QA と同じ読み�
 
 # 17. 2つ同時に動いても npm ci を重ねず、両方通る（hyakunin-awase #1 の CodeRabbit）
 rm -rf "$repo/app/node_modules"
-( cd "$repo" && env -u CHROMIUM_PATH CLAUDE_ENV_FILE="$envf" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 PLAYWRIGHT_BROWSERS_PATH="$tmp/none" PW_PREINSTALLED="$tmp/bin/chromium" bash scripts/setup.sh ) > "$tmp/out1" 2>&1 & p1=$!
-( cd "$repo" && env -u CHROMIUM_PATH CLAUDE_ENV_FILE="$envf" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 PLAYWRIGHT_BROWSERS_PATH="$tmp/none" PW_PREINSTALLED="$tmp/bin/chromium" bash scripts/setup.sh ) > "$tmp/out2" 2>&1 & p2=$!
+# 落ちたときに順番を追えるよう、ロックと npm の行を時刻つきで別のファイルに残す（2026-11-11 main で1回だけ落ちた。incidents/2026-11-11-setup-lock-flake.md）
+# PS4 は root だと環境から読まれないので、BASH_ENV で渡す
+printf '%s\n' 'PS4='"'"'+ ${EPOCHREALTIME:-} $$ '"'" > "$tmp/ps4"
+both() { ( cd "$repo" && exec 9>"$tmp/trace$1" && env -u CHROMIUM_PATH CLAUDE_ENV_FILE="$envf" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 PLAYWRIGHT_BROWSERS_PATH="$tmp/none" PW_PREINSTALLED="$tmp/bin/chromium" BASH_XTRACEFD=9 BASH_ENV="$tmp/ps4" bash -x scripts/setup.sh ) > "$tmp/out$1" 2>&1; }
+both 1 & p1=$!
+both 2 & p2=$!
 r1=0; r2=0; wait $p1 || r1=$?; wait $p2 || r2=$?
 cat "$tmp/out1" "$tmp/out2" > "$tmp/out"
 if [ $r1 = 0 ] && [ $r2 = 0 ] && grep -q '^✓ 準備できた' "$tmp/out1" && grep -q '^✓ 準備できた' "$tmp/out2" && [ ! -d "$repo/app/.setup-lock" ]; then ok "2つ同時に動いても両方通り、ロックを残さない"
-else ng "17. 同時に動かすと落ちる・ロックが残る"; fi
+else grep -h '^+* [0-9.]* [0-9]* .*\(setup-lock\|npm ci\|stale\|reclaim\|got=\)' "$tmp/trace1" "$tmp/trace2" 2>/dev/null | sort -n -k2 | cut -c1-200 >> "$tmp/out" || true; ng "17. 同時に動かすと落ちる・ロックが残る（--- のあとに2つの順番）"; fi
 
 # 18. 強制終了で残ったロック（持ち主がもう動いていない）は外して進む。動いている持ち主のロックは外さない（#259 の CodeRabbit）
 mkdir -p "$repo/app/.setup-lock" && echo "$(hostname 2>/dev/null || echo local) 999999" > "$repo/app/.setup-lock/owner"
