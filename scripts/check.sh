@@ -17,6 +17,7 @@ node scripts/check-capture.mjs
 node scripts/check-repo-lists.mjs
 node scripts/check-issue-forms.mjs
 node scripts/check-transfer.mjs
+node template/qa/depth-check.mjs template/depth.js
 node scripts/check-template-watch.mjs
 node scripts/check-sw-check.mjs
 node scripts/check-game-patterns.mjs

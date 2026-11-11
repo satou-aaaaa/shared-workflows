@@ -3,7 +3,7 @@
 //         node scripts/sync-template.mjs --check <ゲームのフォルダ> [...]  写さずに、ひな形とちがう所を出す（ちがえば 1 で終わる）
 //         node scripts/sync-template.mjs --check --only=transfer.js,sw.js <ゲームのフォルダ>  そのファイルだけを見る
 // 写すもの（ゲームにすでにあるものだけ。無いものは足さない。足すのは routines/game-dev.md の手順で）:
-//   transfer.js・qa/a11y.mjs・qa/transfer-check.mjs・qa/sw-check.mjs …… そのまま写す
+//   transfer.js・depth.js・qa/a11y.mjs・qa/transfer-check.mjs・qa/sw-check.mjs・qa/depth-check.mjs …… そのまま写す（depth.js は 2026-11-11 から。入れたゲームだけ）
 //   index.html の <!-- a11y:begin -->〜<!-- a11y:end --> …… その間だけ写す
 //   sw.js …… ひな形を写し、// game:begin〜// game:end の間（CACHE・SHELL）はゲームのものを残す。
 //            まだ枠の無い古い sw.js からは const CACHE と const SHELL の行を拾って枠に入れる
@@ -63,7 +63,8 @@ export function plan(dir) {
   const out = [];
   const want = (p, next, note) => { if (next !== null && read(p) !== next) out.push({ path: p, next, note }); };
   if (has('qa/run.mjs') && has('sw.js') && !read('qa/run.mjs').includes('checkSwStall')) out.push({ path: 'qa/run.mjs', next: null, note: 'checkSwStall を呼んでいない（import { checkSwStall } from "./sw-check.mjs" と、sw.js の中身で check を1行足す）' });
-  for (const p of ['transfer.js', 'qa/a11y.mjs', 'qa/transfer-check.mjs', 'qa/sw-check.mjs']) if (has(p)) want(p, tpl(p));
+  for (const p of ['transfer.js', 'depth.js', 'qa/a11y.mjs', 'qa/transfer-check.mjs', 'qa/sw-check.mjs', 'qa/depth-check.mjs']) if (has(p)) want(p, tpl(p));
+  if (has('depth.js') && has('qa') && !has('qa/depth-check.mjs')) out.push({ path: 'qa/depth-check.mjs', next: tpl('qa/depth-check.mjs'), note: '足した。qa/run.mjs から checkDepth を呼ぶ' });
   // sw.js があるのに sw の検査が無いゲームには足す（qa/run.mjs から呼ぶのは手で。下で知らせる）
   if (has('sw.js') && has('qa') && !has('qa/sw-check.mjs')) out.push({ path: 'qa/sw-check.mjs', next: tpl('qa/sw-check.mjs'), note: '足した。qa/run.mjs から checkSwStall を呼ぶ' });
   if (has('index.html')) {

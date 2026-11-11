@@ -34,6 +34,9 @@ jobs:
       # 各ゲームが写す引き継ぎコード（template/transfer.js）が読み戻せ、まちがったコードを弾くか（Node 22 の CompressionStream を使うので setup-node のあるこの job で）
       - name: 引き継ぎコードのひな形
         run: node scripts/check-transfer.mjs
+      # 各ゲームが写す深さの部品（template/depth.js）の復習の間・自信の数え方・保存の失敗（routines/game-dev.md「1問を深くする」）
+      - name: 深さの部品のひな形（自信をかける・復習）
+        run: node template/qa/depth-check.mjs template/depth.js
       # ひな形の見張りの一覧（ci-failure-issue.yml）に、main で動くワークフローが全部あるか（incidents/2026-11-07-game-template-review-gaps.md）
       - name: ひな形の見張りの一覧
         run: node scripts/check-template-watch.mjs
