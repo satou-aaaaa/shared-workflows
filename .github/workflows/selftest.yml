@@ -49,6 +49,10 @@ jobs:
           echo "正常なページ: $ok / 無いページ: $bad" | tee -a "$GITHUB_STEP_SUMMARY"
           # 正常なページは ok（Pages の障害で unreachable のときは見分けの検査ができないので通す）
           case "$ok" in ok|unreachable) ;; *) echo "::error::正常なページを $ok と判定しました"; exit 1 ;; esac
+          # 無いページに Pages が 404 でなく 5xx を返す（unreachable）ときも、Pages 側の障害で見分けの検査ができないので、知らせて通す
+          # （2026-11-11 無いページが2回続けて 503 になり、関係の無い PR が赤になった。incidents/2026-11-11-selftest-pages-503.md）
+          badst=$(jq -r '.pages[] | select(.path == "no-such-page-selftest.html") | .status' <<<"$badj")
+          if [ "$badst" = 0 ] || [ "${badst:-0}" -ge 500 ]; then echo "::warning::無いページが $badst（Pages の障害）。今回は見分けの検査ができない"; exit 0; fi
           if [ "$ok" = ok ] && [ "$bad" != broken ]; then echo "::error::無いページを $bad と判定しました（broken のはず）"; exit 1; fi
 
   ui-check-script:

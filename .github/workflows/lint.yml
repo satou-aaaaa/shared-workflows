@@ -49,6 +49,9 @@ jobs:
       # 全リポジトリを読む定期のワークフローが、本数が増えても予算で止まって Issue を出す形か（incidents/2026-11-09-weekly-jobs-timeout.md）
       - name: 全リポジトリを読む検査の予算
         run: node scripts/check-budgets.mjs
+      # 毎日の新作の回（routines/game-factory.md）が使う、作りかけ・候補の見分けと新作のひな形の写し方
+      - name: 新作の作りかけの見分け
+        run: node scripts/check-game-wip.mjs
 
   # 立ち上げ直しの手順書（bootstrap/）に、ルーティンの手順書・共通部品の抜けや内部 ID の混入が無いかを調べる。
   bootstrap:
