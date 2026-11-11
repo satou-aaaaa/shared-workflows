@@ -54,6 +54,32 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 
 - 1日1回のゲームは「1回で終わり」になりやすい（[PeerPush](https://peerpush.com/blog/how-we-fixed-a-one-and-done-problem-on-a-daily-puzzle-game)・[GameGrin](https://www.gamegrin.com/articles/do-streaks-and-leaderboards-still-work)）。上の 3・10・12 で手当てする。
 
+### 1問を深くする（ゲームデザインの要点。satou さん 2026-11-11「各ゲームがシンプルすぎる。もう少し複雑にしたほうが面白いかも」）
+
+外側のやりこみ（実績・カレンダー・とことん）はそろったので、1問の中の判断を増やす。「見る → 1つ押す → 正誤」で終わる1問は、選ぶ理由が「知っている・知らない」の1つだけで浅い。文字は増やさず、どれも1タップで答えられる形にする。
+
+| # | 分かっていること | このゲームたちでの決まり | 出典 |
+| --- | --- | --- | --- |
+| 20 | ゲームは意味のある選択の連なり。選ぶ理由が1つしかない選択は浅い | 1問に2つ目の判断（自信・なぜ・別の解き方）を置く | [Sid Meier, GDC 2012](https://www.gamedeveloper.com/design/gdc-2012-sid-meier-on-how-to-see-games-as-sets-of-interesting-decisions) |
+| 21 | 楽しさは型を覚えること。覚えきると飽きる | 同じ型を5回続けず、決まった所で「ひねり」（例外・2つの決まりが重なる）を出す | [Koster『A Theory of Fun』](https://www.raphkoster.com/wp-content/uploads/2026/07/Theory-of-Fun-10-Years-Later.pdf) |
+| 22 | 面は「出会う → 慣れる → ひねる → まとめる」の起承転結で作る | 今日の5問は、やさしい → ふつう → ひねり → まとめの順。並びを変えるときは区切りの日から先だけ（F7） | [任天堂の4段の面づくり（林田宏一）](https://www.nintendolife.com/news/2015/03/video_nintendos_four_step_stage_design_is_why_you_love_super_mario_games_so_much) |
+| 23 | 答えに自信の度合いをつけると、当てずっぽうが減り、自分の分かり方をふり返る | 答える前に「🎯 自信あり？」を押せる（`depth.js`）。失うものは無く、★も変えない | [Gardner-Medwin（UCL）確信度採点](https://www.ucl.ac.uk/lapt/REAP_CBM.htm) |
+| 24 | 自信があってまちがえた答えほど、直したあと覚えている | 自信ありでまちがえた問題は、理由を出して必ず復習に入れる | [Butterfield & Metcalfe 2001 ほか](https://pmc.ncbi.nlm.nih.gov/articles/PMC4084803) |
+| 25 | 種類をまぜて解くほうが、まとめて解くよりあとで解ける | 復習・とことんは種類をまぜる（`depth.js` の `due()` は同じ種類を続けない） | [Rohrer & Taylor 2007](https://digitalcommons.usf.edu/psy_facpub/1767/) |
+| 26 | 思い出す・まぜる・間をあけるといった「少し苦労する学び方」が長く残る | 復習は1日後 → 3日後 → 7日後（研究18 を `depth.js` で入れる） | [Bjork & Bjork](https://bjorklab.psych.ucla.edu/wp-content/uploads/sites/13/2016/07/RBjork_inpress.pdf) |
+| 27 | 新しい技は前の技の上に積む（スキルの粒） | 2段目の判断は、1段目に正解した人だけが挑む | [Daniel Cook『The Chemistry of Game Design』](https://www.gamedeveloper.com/pc/feature-the-chemistry-of-game-design-) |
+
+| 部品 | どのゲームに | 中身 |
+| --- | --- | --- |
+| 自信をかける（共通） | 答えを選ぶゲーム全部 | `template/depth.js` を写し、問題の画面に `Depth.sureHtml()`・`Depth.bindSure(鍵)`、最初に答えたとき `Depth.judge(正解か)`。結果の画面に「たしかの当たり N/M」。1回分は `Depth.runStart()`・`Depth.runStats()` |
+| 復習（共通） | 全部 | 問題が終わったら `Depth.mark(鍵, まちがい＋ヒント, 名前)`。ホームに「復習 N問」（`Depth.count()` が1以上のとき）。復習は今日の記録・連続・Ko-fi に数えない。鍵だけで同じ問題を作り直せること。起動時に `Depth.setValid(鍵 → 作り直せるか)` を呼ぶ（引き継ぎで入った鍵・消えた種類の鍵を数えない。2026-11-11 CodeRabbit） |
+| 2段の判断（ゲームごと） | 見抜く系（広告・グラフ・健康情報・デマ・出しすぎ・悪質商法など） | 「どこ？」に正解したら「なぜ？（種類を3つから）」。2段目のまちがいも★に数える。中身は一次資料の分け方（優良誤認・有利誤認など）にする（研究14） |
+| ひねりの1問（ゲームごと） | 選ぶ学習系（お金・防災・手当て・税率など） | 今日の5問の4問目を「例外・2つの決まりが重なる」問題に。区切りの日から先だけ |
+| 挑戦条件（ゲームごと） | パズル系（きっぷで10・バーガー・お弁当・路線など） | 解けたあと、任意で「別の式で」「÷を使わずに」などにもう一度挑める。取れたら印。遊べる量は縛らない |
+
+- `depth.js` の記録は別のキー（`<ゲーム>-depth`）。引き継ぎの `data-keys` に足し、`sw.js` の `SHELL` に `depth.js` を足す。`qa/run.mjs` から `checkDepth`（`template/qa/depth-check.mjs`）を呼び、画面の検査（自信のボタンが44px・押すと ✓ が出る・まちがえた問題が次の日に「復習」に出る）も足す。
+- まず3本（広告みぬき・お金のきほん・きっぷで10）で試し、遊んで問題が無ければ残りへ2本ずつ配る（2026-11-11 satou さんがカードで選んだ）。
+
 ## 共通の形（どのゲームもこれにそろえる）
 
 | 部品 | 中身 | 見本 |
@@ -65,6 +91,7 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 | カレンダー | 遊んだ日に★の印。連続日数は1以上のときだけ | seiza-tsunagi #4 |
 | 取りこぼした日 | 過去7日のお題をあとから。連続・今日の記録・Ko-fi に数えない | wagamama-burger #5・seiza-tsunagi #4 |
 | 感想 | Issue フォームへのただのリンク | [game-feedback.md](game-feedback.md) |
+| 深さ | 自信をかける・復習（`template/depth.js`）と、ゲームごとの2つ目の判断（2段・ひねり・挑戦条件）。上の「1問を深くする」 | 広告みぬき（2026-11-11 から） |
 | PWA・OGP | `sw.js`・`manifest.webmanifest`・アイコン・`og.png`（答えを入れない）。`sw.js` は `template/sw.js` を写し、ゲームで書くのは `// game:begin`〜`// game:end` の間（`CACHE`・`SHELL`）だけ。ほかを直すときはひな形を直し、shared-workflows のルートで `node scripts/sync-template.mjs ../<ゲームのフォルダ>` を回して写す（transfer.js・qa/*.mjs・見やすさの設定・setup.sh も同じ道具で写る。drift-check の `sw:template` が見る。`incidents/2026-11-07-template-copies-drift.md`）。`sw.js` の install は `c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))` で取り直す（普通に取ると、GitHub Pages が10分ほど保存させる古い画面が新しい版に入る。drift-check の `sw:reload` が見る）。`template/qa/sw-check.mjs` を `qa/` に写し、`qa/run.mjs` から `checkSwStall(sw.jsの中身)` を呼ぶ（本文の途中で通信が止まっても4秒で保存したものを返すか。ok の返事は本文を読み終えてから返し、返したら60秒の見張りも止める。drift-check の `sw:stall`・`sw:deadline` が見る。`incidents/2026-11-07-sw-body-stall.md`）。`sw.js` の取り方・保存の仕方を変えたら `CACHE` の版も上げる（名前が同じだと、古い worker が `?付き` の URL で保存した画面が残り、オフラインで `ignoreSearch` により返る。2026-11-06 CodeRabbit） | どのゲームも |
 | 見やすさ | 見やすさの設定（`template/a11y/a11y.html`）と検査（`template/qa/a11y.mjs`）。下の「だれでも遊べるように」 | kippu-10 |
 | 引き継ぎ | 記録を別の端末へ移す「引き継ぎコード」と QR（`template/transfer.js`）と検査（`template/qa/transfer-check.mjs`）。下の「引き継ぎコード」 | kippu-10 |
