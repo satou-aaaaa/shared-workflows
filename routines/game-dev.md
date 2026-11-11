@@ -72,13 +72,14 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 | 部品 | どのゲームに | 中身 |
 | --- | --- | --- |
 | 自信をかける（共通） | 答えを選ぶゲーム全部 | `template/depth.js` を写し、問題の画面に `Depth.sureHtml()`・`Depth.bindSure(鍵)`、最初に答えたとき `Depth.judge(正解か)`。結果の画面に「たしかの当たり N/M」。1回分は `Depth.runStart()`・`Depth.runStats()` |
-| 復習（共通） | 全部 | 問題が終わったら `Depth.mark(鍵, まちがい＋ヒント, 名前)`。ホームに「復習 N問」（`Depth.count()` が1以上のとき）。復習は今日の記録・連続・Ko-fi に数えない。鍵だけで同じ問題を作り直せること。起動時に `Depth.setValid(鍵 → 作り直せるか)` を呼ぶ（引き継ぎで入った鍵・消えた種類の鍵を数えない。2026-11-11 CodeRabbit） |
-| 2段の判断（ゲームごと） | 見抜く系（広告・グラフ・健康情報・デマ・出しすぎ・悪質商法など） | 「どこ？」に正解したら「なぜ？（種類を3つから）」。2段目のまちがいも★に数える。中身は一次資料の分け方（優良誤認・有利誤認など）にする（研究14） |
+| 復習（共通） | 全部 | 問題が終わったら `Depth.mark(鍵, まちがい＋ヒント, 名前)`。まちがえた・ヒントを使ったその時にも `Depth.mark(鍵, 1, 名前)`（途中保存 `keep` で、同じ問題か（`same`）を確かめたあとの `early()`。とことんで降りる・閉じると、解き終えた時の mark が呼ばれない。drift-check `depth:early`・`depth:early-same`）。ホームに「復習 N問」（`Depth.count()` が1以上のとき）。途中の復習（`runs.r`）があれば、日の来た数が0でも「復習の続きから」を先に出す（復習の途中でまちがえると日が明日へずれる。`depth:resume`）。2段目があるなら、`keep` が別のタブの2段目を合わせたとき `askWhy()` で画面も2段目にする（`depth:step-sync`）。復習は今日の記録・連続・Ko-fi に数えない。鍵だけで同じ問題を作り直せること。起動時に `Depth.setValid(鍵 → 作り直せるか)` を呼ぶ（引き継ぎで入った鍵・消えた種類の鍵を数えない。2026-11-11 CodeRabbit） |
+| 2段の判断（ゲームごと） | 見抜く系（広告・グラフ・健康情報・デマ・出しすぎ・悪質商法など） | 「どこ？」に正解したら「なぜ？（種類を3つから）」。2段目のまちがいも★に数える。中身は一次資料の分け方（優良誤認・有利誤認など）にする（研究14）。2段目のヒントで消すのは「正解でなく、まだまちがえていない（`cur.w2` に無い）分け方」の最初の1つ。残りが無ければヒントを押せなくする。QA は「まちがえてからヒント → 押せるのは正解だけ」を見る（drift-check `depth:hint2`、`incidents/2026-11-11-depth-hint2-no-cut.md`） |
 | ひねりの1問（ゲームごと） | 選ぶ学習系（お金・防災・手当て・税率など） | 今日の5問の4問目を「例外・2つの決まりが重なる」問題に。区切りの日から先だけ |
 | 挑戦条件（ゲームごと） | パズル系（きっぷで10・バーガー・お弁当・路線など） | 解けたあと、任意で「別の式で」「÷を使わずに」などにもう一度挑める。取れたら印。遊べる量は縛らない |
 
 - `depth.js` の記録は別のキー（`<ゲーム>-depth`）。引き継ぎの `data-keys` に足し、`sw.js` の `SHELL` に `depth.js` を足す。`qa/run.mjs` から `checkDepth`（`template/qa/depth-check.mjs`）を呼び、画面の検査（自信のボタンが44px・押すと ✓ が出る・まちがえた問題が次の日に「復習」に出る）も足す。
 - まず3本（広告みぬき・お金のきほん・きっぷで10）で試し、遊んで問題が無ければ残りへ2本ずつ配る（2026-11-11 satou さんがカードで選んだ）。
+- 新作は標準で入れる：`node scripts/new-game.mjs` が `depth.js`・`qa/depth-check.mjs` も写し、「このあと書くもの」に深さのつなぎが出る。`depth.js` を写したのにつないでいない所（読み込み・引き継ぎのキー・`setValid`・自信・復習・`SHELL`・`checkDepth`）は drift-check の `depth:*` が出す（見分けは `scripts/game-patterns.mjs` の `depthGaps`、検査は `check-game-patterns.mjs`）。答えを選ばないパズルは自信を置かず、`drift-allow.json` に `depth:sure` と理由を書く。見本は健康情報みぬき（2段：なぜあやしい？）・グラフのウソ見抜き（2段：どんな手口？）。
 
 ## 共通の形（どのゲームもこれにそろえる）
 
@@ -91,7 +92,7 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 | カレンダー | 遊んだ日に★の印。連続日数は1以上のときだけ | seiza-tsunagi #4 |
 | 取りこぼした日 | 過去7日のお題をあとから。連続・今日の記録・Ko-fi に数えない | wagamama-burger #5・seiza-tsunagi #4 |
 | 感想 | Issue フォームへのただのリンク | [game-feedback.md](game-feedback.md) |
-| 深さ | 自信をかける・復習（`template/depth.js`）と、ゲームごとの2つ目の判断（2段・ひねり・挑戦条件）。上の「1問を深くする」 | 広告みぬき（2026-11-11 から） |
+| 深さ | 自信をかける・復習（`template/depth.js`）と、ゲームごとの2つ目の判断（2段・ひねり・挑戦条件）。上の「1問を深くする」。新作は標準で入れる（drift-check の `depth:*`） | 広告みぬき・健康情報みぬき・グラフのウソ見抜き（2026-11-11 から） |
 | PWA・OGP | `sw.js`・`manifest.webmanifest`・アイコン・`og.png`（答えを入れない）。`sw.js` は `template/sw.js` を写し、ゲームで書くのは `// game:begin`〜`// game:end` の間（`CACHE`・`SHELL`）だけ。ほかを直すときはひな形を直し、shared-workflows のルートで `node scripts/sync-template.mjs ../<ゲームのフォルダ>` を回して写す（transfer.js・qa/*.mjs・見やすさの設定・setup.sh も同じ道具で写る。drift-check の `sw:template` が見る。`incidents/2026-11-07-template-copies-drift.md`）。`sw.js` の install は `c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))` で取り直す（普通に取ると、GitHub Pages が10分ほど保存させる古い画面が新しい版に入る。drift-check の `sw:reload` が見る）。`template/qa/sw-check.mjs` を `qa/` に写し、`qa/run.mjs` から `checkSwStall(sw.jsの中身)` を呼ぶ（本文の途中で通信が止まっても4秒で保存したものを返すか。ok の返事は本文を読み終えてから返し、返したら60秒の見張りも止める。drift-check の `sw:stall`・`sw:deadline` が見る。`incidents/2026-11-07-sw-body-stall.md`）。`sw.js` の取り方・保存の仕方を変えたら `CACHE` の版も上げる（名前が同じだと、古い worker が `?付き` の URL で保存した画面が残り、オフラインで `ignoreSearch` により返る。2026-11-06 CodeRabbit） | どのゲームも |
 | 見やすさ | 見やすさの設定（`template/a11y/a11y.html`）と検査（`template/qa/a11y.mjs`）。下の「だれでも遊べるように」 | kippu-10 |
 | 引き継ぎ | 記録を別の端末へ移す「引き継ぎコード」と QR（`template/transfer.js`）と検査（`template/qa/transfer-check.mjs`）。下の「引き継ぎコード」 | kippu-10 |

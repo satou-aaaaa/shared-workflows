@@ -1,6 +1,6 @@
 // ゲームの作りの見分け（scripts/game-patterns.mjs）が、事故の形を見つけ、直した形・コメントに残った古い形では出さないかを確かめる（Lint）
-// hint:cut-moves（ヒント2で消した選び肢が戻る）・hint:left-fixed（のこりの数が決まった数）・stars:role（星の表示が読まれない・色だけで分ける）・qa:url-includes（URL を includes で探して CodeQL が赤）
-import { cutMoves, starsBare, leftFixed, urlIncludes } from './game-patterns.mjs';
+// depth:*（depth.js を写したのにつないでいない）・hint:cut-moves（ヒント2で消した選び肢が戻る）・hint:left-fixed（のこりの数が決まった数）・stars:role（星の表示が読まれない・色だけで分ける）・qa:url-includes（URL を includes で探して CodeQL が赤）
+import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps } from './game-patterns.mjs';
 
 const cases = [
   ['事故の形（1行・left.length - 1）', true, 'const cutOf = () => { if (cur.hints < 2) return []; const left = P.opts.map((_, i) => i).filter((i) => i !== P.ans && !cur.wrong.includes(i)); return left.slice(0, Math.max(0, left.length - 1)); };'],
@@ -56,5 +56,33 @@ for (const [name, want, src] of urls) {
   console.log(`${got === want ? '✓' : '✗'} ${name}（${want ? '出す' : '出さない'}）`);
   if (got !== want) bad++;
 }
+// 深さの部品：つないだ形では何も出さず、足りない所だけを出す（id の並びで見る）
+const GOOD = {
+  page: '<script src="transfer.js" data-game="g" data-keys="g-v1,g-depth"></script>\n<script src="depth.js" data-game="g" data-key="g-depth"></script>\n<script>Depth.setValid((t) => true); const a = Depth.sureHtml(); Depth.judge(true); Depth.mark(t, 1, "x"); function early() { Depth.mark(t, 1, "x"); } const l = Depth.due();</script>',
+  sw: 'const CACHE = "g-v2";\nconst SHELL = ["./", "./index.html", "./transfer.js", "./depth.js"];',
+  run: 'import { checkDepth } from "./depth-check.mjs";\nconst e = await checkDepth(src);',
+};
+const depthCases = [
+  ['深さ：全部つないだ形', '', GOOD],
+  ['深さ：depth.js を読んでいない', 'depth:script', { ...GOOD, page: GOOD.page.replace(/<script src="depth\.js"[^>]*><\/script>/, '') }],
+  ['深さ：引き継ぎに復習の記録が無い', 'depth:keys', { ...GOOD, page: GOOD.page.replace('g-v1,g-depth', 'g-v1') }],
+  ['深さ：setValid を呼ばない', 'depth:valid', { ...GOOD, page: GOOD.page.replace('Depth.setValid((t) => true); ', '') }],
+  ['深さ：復習をつながない', 'depth:review', { ...GOOD, page: GOOD.page.replace(/Depth\.mark\(t, 1, "x"\); /g, '') }],
+  ['深さ：解き終えたときしか復習に入れない', 'depth:early', { ...GOOD, page: GOOD.page.replace('function early() { Depth.mark(t, 1, "x"); } ', '') }],
+  ['深さ：自信のボタンを出さない', 'depth:sure', { ...GOOD, page: GOOD.page.replace('const a = Depth.sureHtml(); ', '') }],
+  ['深さ：SHELL に無い（コメントにだけある）', 'depth:sw', { ...GOOD, sw: 'const CACHE = "g-v2";\n// "./depth.js" も入れる\nconst SHELL = ["./", "./index.html", "./transfer.js"];' }],
+  ['深さ：2段目のヒントが、まちがえた分け方を除いて消す', '', { ...GOOD, page: GOOD.page + '\n<script>const left2Of = () => GK.filter((x) => x !== cur.P.grp && !cur.w2.includes(x));\nconst cut2Of = () => (cur.h2 ? left2Of().slice(0, 1) : []);</script>' }],
+  ['深さ：2段目のヒントが、まちがえた分け方も消す先に選ぶ', 'depth:hint2', { ...GOOD, page: GOOD.page + '\n<script>const cut2Of = () => (cur.h2 ? [GK.filter((x) => x !== cur.P.grp)[0]] : []); // w2 は見ない</script>' }],
+  ['深さ：keep が same のあとで early・2段目も合わせる・続きから戻れる', '', { ...GOOD, page: GOOD.page + '\n<script>function keep() { let ok = false; const st0 = cur.step; save((s) => { const r = s.runs[MODE]; if (!same(r)) return; ok = true; cur.step = Math.max(cur.step, was.step || 1); }); if (ok) early(); if (ok && cur.step === 2 && st0 !== 2) setTimeout(() => askWhy(), 0); }\nconst h = `${s.runs.r ? `<button id="go-r">復習の続きから</button>` : rv ? `<button id="go-r">復習</button>` : ""}`;</script>' }],
+  ['深さ：keep が same を確かめる前に early', 'depth:early-same', { ...GOOD, page: GOOD.page + '\n<script>function keep() { early(); save((s) => { const r = s.runs[MODE]; if (!same(r)) return; r.cur = cur; }); }</script>' }],
+  ['深さ：keep が別のタブの2段目を合わせても画面を変えない', 'depth:step-sync', { ...GOOD, page: GOOD.page + '\n<script>function keep() { let ok = false; save((s) => { const r = s.runs[MODE]; if (!same(r)) return; ok = true; cur.step = Math.max(cur.step, was.step || 1); }); if (ok) early(); }</script>' }],
+  ['深さ：復習のボタンが日の来た数だけで出る', 'depth:resume', { ...GOOD, page: GOOD.page + '\n<script>const h = `${rv ? `<button id="go-r">復習 ${rv}問</button>` : ""}`;</script>' }],
+  ['深さ：QA が checkDepth を呼ばない（コメントにだけある）', 'depth:run', { ...GOOD, run: '// checkDepth(src) はあとで\nconst x = 1;' }],
+];
+for (const [name, want, files] of depthCases) {
+  const got = depthGaps(files).map((x) => x[0]).join();
+  console.log(`${got === want ? '✓' : '✗'} ${name}（${want || '出さない'}${got === want ? '' : ` ← ${got || 'なし'}`}）`);
+  if (got !== want) bad++;
+}
 if (bad) { console.error(`✗ ゲームの作りの見分けが ${bad} 件ちがう`); process.exit(1); }
-console.log('✓ hint:cut-moves・hint:left-fixed・stars:role・qa:url-includes の見分けが通った');
+console.log('✓ hint:cut-moves・hint:left-fixed・stars:role・qa:url-includes・depth:* の見分けが通った');

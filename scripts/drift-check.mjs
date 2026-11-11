@@ -43,7 +43,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formProblems } from './check-issue-forms.mjs';
 import { readRepos, repoNames } from './repos.mjs';
-import { cutMoves, starsBare, leftFixed, urlIncludes } from './game-patterns.mjs';
+import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps } from './game-patterns.mjs';
 import { bareUrls, linkFiles, checkedMd } from './link-text.mjs';
 
 const OWNER = process.env.OWNER || 'satou-aaaaa';
@@ -357,6 +357,13 @@ const results = await pool(REPOS, 4, async (r) => {
         if (!paths.has('qa/transfer-check.mjs')) flag('transfer:qa', 'qa/transfer-check.mjs が無い（template/qa/transfer-check.mjs を写し、qa/run.mjs から checkTransfer を呼ぶ）');
         else if (!paths.has('qa/run.mjs') || !(await src.read('qa/run.mjs')).includes('checkTransfer')) flag('transfer:run', 'qa/run.mjs が checkTransfer を呼んでいない（引き継ぎの画面検査が走らない）');
       }
+    }
+
+    // 深さの部品（depth.js）を写したゲームは、ボタン・復習・引き継ぎ・保存・検査までつなぐ（routines/game-dev.md「1問を深くする」。新作は new-game.mjs で depth.js が写る）
+    if (paths.has('depth.js')) {
+      const files = { page: paths.has('index.html') ? await src.read('index.html') : '', sw: paths.has('sw.js') ? await src.read('sw.js') : '', run: paths.has('qa/run.mjs') ? await src.read('qa/run.mjs') : '' };
+      for (const [id, msg] of depthGaps(files)) flag(id, msg);
+      if (!paths.has('qa/depth-check.mjs')) flag('depth:run', 'qa/depth-check.mjs が無い（node scripts/sync-template.mjs <ゲームのフォルダ> で写す）');
     }
 
     // PWA の入れ直し：GitHub Pages は index.html を10分ほど HTTP に保存させるので、install で普通に取ると古い画面を新しい CACHE に入れてしまう（2026-11-06 CodeRabbit が間取り・部首で指摘）
