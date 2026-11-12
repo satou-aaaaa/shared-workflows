@@ -30,6 +30,7 @@ haku-uchi game
 hikari-michi game
 hyakunin-awase game
 hyoshiki-yomi game
+isle-routes-research app
 jintai-shikumi game
 jitensha-rule game
 jobun-tobatsu game
