@@ -71,6 +71,8 @@ jobs:
           NAME: ${{ inputs.name }}
         run: |
           export RESEARCH_OUT="$RUNNER_TEMP/out/$NAME"
+          # 研究リポジトリはパッケージを src/ に置く（pytest の pythonpath と同じ）。python -c や新しいスクリプトからも import できるように
+          [ -d src ] && export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"
           mkdir -p "$RESEARCH_OUT"
           echo "out=$RESEARCH_OUT" >> "$GITHUB_OUTPUT"
           set +e
