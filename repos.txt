@@ -22,6 +22,7 @@ denki-kairo game
 dento-kogei game
 dungeon-boardgame app
 gamen-no-wana game
+gem-merchant-research app
 genso-kigo game
 gogen-suiri game
 gurafu-minuki game
