@@ -45,6 +45,7 @@
 | tenbin（天秤の書） | 学習アプリ | tenbin `CLAUDE.md`、スキル add-ronbun-questions・law-app-ui-check | 間隔反復の復習ドリル・一次資料での確認 | 問題を足すときに「思い出させる形（答える前に考えさせる）」になっているかを見る点に加える |
 | carcassonne-research | 研究（ゲームAI） | carcassonne-research `CLAUDE.md`・`.claude/skills/steward/`・`docs/EXPERIMENTS.md` | シードを決めた先後入替の対戦・信頼区間・再現コマンド | 強さの判定に SPRT を使い、対戦数を減らしつつ誤りの率をそろえる |
 | gem-merchant-research（宝石商の工房） | 研究（ゲームAI） | gem-merchant-research `AGENTS.md`・`.claude/skills/steward/`・`docs/ROADMAP.md` | carcassonne-research と同じ（先後入替の対戦・信頼区間）。元のゲームの名前・絵・ルール文を使わない | ルールエンジンができたら、正解版と速い版の全手照合をテストに入れる |
+| isle-routes-research（島の交易路） | 研究（ゲームAI） | isle-routes-research `AGENTS.md`・`.claude/skills/steward/`・`docs/ROADMAP.md` | carcassonne-research と同じ（先後入替の対戦・信頼区間）。元のゲームの名前・絵・ルール文を使わない | 研究の成果を学習サイト（ルール入門・AIと対戦・初期配置クイズ）として公開する |
 | sandbox（許可申請ツール） | 業務ツール | sandbox `CLAUDE.md`・`docs/DEVELOPMENT_GUIDE.md`・`docs/routines/` | 小さな PR・多層の検査・運用エージェント | ダミー案件で端から端まで通す確認を定期の作業に入れ、詰まった所を Issue にする |
 | 連載（カクヨム） | 執筆 | スキル kakuyomu-story-craft-guide・連載のプロジェクト | 予約切れのチェック | 書きためと筋書きの残りを見る点に加える。読者の反応（PV・コメント）を次の話の材料にする |
 
