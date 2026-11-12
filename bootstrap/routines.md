@@ -46,6 +46,7 @@
 | --- | --- | --- | --- |
 | ダンジョンボドゲ issue 自動対応（毎朝9:54） | [dungeon-issue.md](../routines/dungeon-issue.md) | `CRON_TZ=Asia/Tokyo 54 9 * * *` | ダンジョンボドゲ |
 | LAST TELL ソースの控え（週1） | [last-tell-backup.md](../routines/last-tell-backup.md) | `CRON_TZ=Asia/Tokyo 52 8 * * 0` | LAST TELL |
+| 研究を毎日1件ずつ進める（毎日 14:23） | [research-loop.md](../routines/research-loop.md) | `CRON_TZ=Asia/Tokyo 23 14 * * *`（毎回新しいセッション） | カルカソンヌ（報告の届け先はスレッド「研究を継続して進める仕組みを整える」） |
 | Issue/PR定期対応 (kensetsu-kyoka-toolkit)（月曜 4:35、Sonnet・low） | [sandbox-issue-pr.md](../routines/sandbox-issue-pr.md) | `35 19 * * 0` | ドラえもん（手順の1で sandbox を自分で足す） |
 
 ## sandbox のルーティン（手順書が satou-aaaaa/sandbox にあるもの）
@@ -70,7 +71,7 @@
 | カンバンの頼みごとを片付ける | このプロジェクトの共有フォルダ `board/app-requests.md` | なし（ops-backup の app-inbox への push が合図） | 新しいセッション。PC につないでいないスレッドから作る。GitHub の合図は Web の画面でしか付けられず、付くまでは見回り（8:07・20:07）が拾う（11/5 の1週間の振り返り：取りこぼし0） |
 | ops-backup 書き出し（毎日・9:17） | satou-aaaaa/ops-backup（非公開）`README.md`「書き出し」 | `CRON_TZ=Asia/Tokyo 17 9 * * *` | 業務代行エージェント作りのスレッドから作る |
 | ops-backup 書き出し（ほかのプロジェクト・週1） | satou-aaaaa/ops-backup（非公開）`README.md`「ほかのプロジェクト」 | 日曜 9:23〜10:05 JST（時刻とフォルダ名はそこの表） | 外のプロジェクトからは作れない。各プロジェクトのチャットで README の1行を頼んで作る |
-| 週次の研究進捗まとめ（カルカソンヌ） | プロンプト内: 「satou-aaaaa/carcassonne-research の過去1週間のコミットと PR の状態を確認し、AI の強さの変化と、初心者向け解説に使える発見を日本語で短くまとめてプロジェクトに投稿してください。」 | `CRON_TZ=Asia/Tokyo 45 20 * * 0` | モデル claude-haiku-5-5 |
+| 週次の研究進捗まとめ（研究リポジトリ3つ） | プロンプト内: 「satou-aaaaa の carcassonne-research・gem-merchant-research・isle-routes-research の過去1週間のコミットと PR、docs/BACKLOG.md の動き（済み・作業中・保留）を確認し、AI の強さの変化と、学びのページに使える発見を日本語で短くまとめてプロジェクトに投稿してください。保留の項目があれば、satou さんに要る判断を1行添えてください。」 | `CRON_TZ=Asia/Tokyo 45 20 * * 0` | モデル claude-haiku-5-5 |
 | 個人の作業（朝のタスク整理・転職・連載・動画など） | 各プロジェクトの共有フォルダかプロンプト内 | — | 公開リポジトリには置かない |
 
 ## Claude を使わないもの（CI）

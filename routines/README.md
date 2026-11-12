@@ -26,6 +26,7 @@
 | [x-account.md](x-account.md) | X（@coedogameclub）の運用（次の1週間ぶんを予約投稿。Chrome が要る） | 週1（土曜 10:47 JST） |
 | [game-dev.md](game-dev.md) | ゲームを作る・1本磨く（好み・共通の形・やりこみの設計） | 磨くのは週1（水曜 10:17 JST）・新作は game-factory.md の毎日の回 |
 | [game-factory.md](game-factory.md) | 新作ゲームを毎日1本ずつ進める（候補の列・同時2本まで・最新のひな形から） | 毎日 10:37 JST |
+| [research-loop.md](research-loop.md) | 研究を毎日1件ずつ進める（ボードゲーム AI の研究リポジトリ3つを日替わり・一覧 docs/BACKLOG.md・重い計算は research-run.yml） | 毎日 14:23 JST |
 | [ci-speedup.md](ci-speedup.md) | CI の時間短縮（集計は CI time report が木曜 05:29 JST に Issue「CI時間」へ） | 週1（木曜 10:26 JST） |
 | [onboarding.md](onboarding.md) | 新しいリポジトリ・プロジェクトの受け入れ（巡回の新規検出や satou さんの連絡から呼ぶ） | 増えたとき |
 | [dungeon-issue.md](dungeon-issue.md) | ダンジョンボドゲ issue 自動対応 | 毎朝 9:54 JST |

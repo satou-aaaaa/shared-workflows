@@ -25,6 +25,7 @@ node scripts/check-link-text.mjs
 node scripts/check-budgets.mjs
 node scripts/fit-body.mjs
 node scripts/check-game-wip.mjs
+node scripts/check-research-next.mjs
 # Issue の重なりを見るのに検索（--search）を使わない。索引が遅れて、閉じた・作ったばかりの Issue を取りちがえる（incidents/2026-11-05-ci-time-report-missing-repos.md）
 if grep -rn 'gh issue list.*-[-]search' .github/workflows template/.github/workflows; then echo "✗ Issue の一覧で検索の索引を使わない（--json と --jq で題を見る）" >&2; exit 1; fi
 bash scripts/check-setup-template.sh
