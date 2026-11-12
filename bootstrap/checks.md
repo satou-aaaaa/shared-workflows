@@ -56,6 +56,7 @@
 | 不安定な検査 Issue | 3つ以上の別々の PR で落ちた検査 → 「不安定な検査: <repo>」（自動で開閉）→ 監督が担当へ1回渡す | `scripts/pr-quality.mjs`（成績表の中で動く）、supervisor.md 7b | 同上 |
 | CI時間 Issue | CI の実行時間（遅い検査） | `ci-time-report.yml`（木曜 05:29 JST）、ルーティン CI の時間短縮 | `repos.txt` |
 | このリポジトリの定期実行の失敗 | 週次まとめ・CI時間・成績表・Lint が main で落ちた → ci-failure の Issue（次に成功したら閉じる） | `watch-failures.yml`（中身は `ci-failure-issue.yml`） | なし |
+| 研究の重い計算 | （見張りではなく実行の部品）研究の毎日の回（routines/research-loop.md）が起こす何百局の対戦・学習を Actions で回し、結果をブランチ research-results の runs/<name>/ に残す。今日の1件の選び方は `scripts/research-next.mjs`（Lint の `scripts/check-research-next.mjs` が見方を確かめる） | `research-run.yml`（各研究リポジトリの同名の呼び出しから。contents: write） | 研究リポジトリに呼び出しと `docs/BACKLOG.md` |
 | Labels | 自動化が使うラベルの抜け | `labels.yml` | 呼び出し側を入れて1回動かす |
 | Branch cleanup | 使い終わったブランチ | `branch-cleanup.yml` | `keep`（last-tell は qa-results・source-backup） |
 | 監督の巡回（見回りの中で1日2回） | 失敗・止まったルーティンとスレッド、赤い PR、許可待ち、期限切れの約束。担当に直させ、satou さん本人のものだけ知らせる。状況ページを更新 | [supervisor.md](../routines/supervisor.md) | ルーティン（[routines.md](routines.md)）、状況ページの Artifact |

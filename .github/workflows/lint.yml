@@ -57,6 +57,9 @@ jobs:
       # 毎日の新作の回（routines/game-factory.md）が使う、作りかけ・候補の見分けと新作のひな形の写し方
       - name: 新作の作りかけの見分け
         run: node scripts/check-game-wip.mjs
+      # 研究の毎日の回（routines/research-loop.md）が使う、今日の1件の選び方（一覧 docs/BACKLOG.md の読み方・日替わり・飛ばし方）
+      - name: 研究の今日の1件の選び方
+        run: node scripts/check-research-next.mjs
 
   # 立ち上げ直しの手順書（bootstrap/）に、ルーティンの手順書・共通部品の抜けや内部 ID の混入が無いかを調べる。
   bootstrap:
