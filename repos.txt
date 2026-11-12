@@ -83,6 +83,7 @@ shiritori-saitan game
 shokuchudoku-yobo game
 shokuhin-hyoji game
 shukujitsu-yurai game
+taikyo-hiyo game
 taiyokei-kurabe game
 tani-kankaku game
 teate-junban game
