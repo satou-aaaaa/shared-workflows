@@ -87,18 +87,8 @@ const lines = [];
 lines.push(`${day} 時点（自動）。直近7日の CI の実行時間です。合計 **${min(sumCur)} 分**（前の7日 ${min(sumPrev)} 分）。`);
 lines.push("時間は実行の開始から終了まで。取り消し・スキップは除く。改善の手順は routines/ci-speedup.md。");
 lines.push("");
-lines.push("| リポジトリ | ワークフロー | きっかけ | 回数 | 中央値 | p90 | 合計(分) | 前週の中央値 |");
-lines.push("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |");
-for (const r of ok) {
-  const file = r.path.replace(/^\.github\/workflows\//, "").replace(/@.*$/, "");
-  lines.push(
-    `| ${r.repo} | ${r.name}（${file}） | ${r.events} | ${r.cur.n} | ${fmt(r.cur.p50)} | ${fmt(r.cur.p90)} | ${min(r.cur.total)} | ${r.prev.n ? fmt(r.prev.p50) : "—"} |`,
-  );
-}
-for (const r of rows.filter((r) => r.error)) lines.push(`| ${r.repo} | 読めませんでした（${r.error}） | | | | | | |`);
-
 // 合計時間の上位5本: 最新の成功した実行の遅いステップ
-lines.push("", "### 遅いステップ（合計時間の上位5本、中央値以上かかった最新の成功した実行）", "");
+lines.push("### 遅いステップ（合計時間の上位5本、中央値以上かかった最新の成功した実行）", "");
 for (const r of ok.slice(0, 5)) {
   if (!r.lastOk) continue;
   try {
@@ -117,7 +107,19 @@ for (const r of ok.slice(0, 5)) {
     lines.push(`- **${r.repo} ${r.name}**: 読めませんでした（${e.message}）`);
   }
 }
-
+const bad = rows.filter((r) => r.error);
+if (bad.length) lines.push("", "### 読めなかったリポジトリ", "", ...bad.map((r) => `- ${r.repo}: ${r.error}`));
 const u = reportUsage("CI時間");
 if (u.warn) lines.push("", `⏱ ${u.text}。時間切れが近い（予算の ${u.rate}%）`);
+
+// 表は最後に置く（長すぎて fit-body.mjs が後ろを切るとき、合計の短い行から落ちるように。incidents/2026-11-12-ci-time-report-body-too-long.md）
+lines.push("", "### ワークフローごと（合計時間の長い順）", "");
+lines.push("| リポジトリ | ワークフロー | きっかけ | 回数 | 中央値 | p90 | 合計(分) | 前週の中央値 |");
+lines.push("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |");
+for (const r of ok) {
+  const file = r.path.replace(/^\.github\/workflows\//, "").replace(/@.*$/, "");
+  lines.push(
+    `| ${r.repo} | ${r.name}（${file}） | ${r.events} | ${r.cur.n} | ${fmt(r.cur.p50)} | ${fmt(r.cur.p90)} | ${min(r.cur.total)} | ${r.prev.n ? fmt(r.prev.p50) : "—"} |`,
+  );
+}
 process.stdout.write(lines.join("\n") + "\n");

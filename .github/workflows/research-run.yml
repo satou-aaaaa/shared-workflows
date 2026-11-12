@@ -1,0 +1,129 @@
+name: Research run
+
+# 研究の重い計算（何百局の対戦・学習）を、Claude を起こさずに GitHub Actions で回す共通部品。
+# 研究を進める毎日の回（routines/research-loop.md）が、各研究リポジトリの research-run.yml を workflow_dispatch で起こす。
+# 公開リポジトリの Actions は無料。1回は最大 330 分（ジョブの上限 360 分の手前で止め、途中の結果も保存する）。
+#
+# 結果はブランチ research-results の runs/<name>/ に置く（main には入れない。次の回の Claude が git fetch で読む）。
+#   runs/<name>/log.txt     … コマンドの出力（最後の 2000 行）
+#   runs/<name>/status.txt  … 終わった時刻・終了コード・コミット・コマンド
+#   runs/<name>/ 以下        … コマンドが $RESEARCH_OUT に書いたファイル（1ファイル 50MB まで）
+#
+# 呼ぶ側（各研究リポジトリの .github/workflows/research-run.yml）:
+#   on: workflow_dispatch（inputs: name・command・minutes・ref）
+#   permissions: contents: write
+#   jobs.run.uses: satou-aaaaa/shared-workflows/.github/workflows/research-run.yml@main（with: に inputs をそのまま渡す）
+
+on:
+  workflow_call:
+    inputs:
+      name:
+        description: "実行の名前（英数字・-・_・.。結果の置き場所 runs/<name>/ になる）"
+        required: true
+        type: string
+      command:
+        description: "リポジトリの一番上で動かすコマンド（結果は $RESEARCH_OUT に書く）"
+        required: true
+        type: string
+      minutes:
+        description: "コマンドを止めるまでの分数（最大 330）"
+        required: false
+        type: string
+        default: "300"
+      ref:
+        description: "動かすブランチ（既定 main）"
+        required: false
+        type: string
+        default: main
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    concurrency:
+      group: research-run-${{ github.repository }}-${{ inputs.name }}
+      cancel-in-progress: false
+    steps:
+      - name: 名前と分数を確かめる
+        env:
+          NAME: ${{ inputs.name }}
+          MINUTES: ${{ inputs.minutes }}
+        run: |
+          [[ "$NAME" =~ ^[A-Za-z0-9._-]{1,80}$ ]] || { echo "::error::name は英数字・-・_・. で80字まで: $NAME"; exit 1; }
+          [[ "$MINUTES" =~ ^[0-9]{1,3}$ ]] && [ "$MINUTES" -ge 1 ] && [ "$MINUTES" -le 330 ] || { echo "::error::minutes は 1〜330: $MINUTES"; exit 1; }
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version-file: .python-version
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: コマンドを動かす
+        id: cmd
+        env:
+          CMD: ${{ inputs.command }}
+          MINUTES: ${{ inputs.minutes }}
+          NAME: ${{ inputs.name }}
+        run: |
+          export RESEARCH_OUT="$RUNNER_TEMP/out/$NAME"
+          # 研究リポジトリはパッケージを src/ に置く（pytest の pythonpath と同じ）。python -c や新しいスクリプトからも import できるように
+          [ -d src ] && export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"
+          mkdir -p "$RESEARCH_OUT"
+          echo "out=$RESEARCH_OUT" >> "$GITHUB_OUTPUT"
+          set +e
+          timeout --signal=INT --kill-after=120 "${MINUTES}m" bash -c "$CMD" 2>&1 | tee "$RUNNER_TEMP/log.txt"
+          code=${PIPESTATUS[0]}
+          set -e
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          [ "$code" = 124 ] && echo "::warning::${MINUTES} 分で止めた（途中までの結果を保存する）"
+          exit 0
+      - name: 結果を research-results ブランチに保存する
+        if: always() && steps.cmd.outputs.out != ''
+        env:
+          NAME: ${{ inputs.name }}
+          OUT: ${{ steps.cmd.outputs.out }}
+          CODE: ${{ steps.cmd.outputs.code }}
+          CMD: ${{ inputs.command }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          dir="$RUNNER_TEMP/results"
+          url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads "$url" research-results >/dev/null; then
+            git clone -q --depth 1 -b research-results "$url" "$dir"
+          else
+            git init -q -b research-results "$dir"
+            git -C "$dir" remote add origin "$url"
+            printf '# 研究の重い計算の結果\n\nshared-workflows の research-run.yml が runs/<name>/ に書く。main には入れない。\n' > "$dir/README.md"
+          fi
+          rm -rf "${dir:?}/runs/$NAME"
+          mkdir -p "$dir/runs/$NAME"
+          find "$OUT" -type f -size +50M -print -delete | sed 's/^/::warning::50MB を超えるので保存しない: /'
+          cp -r "$OUT"/. "$dir/runs/$NAME/"
+          tail -n 2000 "$RUNNER_TEMP/log.txt" > "$dir/runs/$NAME/log.txt" || true
+          { echo "finished: $(date -u +%Y-%m-%dT%H:%MZ)"; echo "exit_code: ${CODE:-なし}"; echo "commit: $GITHUB_SHA"; echo "run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"; echo "command: $CMD"; } > "$dir/runs/$NAME/status.txt"
+          cd "$dir"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "研究の計算の結果 $NAME"
+          # 同時に走った別の実行と重なったら、取り込み直して3回まで
+          for i in 1 2 3; do
+            git push -q origin HEAD:research-results && exit 0
+            sleep $((i * 10))
+            git pull -q --rebase origin research-results
+          done
+          echo "::error::research-results に保存できなかった"
+          exit 1
+      - name: コマンドの失敗をジョブの失敗にする
+        if: steps.cmd.outputs.code != '0' && steps.cmd.outputs.code != '124'
+        env:
+          CODE: ${{ steps.cmd.outputs.code }}
+        run: |
+          echo "::error::コマンドが終了コード $CODE で終わった（runs/<name>/log.txt を見る）"
+          exit 1

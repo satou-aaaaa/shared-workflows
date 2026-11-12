@@ -33,6 +33,7 @@
 //   - ゲームのヒント2（cutOf）が、まちがいの数で消す数を変える（しぼったあとにまちがいを選ぶと、消した選び肢が戻る。incidents/2026-11-07-hint-cut-comes-back.md）
 //   - 星の表示（class="stars"）に role="img" が無い・取れなかった星も ★（読まれない・色だけで分ける）
 //   - ゲームの qa/run.mjs が URL を文字のまま includes・indexOf で探している（CodeQL が赤になる。incidents/2026-11-11-codeql-url-includes-in-qa.md）
+//   - ゲームの qa/run.mjs の回数で区切るくり返しが、相手（AI）の番を待つ回まで数えている（遅い CI で回数が尽きて落ちる。incidents/2026-11-11-qa-loop-counts-waits.md）
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync, mkdirSync } from 'node:fs';
 import { execFileSync, execFile } from 'node:child_process';
@@ -43,7 +44,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formProblems } from './check-issue-forms.mjs';
 import { readRepos, repoNames } from './repos.mjs';
-import { cutMoves, starsBare, leftFixed, urlIncludes } from './game-patterns.mjs';
+import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted } from './game-patterns.mjs';
 import { bareUrls, linkFiles, checkedMd } from './link-text.mjs';
 
 const OWNER = process.env.OWNER || 'satou-aaaaa';
@@ -233,6 +234,15 @@ const results = await pool(REPOS, 4, async (r) => {
       }
     }
 
+    // 自動マージ：require_checks に scan / scan があるのに、Secret scan が後に終わったときに判定し直さない。
+    // QA が先に終わると scan 待ちで止まり、すべて ✅ でもマージされないまま残る（2026-11-11 ひな形の automerge.yml がこの形で、
+    // yarikuri-shotengai #1 で CodeRabbit が指摘。incidents/2026-11-11-automerge-secret-scan-trigger.md）
+    if (paths.has('.github/workflows/automerge.yml')) {
+      const am = await src.read('.github/workflows/automerge.yml');
+      const on = (am.match(/^\s*workflows:\s*\[([^\]]*)\]/m) || [, ''])[1].split(',').map((x) => x.trim().replace(/^["']|["']$/g, ''));
+      if (/^\s*scan \/ scan\s*$/m.test(am) && !on.includes('Secret scan')) flag('automerge:scan', '.github/workflows/automerge.yml の require_checks に scan / scan があるのに、on.workflow_run.workflows に Secret scan が無い（Secret scan が後に終わるとマージされない。workflows に Secret scan を足す）');
+    }
+
     // main の守り（削除と force push の禁止）。設定画面でしか入れられず、Chrome が無い日の受け入れで抜けたまま気づかれなかった
     // （2026-11-04 公開ゲーム14本で0件。incidents/2026-11-04-new-repos-no-ruleset.md）。無料プランの非公開リポジトリは入れられないので見ない
     if (src.repo && !src.repo.private) {
@@ -288,6 +298,8 @@ const results = await pool(REPOS, 4, async (r) => {
     if (paths.has('qa/run.mjs')) {
       const qa = await src.read('qa/run.mjs');
       const lit = qa.match(/try\s*\{[^}]*\bmake\(\s*["'][0-9]:[a-z]+[0-9]+/);
+      const wc = waitCounted(qa);
+      if (wc.length) flag('qa:wait-count', `qa/run.mjs の ${wc.join('・')} 行目のくり返しが、待つだけの回（{ await p.waitForTimeout(…); continue; }）まで回数に数えている（遅い CI では回数が尽きて落ちる。待つ回は数えず、Date.now() で時間を区切る。incidents/2026-11-11-qa-loop-counts-waits.md）`);
       if (urlIncludes(qa)) flag('qa:url-includes', 'qa/run.mjs が URL を文字のまま includes・indexOf で探している（CodeQL が high の警告にして PR が赤のまま止まる。出典の定義を正規表現で見る。routines/game-dev.md の QA の行。incidents/2026-11-11-codeql-url-includes-in-qa.md）');
       if (lit) flag('qa:literal-id', `qa/run.mjs の例外を待つ検査に、問題 id を文字で書いている「${lit[0].slice(-24)}」（G.POOL などデータから選ぶ。routines/game-dev.md の QA の行）`);
     }
@@ -357,6 +369,13 @@ const results = await pool(REPOS, 4, async (r) => {
         if (!paths.has('qa/transfer-check.mjs')) flag('transfer:qa', 'qa/transfer-check.mjs が無い（template/qa/transfer-check.mjs を写し、qa/run.mjs から checkTransfer を呼ぶ）');
         else if (!paths.has('qa/run.mjs') || !(await src.read('qa/run.mjs')).includes('checkTransfer')) flag('transfer:run', 'qa/run.mjs が checkTransfer を呼んでいない（引き継ぎの画面検査が走らない）');
       }
+    }
+
+    // 深さの部品（depth.js）を写したゲームは、ボタン・復習・引き継ぎ・保存・検査までつなぐ（routines/game-dev.md「1問を深くする」。新作は new-game.mjs で depth.js が写る）
+    if (paths.has('depth.js')) {
+      const files = { page: paths.has('index.html') ? await src.read('index.html') : '', sw: paths.has('sw.js') ? await src.read('sw.js') : '', run: paths.has('qa/run.mjs') ? await src.read('qa/run.mjs') : '' };
+      for (const [id, msg] of depthGaps(files)) flag(id, msg);
+      if (!paths.has('qa/depth-check.mjs')) flag('depth:run', 'qa/depth-check.mjs が無い（node scripts/sync-template.mjs <ゲームのフォルダ> で写す）');
     }
 
     // PWA の入れ直し：GitHub Pages は index.html を10分ほど HTTP に保存させるので、install で普通に取ると古い画面を新しい CACHE に入れてしまう（2026-11-06 CodeRabbit が間取り・部首で指摘）

@@ -3,7 +3,7 @@ import { mkdtempSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { collect, plan, repoOf, branchOf, WIP_LIMIT } from './game-wip.mjs';
-import { scaffold, templateFiles } from './new-game.mjs';
+import { scaffold, templateFiles, TODO } from './new-game.mjs';
 
 const errors = [];
 const ok = (cond, msg) => { if (!cond) errors.push(msg); };
@@ -55,7 +55,9 @@ writeFileSync(join(dir, 'AGENTS.md'), 'もとから');
 const r = scaffold(dir);
 ok(readFileSync(join(dir, 'AGENTS.md'), 'utf8') === 'もとから', 'もうあるファイルを上書きした');
 ok(r.copied.length === templateFiles().length - 1, 'ひな形を全部写していない');
-for (const f of ['.github/workflows/qa.yml', 'transfer.js', 'sw.js', 'qa/a11y.mjs', 'scripts/setup.sh']) ok(existsSync(join(dir, f)), `${f} を写していない`);
+for (const f of ['.github/workflows/qa.yml', 'transfer.js', 'depth.js', 'qa/depth-check.mjs', 'sw.js', 'qa/a11y.mjs', 'scripts/setup.sh']) ok(existsSync(join(dir, f)), `${f} を写していない`);
+
+ok(TODO.some((t) => /depth\.js/.test(t)) && TODO.some((t) => /Depth\.mark/.test(t) && /checkDepth/.test(t)), '新作の「このあと書くもの」に深さ（depth.js のつなぎ）が無い');
 
 if (errors.length) { console.error(errors.map((e) => `::error::${e}`).join('\n')); process.exit(1); }
 console.log('✓ game-wip・new-game の見方');

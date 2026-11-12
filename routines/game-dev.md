@@ -54,6 +54,33 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 
 - 1日1回のゲームは「1回で終わり」になりやすい（[PeerPush](https://peerpush.com/blog/how-we-fixed-a-one-and-done-problem-on-a-daily-puzzle-game)・[GameGrin](https://www.gamegrin.com/articles/do-streaks-and-leaderboards-still-work)）。上の 3・10・12 で手当てする。
 
+### 1問を深くする（ゲームデザインの要点。satou さん 2026-11-11「各ゲームがシンプルすぎる。もう少し複雑にしたほうが面白いかも」）
+
+外側のやりこみ（実績・カレンダー・とことん）はそろったので、1問の中の判断を増やす。「見る → 1つ押す → 正誤」で終わる1問は、選ぶ理由が「知っている・知らない」の1つだけで浅い。文字は増やさず、どれも1タップで答えられる形にする。
+
+| # | 分かっていること | このゲームたちでの決まり | 出典 |
+| --- | --- | --- | --- |
+| 20 | ゲームは意味のある選択の連なり。選ぶ理由が1つしかない選択は浅い | 1問に2つ目の判断（自信・なぜ・別の解き方）を置く | [Sid Meier, GDC 2012](https://www.gamedeveloper.com/design/gdc-2012-sid-meier-on-how-to-see-games-as-sets-of-interesting-decisions) |
+| 21 | 楽しさは型を覚えること。覚えきると飽きる | 同じ型を5回続けず、決まった所で「ひねり」（例外・2つの決まりが重なる）を出す | [Koster『A Theory of Fun』](https://www.raphkoster.com/wp-content/uploads/2026/07/Theory-of-Fun-10-Years-Later.pdf) |
+| 22 | 面は「出会う → 慣れる → ひねる → まとめる」の起承転結で作る | 今日の5問は、やさしい → ふつう → ひねり → まとめの順。並びを変えるときは区切りの日から先だけ（F7） | [任天堂の4段の面づくり（林田宏一）](https://www.nintendolife.com/news/2015/03/video_nintendos_four_step_stage_design_is_why_you_love_super_mario_games_so_much) |
+| 23 | 答えに自信の度合いをつけると、当てずっぽうが減り、自分の分かり方をふり返る | 答える前に「🎯 自信あり？」を押せる（`depth.js`）。失うものは無く、★も変えない | [Gardner-Medwin（UCL）確信度採点](https://www.ucl.ac.uk/lapt/REAP_CBM.htm) |
+| 24 | 自信があってまちがえた答えほど、直したあと覚えている | 自信ありでまちがえた問題は、理由を出して必ず復習に入れる | [Butterfield & Metcalfe 2001 ほか](https://pmc.ncbi.nlm.nih.gov/articles/PMC4084803) |
+| 25 | 種類をまぜて解くほうが、まとめて解くよりあとで解ける | 復習・とことんは種類をまぜる（`depth.js` の `due()` は同じ種類を続けない） | [Rohrer & Taylor 2007](https://digitalcommons.usf.edu/psy_facpub/1767/) |
+| 26 | 思い出す・まぜる・間をあけるといった「少し苦労する学び方」が長く残る | 復習は1日後 → 3日後 → 7日後（研究18 を `depth.js` で入れる） | [Bjork & Bjork](https://bjorklab.psych.ucla.edu/wp-content/uploads/sites/13/2016/07/RBjork_inpress.pdf) |
+| 27 | 新しい技は前の技の上に積む（スキルの粒） | 2段目の判断は、1段目に正解した人だけが挑む | [Daniel Cook『The Chemistry of Game Design』](https://www.gamedeveloper.com/pc/feature-the-chemistry-of-game-design-) |
+
+| 部品 | どのゲームに | 中身 |
+| --- | --- | --- |
+| 自信をかける（共通） | 答えを選ぶゲーム全部 | `template/depth.js` を写し、問題の画面に `Depth.sureHtml()`・`Depth.bindSure(鍵)`、最初に答えたとき `Depth.judge(正解か)`。結果の画面に「たしかの当たり N/M」。1回分は `Depth.runStart()`・`Depth.runStats()` |
+| 復習（共通） | 全部 | 問題が終わったら `Depth.mark(鍵, まちがい＋ヒント, 名前)`。まちがえた・ヒントを使ったその時にも `Depth.mark(鍵, 1, 名前)`（途中保存 `keep` で、同じ問題か（`same`）を確かめたあとの `early()`。とことんで降りる・閉じると、解き終えた時の mark が呼ばれない。drift-check `depth:early`・`depth:early-same`）。ホームに「復習 N問」（`Depth.count()` が1以上のとき）。途中の復習（`runs.r`）があれば、日の来た数が0でも「復習の続きから」を先に出す（復習の途中でまちがえると日が明日へずれる。`depth:resume`）。2段目があるなら、`keep` が別のタブの2段目を合わせたとき `askWhy()` で画面も2段目にする（`depth:step-sync`）。復習は今日の記録・連続・Ko-fi に数えない。鍵だけで同じ問題を作り直せること。起動時に `Depth.setValid(鍵 → 作り直せるか)` を呼ぶ（引き継ぎで入った鍵・消えた種類の鍵を数えない。2026-11-11 CodeRabbit） |
+| 2段の判断（ゲームごと） | 見抜く系（広告・グラフ・健康情報・デマ・出しすぎ・悪質商法など） | 「どこ？」に正解したら「なぜ？（種類を3つから）」。2段目のまちがいも★に数える。中身は一次資料の分け方（優良誤認・有利誤認など）にする（研究14）。2段目のヒントで消すのは「正解でなく、まだまちがえていない（`cur.w2` に無い）分け方」の最初の1つ。残りが無ければヒントを押せなくする。QA は「まちがえてからヒント → 押せるのは正解だけ」を見る（drift-check `depth:hint2`、`incidents/2026-11-11-depth-hint2-no-cut.md`） |
+| ひねりの1問（ゲームごと） | 選ぶ学習系（お金・防災・手当て・税率など） | 今日の5問の4問目を「例外・2つの決まりが重なる」問題に。区切りの日から先だけ |
+| 挑戦条件（ゲームごと） | パズル系（きっぷで10・バーガー・お弁当・路線など） | 解けたあと、任意で「別の式で」「÷を使わずに」などにもう一度挑める。取れたら印。遊べる量は縛らない |
+
+- `depth.js` の記録は別のキー（`<ゲーム>-depth`）。引き継ぎの `data-keys` に足し、`sw.js` の `SHELL` に `depth.js` を足す。`qa/run.mjs` から `checkDepth`（`template/qa/depth-check.mjs`）を呼び、画面の検査（自信のボタンが44px・押すと ✓ が出る・まちがえた問題が次の日に「復習」に出る）も足す。
+- まず3本（広告みぬき・お金のきほん・きっぷで10）で試し、遊んで問題が無ければ残りへ2本ずつ配る（2026-11-11 satou さんがカードで選んだ）。
+- 新作は標準で入れる：`node scripts/new-game.mjs` が `depth.js`・`qa/depth-check.mjs` も写し、「このあと書くもの」に深さのつなぎが出る。`depth.js` を写したのにつないでいない所（読み込み・引き継ぎのキー・`setValid`・自信・復習・`SHELL`・`checkDepth`）は drift-check の `depth:*` が出す（見分けは `scripts/game-patterns.mjs` の `depthGaps`、検査は `check-game-patterns.mjs`）。答えを選ばないパズルは自信を置かず、`drift-allow.json` に `depth:sure` と理由を書く。見本は健康情報みぬき（2段：なぜあやしい？）・グラフのウソ見抜き（2段：どんな手口？）。
+
 ## 共通の形（どのゲームもこれにそろえる）
 
 | 部品 | 中身 | 見本 |
@@ -65,6 +92,7 @@ satou さんのブラウザゲーム（GitHub Pages で公開・無料）を、�
 | カレンダー | 遊んだ日に★の印。連続日数は1以上のときだけ | seiza-tsunagi #4 |
 | 取りこぼした日 | 過去7日のお題をあとから。連続・今日の記録・Ko-fi に数えない | wagamama-burger #5・seiza-tsunagi #4 |
 | 感想 | Issue フォームへのただのリンク | [game-feedback.md](game-feedback.md) |
+| 深さ | 自信をかける・復習（`template/depth.js`）と、ゲームごとの2つ目の判断（2段・ひねり・挑戦条件）。上の「1問を深くする」。新作は標準で入れる（drift-check の `depth:*`） | 広告みぬき・健康情報みぬき・グラフのウソ見抜き（2026-11-11 から） |
 | PWA・OGP | `sw.js`・`manifest.webmanifest`・アイコン・`og.png`（答えを入れない）。`sw.js` は `template/sw.js` を写し、ゲームで書くのは `// game:begin`〜`// game:end` の間（`CACHE`・`SHELL`）だけ。ほかを直すときはひな形を直し、shared-workflows のルートで `node scripts/sync-template.mjs ../<ゲームのフォルダ>` を回して写す（transfer.js・qa/*.mjs・見やすさの設定・setup.sh も同じ道具で写る。drift-check の `sw:template` が見る。`incidents/2026-11-07-template-copies-drift.md`）。`sw.js` の install は `c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))` で取り直す（普通に取ると、GitHub Pages が10分ほど保存させる古い画面が新しい版に入る。drift-check の `sw:reload` が見る）。`template/qa/sw-check.mjs` を `qa/` に写し、`qa/run.mjs` から `checkSwStall(sw.jsの中身)` を呼ぶ（本文の途中で通信が止まっても4秒で保存したものを返すか。ok の返事は本文を読み終えてから返し、返したら60秒の見張りも止める。drift-check の `sw:stall`・`sw:deadline` が見る。`incidents/2026-11-07-sw-body-stall.md`）。`sw.js` の取り方・保存の仕方を変えたら `CACHE` の版も上げる（名前が同じだと、古い worker が `?付き` の URL で保存した画面が残り、オフラインで `ignoreSearch` により返る。2026-11-06 CodeRabbit） | どのゲームも |
 | 見やすさ | 見やすさの設定（`template/a11y/a11y.html`）と検査（`template/qa/a11y.mjs`）。下の「だれでも遊べるように」 | kippu-10 |
 | 引き継ぎ | 記録を別の端末へ移す「引き継ぎコード」と QR（`template/transfer.js`）と検査（`template/qa/transfer-check.mjs`）。下の「引き継ぎコード」 | kippu-10 |
@@ -163,11 +191,12 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 2. 動く見本（単体の HTML）を Artifact で出し、satou さんに選んでもらう（カード）。
 3. リポジトリは [onboarding.md](onboarding.md) 手順0で AI が作る（A：Actions「Create repo」を、担当の Issue 番号 `claim` と題材の言葉 `topic` を付けて起こす。先の担当・公開済みの表にあれば止まる。だめなら B：Chrome。そのときはこのスレッドに satou さんの一言を頼む）。リンクを渡すのは両方使えないときだけ。
 4. はじめの commit は README だけ。workflows・`qa/`・本体は同じ PR #1 で入れる（incidents/2026-11-04-new-repo-main-qa-without-qa-dir.md）。PR #1 の中身は `node scripts/new-game.mjs ../<名前>` で、いまのひな形から始める（古いゲームのフォルダから写さない。出た「このあと書くもの」の順に書く）。
-5. 上の「共通の形」と「だれでも遊べるように」を全部入れる。AGENTS.md は既存のゲーム（kippu-10 など）を写して直す。
+5. 上の「共通の形」と「だれでも遊べるように」を全部入れる。AGENTS.md は既存のゲーム（kippu-10 など）を写して直す。既存のゲームを写して作ったときは、元のゲームの言葉（題・札の見出し・判の字など）を新作の `qa/run.mjs` に登録し、残っていれば落とす。登録するのは写し元ごと（写し元の QA が見ているのは、そのまた元のゲームの言葉なので、写すだけでは今の写し元の言葉は見られない。2026-11-11 著作権のきほんに選挙のしくみの「せんきょ」「投票」が残り、レビューで見つかった）。
    `.github/workflows/` は既存のゲームからでなく `template/.github/workflows/` から写す（古いゲームの写しはひな形の直しが届いていない。QA も `template/.github/workflows/qa.yml`（共通部品 game-qa を呼ぶ。検査の名前は `qa / qa` で、main の必須チェックと Auto merge の `require_checks` に書く）を写す）。PR #1 を出す前に、shared-workflows で `LOCAL_ROOT=<clone の親> REPOS=<リポジトリ> node scripts/drift-check.mjs` を回し、出た行を直す（2026-11-05 あみだ配達・ことばならべ・ひかり道が、前の日に直した link-check の設定なしで出た）。PR #1 が1日以上止まったあとでマージするときも、まず shared-workflows を `git pull origin main` で新しくし（古いままだと新しい検査が動かない）、`node scripts/sync-template.mjs <ゲームのフォルダ>` で写し直し、drift-check をもう一度回してから（2026-11-11 標識よみは2日のあいだに共通の決まりが7つ増えていた。`incidents/2026-11-11-codeql-url-includes-in-qa.md`）。
    あわせて shared-workflows を `git pull` してから `node scripts/sync-template.mjs --check ../<ゲーム>` を回し、ちがえば `node scripts/sync-template.mjs ../<ゲーム>` で写す（作っているあいだにひな形の版が上がる。PR の QA の「ひな形の写し」も見る。incidents/2026-11-07-new-game-old-template.md）。
    レビュー（CodeRabbit）がひな形の写し（transfer.js・qa/a11y.mjs・qa/transfer-check.mjs・qa/sw-check.mjs・scripts/setup.sh・共通部品の呼び出し）に指摘したら、ゲームでは直さず、その日のうちに shared-workflows でひな形を直す PR を出し（直さない指摘は理由を返す）、直したら版を上げて全部のゲームへ配る。ゲームの PR は待たずに進めてよい（2026-11-07 同じ指摘が新作ごとに繰り返された。`incidents/2026-11-07-game-template-review-gaps.md`）。
-6. `node qa/run.mjs` が全部通ってから PR。`sw.js` を含む PR は `@coderabbitai review` とコメントし、レビューを読んでから手でマージする。
+6. `node qa/run.mjs` が全部通ってから PR。記録のキー（localStorage）は `<短い名>-v1` のように短くし、ほかのゲームと重ならないことを確かめる（同じ github.io の下なので、重なると記録が混ざる）。確かめ方：`gh api -X GET search/code -f q='"<キー>" user:satou-aaaaa'` で全部のリポジトリを探し、さらに各ゲームの `data-keys` の `xdoko-*` のような「* で終わる名前」に新しいキーが前方一致しないかも見る（引き継ぎコードは * を前方一致で読む）。探せなかったら先へ進まない。並行して作っている新作とぶつからないよう、決めたキーを手順1の「題材:」Issue の本文に書き、開いている「題材:」Issue のキーとも比べる（番号の小さい Issue が先に取ったキーを使う）。`chosakuken-v1` のような長い名前は Secret scan（gitleaks）が `data-keys=`・`KEY =` の値を鍵と読み違えて PR #1 が落ちる（2026-11-11 著作権のきほん）。落ちたら、まずキーを短い名前に替え、新しいキーで上の重なりの確かめをやり直して「題材:」Issue のキーも書き直す（squash マージのあと main への push でも Secret scan が回り、そのときは最後の中身だけを見るので、替えておけば main では出ない）。PR の古いコミットに残った分は、誤検知と確かめたうえで全部、指紋（`<コミットの全 SHA>:<ファイル>:<規則>:<行>`。Secret scan の要約のファイル・行・規則・コミットから作るか、手元で `gitleaks git --log-opts="origin/main..HEAD" --redact -v` を回して `Fingerprint:` の行を写す）を`.gitleaksignore` に理由つきで書く（数は結果に合わせる）。`sw.js` を含む PR は `@coderabbitai review` とコメントし、レビューを読んでから手でマージする。
+   - 印刷用の紙（`print.html` など、A4 の `.page`）を持つゲームは、QA で「はみ出さない」だけでなく「下に 5mm 以上の空きがある」も見る。字の形は手元と CI でちがい、手元でぎりぎり入っても CI ではみ出す（`incidents/2026-11-11-yarikuri-print-overflow-ci.md`）。
 7. マージの直前にもう一度 `node scripts/sync-template.mjs --check ../<ゲーム>` を回す（PR を出したあとにひな形の版が上がることがある。ちがえば写して push し直す）。Pages を main のルートで公開する（[onboarding.md](onboarding.md) 手順5の1）。`node scripts/drift-check.mjs` に `pages` の行が出ないこと、Actions の Post-deploy check が緑になったことを見るまで、X などで紹介しない（2026-11-04 3本が 404 のまま紹介された。incidents/2026-11-04-pages-never-enabled.md）。
 8. shared-workflows に PR を1つ出し、一覧に足す（[onboarding.md](onboarding.md) 手順3）。足すのは次の3か所だけで、どれも**名前の ABC 順の位置**に1行入れる（末尾に足さない。並行の新作の PR が同じ所に足すとぶつかる。2026-11-07 #184 が3つの PR とぶつかった。incidents/2026-11-07-repo-list-conflicts.md）。
    - [repos.txt](../repos.txt) に `<名前> game`（ワークフロー・巡回・監督・週次まとめはここを読む。ほかのファイルに一覧を書かない）

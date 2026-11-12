@@ -91,7 +91,10 @@ jobs:
             echo '```'
           } >> "$body"
           gh label create 週次まとめ --color 0E8A16 --description "Weekly summary が作る週1のまとめ（自動）" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
-          for old in $(gh issue list -R "$GITHUB_REPOSITORY" --label 週次まとめ --state open --json number --jq '.[].number'); do
+          # GitHub の Issue は 65,536 字まで。長いときは後ろを切り、全部は Summary に置く。前の Issue は新しいのができてから閉じる（incidents/2026-11-12-ci-time-report-body-too-long.md）
+          node scripts/fit-body.mjs "$body"
+          olds=$(gh issue list -R "$GITHUB_REPOSITORY" --label 週次まとめ --state open --json number --jq '.[].number')
+          gh issue create -R "$GITHUB_REPOSITORY" --label 週次まとめ --title "週次まとめ ${day}（気にするもの ${total} 件）" --body-file "$body"
+          for old in $olds; do
             gh issue close "$old" -R "$GITHUB_REPOSITORY" --reason completed --comment "新しいまとめを作ったので閉じます（自動）"
           done
-          gh issue create -R "$GITHUB_REPOSITORY" --label 週次まとめ --title "週次まとめ ${day}（気にするもの ${total} 件）" --body-file "$body"

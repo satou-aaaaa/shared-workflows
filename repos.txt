@@ -15,12 +15,14 @@ bushu-tashizan game
 carcassonne-research app
 chikei-ate game
 chizu-kigo game
+chosakuken game
 dashisugi-check game
 dema-tashikame game
 denki-kairo game
 dento-kogei game
 dungeon-boardgame app
 gamen-no-wana game
+gem-merchant-research app
 genso-kigo game
 gogen-suiri game
 gurafu-minuki game
@@ -82,6 +84,7 @@ shiritori-saitan game
 shokuchudoku-yobo game
 shokuhin-hyoji game
 shukujitsu-yurai game
+taikyo-hiyo game
 taiyokei-kurabe game
 tani-kankaku game
 teate-junban game
@@ -93,3 +96,4 @@ todofuken-relay game
 usotsuki-roppo game
 wagamama-burger game
 wareki-yomi game
+yarikuri-shotengai game

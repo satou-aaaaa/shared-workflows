@@ -80,8 +80,17 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-11-12 | 公開・CI | [CI time report の本文が長すぎて Issue が作れず、前の週の Issue だけ閉じて1件も無くなった](2026-11-12-ci-time-report-body-too-long.md) | 対策済み |
+| 2026-11-11 | 公開・CI | [やりくり商店街の説明書：手元では紙に入ったのに CI ではみ出した](2026-11-11-yarikuri-print-overflow-ci.md) | 対策済み |
+| 2026-11-11 | 公開・CI | [main の Lint が1回だけ赤：setup.sh を2つ同時に動かす検査で npm ci が重なった（原因は調査中、次に落ちたら順番が出る）](2026-11-11-setup-lock-flake.md) | 対策中 |
+| 2026-11-11 | 動作 | [復習の途中でまちがえると、ホームから続きに戻れなかった（ほか、復習と2段目の保存の穴2つ）](2026-11-11-depth-review-resume.md) | 対策済み |
+| 2026-11-11 | 動作 | [まちがえてから「ここで降りる」と、その問題が復習に入らなかった](2026-11-11-depth-mark-on-quit.md) | 対策済み |
+| 2026-11-11 | 動作 | [2段目「なぜ？」のヒントが、もうまちがえた分け方を選んで消し、★だけ減って何も消えなかった](2026-11-11-depth-hint2-no-cut.md) | 対策済み |
 | 2026-11-11 | 公開・CI | [Selftest の公開後の確認の試しが、Pages の 503 で関係の無い PR を赤にした](2026-11-11-selftest-pages-503.md) | 対策済み |
 | 2026-11-11 | 検査の見逃し | [標識よみの PR #1 が、QA の出典 URL の検査を CodeQL が high と見て、赤のまま2日止まった](2026-11-11-codeql-url-includes-in-qa.md) | 対策済み |
+| 2026-11-11 | 公開・CI | [ひな形の自動マージが、Secret scan が後に終わったときに判定し直さなかった](2026-11-11-automerge-secret-scan-trigger.md) | 対策済み |
+| 2026-11-11 | 公開・CI | [ゲームの QA が、Ubuntu の置き場の名前が引けず Playwright を入れる段階で全部落ちた](2026-11-11-qa-apt-dns-outage.md) | 対策済み |
+| 2026-11-11 | 検査の見逃し | [やりくり商店街の QA が、店主の番を待つ回まで回数に数え、遅い CI で「増築」の検査が落ちた](2026-11-11-qa-loop-counts-waits.md) | 対策済み |
 | 2026-11-09 | 公開・CI | [リポジトリが88本に増え、Weekly summary と Scorecard が時間切れで止まって週1の Issue が出なかった](2026-11-09-weekly-jobs-timeout.md) | 対策済み |
 | 2026-11-09 | 検査の見逃し | [天秤の書の週1の Lighthouse で、速さが 36 点（下限 53 点）に落ちた](2026-11-09-tenbin-lighthouse-cls.md) | 対策1つ残り |
 | 2026-11-08 | 検査の見逃し | [Link check が、AGENTS.md の「Ko-fi（URL）へ…」を全角の続きまで URL と読んで2本とも落ちた](2026-11-08-link-check-wide-char-after-url.md) | 対策済み |
