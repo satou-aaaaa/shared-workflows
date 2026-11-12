@@ -93,6 +93,7 @@ teko-tsuriai game
 tenbin app
 tenji-yomi game
 tenkizu-yomi game
+toan-kumitate game
 todofuken-relay game
 usotsuki-roppo game
 wagamama-burger game
