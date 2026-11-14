@@ -4,6 +4,7 @@
 //   1. `<!-- style: v1 -->` を書いた手順書に、決まった見出し（目的・使う道具・手順・完了条件・やってはいけないこと）がこの順にある
 //   2. AGENTS.md と template/AGENTS.md があり、CLAUDE.md と template/CLAUDE.md が AGENTS.md を指している（4KB 超を @ で取り込まない）
 //   3. まだ新しい形になっていない手順書の名前を知らせる（失敗にはしない。少しずつ直す）
+//   4. <名前>-detail.md に分けた手順書は、本体が 15KB 以下のまま（毎回読まれる量がまた増えないように。routines/token-check.md、2026-11-14 game-dev.md）
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 
 const errors = [];
@@ -14,9 +15,12 @@ const read = (p) => readFileSync(p, 'utf8');
 const notProcedures = new Set(['README.md', 'common.md', 'common-detail.md', 'autonomy.md', 'catalog.md', 'agent-practices.md', 'STYLE.md', 'tool-map.md', 'project-practices.md', 'history.md', 'known-limits.md', 'events.md', 'parallel.md']);
 const required = ['## 目的', '## 使う道具', '## 手順', '## 完了条件', '## やってはいけないこと'];
 
+const BODY_MAX = 15 * 1024;
 for (const f of readdirSync('routines').sort()) {
-  if (!f.endsWith('.md') || notProcedures.has(f)) continue;
+  if (!f.endsWith('.md') || notProcedures.has(f) || f.endsWith('-detail.md')) continue;
   const text = read(`routines/${f}`);
+  const detail = f.replace(/\.md$/, '-detail.md');
+  if (existsSync(`routines/${detail}`) && Buffer.byteLength(text) > BODY_MAX) errors.push(`routines/${f} が ${Buffer.byteLength(text)} バイト（${detail} に分けた本体は 15KB 以下。足す本文は ${detail} へ）`);
   if (!text.includes('<!-- style: v1 -->')) {
     notices.push(`routines/${f} はまだ STYLE.md の形ではありません`);
     continue;
