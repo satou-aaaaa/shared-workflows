@@ -52,6 +52,7 @@ kotoba-honrai game
 kotoba-narabe game
 kotowaza-awase game
 kotowaza-bamen game
+kumo-namae game
 kusuri-yomi game
 kyukoku-mei game
 kyukyusha-yobu game
