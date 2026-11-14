@@ -26,6 +26,7 @@ jobs:
           手でマージ|D4C5F9|検査は緑。.github/ を変えるので手でマージする（Auto merge が付ける）
           needs-decision|FBCA04|satou さんの判断待ち
           感想|0E8A16|遊んだ人の感想（Issue フォーム。routines/game-feedback.md が読む）
+          feedback|1D76DB|ゲーム内の改善提案（routines/dungeon-issue.md が毎朝読む）
           dependencies|0366D6|依存の更新'
           printf '%s\n%s\n' "$common" "$EXTRA" | sed 's/^ *//' | while IFS='|' read -r name color desc; do
             [ -n "$name" ] || continue
