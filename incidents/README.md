@@ -80,6 +80,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-11-14 | 見回りの見落とし | [コツ集の「言い切りが合わない」自動の知らせが3日直されず、Issue が増えたように見えた](2026-11-14-tips-claims-issue-left-open.md) | 対策済み |
 | 2026-11-12 | 公開・CI | [CI time report の本文が長すぎて Issue が作れず、前の週の Issue だけ閉じて1件も無くなった](2026-11-12-ci-time-report-body-too-long.md) | 対策済み |
 | 2026-11-11 | 公開・CI | [やりくり商店街の説明書：手元では紙に入ったのに CI ではみ出した](2026-11-11-yarikuri-print-overflow-ci.md) | 対策済み |
 | 2026-11-11 | 公開・CI | [main の Lint が1回だけ赤：setup.sh を2つ同時に動かす検査で npm ci が重なった（原因は調査中、次に落ちたら順番が出る）](2026-11-11-setup-lock-flake.md) | 対策中 |
