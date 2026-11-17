@@ -4,7 +4,7 @@
 # Claude Code のクラウドセッションでは .claude/settings.json の SessionStart フックが自動で呼ぶ。
 # CI の Setup check（共通部品）が、まっさらな環境でこれが通るかを確かめる。
 # ひな形: satou-aaaaa/shared-workflows の template/scripts/setup.sh。ゲームはそのまま写せば動く（npm_dir と next だけ、ちがえば書き換える）。
-# ひな形の版: 12（上げたら写しの版も上げる。scripts/drift-check.mjs が古い写しを週次まとめに出す）
+# ひな形の版: 13（上げたら写しの版も上げる。scripts/drift-check.mjs が古い写しを週次まとめに出す）
 #   2: 依存は毎回 npm ci・ブラウザが無ければ止める・このシェルで要る操作（nvm use・export）を最後に出す（shared-workflows incidents/2026-11-03-setup-false-ready.md）
 #   3: nvm.sh を --no-use で読む（.nvmrc の版が入っていないと、読んだだけで何も言わずに止まっていた。incidents/2026-11-04-setup-nvm-silent-stop.md）
 #   4: ブラウザの場所はファイルかも見る（-x だけだとフォルダでも通った。2026-11-05 CodeRabbit が bunshi-tsukuri #1 で指摘）
@@ -22,6 +22,7 @@
 #  11: 強制終了で残ったロックは、同じ機械で持ち主が動いていなければ外す（10分待って止まっていた。#259）
 #  12: 起動の試しは package.json に書いた Playwright を先に使う・ブラウザの置き場も QA と同じ import() で探す・
 #      古いロックは自分だけの名前へ移してから消す（2つ同時に外して新しいロックを消さない）・名札の無い1分より古いロックも外す・ほかの人の動いているプロセスのロックは外さない（各ゲームの PR の CodeRabbit、2026-11-07）
+#  13: 古いロックは移さず、外す人の札（.setup-lock.reclaim）を取った1人が見直してから消す（移したあいだに別の setup.sh がロックを取り、npm ci が2つ走ることがあった。2026-11-17 hatsuden-kurabe #1・nenkin-shikumi #1 の CodeRabbit）
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -85,17 +86,24 @@ stale() {
   if ! o=$(cat "$lock/owner" 2>/dev/null); then [ -d "$lock" ] && [ -n "$(find "$lock" -maxdepth 0 -mmin +1 2>/dev/null)" ] && echo "（名札なし）"; return; fi
   [ "${o% *}" = "${me% *}" ] && ! alive "${o##* }" && echo "$o"
 }
-# 外すときは、まず自分だけの名前へ移す（移せるのは1つだけ）。移したものが見たときと同じ持ち主のときだけ消し、ちがえば戻す。
-# 2つの setup.sh が同じ古いロックを同時に外して、あとから取った新しいロックまで消すのを防ぐ（版12、shokuhin-hyoji #3 などの CodeRabbit）
+# 外すのは、外す人の札（$lock.reclaim）を取った1人だけ。札を持ったまま、もう一度見て同じ古いロックのときだけ消す。
+# 動いているロックは移さない・消さない（前は自分の名前へ移してから見たので、移したあいだに別の setup.sh が空いた場所でロックを取り、
+# 2つの npm ci が同じ node_modules を変えることがあった。版13、hatsuden-kurabe #1・nenkin-shikumi #1 の CodeRabbit）。
+# 札は外し終えたらすぐ返す。1分より古い札は外す途中で止まった人のものなので、find が古さを見直してから消す。
+# 札を取れなかったときは 1 を返す（待ってから見直す。すぐ回すと10分の待ちを一瞬で使い切る）
 reclaim() {
-  local seen=$1 aside="$lock.gone.$$" now
-  mv "$lock" "$aside" 2>/dev/null || return 0
-  now=$(cat "$aside/owner" 2>/dev/null || echo "（名札なし）")
-  if [ "$now" = "$seen" ]; then echo "前の setup.sh が残したロックを外す（$seen）"; rm -rf "$aside"; else mv "$aside" "$lock" 2>/dev/null || rm -rf "$aside"; fi
+  local seen=$1 guard="$lock.reclaim" now
+  if ! mkdir "$guard" 2>/dev/null; then
+    find "$guard" -maxdepth 0 -mmin +1 -exec rmdir {} \; 2>/dev/null || true
+    return 1
+  fi
+  now=$(stale) || true
+  if [ -n "$now" ] && [ "$now" = "$seen" ]; then echo "前の setup.sh が残したロックを外す（$seen）"; rm -rf "$lock"; fi
+  rmdir "$guard" 2>/dev/null || true
 }
 for _ in $(seq 1 600); do
   if mkdir "$lock" 2>/dev/null; then echo "$me" > "$lock/owner"; got=1; break; fi
-  if o=$(stale) && [ -n "$o" ]; then reclaim "$o"; continue; fi
+  if o=$(stale) && [ -n "$o" ] && reclaim "$o"; then continue; fi
   sleep 1
 done
 [ -n "$got" ] || fail "$lock が10分消えない（ほかの setup.sh が止まったまま。動いていなければ rm -r $lock）"   # 取れなかったら進まない・人のロックを消さない

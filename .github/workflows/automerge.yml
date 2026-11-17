@@ -3,7 +3,7 @@ name: Auto merge (共通部品)
 # 検査（呼び出し元の on.workflow_run.workflows に書いたもの）がプルリクエストで ✅ になったら、
 # そのプルリクエストを自動で squash マージする。
 # - 対象は、このリポジトリの中のブランチから出したプルリクエストだけ（よその人のフォークからのものは手でマージ）
-# - 下書きのもの、ラベル「自動マージしない」が付いたもの、.github/ を変えるものはマージしない（手でマージ）
+# - 下書きのもの、ラベル「自動マージしない」が付いたもの、.github/ を変えるもの、Dependabot の major 更新はマージしない（手でマージ）
 #   .github/ を変えるものには、ラベル「手でマージ」と一言を付けて、マージ待ちだと分かるようにする
 #   （.github/ を変える PR は GITHUB_TOKEN ではマージできない。workflows 権限が無いため）
 # - require_checks に書いた検査（check run の名前）が同じコミットで ✅ でなければマージしない（例: Secret scan の "scan / scan"）
@@ -89,6 +89,15 @@ jobs:
           info=$(gh api "repos/$REPO/pulls/$pr")
           if [ "$(jq -r .draft <<<"$info")" = true ]; then echo "#$pr は下書きなのでマージしません"; exit 0; fi
           if jq -e '.labels[].name | select(. == "自動マージしない")' <<<"$info" >/dev/null; then echo "#$pr は「自動マージしない」"; exit 0; fi
+          # Dependabot の major 更新はマージしない（Dependabot auto-merge の部品も予約しない。破壊的な変更がありうるので人が確かめる）。
+          # 種類は Dependabot のコミットの本文の update-type で見る（dependabot/fetch-metadata が読むのと同じ所）。まとめた更新は1つでも major なら、種類が読めなければマージしない
+          # （/qa の依存の major 更新が、QA と Secret scan が通るとこの道でマージされえた。2026-11-17 hatsuden-kurabe #1 の CodeRabbit）
+          if [ "$(jq -r .user.login <<<"$info")" = 'dependabot[bot]' ]; then
+            msg=$(gh api "repos/$REPO/commits/$SHA" --jq .commit.message 2>/dev/null) || msg=""
+            if grep -q 'update-type: version-update:semver-major' <<<"$msg" || ! grep -q 'update-type: version-update:semver-' <<<"$msg"; then
+              echo "#$pr は Dependabot の major 更新（か種類が読めない）なので、自動ではマージしません（人が確かめてマージする）"; exit 0
+            fi
+          fi
           # 1ファイル1行の JSON 配列で取る（名前に改行があっても数えられる）。名前を変えたファイルは元の名前も判定に入れる
           names=$(gh api --paginate "repos/$REPO/pulls/$pr/files" --jq '.[] | [.filename, (.previous_filename // empty)] | @json')
           # 名前に改行があると行の判定がすり抜けるので、手でマージに回す

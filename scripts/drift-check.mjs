@@ -241,6 +241,10 @@ const results = await pool(REPOS, 4, async (r) => {
       const am = await src.read('.github/workflows/automerge.yml');
       const on = (am.match(/^\s*workflows:\s*\[([^\]]*)\]/m) || [, ''])[1].split(',').map((x) => x.trim().replace(/^["']|["']$/g, ''));
       if (/^\s*scan \/ scan\s*$/m.test(am) && !on.includes('Secret scan')) flag('automerge:scan', '.github/workflows/automerge.yml の require_checks に scan / scan があるのに、on.workflow_run.workflows に Secret scan が無い（Secret scan が後に終わるとマージされない。workflows に Secret scan を足す）');
+      // 自動マージは GITHUB_TOKEN でマージするので main の push で Secret scan が動かない。dispatch に無いと、main の Secret scan の失敗の Issue が古いまま残る
+      // （2026-11-17 hatsuden-kurabe #1 の CodeRabbit。incidents/2026-11-17-template-review-gaps-again.md）
+      const disp = (am.match(/^\s*dispatch:\s*(.*)$/m) || [, ''])[1];
+      if (on.includes('Secret scan') && paths.has('.github/workflows/secret-scan.yml') && /recheck_main:\s*false/.test(am) && !/\bsecret-scan\.yml\b/.test(disp)) flag('automerge:scan-dispatch', '.github/workflows/automerge.yml の dispatch に secret-scan.yml が無い（自動マージのあと main で Secret scan が動かず、失敗の Issue が閉じない。template/.github/workflows/automerge.yml を写す）');
     }
 
     // main の守り（削除と force push の禁止）。設定画面でしか入れられず、Chrome が無い日の受け入れで抜けたまま気づかれなかった

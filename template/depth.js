@@ -1,5 +1,5 @@
 // 深さの部品（depth.js）：1問の中に2つ目の判断を足す「自信をかける」と、まちがえた問題が間をあけて戻る「復習」。
-// 深さの版: 3
+// 深さの版: 4
 // 正：satou-aaaaa/shared-workflows の template/depth.js（各ゲームはこれをそのまま写す。直すときはひな形を直して配り、版を上げる）
 // 考え（routines/game-dev.md「1問を深くする」）:
 //   - 自信をかける：答える前に「たしか」を押せる（押さなければ「たぶん」）。自分の見立てが当たったかが2つ目の勝負になる。
@@ -46,7 +46,8 @@
   var num = function (v) { return Number.isFinite(+v) && +v >= 0 ? Math.floor(+v) : 0; };
   var okDate = function (v) { return typeof v === "string" && /^\d{4}-\d\d-\d\d$/.test(v) && Number.isFinite(Date.parse(v + "T00:00:00Z")); };
   // rv はプロトタイプの無い辞書にする（鍵が constructor・__proto__ などでも、もとからある値と混ざらない）
-  var fresh = function () { return { v: 1, rv: Object.create(null), sure: 0, sureOk: 0, learned: 0 }; };
+  // gone は「覚えた」で消した鍵と消した時刻（保存に失敗した控えと合わせるとき、保存済みの古い項目を戻さない。版4、hatsuden-kurabe #1 の CodeRabbit）
+  var fresh = function () { return { v: 1, rv: Object.create(null), gone: Object.create(null), sure: 0, sureOk: 0, learned: 0 }; };
 
   // 形を直す（引き継ぎコードなどから入った値で画面を壊さない）
   function tidy(s) {
@@ -61,6 +62,16 @@
       list.push([k, { s: Math.min(num(x.s), GAPS.length - 1), due: x.due, t: num(x.t), lab: typeof x.lab === "string" ? x.lab.slice(0, 60) : "" }]);
     }
     list.sort(function (a, b) { return b[1].t - a[1].t; });
+    var gone = s.gone && typeof s.gone === "object" && !Array.isArray(s.gone) ? s.gone : {};
+    var gl = [];
+    for (var g in gone) {
+      if (!Object.prototype.hasOwnProperty.call(gone, g) || g === "__proto__" || g.length > 200 || !(num(gone[g]) > 0)) continue;
+      gl.push([g, num(gone[g])]);
+    }
+    gl.sort(function (a, b) { return b[1] - a[1]; });
+    gl.slice(0, MAX).forEach(function (e) { o.gone[e[0]] = e[1]; });
+    // 消したあとに書かれていない項目は戻さない（消した時刻より新しく入れ直したものだけ残す）
+    list = list.filter(function (e) { return !(e[0] in o.gone) || e[1].t > o.gone[e[0]]; });
     list.slice(0, MAX).forEach(function (e) { o.rv[e[0]] = e[1]; });
     return o;
   }
@@ -75,6 +86,8 @@
     var s = fresh();
     s.sure = Math.max(a.sure, b.sure); s.sureOk = Math.max(a.sureOk, b.sureOk); s.learned = Math.max(a.learned, b.learned);
     [b.rv, a.rv].forEach(function (rv) { for (var k in rv) if (!s.rv[k] || rv[k].t >= s.rv[k].t) s.rv[k] = rv[k]; });
+    // 消した印も合わせる（控えで消した項目を、保存されている分から戻さない。版4）
+    [b.gone, a.gone].forEach(function (gone) { for (var k in gone) if (!(k in s.gone) || gone[k] > s.gone[k]) s.gone[k] = gone[k]; });
     return tidy(s);
   }
   function write(fn) {
@@ -93,9 +106,9 @@
     var now = Date.now(), d = today();
     write(function (s) {
       var x = s.rv[key];
-      if (bad) { s.rv[key] = { s: 0, due: addDays(d, GAPS[0]), t: now, lab: String(label || (x && x.lab) || "").slice(0, 60) }; return; }
+      if (bad) { delete s.gone[key]; s.rv[key] = { s: 0, due: addDays(d, GAPS[0]), t: now, lab: String(label || (x && x.lab) || "").slice(0, 60) }; return; }
       if (!x || x.due > d) return; // 復習に入っていない・まだ日が来ていない問題は動かさない
-      if (x.s + 1 >= GAPS.length) { delete s.rv[key]; s.learned++; return; }
+      if (x.s + 1 >= GAPS.length) { delete s.rv[key]; s.gone[key] = Math.max(now, x.t + 1); s.learned++; return; }
       s.rv[key] = { s: x.s + 1, due: addDays(d, GAPS[x.s + 1]), t: now, lab: x.lab };
     });
   }
