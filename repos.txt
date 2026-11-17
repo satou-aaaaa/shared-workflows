@@ -30,6 +30,7 @@ doubutsu-nakama game
 dungeon-boardgame app
 ekisei-yomi game
 endaka-enyasu game
+energy-shurui game
 funka-level game
 gairai-miwake game
 gamen-no-wana game
@@ -70,6 +71,7 @@ kanazukai-dotchi game
 kanji-tsukaiwake game
 kansen-yobo game
 kasane-zome game
+kaseki-ate game
 kazoku-kimari game
 keigen-zeiritsu game
 keigo-naoshi game
@@ -143,6 +145,7 @@ shakuchi-shakuya game
 shindo-yomi game
 shiritori-saitan game
 shitsugyo-teate game
+shoka-koso game
 shokubutsu-nakama game
 shokuchudoku-yobo game
 shokuhin-hyoji game
