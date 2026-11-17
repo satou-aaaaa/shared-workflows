@@ -83,6 +83,7 @@ kippu-10 game
 kisetsu-tenki game
 kitai-ate game
 kitte-ikura game
+kokkai-nissu game
 kokki-shuto game
 kokoku-minuki game
 kondate-koma game
