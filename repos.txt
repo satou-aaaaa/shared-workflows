@@ -53,6 +53,7 @@ jiko-kihon game
 jintai-shikumi game
 jitensha-rule game
 jobun-tobatsu game
+jotai-henka game
 kabu-news game
 kaden-anzen game
 kagaku-henka game
