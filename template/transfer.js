@@ -40,7 +40,7 @@
 //     入れ替えの番号を進めてから、控えにする記録を読む（番号を進める前に別のタブが保存した分を、控えに入れずに消していた）・
 //     控えを書けず、戻すのも途中で止まったときも、止まったときの記録の印（hk-prevfp:）を残す・
 //     保存に失敗したままの記録があるタブは、別のタブで入れ替えても自動では読み直さず、帯で知らせる（読み直すと手元の記録が消える）・
-//     保存した直後に番号が変わっていたら（別のタブの入れ替えと重なった）、印（hk-race:）を残して、入れ替えた側にも知らせる
+//     保存した直後に番号が変わっていたら（別のタブの入れ替えと重なった）、印（hk-race:<ゲーム>:<番号>）を残して、入れ替えた側にも知らせる。印を書けなければ読み直さずに帯で知らせる
 //     （localStorage にはタブをまたぐ鍵が無く、確かめてから書くまでの間は閉じられない。混ざったかもしれないと知らせ、取り込み直せるようにする）。
 (function () {
   "use strict";
@@ -55,7 +55,8 @@
   var SYNC = "hk-sync:" + GAME; // 入れ替えたことをほかのタブへ知らせる印・入れ替えの番号（記録には入れない）
   var PREV = "hk-prev:" + GAME; // 控えに戻す途中だけ置く、戻す前の記録（版10）
   var PREVFP = "hk-prevfp:" + GAME; // 控えに戻す途中で止まったときの記録の印（そのあと記録が変わったかを見る。版11）
-  var RACE = "hk-race:" + GAME; // 入れ替えと古いタブの保存が重なったときの印（その入れ替えの番号。版13）
+  var RACE = "hk-race:" + GAME + ":"; // 入れ替えと古いタブの保存が重なったときの印。後ろにその入れ替えの番号を付け、番号ごとに別のキーにする（古い印を消すときに新しい印を消さない。版13）
+  var RACE_TEXT = "記録を入れ替えた直後に、別の画面が前の記録を保存しました。記録が混ざったかもしれません。もう一度取り込むか、「控えに戻す」で入れ替える前の記録に戻してください。";
   var MAX_JSON = 4 * 1024 * 1024; // localStorage はおおよそ 5MB まで
   var MAX_CODE = MAX_JSON * 2; // 貼りつけの長さの上限（HK0 の base64 でも MAX_JSON の 4/3 倍。URL・改行の分を足しても収まる）
   var QR_MAX = 2300; // QR（誤り訂正 L・40型）に入る URL の長さのめやす
@@ -110,7 +111,8 @@
         if (isLocal(this) && ours(String(k))) {
           var now = syncNo();
           if (now !== mySync) {
-            try { orig.call(this, RACE, now); } catch (e) { /* 印を書けなくても、このタブの帯で知らせる */ }
+            // 印を書けない（端末の空きが無い）ときは読み直さず、このタブの帯で混ざったかもしれないと知らせ続ける（読み直すと、知らせがどこにも残らない）
+            try { orig.call(this, RACE + now, "1"); } catch (e) { staleTab(RACE_TEXT); return; }
             staleTab();
             reloadIfSafe();
           }
@@ -125,11 +127,11 @@
     if (!reloading) { reloading = true; try { location.reload(); } catch (e) { reloading = false; /* 次の保存でまた読み直す（版11） */ } }
   }
   // 古いタブの保存を捨てたことを知らせる帯（読み直しが遅れる・止まると、そのあいだの保存はゲームには成功に見えて消える。版11）
-  function staleTab() {
+  function staleTab(say) {
     try {
-      var text = stale()
+      var text = say || (stale()
         ? "別の画面で記録が入れ替わりました。この画面には保存できなかった記録があり、読み直すと消えます（この画面からはもう保存できません）。いまの点数などを控えてから読み直してください。"
-        : "別の画面で記録が入れ替わったので、この画面の記録は保存できません。読み直してください。";
+        : "別の画面で記録が入れ替わったので、この画面の記録は保存できません。読み直してください。");
       var had = document.getElementById("hk-stale-tab");
       if (had) { if (had.firstChild && had.firstChild.nodeType === 3) had.firstChild.nodeValue = text; return; }
       var b = document.createElement("div");
@@ -674,14 +676,22 @@
     onClosed = onCancel || null; // やめる・Esc・外を押す、のどれで閉じても
   }
 
-  // 入れ替えと古いタブの保存が重なったら知らせる（その入れ替えの番号の印だけ。古い印は黙って消す。版13）
+  // 入れ替えと古いタブの保存が重なったら知らせる（いまの入れ替えの番号の印だけ。版13）
+  // 前の入れ替えの印は、いまの番号より古い（番号の頭の時刻が小さい）ものだけ黙って消す（読んだあとに書かれた新しい印は消さない）
   function raced() {
-    var r = null;
-    try { r = localStorage.getItem(RACE); } catch (e) { return; }
-    if (r == null) return;
-    try { localStorage.removeItem(RACE); } catch (e) { /* なし */ }
-    if (r !== syncNo()) return;
-    toast("記録を入れ替えた直後に、別の画面が前の記録を保存しました。記録が混ざったかもしれません。もう一度取り込むか、「控えに戻す」で入れ替える前の記録に戻してください。", true);
+    var cur = syncNo(), mine = RACE + cur, has = false, old = [];
+    var tOf = function (n) { return parseFloat(String(n).split(".")[0]) || 0; };
+    try {
+      has = localStorage.getItem(mine) != null;
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf(RACE) === 0 && k !== mine && tOf(k.slice(RACE.length)) < tOf(cur)) old.push(k);
+      }
+    } catch (e) { return; }
+    old.forEach(function (k) { try { localStorage.removeItem(k); } catch (e) { /* なし */ } });
+    if (!has) return;
+    try { localStorage.removeItem(mine); } catch (e) { /* なし */ }
+    toast(RACE_TEXT, true);
   }
   function boot() {
     document.addEventListener("click", function (e) {
@@ -703,7 +713,7 @@
     // 保存に失敗したままの記録があるタブは読み直さず、帯で知らせる（版13）
     window.addEventListener("storage", function (e) {
       if (e.key === SYNC && e.newValue) { if (stale()) staleTab(); else location.reload(); }
-      if (e.key === RACE && e.newValue && e.newValue === syncNo()) raced();
+      if (e.key === RACE + syncNo() && e.newValue) raced();
     });
     raced();
   }

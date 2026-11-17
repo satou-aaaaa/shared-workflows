@@ -35,6 +35,12 @@ try {
     await page.emulateMedia({ reducedMotion: 'no-preference' }); await page.waitForTimeout(100);
     const c = await calm(page);
     ok('1. 開いたあとに端末の「視差効果を減らす」を入れる・切ると、動きを減らす設定も入る・切れる', !b && a && !c);
+    // 設定の画面を開いたまま変えても、チェックが合い、1回押せば外せる
+    await page.click('[data-a11y-open]');
+    await page.emulateMedia({ reducedMotion: 'reduce' }); await page.waitForTimeout(100);
+    const checked = await page.isChecked('dialog.a11y-dlg input[data-k="calm"]');
+    await page.click('dialog.a11y-dlg input[data-k="calm"]');
+    ok('1. 設定の画面を開いたまま端末の設定を変えても、チェックが合い、1回押せば外せる', checked && !(await calm(page)));
     await ctx.close();
   }
   {

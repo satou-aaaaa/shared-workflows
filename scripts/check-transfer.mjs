@@ -334,23 +334,49 @@ function bootTab({ local, session = store(), game = 'kippu-10', keys = 'kippu-v1
   } finally { t2.restore(); }
 }
 {
-  // 確かめてから書くまでのあいだに別のタブが入れ替えたら、書いたあとに気づいて印（hk-race:）を残し、読み直す。印のある画面は知らせる
-  const l = new SpyStorage({ 'kippu-v1': '{"a":1}', 'hk-sync:kippu-10': 's1' });
+  // 確かめてから書くまでのあいだに別のタブが入れ替えたら、書いたあとに気づいて印（hk-race:<ゲーム>:<番号>）を残し、読み直す。印のある画面は知らせる
+  const s1 = '1000.a', s2 = '2000.b', s3 = '3000.c';
+  const l = new SpyStorage({ 'kippu-v1': '{"a":1}', 'hk-sync:kippu-10': s1 });
   const t = bootTab({ local: l });
   try {
-    l.before = (k) => { if (k === 'kippu-v1') { l.before = null; l.m.set('hk-sync:kippu-10', 's2'); } };
+    l.before = (k) => { if (k === 'kippu-v1') { l.before = null; l.m.set('hk-sync:kippu-10', s2); } };
     l.setItem('kippu-v1', '{"old":1}');
-    ok('保存と入れ替えが重なったら、その入れ替えの番号で印（hk-race:）を残して読み直す', l.getItem('hk-race:kippu-10') === 's2' && t.reloads.n === 1);
+    ok('保存と入れ替えが重なったら、その入れ替えの番号の印（hk-race:）を残して読み直す', l.getItem(`hk-race:kippu-10:${s2}`) !== null && t.reloads.n === 1);
   } finally { t.restore(); }
   const t2 = bootTab({ local: l });
   try {
-    ok('印のある画面を開くと「混ざったかもしれない」と知らせ、印を消す', t2.toasts().length === 1 && l.getItem('hk-race:kippu-10') === null);
+    ok('印のある画面を開くと「混ざったかもしれない」と知らせ、印を消す', t2.toasts().length === 1 && l.getItem(`hk-race:kippu-10:${s2}`) === null);
   } finally { t2.restore(); }
-  l.m.set('hk-race:kippu-10', 's1');
+  l.m.set(`hk-race:kippu-10:${s1}`, '1');
   const t3 = bootTab({ local: l });
   try {
-    ok('前の入れ替えの古い印では知らせず、印だけ消す', t3.toasts().length === 0 && l.getItem('hk-race:kippu-10') === null);
+    ok('前の入れ替えの古い印では知らせず、印だけ消す', t3.toasts().length === 0 && l.getItem(`hk-race:kippu-10:${s1}`) === null);
   } finally { t3.restore(); }
+  // 古い番号のままのタブが印を片づけても、あとから書かれた新しい入れ替えの印は消さない
+  {
+    const l5 = new SpyStorage({ 'kippu-v1': '{"a":1}', 'hk-sync:kippu-10': s2 });
+    const t5 = bootTab({ local: l5 });
+    try {
+      l5.m.set(`hk-race:kippu-10:${s3}`, '1');
+      t5.d.fire('win:storage', { key: `hk-race:kippu-10:${s2}`, newValue: '1' });
+      ok('古い番号のタブの片づけで、新しい入れ替えの印を消さない', l5.getItem(`hk-race:kippu-10:${s3}`) === '1');
+    } finally { t5.restore(); }
+  }
+  // 印を書けない（端末の空きが無い）ときは、読み直さずに帯で「混ざったかもしれない」と知らせ続ける
+  {
+    const l6 = new SpyStorage({ 'kippu-v1': '{"a":1}', 'hk-sync:kippu-10': s1 });
+    const t6 = bootTab({ local: l6 });
+    try {
+      l6.before = (k) => {
+        if (k === 'kippu-v1') l6.m.set('hk-sync:kippu-10', s2);
+        if (String(k).startsWith('hk-race:')) throw new Error('QuotaExceededError');
+      };
+      l6.setItem('kippu-v1', '{"old":1}');
+      const band = t6.banner();
+      const text = band && band.firstChild && band.firstChild.nodeValue;
+      ok('印を書けないときは読み直さず、帯で「混ざったかもしれない」と知らせる', t6.reloads.n === 0 && /混ざった/.test(text || ''));
+    } finally { t6.restore(); }
+  }
 }
 
 const bad = boot({ game: 'x', keys: '*', local: store(), session: store() });

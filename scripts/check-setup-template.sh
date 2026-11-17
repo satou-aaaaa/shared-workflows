@@ -193,19 +193,23 @@ if [ -d "$repo/app/.setup-lock" ] && ! grep -q '残したロックを外す' "$t
 else ng "19. 作ったばかりの名札の無いロックを外した"; fi
 rm -rf "$repo/app/.setup-lock"
 
-# 20. 古いロックを外すのは札（.setup-lock.reclaim）を取った1人だけ。動いているロックを移さない（版13、hatsuden-kurabe #1・nenkin-shikumi #1 の CodeRabbit）
+# 20. 古いロックを外すのは札（.setup-lock.reclaim.<inode>）を取った1人だけ。動いているロックを移さない（版13、hatsuden-kurabe #1・nenkin-shikumi #1 の CodeRabbit）
 if grep -nE '^[^#]*mv[^#]*"\$lock"' "$root/template/scripts/setup.sh"; then echo "--- 出力 ---" > "$tmp/out"; ng "20. ロックを mv で移している（移したあいだに別の setup.sh がロックを取れる）"; fi
 dead="$(hostname 2>/dev/null || echo local) 999999"
-#   20a. 札をほかの人が持っているあいだは、古いロックでも消さずに待つ
-mkdir -p "$repo/app/.setup-lock" "$repo/app/.setup-lock.reclaim" && echo "$dead" > "$repo/app/.setup-lock/owner"
-( cd "$repo" && timeout 4 env CLAUDE_ENV_FILE="$envf" bash scripts/setup.sh ) > "$tmp/out" 2>&1 || true
-if [ "$(cat "$repo/app/.setup-lock/owner" 2>/dev/null)" = "$dead" ] && ! grep -q '残したロックを外す' "$tmp/out"; then ok "外す人の札がほかの人にあるあいだは、古いロックを消さずに待つ"
-else ng "20a. 札を持たずに古いロックを消した"; fi
-#   20b. 札が1分より古い（外す途中で止まった）なら札を外し、古いロックも外して進む
-touch -d '2 minutes ago' "$repo/app/.setup-lock.reclaim"
-if run CLAUDE_ENV_FILE="$envf" && grep -q '残したロックを外す' "$tmp/out" && [ ! -d "$repo/app/.setup-lock" ] && [ ! -d "$repo/app/.setup-lock.reclaim" ]; then ok "止まった人の古い札とロックを外して進む"
-else ng "20b. 古い札が残って進めない・札かロックが残る"; fi
-rm -rf "$repo/app/.setup-lock" "$repo/app/.setup-lock.reclaim"
+#   20a. 札をほかの人（動いている）が持っているあいだは、古いロックでも消さずに待つ。札が2分前のものでも、持ち主が動いていれば時間では外さない
+guard_of() { echo "$repo/app/.setup-lock.reclaim.$(ls -di "$repo/app/.setup-lock" | awk '{print $1}')"; }
+sleep 30 & holder=$!
+mkdir -p "$repo/app/.setup-lock" && echo "$dead" > "$repo/app/.setup-lock/owner"
+g=$(guard_of); mkdir -p "$g" && echo "$(hostname 2>/dev/null || echo local) $holder" > "$g/owner" && touch -d '2 minutes ago' "$g"
+rc=0; ( cd "$repo" && timeout 4 env CLAUDE_ENV_FILE="$envf" bash scripts/setup.sh ) > "$tmp/out" 2>&1 || rc=$?
+if [ "$rc" = 124 ] && [ "$(cat "$repo/app/.setup-lock/owner" 2>/dev/null)" = "$dead" ] && [ -d "$g" ] && ! grep -q '残したロックを外す' "$tmp/out"; then ok "動いている人の札があるあいだは、古いロックを消さずに待つ（札が古くても時間では外さない）"
+else echo "終了コード $rc" >> "$tmp/out"; ng "20a. 札を持たずに古いロックを消した・待たずに終わった（timeout の 124 でない）"; fi
+kill $holder 2>/dev/null || true; wait $holder 2>/dev/null || true
+#   20b. 札の持ち主がもう動いていない（外す途中で止まった）なら、次の札を取って古いロックを外して進み、自分の札を残さない
+echo "$dead" > "$g/owner"
+if run CLAUDE_ENV_FILE="$envf" && grep -q '残したロックを外す' "$tmp/out" && [ ! -d "$repo/app/.setup-lock" ] && [ -z "$(find "$repo/app" -maxdepth 1 -name '.setup-lock.reclaim.*.*' 2>/dev/null)" ]; then ok "止まった人の札のあとの札を取り、古いロックを外して進む"
+else ng "20b. 止まった人の札が残って進めない・自分の札かロックが残る"; fi
+rm -rf "$repo/app/.setup-lock" "$repo/app"/.setup-lock.reclaim.*
 #   20c. 古いロックがあるところへ4つ同時に動かしても、npm ci は重ならない（npm ci の間だけ印のフォルダを置き、重なれば記録する）
 realnpm=$(command -v npm); mkdir -p "$tmp/shim"
 cat > "$tmp/shim/npm" <<SHIM
@@ -224,7 +228,7 @@ four() { ( cd "$repo" && env -u CHROMIUM_PATH PATH="$tmp/shim:$PATH" CLAUDE_ENV_
 pids=(); for i in 1 2 3 4; do four $i & pids+=($!); done
 rc=0; for p in "${pids[@]}"; do wait "$p" || rc=1; done
 cat "$tmp/four1" "$tmp/four2" "$tmp/four3" "$tmp/four4" > "$tmp/out"
-if [ $rc = 0 ] && [ ! -f "$tmp/npm-ci-overlap" ] && [ ! -d "$repo/app/.setup-lock" ] && [ ! -d "$repo/app/.setup-lock.reclaim" ]; then ok "古いロックへ4つ同時に動いても、npm ci は重ならず全部通る"
+if [ $rc = 0 ] && [ ! -f "$tmp/npm-ci-overlap" ] && [ ! -d "$repo/app/.setup-lock" ] && [ -z "$(find "$repo/app" -maxdepth 1 -name '.setup-lock.reclaim*' 2>/dev/null)" ]; then ok "古いロックへ4つ同時に動いても、npm ci は重ならず全部通る"
 else cat "$tmp/npm-ci-overlap" >> "$tmp/out" 2>/dev/null || true; ng "20c. 古いロックを外すときに npm ci が重なった・落ちた・ロックが残った"; fi
 
 [ "$bad" = 0 ] || { echo "✗ ひな形 template/scripts/setup.sh の検査が落ちた" >&2; exit 1; }

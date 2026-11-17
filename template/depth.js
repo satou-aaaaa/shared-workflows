@@ -29,6 +29,7 @@
   var KEY = cfg.key || (me && me.dataset.key) || GAME + "-depth";
   var GAPS = [1, 3, 7]; // 復習の間（日）
   var MAX = 300; // 復習に置いておく数の上限（古いものから捨てる）
+  var GONE_DAYS = 400; // 「覚えた」で消した印を置いておく日数（保存に失敗したままの古い控えより長く）
   var DUE_MAX = 10; // 1日に出す復習の数
   var kindOf = typeof cfg.kindOf === "function" ? cfg.kindOf : function (k) { return String(k).split("|")[0]; };
   var valid = function () { return true; }; // 作り直せる鍵か（ゲームが setValid で渡す）
@@ -68,8 +69,9 @@
       if (!Object.prototype.hasOwnProperty.call(gone, g) || g === "__proto__" || g.length > 200 || !(num(gone[g]) > 0)) continue;
       gl.push([g, num(gone[g])]);
     }
-    gl.sort(function (a, b) { return b[1] - a[1]; });
-    gl.slice(0, MAX).forEach(function (e) { o.gone[e[0]] = e[1]; });
+    // 消した印は数で切らない（切ると、保存されている古い分から消した項目が戻る）。GONE_DAYS より古い印だけ捨てる
+    var keepFrom = Date.now() - GONE_DAYS * 864e5;
+    gl.forEach(function (e) { if (e[1] >= keepFrom) o.gone[e[0]] = e[1]; });
     // 消したあとに書かれていない項目は戻さない（消した時刻より新しく入れ直したものだけ残す）
     list = list.filter(function (e) { return !(e[0] in o.gone) || e[1].t > o.gone[e[0]]; });
     list.slice(0, MAX).forEach(function (e) { o.rv[e[0]] = e[1]; });
@@ -106,10 +108,12 @@
     var now = Date.now(), d = today();
     write(function (s) {
       var x = s.rv[key];
-      if (bad) { delete s.gone[key]; s.rv[key] = { s: 0, due: addDays(d, GAPS[0]), t: now, lab: String(label || (x && x.lab) || "").slice(0, 60) }; return; }
+      // 書いた時刻は、前の項目・消した印より必ず新しくする（端末の時計が戻っても、消した印に負けない）
+      var t = Math.max(now, x ? x.t + 1 : 0, key in s.gone ? s.gone[key] + 1 : 0);
+      if (bad) { delete s.gone[key]; s.rv[key] = { s: 0, due: addDays(d, GAPS[0]), t: t, lab: String(label || (x && x.lab) || "").slice(0, 60) }; return; }
       if (!x || x.due > d) return; // 復習に入っていない・まだ日が来ていない問題は動かさない
-      if (x.s + 1 >= GAPS.length) { delete s.rv[key]; s.gone[key] = Math.max(now, x.t + 1); s.learned++; return; }
-      s.rv[key] = { s: x.s + 1, due: addDays(d, GAPS[x.s + 1]), t: now, lab: x.lab };
+      if (x.s + 1 >= GAPS.length) { delete s.rv[key]; s.gone[key] = t; s.learned++; return; }
+      s.rv[key] = { s: x.s + 1, due: addDays(d, GAPS[x.s + 1]), t: t, lab: x.lab };
     });
   }
   // 今日出す鍵：日の来たものを古い順に取り、種類が続かないように並べる

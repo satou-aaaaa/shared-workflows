@@ -127,6 +127,26 @@ export async function checkDepth(code) {
       t.day(1); t.D.mark("g|1", 1);
       ok("nosave-del: 消したあとでまちがえた問題は、また復習に入る", t.D.waiting() === 2);
     }
+    // nosave-del の続き：保存されている「最後の段」の300件と、失敗のあいだに入れた1件を、保存に失敗したまま覚えても、どれも戻らない（印を数で切らない）
+    {
+      const due = "2026-11-01";
+      const rv = {}; for (let i = 0; i < 300; i++) rv[`m|${i}`] = { s: 2, due, t: 1000 + i };
+      const ls3 = store({ "t-depth": JSON.stringify({ rv, learned: 0 }) });
+      t = boot(code, { ls: ls3 });
+      ls3.break(true);
+      t.D.mark("z|1", 1); t.day(1); t.D.mark("z|1", 0); t.day(3); t.D.mark("z|1", 0); t.day(7); t.D.mark("z|1", 0);
+      for (let i = 0; i < 300; i++) t.D.mark(`m|${i}`, 0);
+      ok("nosave-del: 保存に失敗したまま301件覚えても、どれも戻らず、覚えた数は301", t.D.waiting() === 0 && t.D.stats().learned === 301);
+    }
+    // nosave-del の続き：端末の時計が戻っても、消したあとに入れ直した項目は、保存されている消した印に負けない
+    {
+      const ls4 = store();
+      t = boot(code, { ls: ls4 });
+      t.D.mark("k|1", 1); t.day(1); t.D.mark("k|1", 0); t.day(3); t.D.mark("k|1", 0); t.day(7); t.D.mark("k|1", 0);
+      ok("nosave-del: 覚えた印が保存される", "k|1" in (JSON.parse(ls4.getItem("t-depth")).gone || {}));
+      t.day(-30); ls4.break(true); t.D.mark("k|1", 1);
+      ok("nosave-del: 時計が戻っても、保存に失敗したまま入れ直した項目が消えない", t.D.waiting() === 1);
+    }
 
     // junk
     for (const v of ['[1,2]', '"x"', '{"rv":[1],"sure":"a"}', '{"rv":{"k":{"due":"2026-99-99","s":9}},"sure":-3,"sureOk":5}', "{bad"]) {

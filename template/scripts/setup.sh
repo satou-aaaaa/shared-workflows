@@ -22,7 +22,7 @@
 #  11: 強制終了で残ったロックは、同じ機械で持ち主が動いていなければ外す（10分待って止まっていた。#259）
 #  12: 起動の試しは package.json に書いた Playwright を先に使う・ブラウザの置き場も QA と同じ import() で探す・
 #      古いロックは自分だけの名前へ移してから消す（2つ同時に外して新しいロックを消さない）・名札の無い1分より古いロックも外す・ほかの人の動いているプロセスのロックは外さない（各ゲームの PR の CodeRabbit、2026-11-07）
-#  13: 古いロックは移さず、外す人の札（.setup-lock.reclaim）を取った1人が見直してから消す（移したあいだに別の setup.sh がロックを取り、npm ci が2つ走ることがあった。2026-11-17 hatsuden-kurabe #1・nenkin-shikumi #1 の CodeRabbit）
+#  13: 古いロックは移さず、外す人の札（.setup-lock.reclaim.<inode>。時間でなく持ち主が動いているかで見る）を取った1人が見直してから消す（移したあいだに別の setup.sh がロックを取り、npm ci が2つ走ることがあった。2026-11-17 hatsuden-kurabe #1・nenkin-shikumi #1 の CodeRabbit）
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -86,20 +86,34 @@ stale() {
   if ! o=$(cat "$lock/owner" 2>/dev/null); then [ -d "$lock" ] && [ -n "$(find "$lock" -maxdepth 0 -mmin +1 2>/dev/null)" ] && echo "（名札なし）"; return; fi
   [ "${o% *}" = "${me% *}" ] && ! alive "${o##* }" && echo "$o"
 }
-# 外すのは、外す人の札（$lock.reclaim）を取った1人だけ。札を持ったまま、もう一度見て同じ古いロックのときだけ消す。
+# 外すのは、外す人の札を取った1人だけ。札を持ったまま、もう一度見て同じ古いロックのときだけ消す。
 # 動いているロックは移さない・消さない（前は自分の名前へ移してから見たので、移したあいだに別の setup.sh が空いた場所でロックを取り、
 # 2つの npm ci が同じ node_modules を変えることがあった。版13、hatsuden-kurabe #1・nenkin-shikumi #1 の CodeRabbit）。
-# 札は外し終えたらすぐ返す。1分より古い札は外す途中で止まった人のものなので、find が古さを見直してから消す。
+# 札はロックのフォルダごと（番号＝inode。同じ名前で作り直したロックとは別の札）。札を取った人は、外し終えたら自分の札だけを消す。
+# 札は時間では外さない（止まっているだけの人が戻って、あとの人のロックを消す）。札の持ち主が同じ機械でもう動いていないときだけ、
+# 札の名前に持ち主の番号を足した次の札を取る。名札を書く前に止まった札（名札なし）は、1分より古ければ動いていないとみなす。
 # 札を取れなかったときは 1 を返す（待ってから見直す。すぐ回すと10分の待ちを一瞬で使い切る）
+ino() { ls -di "$lock" 2>/dev/null | awk '{print $1}'; }
 reclaim() {
-  local seen=$1 guard="$lock.reclaim" now
-  if ! mkdir "$guard" 2>/dev/null; then
-    find "$guard" -maxdepth 0 -mmin +1 -exec rmdir {} \; 2>/dev/null || true
-    return 1
-  fi
-  now=$(stale) || true
-  if [ -n "$now" ] && [ "$now" = "$seen" ]; then echo "前の setup.sh が残したロックを外す（$seen）"; rm -rf "$lock"; fi
-  rmdir "$guard" 2>/dev/null || true
+  local seen=$1 id guard o
+  id=$(ino); [ -n "$id" ] || return 0
+  guard="$lock.reclaim.$id"
+  for _ in 1 2 3 4 5 6 7 8; do
+    if mkdir "$guard" 2>/dev/null; then
+      echo "$me" > "$guard/owner"
+      if [ "$(ino)" = "$id" ] && [ "$(stale)" = "$seen" ]; then echo "前の setup.sh が残したロックを外す（$seen）"; rm -rf "$lock"; fi
+      rm -rf "$guard"
+      return 0
+    fi
+    if ! o=$(cat "$guard/owner" 2>/dev/null); then
+      [ -n "$(find "$guard" -maxdepth 0 -mmin +1 2>/dev/null)" ] || return 1
+      o="x x"
+    elif [ "${o% *}" != "${me% *}" ] || alive "${o##* }"; then
+      return 1
+    fi
+    guard="$guard.${o##* }"
+  done
+  return 1
 }
 for _ in $(seq 1 600); do
   if mkdir "$lock" 2>/dev/null; then echo "$me" > "$lock/owner"; got=1; break; fi

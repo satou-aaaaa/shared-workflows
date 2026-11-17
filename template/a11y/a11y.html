@@ -148,7 +148,8 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
   // 端末の「視差効果を減らす」を開いたあとに変えても効かせる（自分で決めていないときだけ。v7、hatsuden-kurabe #1 の CodeRabbit）
   try {
     const mq = matchMedia("(prefers-reduced-motion: reduce)");
-    const follow = () => { if (!("calm" in S)) { apply(); document.dispatchEvent(new CustomEvent("a11ychange", { detail: { key: "calm", on: on("calm") } })); } };
+    // 設定の画面を開いたままでも、チェックを今の状態に合わせる（合わないと1回目の押しで外せない）
+    const follow = () => { if (!("calm" in S)) { apply(); const c = dlg && dlg.querySelector('input[data-k="calm"]'); if (c) c.checked = on("calm"); document.dispatchEvent(new CustomEvent("a11ychange", { detail: { key: "calm", on: on("calm") } })); } };
     if (mq.addEventListener) mq.addEventListener("change", follow); else if (mq.addListener) mq.addListener(follow);
   } catch { /* matchMedia の無い端末 */ }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", build); else build();
