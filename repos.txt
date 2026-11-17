@@ -99,6 +99,7 @@ sentaku-hyoji game
 setsuden-kotsu game
 shindo-yomi game
 shiritori-saitan game
+shokubutsu-nakama game
 shokuchudoku-yobo game
 shokuhin-hyoji game
 shukujitsu-yurai game
