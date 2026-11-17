@@ -139,6 +139,7 @@ setsuden-kotsu game
 shindo-yomi game
 shiritori-saitan game
 shitsugyo-teate game
+shoka-koso game
 shokubutsu-nakama game
 shokuchudoku-yobo game
 shokuhin-hyoji game
