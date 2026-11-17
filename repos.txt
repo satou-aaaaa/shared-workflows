@@ -70,6 +70,7 @@ kanazukai-dotchi game
 kanji-tsukaiwake game
 kansen-yobo game
 kasane-zome game
+kashikari-kimari game
 kazoku-kimari game
 keigen-zeiritsu game
 keigo-naoshi game
