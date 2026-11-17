@@ -52,8 +52,20 @@ jobs:
           OWNER: ${{ github.repository_owner }}
           ONLY: ${{ inputs.only }}
           SHA: ${{ github.sha }}
+          # 鍵が読めないときに、どこにずれがあるかを出す（値は出さず、あるか無いかだけ。2026-11-17 鍵が空で読まれた件）
+          HAS_VAR: ${{ vars.TEMPLATE_SYNC_TOKEN != '' }}
+          HAS_OTHER: >-
+            TEMPLATE_SYNC=${{ secrets.TEMPLATE_SYNC != '' }}
+            TEMPLATE_TOKEN=${{ secrets.TEMPLATE_TOKEN != '' }}
+            SYNC_TOKEN=${{ secrets.SYNC_TOKEN != '' }}
+            TEMPLATE_SYNC_PAT=${{ secrets.TEMPLATE_SYNC_PAT != '' }}
+            GH_TOKEN=${{ secrets.GH_TOKEN != '' }}
+            PAT=${{ secrets.PAT != '' }}
+            TOKEN=${{ secrets.TOKEN != '' }}
+            REPO_CREATE_TOKEN=${{ secrets.REPO_CREATE_TOKEN != '' }}
         run: |
           if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::TEMPLATE_SYNC_TOKEN が空。同じ名前の変数（Variables）にある: $HAS_VAR。ほかの名前の秘密（true があればその名前で入っている）: $HAS_OTHER"
             echo "::warning::環境 template-sync に TEMPLATE_SYNC_TOKEN が無いので配らない（routines/game-dev.md「保存の読み直し」の配り方。手で配るときは shared-workflows のルートで sync-template.mjs をゲームのフォルダに向けて回す）"
             exit 0
           fi
