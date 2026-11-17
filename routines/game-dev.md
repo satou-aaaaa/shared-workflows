@@ -48,7 +48,7 @@ F1〜F7：遊ぶ量を縛らない（チケット・ライフなし）・遊ぶ�
 
 ## 引き継ぎコード（別の端末へ記録を移す。satou さん 2026-11-05）
 
-`template/transfer.js` と `template/qa/transfer-check.mjs` を写す（ゲームでは直さない）。取り込みは確認の画面を出し、コードは他人から届くものとして扱う。守ることの表は [game-dev-detail.md](game-dev-detail.md)。
+`template/transfer.js` と `template/qa/transfer-check.mjs` を写す（ゲームでは直さない）。取り込みは確認の画面を出し、コードは他人から届くものとして扱う。守ることの表は [game-dev-detail.md](game-dev-detail.md)。load() は共通部品 GameStore を使う（同「保存の読み直し」）。
 
 ## トークンを節約する（satou さん 2026-11-07「トークンを節約するための改善も」）
 

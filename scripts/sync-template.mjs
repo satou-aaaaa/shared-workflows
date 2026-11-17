@@ -5,6 +5,7 @@
 // 写すもの（ゲームにすでにあるものだけ。無いものは足さない。足すのは routines/game-dev.md の手順で）:
 //   transfer.js・depth.js・qa/a11y.mjs・qa/transfer-check.mjs・qa/sw-check.mjs・qa/depth-check.mjs …… そのまま写す（depth.js は 2026-11-11 から。入れたゲームだけ）
 //   index.html の <!-- a11y:begin -->〜<!-- a11y:end --> …… その間だけ写す
+//   index.html の <!-- store:begin -->〜<!-- store:end --> …… template/store/store.js を <script> に包んで写す（保存の読み直しの共通部品。2026-11-17 から）
 //   sw.js …… ひな形を写し、// game:begin〜// game:end の間（CACHE・SHELL）はゲームのものを残す。
 //            まだ枠の無い古い sw.js からは const CACHE と const SHELL の行を拾って枠に入れる
 //   scripts/setup.sh …… ひな形を写し、npm_dir= と next= の行はゲームのものを残す
@@ -20,6 +21,9 @@ const tpl = (p) => readFileSync(join(T, p), 'utf8');
 
 const REGION = /\/\/ game:begin\n[\s\S]*?\/\/ game:end\n/;
 const A11Y = /<!-- a11y:begin[\s\S]*?<!-- a11y:end -->/;
+export const STORE = /<!-- store:begin[\s\S]*?<!-- store:end -->/;
+// index.html に写す保存の共通部品のかたまり（ファイルを足さないので、sw.js の SHELL も電波の無いときの動きも変わらない）
+export const storeBlock = () => `<!-- store:begin（template/store/store.js の写し。ここでは直さない。node scripts/sync-template.mjs で写す） -->\n<script id="game-store">\n${tpl('store/store.js')}</script>\n<!-- store:end -->`;
 
 // sw.js のゲームの枠を取り出す（無ければ古い形から CACHE と SHELL の行を拾う）
 export function swRegion(old) {
@@ -70,7 +74,9 @@ export function plan(dir) {
   if (has('index.html')) {
     const html = read('index.html');
     const block = tpl('a11y/a11y.html').match(A11Y)[0];
-    if (A11Y.test(html)) want('index.html', html.replace(A11Y, () => block), '見やすさの設定');
+    let next = A11Y.test(html) ? html.replace(A11Y, () => block) : html;
+    if (STORE.test(next)) next = next.replace(STORE, () => storeBlock());
+    if (A11Y.test(html) || STORE.test(html)) want('index.html', next, '見やすさの設定・保存の共通部品');
   }
   if (has('sw.js')) {
     const next = makeSw(read('sw.js'));

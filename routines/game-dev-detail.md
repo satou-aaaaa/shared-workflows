@@ -149,6 +149,10 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 - iPhone はブラウザ（Safari）とホーム画面のアプリで記録が別。ホーム画面のアプリで遊ぶ人は、アプリの中の「引き継ぎ」にコードを貼る（画面にも書いてある）。
 - `node scripts/drift-check.mjs` が、PWA のゲームに `transfer.js` が無い・版が古いのを知らせる。
 
+## 保存の読み直し（2つの写しを合わせる。satou さん 2026-11-17「共通化をし、そこを修正する」）
+
+保存に失敗したときの写し `mem` と localStorage を合わせる決まりは、共通部品 `template/store/store.js` だけに置く。ゲームの `load()` は `return GameStore.load(KEY, mem, { v: 1, fresh, tidy, bank, doneOf, bookOf, objs: [...] })` の1つにし、合わせ方を自分で書かない（ちがうところは `join`・`field`・`differ`・`after` などの手で渡す。手の一覧は store.js の頭）。部品は index.html の `<!-- store:begin -->`〜`<!-- store:end -->` に `node scripts/sync-template.mjs <ゲームのフォルダ>` で写す（ファイルを足さないので sw.js の SHELL は変えない）。直すときは store.js と `scripts/check-store.mjs` を直し、写しを配る。まだ切り替えていないゲームは drift-check が `store:load` で出す（incidents/2026-11-17-endless-revive-after-save-failure.md）。
+
 ## トークンを節約する（satou さん 2026-11-07「トークンを節約するための改善も」）
 
 ゲームのスレッドは十数本が同時に動くので、1本の読みすぎが全部の利用枠を減らす。出典：[Claude Code: Manage costs](https://code.claude.com/docs/en/costs)（CLAUDE.md は短く・長い出力はしぼる）、[Memory](https://code.claude.com/docs/en/memory)（`@` で取り込んだファイルは全文が毎回読まれる）。
