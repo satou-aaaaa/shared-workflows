@@ -14,6 +14,7 @@ bunshi-tsukuri game
 bushu-tashizan game
 carcassonne-research app
 chikei-ate game
+chintai-kimari game
 chizu-kigo game
 chosakuken game
 dashisugi-check game
@@ -112,6 +113,7 @@ shokuchudoku-yobo game
 shokuhin-hyoji game
 shukujitsu-yurai game
 shukushaku-yomi game
+souzoku-kihon game
 taikyo-hiyo game
 taiyokei-kurabe game
 tani-kankaku game
