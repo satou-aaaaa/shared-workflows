@@ -19,6 +19,7 @@ chintai-kimari game
 chizu-kigo game
 chosakuken game
 chusha-kyori game
+dare-bensho game
 dashisugi-check game
 dema-tashikame game
 denki-kairo game
@@ -43,6 +44,7 @@ hikari-michi game
 hikari-susumi game
 hiraku-tojiru game
 hoken-dore game
+hosho-kimari game
 hozon-kikan game
 hyakunin-awase game
 hyoshiki-yomi game
@@ -58,12 +60,14 @@ jotai-henka game
 kabu-news game
 kaden-anzen game
 kagaku-henka game
+kaisha-kigen game
 kaji-mamoru game
 kakuritsu-dotchi game
 kanazukai-dotchi game
 kanji-tsukaiwake game
 kansen-yobo game
 kasane-zome game
+kazoku-kimari game
 keigen-zeiritsu game
 keigo-naoshi game
 keiyaku-torikeshi game
@@ -97,6 +101,7 @@ machi-michijun game
 madori-puzzle game
 mannaka-kanji game
 meirei-narabe game
+menkyo-nenrei game
 mizu-mamoru game
 mukashi-narabe game
 musekitsui-nakama game
@@ -113,6 +118,7 @@ otsukai-memo game
 pikuto-yomi game
 recycle-mark game
 rekishi-narabe game
+risoku-jogen game
 rosai-shikumi game
 rosen-hitofude game
 sagi-minuki game
@@ -147,6 +153,7 @@ toan-kumitate game
 todofuken-relay game
 todokede-kigen game
 tokkyo-kikan game
+tonari-kimari game
 tsuki-katachi game
 usotsuki-roppo game
 wagamama-burger game
