@@ -43,6 +43,7 @@ keigen-zeiritsu game
 keigo-naoshi game
 kengen-check game
 kenko-minuki game
+kenpo-shikumi game
 kikigaki-techo game
 kimari-sagashi game
 kippu-10 game
