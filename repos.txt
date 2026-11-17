@@ -13,6 +13,7 @@ bousai-handan game
 bunshi-tsukuri game
 bushu-tashizan game
 carcassonne-research app
+chikara-shurui game
 chikei-ate game
 chintai-kimari game
 chizu-kigo game
@@ -38,6 +39,7 @@ haku-uchi game
 hataraku-kimari game
 hatsuden-kurabe game
 hikari-michi game
+hikari-susumi game
 hiraku-tojiru game
 hoken-dore game
 hyakunin-awase game
@@ -94,6 +96,7 @@ mannaka-kanji game
 meirei-narabe game
 mizu-mamoru game
 mukashi-narabe game
+musekitsui-nakama game
 naitei-no-michi app
 nanban-soudan game
 nemuri-kotsu game
