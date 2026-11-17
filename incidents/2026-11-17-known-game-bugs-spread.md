@@ -27,3 +27,4 @@
 - [x] 見つける: drift-check に `toast:blocks` を足し、コメントの中の「押すと開く」を鍵と見ないようにした（kimari-sagashi の見まちがい）（この PR）
 - [x] 見つける: `endless:stuck` が `endFinish()` の形と、正解したときに `$("quit").hidden = true` でボタンを隠す形を見落としていた（gurafu-minuki・rosen-hitofude・kusuri-yomi・taikyo-hiyo・tenkizu-yomi で見つけた）。両方を見分けに足した（2つ目の PR）
 - [x] 見つける: `endless:stuck` が、降りるボタンの中で `if (cur && cur.done) return;` のあとに保存や読み直しを挟む形（`save(...); finish();`・`const r = load()...`）を見落としていた（tani-kankaku・sentaku-hyoji・sekai-jikoku・bousai-handan・onpu-yomi・hyakunin-awase・wareki-yomi・shukujitsu-yurai・kyukoku-mei・kakuritsu-dotchi）。`$("quit").onclick = () => { if (cur && cur.done) return;` そのものを見分けに足した（3つ目の PR）
+- [x] 防ぐ: 作業用の木（worktree）で `.tools` を記号リンクにして `git add -A` すると、`.gitignore` の `.tools/`（フォルダだけに当たる）をすり抜けてリンクがコミットされ、CI の setup.sh が「mkdir: Already exists」で止まった（#342）。`.gitignore` を `.tools` にしてリンクも外す
