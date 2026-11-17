@@ -55,6 +55,13 @@ export function urlIncludes(src) {
   return URL_ARG.test(stripComments(src));
 }
 
+// heightRaw：押せる所の高さを丸めずに 44 とくらべている（drift-check の qa:height-raw）
+// 出てくる動き（translateY）の途中では、44px ちょうどの枠も 43.98… と測れることがあり、ときどきだけ落ちる
+// （2026-11-17 shokuhin-hyoji：CI でだけ・手元では3回に1回。incidents/2026-11-17-qa-44px-subpixel.md）。Math.round で丸めてくらべる
+export function heightRaw(qa) {
+  return /(?<!Math\.round\()\b[\w$.]*getBoundingClientRect\(\)\.height\s*<\s*44\b/.test(stripComments(qa));
+}
+
 // waitCounted：回数で区切るくり返し（for (let k = 0; k < N; k++)）の中に、待つだけの回 { await p.waitForTimeout(…); continue; } があり、時間（Date.now()）で区切っていない所の行番号（drift-check の qa:wait-count）
 // 2026-11-11 yarikuri-shotengai #4：店主の番を待つ回まで80回に数え、遅い CI で増築できる日まで進まずに落ちた（incidents/2026-11-11-qa-loop-counts-waits.md）
 export function waitCounted(qa) {

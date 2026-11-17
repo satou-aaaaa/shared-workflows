@@ -46,7 +46,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formProblems } from './check-issue-forms.mjs';
 import { readRepos, repoNames } from './repos.mjs';
-import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted, playerBugs } from './game-patterns.mjs';
+import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted, playerBugs, heightRaw } from './game-patterns.mjs';
 import { bareUrls, linkFiles, checkedMd } from './link-text.mjs';
 
 const OWNER = process.env.OWNER || 'satou-aaaaa';
@@ -318,6 +318,7 @@ const results = await pool(REPOS, 4, async (r) => {
       const wc = waitCounted(qa);
       if (wc.length) flag('qa:wait-count', `qa/run.mjs の ${wc.join('・')} 行目のくり返しが、待つだけの回（{ await p.waitForTimeout(…); continue; }）まで回数に数えている（遅い CI では回数が尽きて落ちる。待つ回は数えず、Date.now() で時間を区切る。incidents/2026-11-11-qa-loop-counts-waits.md）`);
       if (urlIncludes(qa)) flag('qa:url-includes', 'qa/run.mjs が URL を文字のまま includes・indexOf で探している（CodeQL が high の警告にして PR が赤のまま止まる。出典の定義を正規表現で見る。routines/game-dev.md の QA の行。incidents/2026-11-11-codeql-url-includes-in-qa.md）');
+      if (heightRaw(qa)) flag('qa:height-raw', 'qa/run.mjs が押せる所の高さを丸めずに 44 とくらべている（出てくる動きの途中で 43.98… と測れ、ときどきだけ落ちる。Math.round(…height) < 44 にする。incidents/2026-11-17-qa-44px-subpixel.md）');
       if (lit) flag('qa:literal-id', `qa/run.mjs の例外を待つ検査に、問題 id を文字で書いている「${lit[0].slice(-24)}」（G.POOL などデータから選ぶ。routines/game-dev.md の QA の行）`);
     }
 
