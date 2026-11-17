@@ -25,6 +25,7 @@
 | Permission guard（このリポジトリ） | `routines/autonomy.md`・`common.md` を変える PR にラベル「satou承認」が無い | `permission-guard.yml` | ラベル「satou承認」 |
 | UI check | 画面の使いやすさの悪化（開いてすぐ押せる部品の数が基準 +1 を超える・24px 未満の押す所や 12px 未満の字が増える・名前の無いボタン・横のはみ出し）。詳細などは click で開いてから数える | `ui-check.yml`・`scripts/ui-check.mjs` | 呼ぶ側の `qa/ui-check.json` と基準（`--update-baseline`） |
 | 見やすさの検査（ゲーム） | 色だけに頼る・字のコントラスト不足・字間を広げると崩れる・動き続ける・Tab の枠が無い・名前の無いボタン・知らせの場所が無い・斜体・決めつけの言葉。見やすさの設定がひな形とちがう | 各ゲームの `qa/a11y.mjs`（`template/qa/a11y.mjs` の写し。`qa/run.mjs` から回す）・`template/a11y/a11y.html`。写しのずれは `scripts/drift-check.mjs` | 新作に2つを写す（[game-dev.md](../routines/game-dev.md)「だれでも遊べるように」） |
+| 保存の読み直しの共通部品（ゲーム） | 2つの写しの合わせ方のまちがい（とことんを終えたあとに古い回が戻る・数が減る・別の回の取りちがえ）。共通部品を使わず自分で合わせている・写しがひな形とちがう | `template/store/store.js`・`scripts/check-store.mjs`（check.sh と Lint）・`scripts/drift-check.mjs`（store:load・store:block）・写しは `scripts/sync-template.mjs` | 新作は index.html に store:begin〜end を置き、load() を GameStore.load にする（[game-dev.md](../routines/game-dev.md)「保存の読み直し」） |
 | CodeQL | AI が書いたコードの脆弱性（無料、公開リポジトリ） | `codeql.yml` | 呼び出し側の `languages` |
 | Secret scan | PR と main への push に入った秘密（gitleaks） | `secret-scan.yml` | 呼び出し側を入れる、★ Push protection |
 | Game QA | ゲームをブラウザで自動で遊ぶ検査（PR と main。検査の名前 qa / qa を main の必須チェックに） | `game-qa.yml` | `template/.github/workflows/qa.yml`（呼び出し側）と、Actions「Add ruleset」で必須チェック |
@@ -66,7 +67,7 @@
 | 約束の台帳 | 「あとで確かめる」のまま忘れた作業（監督が期限切れを催促） | common.md「対応漏れを防ぐ」、共有フォルダ `notes/todo.md` | 共有フォルダに todo.md |
 | 節約モード | 利用上限での失敗が続く（提案・巡回を最小にする） | common.md「お金と利用枠」 | なし |
 
-チェックではない共通部品: `changes-page.yml`（マージした PR の題から遊ぶ人向けの更新情報ページを作る。呼び出し側の `app_name`・`ignore_paths`）、`fetch-page.yml`（クラウドから開けないページを Actions から読む。このリポジトリで workflow_dispatch。[known-limits.md](../routines/known-limits.md)）、`create-repo.yml`（新作のリポジトリを公開で作り、Pages とルールセットも入れる。このリポジトリで workflow_dispatch。鍵は環境 repo-create の REPO_CREATE_TOKEN ★。[onboarding.md](../routines/onboarding.md) 手順0）、`add-ruleset.yml`（あるリポジトリの main にルールセットだけを入れる。もうあれば何もしない。同じ鍵。onboarding.md 手順5）。
+チェックではない共通部品: `template-sync.yml`（ひな形の共通部品を全ゲームへ PR で配る。環境「template-sync」の `TEMPLATE_SYNC_TOKEN`。無いあいだは何もしない。routines/game-dev.md「保存の読み直し」）、`changes-page.yml`（マージした PR の題から遊ぶ人向けの更新情報ページを作る。呼び出し側の `app_name`・`ignore_paths`）、`fetch-page.yml`（クラウドから開けないページを Actions から読む。このリポジトリで workflow_dispatch。[known-limits.md](../routines/known-limits.md)）、`create-repo.yml`（新作のリポジトリを公開で作り、Pages とルールセットも入れる。このリポジトリで workflow_dispatch。鍵は環境 repo-create の REPO_CREATE_TOKEN ★。[onboarding.md](../routines/onboarding.md) 手順0）、`add-ruleset.yml`（あるリポジトリの main にルールセットだけを入れる。もうあれば何もしない。同じ鍵。onboarding.md 手順5）。
 
 ★ は satou さん本人の画面操作（onboarding.md の 5）。
 

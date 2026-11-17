@@ -27,6 +27,8 @@
 //   - ゲーム（index.html と sw.js がある）に、遊ぶ量を縛るチケット🎫や「○○すると開く」のモードの鍵がある（routines/game-dev.md「好きなだけ遊べるように」。satou さん 2026-11-06）
 //   - 公開リポジトリなのに repos.txt に無い（一覧の足し忘れ。API で読むときだけ。incidents/2026-11-07-repo-list-conflicts.md）
 //   - ゲームの sw.js が、入れるとき（install）に HTTP の保存を通して SHELL を取る（cache: 'reload' が無い。古い画面が新しい版に入る。routines/game-dev.md「PWA」）
+//   - ゲームの index.html の保存の共通部品（<!-- store:begin -->〜end）がひな形（template/store/store.js）とちがう・
+//     保存に失敗したときの写し（mem）を自分の load() で合わせていて、共通部品に切り替えていない（incidents/2026-11-17-endless-revive-after-save-failure.md）
 //   - ゲームの sw.js・qa/sw-check.mjs がひな形（template/sw.js の game:begin〜game:end の外）とちがう（scripts/sync-template.mjs で写す）
 //   - とことんの「ここで降りる」が正解の直後に効かない形がある・manifest がふつうのアイコンを maskable にも使い回す
 //   - ゲームの save が、localStorage に書けなかったときに黙っている（開き直すと記録が消える。incidents/2026-11-07-save-failure-silent.md）
@@ -82,6 +84,8 @@ const FEEDBACK_NAME = formProblems(readFileSync(join(here, '..', 'template', '.g
 const A11Y_BLOCK = (t) => (t.match(/<!-- a11y:begin[\s\S]*?<!-- a11y:end -->/) || [''])[0];
 const A11Y_HTML = A11Y_BLOCK(readFileSync(join(here, '..', 'template', 'a11y', 'a11y.html'), 'utf8'));
 const A11Y_QA = readFileSync(join(here, '..', 'template', 'qa', 'a11y.mjs'), 'utf8');
+import { STORE, storeBlock } from './sync-template.mjs';
+const STORE_HTML = storeBlock();
 const SW_QA = readFileSync(join(here, '..', 'template', 'qa', 'sw-check.mjs'), 'utf8');
 
 const allowPath = join(here, 'drift-allow.json');
@@ -241,6 +245,15 @@ const results = await pool(REPOS, 4, async (r) => {
       const am = await src.read('.github/workflows/automerge.yml');
       const on = (am.match(/^\s*workflows:\s*\[([^\]]*)\]/m) || [, ''])[1].split(',').map((x) => x.trim().replace(/^["']|["']$/g, ''));
       if (/^\s*scan \/ scan\s*$/m.test(am) && !on.includes('Secret scan')) flag('automerge:scan', '.github/workflows/automerge.yml の require_checks に scan / scan があるのに、on.workflow_run.workflows に Secret scan が無い（Secret scan が後に終わるとマージされない。workflows に Secret scan を足す）');
+      // 自動マージは GITHUB_TOKEN でマージするので main の push で Secret scan が動かない。dispatch に無いと、main の Secret scan の失敗の Issue が古いまま残る
+      // （2026-11-17 hatsuden-kurabe #1 の CodeRabbit。incidents/2026-11-17-template-review-gaps-again.md）
+      const disp = (am.match(/^\s*dispatch:\s*(.*)$/m) || [, ''])[1];
+      if (on.includes('Secret scan') && paths.has('.github/workflows/secret-scan.yml') && /recheck_main:\s*false/.test(am) && !/\bsecret-scan\.yml\b/.test(disp)) flag('automerge:scan-dispatch', '.github/workflows/automerge.yml の dispatch に secret-scan.yml が無い（自動マージのあと main で Secret scan が動かず、失敗の Issue が閉じない。template/.github/workflows/automerge.yml を写す）');
+      // Secret scan を入れたのに require_checks に scan / scan が無いと、QA だけ ✅ で scan の前にマージされる。
+      // ゲームの問題の表（data.js）を変える PR は CodeRabbit を読んでから手でマージする（hold_paths）。ひな形から始めた新作で両方抜けた
+      // （2026-11-17 gairai-miwake #1 の CodeRabbit。incidents/2026-11-17-new-game-automerge-gaps.md）
+      if (paths.has('.github/workflows/secret-scan.yml') && !/^\s*scan \/ scan\s*$/m.test(am)) flag('automerge:scan-required', '.github/workflows/automerge.yml の require_checks に scan / scan が無い（Secret scan の前にマージされる。require_checks に scan / scan を足す）');
+      if (paths.has('data.js') && paths.has('sw.js') && !/hold_paths:[^\n]*data\\\.js/.test(am)) flag('automerge:hold-data', '.github/workflows/automerge.yml の hold_paths に data.js が無い（問題の表を変える PR が CodeRabbit を待たずにマージされる。hold_paths に data\\.js を足す）');
     }
 
     // main の守り（削除と force push の禁止）。設定画面でしか入れられず、Chrome が無い日の受け入れで抜けたまま気づかれなかった
@@ -291,6 +304,10 @@ const results = await pool(REPOS, 4, async (r) => {
         if ((await src.read('qa/a11y.mjs')) !== A11Y_QA) flag('a11y:qa', 'qa/a11y.mjs がひな形とちがう（template/qa/a11y.mjs をもう一度写す。ゲームごとの許しは qa/a11y.json に理由つきで）');
         if (paths.has('qa/run.mjs') && !(await src.read('qa/run.mjs')).includes('a11y.mjs')) flag('a11y:run', 'qa/run.mjs が qa/a11y.mjs を回していない（CI の QA で見やすさが見られない）');
       }
+      // 保存の読み直し：2つの写しを合わせる決まりは共通部品だけに置く（直すときに1か所で済むように。2026-11-17 satou さん）
+      const store = (page.match(STORE) || [''])[0];
+      if (store && store !== STORE_HTML) flag('store:block', 'index.html の保存の共通部品がひな形とちがう（node scripts/sync-template.mjs で写す。写しを直さない）');
+      else if (!store && /JSON\.parse\(mem\)/.test(page)) flag('store:load', 'load() が保存の写しを自分で合わせている（共通部品 template/store/store.js に切り替える。routines/game-dev.md「保存の読み直し」）');
     }
 
     // QA の「この問題は作れない」検査に、問題 id を文字で書かない。別のゲームから写した id がそのゲームに無いと、
@@ -334,7 +351,7 @@ const results = await pool(REPOS, 4, async (r) => {
     // 黙っていると遊ぶ人は気づけない（2026-11-07 暑さ指数よみの PR のレビューで見つけ、同じ作りのゲーム14本を直した。incidents/2026-11-07-save-failure-silent.md）
     if (paths.has('index.html')) {
       const page = pageCache ?? await src.read('index.html');
-      for (const [id, msg] of playerBugs(page)) if (['save:silent', 'hint:cut-moves', 'hint:left-fixed', 'stars:role', 'endless:stuck', 'toast:blocks'].includes(id)) flag(id, msg); // 見分けは scripts/game-patterns.mjs の playerBugs（ゲームの PR の QA も同じものを使う）
+      for (const [id, msg] of playerBugs(page)) if (['save:silent', 'hint:cut-moves', 'hint:left-fixed', 'stars:role', 'endless:stuck', 'endless:revive', 'toast:blocks'].includes(id)) flag(id, msg); // 見分けは scripts/game-patterns.mjs の playerBugs（ゲームの PR の QA も同じものを使う）
       // ヒント2：まちがいを除いてから消す数を決めると、しぼったあとにまちがいを選んだとき、消した選び肢が戻る（saibanin-shikumi #1 の CodeRabbit）
       // コメントを除き、複数行の定義も終わりまで見る（scripts/game-patterns.mjs。見分けの検査は scripts/check-game-patterns.mjs）
       // ヒント2のあとの「のこりは○つ」は、いま押せる選び肢の数を出す（決まった「2つ」だと、先に最後のまちがいを選んだとき、のこり1つでも2つと出る）

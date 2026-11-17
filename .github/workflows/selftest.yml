@@ -7,6 +7,7 @@ name: Selftest
 # - 公開後の確認のスクリプト（smoke.mjs）を、正常なページと存在しないページの両方に当て、結果の見分けが合っているかを見る
 # - 画面の検査（ui-check.mjs）を、基準どおりの見本と、ボタンを足した・はみ出した見本に当てる
 # - 見やすさの検査（template/qa/a11y.mjs）のコントラストの測り方を、薄い字・濃い字の見本に当てる
+# - 見やすさの設定のひな形（template/a11y/a11y.html）が、開いたあとの端末の設定の変更・保存の失敗のあとの変更を正しく扱うか
 # 考え方: 全体に出す前に一部で試す（Google SRE Workbook「Canarying Releases」 https://sre.google/workbook/canarying-releases/ ）
 on:
   pull_request:
@@ -84,3 +85,10 @@ jobs:
           export CHROME_PATH
           CHROME_PATH=$(command -v google-chrome || command -v chromium)
           node scripts/check-a11y-contrast.mjs
+      # 見やすさの設定のひな形が、開いたあとの端末の設定の変更・保存の失敗のあとの変更を正しく扱うか（2026-11-17 hatsuden-kurabe #1・nenkin-shikumi #1 の CodeRabbit）
+      - name: 見やすさの設定（template/a11y/a11y.html）の動き
+        run: |
+          set -euo pipefail
+          export CHROME_PATH
+          CHROME_PATH=$(command -v google-chrome || command -v chromium)
+          node scripts/check-a11y-block.mjs

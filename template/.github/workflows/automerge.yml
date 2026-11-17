@@ -2,7 +2,7 @@ name: Auto merge
 
 # 検査（QA）がプルリクエストで ✅ になったら自動で squash マージする。中身と条件は共通部品 satou-aaaaa/shared-workflows。
 # QA・Setup check・Secret scan のどれが後に終わっても判定し直す（先に終わった方の回は、ほかを待って止まり、後から再実行されないため。2026-10-31）。
-# Secret scan を外したリポジトリは、workflows から Secret scan、require_checks から scan / scan を消す（drift-check の automerge:scan が見る）。
+# Secret scan を外したリポジトリは、workflows から Secret scan、require_checks から scan / scan、dispatch から secret-scan.yml を消す（drift-check の automerge:scan が見る）。
 on:
   workflow_run:
     # Setup check（準備のファイルを変えた PR だけで動く）・Secret scan が終わったときにも判定し直す
@@ -25,9 +25,13 @@ jobs:
       pages_build: true
       delete_branch: true
       # 同じコミットで ✅ が要る検査（改行区切り）。きっかけが Setup check のときも QA が通っていなければマージしない
-      # Secret scan を入れたリポジトリは "scan / scan" も足す
+      # Secret scan を外したリポジトリは "scan / scan" を消す（drift-check の automerge:scan-required が見る）
       require_checks: |
         qa / qa
+        scan / scan
+      # 問題の表（data.js など）・PWA の仕組みを変える PR は自動ではマージせず、CodeRabbit を読んでから手でマージ。表のファイル名はゲームに合わせる
+      # （drift-check の automerge:hold-data が見る。incidents/2026-11-17-new-game-automerge-gaps.md）
+      hold_paths: '^(sw\.js|manifest\.webmanifest|data\.js)$'
       # 動いたときだけ成功を待つ検査。準備のファイルを変えた PR は Setup check が通るまでマージしない（2026-11-07 atsusa-shisu #1・#252 の CodeRabbit）
       present_checks: |
         setup / setup
@@ -35,4 +39,6 @@ jobs:
       # （GITHUB_TOKEN のマージでは main の push で動かないため。Setup check を起こさないと、月1の失敗の Issue が次の月まで閉じない。#252 の CodeRabbit）
       recheck_main: false
       # Link check も起こす（GITHUB_TOKEN のマージでは main の push で動かず、直したリンクが次の週まで赤のまま。版11の CodeRabbit）
-      dispatch: qa.yml setup-check.yml link-check.yml
+      # Secret scan も起こす（main で一度落ちると、次のマージでも main では動かず、失敗の Issue が古いまま残る。2026-11-17 hatsuden-kurabe #1 の CodeRabbit）
+      # Secret scan を外したリポジトリは、ここからも secret-scan.yml を消す（無いワークフローを起こすと赤になる）
+      dispatch: qa.yml setup-check.yml link-check.yml secret-scan.yml

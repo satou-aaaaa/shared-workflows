@@ -149,6 +149,10 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 - iPhone はブラウザ（Safari）とホーム画面のアプリで記録が別。ホーム画面のアプリで遊ぶ人は、アプリの中の「引き継ぎ」にコードを貼る（画面にも書いてある）。
 - `node scripts/drift-check.mjs` が、PWA のゲームに `transfer.js` が無い・版が古いのを知らせる。
 
+## 保存の読み直し（2つの写しを合わせる。satou さん 2026-11-17「共通化をし、そこを修正する」）
+
+保存に失敗したときの写し `mem` と localStorage を合わせる決まりは、共通部品 `template/store/store.js` だけに置く。ゲームの `load()` は `return GameStore.load(KEY, mem, { v: 1, fresh, tidy, bank, doneOf, bookOf, objs: [...] })` の1つにし、合わせ方を自分で書かない（ちがうところは `join`・`field`・`differ`・`after` などの手で渡す。手の一覧は store.js の頭）。部品は index.html の `<!-- store:begin -->`〜`<!-- store:end -->` に `node scripts/sync-template.mjs <ゲームのフォルダ>` で写す（ファイルを足さないので sw.js の SHELL は変えない）。直すときは store.js と `scripts/check-store.mjs` を直し、写しを配る。まだ切り替えていないゲームは drift-check が `store:load` で出す（incidents/2026-11-17-endless-revive-after-save-failure.md）。
+
 ## トークンを節約する（satou さん 2026-11-07「トークンを節約するための改善も」）
 
 ゲームのスレッドは十数本が同時に動くので、1本の読みすぎが全部の利用枠を減らす。出典：[Claude Code: Manage costs](https://code.claude.com/docs/en/costs)（CLAUDE.md は短く・長い出力はしぼる）、[Memory](https://code.claude.com/docs/en/memory)（`@` で取り込んだファイルは全文が毎回読まれる）。
@@ -173,6 +177,7 @@ game-dev.md の手順 A の各番号の元の全文。本体には動作だけ�
    あわせて shared-workflows を `git pull` してから `node scripts/sync-template.mjs --check ../<ゲーム>` を回し、ちがえば `node scripts/sync-template.mjs ../<ゲーム>` で写す（作っているあいだにひな形の版が上がる。PR の QA の「ひな形の写し」も見る。incidents/2026-11-07-new-game-old-template.md）。
    レビュー（CodeRabbit）がひな形の写し（transfer.js・qa/a11y.mjs・qa/transfer-check.mjs・qa/sw-check.mjs・scripts/setup.sh・共通部品の呼び出し）に指摘したら、ゲームでは直さず、その日のうちに shared-workflows でひな形を直す PR を出し（直さない指摘は理由を返す）、直したら版を上げて全部のゲームへ配る。ゲームの PR は待たずに進めてよい（2026-11-07 同じ指摘が新作ごとに繰り返された。`incidents/2026-11-07-game-template-review-gaps.md`）。
 6. `node qa/run.mjs` が全部通ってから PR。記録のキー（localStorage）は `<短い名>-v1` のように短くし、ほかのゲームと重ならないことを確かめる（同じ github.io の下なので、重なると記録が混ざる）。確かめ方：`gh api -X GET search/code -f q='"<キー>" user:satou-aaaaa'` で全部のリポジトリを探し、さらに各ゲームの `data-keys` の `xdoko-*` のような「* で終わる名前」に新しいキーが前方一致しないかも見る（引き継ぎコードは * を前方一致で読む）。探せなかったら先へ進まない。並行して作っている新作とぶつからないよう、決めたキーを手順1の「題材:」Issue の本文に書き、開いている「題材:」Issue のキーとも比べる（番号の小さい Issue が先に取ったキーを使う）。`chosakuken-v1` のような長い名前は Secret scan（gitleaks）が `data-keys=`・`KEY =` の値を鍵と読み違えて PR #1 が落ちる（2026-11-11 著作権のきほん）。落ちたら、まずキーを短い名前に替え、新しいキーで上の重なりの確かめをやり直して「題材:」Issue のキーも書き直す（squash マージのあと main への push でも Secret scan が回り、そのときは最後の中身だけを見るので、替えておけば main では出ない）。PR の古いコミットに残った分は、誤検知と確かめたうえで全部、指紋（`<コミットの全 SHA>:<ファイル>:<規則>:<行>`。Secret scan の要約のファイル・行・規則・コミットから作るか、手元で `gitleaks git --log-opts="origin/main..HEAD" --redact -v` を回して `Fingerprint:` の行を写す）を`.gitleaksignore` に理由つきで書く（数は結果に合わせる）。`sw.js` を含む PR は `@coderabbitai review` とコメントし、レビューを読んでから手でマージする。
+   - 今日の問題で「この形の問題なら」を確かめる検査は、その形が出る日を選んでから確かめる（今日の問題の形は日によって変わる。`QA_SHIFT_DAYS` が無いときは、その形になる日まで進める）。形を足したら、前からの検査が日によって落ちないか、30日分ずらして回す（`incidents/2026-11-17-known-game-bugs-spread.md`。kengen-check・kyukoku-mei）。
    - 印刷用の紙（`print.html` など、A4 の `.page`）を持つゲームは、QA で「はみ出さない」だけでなく「下に 5mm 以上の空きがある」も見る。字の形は手元と CI でちがい、手元でぎりぎり入っても CI ではみ出す（`incidents/2026-11-11-yarikuri-print-overflow-ci.md`）。
 7. マージの直前にもう一度 `node scripts/sync-template.mjs --check ../<ゲーム>` を回す（PR を出したあとにひな形の版が上がることがある。ちがえば写して push し直す）。Pages を main のルートで公開する（[onboarding.md](onboarding.md) 手順5の1）。`node scripts/drift-check.mjs` に `pages` の行が出ないこと、Actions の Post-deploy check が緑になったことを見るまで、X などで紹介しない（2026-11-04 3本が 404 のまま紹介された。incidents/2026-11-04-pages-never-enabled.md）。
 8. shared-workflows に PR を1つ出し、一覧に足す（[onboarding.md](onboarding.md) 手順3）。足すのは次の3か所だけで、どれも**名前の ABC 順の位置**に1行入れる（末尾に足さない。並行の新作の PR が同じ所に足すとぶつかる。2026-11-07 #184 が3つの PR とぶつかった。incidents/2026-11-07-repo-list-conflicts.md）。
