@@ -25,7 +25,7 @@ export function scaffold(to) {
   const copied = [];
   const kept = [];
   for (const f of templateFiles()) {
-    if (SKIP.some((d) => f.startsWith(d))) continue; // 部品のもとは写さない（index.html の印のあいだに sync-template.mjs で写す）
+    if (SKIP.some((d) => f.replaceAll('\\', '/').startsWith(d))) continue; // 部品のもとは写さない（index.html の印のあいだに sync-template.mjs で写す）
     const dest = join(to, f);
     if (existsSync(dest)) { kept.push(f); continue; }
     mkdirSync(dirname(dest), { recursive: true });
