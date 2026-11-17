@@ -9,6 +9,7 @@
 //   tabs:    回の印（bindSure の2つ目）が同じなら、別のタブ・開き直したあとで答えても judge は1回だけ数える（版5、shared-workflows #352）
 //   mix:     今日出す復習は種類が続かない・多くて10問
 //   nosave:  保存に失敗しても開いているあいだは覚え、saveWarn(true) を呼ぶ。控えがあるあいだはゲームの saveWarn(false) で帯を消さない。保存できるようになったら合わせて書く
+//   nosave-tabs: 保存できないタブで足した数と、そのあいだにほかのタブが保存した数を両方残す（版6、recycle-mark #7 の CodeRabbit）
 //   nosave-del: 保存に失敗したまま「覚えた」で消した項目を、保存できるようになったとき戻さない・覚えた数を重ねない（版4）
 //   junk:    壊れた記録（配列・文字・変な日付）でも止まらず、空の形に直す
 //   proto:   鍵が constructor・__proto__・toString でも止まらず、ふつうの鍵として数える（2026-11-11 CodeRabbit）
@@ -127,6 +128,22 @@ export async function checkDepth(code) {
     ok("nosave: 保存できたら控えと合わせて書く", Object.keys(JSON.parse(ls.getItem("t-depth")).rv).length === 2);
     t.window.saveWarn(false);
     ok("nosave: 控えを書けたら、ゲームの保存で帯が消える", t.warn.on === false);
+
+    // nosave-tabs：A は保存できないまま自信ありを1つ、そのあいだに B が保存できて1つ。A が保存できるようになったら2つ
+    {
+      const m = store(); let failA = true;
+      const lsA = { getItem: m.getItem, removeItem: m.removeItem, setItem: (k, v) => { if (failA) throw new Error("QuotaExceededError"); m.setItem(k, v); } };
+      const A = boot(code, { ls: lsA }), B = boot(code, { ls: m });
+      for (const x of [A, B]) x.els["dp-sure"] = { setAttribute() {}, onclick: null };
+      A.D.bindSure("p|1", "ra|0"); A.els["dp-sure"].onclick(); A.D.judge(true);
+      B.D.bindSure("p|2", "rb|0"); B.els["dp-sure"].onclick(); B.D.judge(true);
+      ok("nosave-tabs: 保存できないあいだは、控えと保存済みの両方を数える", A.D.stats().sure === 2 && A.D.stats().sureOk === 2);
+      failA = false; A.D.mark("p|1", 0);
+      const sv = JSON.parse(m.getItem("t-depth"));
+      ok("nosave-tabs: 保存できたら、ほかのタブが足した分も残す（自信あり2・当たり2）", sv.sure === 2 && sv.sureOk === 2);
+      A.D.mark("p|3", 1);
+      ok("nosave-tabs: 保存できたあとは足した分を二重に数えない", JSON.parse(m.getItem("t-depth")).sure === 2);
+    }
 
     // nosave-del：保存に失敗したまま「覚えた」で消した項目を、保存できるようになったとき保存済みの分から戻さない（hatsuden-kurabe #1 の CodeRabbit）
     {

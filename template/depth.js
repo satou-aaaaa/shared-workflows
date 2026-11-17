@@ -1,5 +1,5 @@
 // 深さの部品（depth.js）：1問の中に2つ目の判断を足す「自信をかける」と、まちがえた問題が間をあけて戻る「復習」。
-// 深さの版: 5
+// 深さの版: 6
 // 正：satou-aaaaa/shared-workflows の template/depth.js（各ゲームはこれをそのまま写す。直すときはひな形を直して配り、版を上げる）
 // 考え（routines/game-dev.md「1問を深くする」）:
 //   - 自信をかける：答える前に「たしか」を押せる（押さなければ「たぶん」）。自分の見立てが当たったかが2つ目の勝負になる。
@@ -36,6 +36,9 @@
   var kindOf = typeof cfg.kindOf === "function" ? cfg.kindOf : function (k) { return String(k).split("|")[0]; };
   var valid = function () { return true; }; // 作り直せる鍵か（ゲームが setValid で渡す）
   var mem = null; // 保存できないあいだの控え
+  // 保存できないあいだに足した数（自信あり・当たり・覚えた）。合わせるとき「保存済みの数＋足した分」にする
+  // （多いほうを取ると、そのあいだにほかのタブが保存した分が消えていた。版6、recycle-mark #7 の CodeRabbit）
+  var pend = { sure: 0, sureOk: 0, learned: 0 };
   // 復習の控えが残っているあいだは、ゲーム本体の保存がうまくいっても帯を消さない（2026-11-11 CodeRabbit、版3）
   var held = false;
   function hold() {
@@ -92,10 +95,10 @@
     try { a = mem !== null ? JSON.parse(mem) : null; } catch (e) {}
     if (!a) return tidy(b);
     if (!b) return tidy(a);
-    // 保存に失敗していたあいだの控えと、保存されている分を合わせる（数は多いほう、復習は新しく書いたほう）
+    // 保存に失敗していたあいだの控えと、保存されている分を合わせる（数は保存済み＋控えで足した分、復習は新しく書いたほう）
     a = tidy(a); b = tidy(b);
     var s = fresh();
-    s.sure = Math.max(a.sure, b.sure); s.sureOk = Math.max(a.sureOk, b.sureOk); s.learned = Math.max(a.learned, b.learned);
+    ["sure", "sureOk", "learned"].forEach(function (n) { s[n] = Math.max(a[n], b[n] + pend[n]); });
     [b.rv, a.rv].forEach(function (rv) { for (var k in rv) if (!s.rv[k] || rv[k].t >= s.rv[k].t) s.rv[k] = rv[k]; });
     // 消した印も合わせる（控えで消した項目を、保存されている分から戻さない。版4）
     [b.gone, a.gone].forEach(function (gone) { for (var k in gone) if (!(k in s.gone) || gone[k] > s.gone[k]) s.gone[k] = gone[k]; });
@@ -103,10 +106,12 @@
     return tidy(s);
   }
   function write(fn) {
-    var s = read();
+    var s = read(), was = { sure: s.sure, sureOk: s.sureOk, learned: s.learned };
     fn(s);
     var j = JSON.stringify(s);
-    try { localStorage.setItem(KEY, j); mem = null; } catch (e) { mem = j; hold(); if (typeof window.saveWarn === "function") { try { window.saveWarn(true); } catch (e2) {} } }
+    try { localStorage.setItem(KEY, j); mem = null; pend = { sure: 0, sureOk: 0, learned: 0 }; } catch (e) {
+      for (var n in pend) pend[n] += Math.max(0, num(s[n]) - was[n]);
+      mem = j; hold(); if (typeof window.saveWarn === "function") { try { window.saveWarn(true); } catch (e2) {} } }
     return s;
   }
 
@@ -200,5 +205,5 @@
   }
   if (document.head) style(); else document.addEventListener("DOMContentLoaded", style);
 
-  window.Depth = { VERSION: 3, KEY: KEY, GAPS: GAPS, mark: mark, due: due, count: count, waiting: waiting, setValid: setValid, sureHtml: sureHtml, bindSure: bindSure, judge: judge, runStart: runStart, runStats: runStats, stats: stats, _tidy: tidy };
+  window.Depth = { VERSION: 6, KEY: KEY, GAPS: GAPS, mark: mark, due: due, count: count, waiting: waiting, setValid: setValid, sureHtml: sureHtml, bindSure: bindSure, judge: judge, runStart: runStart, runStats: runStats, stats: stats, _tidy: tidy };
 })();
