@@ -39,6 +39,7 @@ jintai-shikumi game
 jitensha-rule game
 jobun-tobatsu game
 kabu-news game
+kaden-anzen game
 kaji-mamoru game
 kakuritsu-dotchi game
 kansen-yobo game
