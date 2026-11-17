@@ -69,6 +69,7 @@ kaji-mamoru game
 kakuritsu-dotchi game
 kanazukai-dotchi game
 kanji-tsukaiwake game
+kankaku-ate game
 kansen-yobo game
 kasane-zome game
 kaseki-ate game
