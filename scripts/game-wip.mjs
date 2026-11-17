@@ -20,6 +20,10 @@ export const PARK_DAYS = 3; // これ以上動いていなければ needs-decisi
 export const repoOf = (body) => (body || '').match(/^repo:\s*([\w.-]+)\s*$/m)?.[1] || null;
 // 途中で止めたときに push したブランチ（`branch: <名前>` の行）
 export const branchOf = (body) => (body || '').match(/^branch:\s*([\w./-]+)\s*$/m)?.[1] || null;
+// 毎日の回とは別のスレッドが作っているとき（`thread: <スレッドの題>` の行）。毎日の回は触らず、作りかけの数にも入れない。
+// ただし Issue が PARK_DAYS 日動いていなければ、スレッドが止まったものとして毎日の回が引き取る（取り残し防止）。
+// きっかけ: 2026-11-17 satou さんの頼みで別スレッドが新作2本を並行で作るとき、毎日の回と同じゲームを2つの PR で直すおそれがあった。
+export const threadOf = (body) => (body || '').match(/^thread:\s*(\S.*?)\s*$/m)?.[1] || null;
 const parked = (i) => (i.labels || []).some((l) => (l.name || l) === 'needs-decision');
 export const isTopic = (i) => !i.pull_request && /^題材:/.test(i.title);
 
@@ -45,10 +49,14 @@ export async function collect(api) {
   const wip = [];
   const queue = [];
   const parkedList = [];
+  const others = [];
   for (const i of topics) {
     const repo = repoOf(i.body);
     if (!repo) { queue.push({ number: i.number, title: i.title, url: i.html_url }); continue; }
     if (parked(i)) { parkedList.push({ number: i.number, title: i.title, url: i.html_url, repo }); continue; }
+    const thread = threadOf(i.body);
+    const idle = i.updated_at ? (Date.now() - Date.parse(i.updated_at)) / 864e5 : 0;
+    if (thread && idle < PARK_DAYS) { others.push({ number: i.number, title: i.title, url: i.html_url, repo, thread }); continue; }
     const r = await api(`repos/${OWNER}/${repo}`, { nullOn404: true });
     const prs = r ? await api(`repos/${OWNER}/${repo}/pulls?state=open&per_page=10`) : [];
     const pages = r ? Boolean(r.has_pages) : false;
@@ -56,12 +64,13 @@ export async function collect(api) {
     w.next = nextStep(w);
     wip.push(w);
   }
-  return { wip, queue, parked: parkedList };
+  return { wip, queue, parked: parkedList, others };
 }
 
 // 今日することを、する順に並べる
-export function plan({ wip, queue, parked: p = [] }) {
+export function plan({ wip, queue, parked: p = [], others = [] }) {
   const out = [];
+  for (const x of others) out.push(`別スレッドが担当 #${x.number} ${x.repo}（${x.thread}）: 触らない。作りかけに数えない`);
   for (const x of p) out.push(`止めている #${x.number} ${x.repo}: needs-decision の答え待ち。作りかけに数えない`);
   for (const w of wip) out.push(`作りかけ #${w.number} ${w.repo}: ${w.next}`);
   if (wip.length < WIP_LIMIT && queue.length) out.push(`空きあり（${wip.length}/${WIP_LIMIT}）: 候補 #${queue[0].number}「${queue[0].title}」を始める（Issue の本文に repo: <名前> を足す）`);

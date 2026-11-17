@@ -2,7 +2,7 @@
 import { mkdtempSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { collect, plan, repoOf, branchOf, WIP_LIMIT } from './game-wip.mjs';
+import { collect, plan, repoOf, branchOf, threadOf, WIP_LIMIT } from './game-wip.mjs';
 import { scaffold, templateFiles, TODO } from './new-game.mjs';
 
 const errors = [];
@@ -11,6 +11,7 @@ const ok = (cond, msg) => { if (!cond) errors.push(msg); };
 ok(repoOf('説明\nrepo: kotoba-game\n') === 'kotoba-game', 'repo: の行を読めない');
 ok(repoOf('repo は未定') === null, 'repo: の行が無いのに作りかけにした');
 ok(branchOf('repo: a\nbranch: claude/x-1\n') === 'claude/x-1', 'branch: の行を読めない');
+ok(threadOf('repo: a\nthread: 次の新作ゲームを2本作る\n') === '次の新作ゲームを2本作る', 'thread: の行を読めない');
 
 const old = new Date(Date.now() - 3 * 864e5).toISOString();
 const day1 = new Date(Date.now() - 1.5 * 864e5).toISOString();
@@ -22,6 +23,8 @@ const fake = {
     { number: 7, title: '題材: 丁（丁）', body: 'repo: game-d', html_url: 'u7', labels: [{ name: 'needs-decision' }] },
     { number: 8, title: '題材: 戊（戊）', body: 'repo: game-e\nbranch: claude/e-1', html_url: 'u8' },
     { number: 10, title: '題材: 己（己）', body: 'repo: game-f', html_url: 'u10' },
+    { number: 11, title: '題材: 庚（庚）', body: 'repo: game-g\nthread: 別の作業', html_url: 'u11', updated_at: new Date().toISOString() },
+    { number: 12, title: '題材: 辛（辛）', body: 'repo: game-h\nthread: 止まった作業', html_url: 'u12', updated_at: old },
     { number: 4, title: 'ほかの Issue', body: 'repo: x', html_url: 'u4' },
     { number: 6, title: '題材: PR', body: '', html_url: 'u6', pull_request: {} },
   ],
@@ -32,10 +35,13 @@ const fake = {
   'repos/satou-aaaaa/game-e/pulls?state=open&per_page=10': [],
   'repos/satou-aaaaa/game-f': { has_pages: false },
   'repos/satou-aaaaa/game-f/pulls?state=open&per_page=10': [{ number: 1, updated_at: day1 }],
+  'repos/satou-aaaaa/game-h': { has_pages: false },
+  'repos/satou-aaaaa/game-h/pulls?state=open&per_page=10': [],
 };
 const api = async (p) => (p in fake ? fake[p] : (() => { throw new Error(`読まないはずの所 ${p}`); })());
 const data = await collect(api);
-ok(data.wip.map((w) => w.number).join() === '5,8,9,10', `作りかけの見分けがちがう: ${data.wip.map((w) => w.number)}`);
+ok(data.wip.map((w) => w.number).join() === '5,8,9,10,12', `作りかけの見分けがちがう: ${data.wip.map((w) => w.number)}`);
+ok(data.others.map((w) => w.number).join() === '11', '別スレッドが作っているものを作りかけに数えた（3日動かないものは引き取る）');
 ok(data.parked.map((w) => w.number).join() === '7', 'needs-decision の作りかけを数えている');
 ok(data.queue.map((q) => q.number).join() === '3', `候補の列がちがう: ${data.queue.map((q) => q.number)}`);
 const byNo = Object.fromEntries(data.wip.map((w) => [w.number, w.next]));
@@ -46,6 +52,7 @@ ok(/リポジトリを作る/.test(byNo[9]), 'リポジトリが無いのに作�
 const lines = plan(data);
 ok(WIP_LIMIT !== 2 || lines.some((l) => /空きなし/.test(l)), '上限に達しても新しい候補を始めようとする');
 ok(lines.some((l) => /候補が 1 本/.test(l)), '候補が少ないのに足すよう出さない');
+ok(lines.some((l) => /別スレッドが担当 #11/.test(l) && /触らない/.test(l)), '別スレッドが作っているものを触らないと出さない');
 ok(lines.some((l) => /止めている #7/.test(l)), '止めている作りかけを出さない');
 const free = plan({ wip: [data.wip[0]], queue: data.queue, parked: data.parked });
 ok(free.some((l) => /#3/.test(l) && /始める/.test(l)), '空きがあるのに候補を始めない');

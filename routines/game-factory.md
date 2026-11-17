@@ -27,6 +27,7 @@
 - 本文に `repo: <リポジトリ名>` の行が無い Issue は候補、ある Issue は作りかけ。始めるときに `repo:` の行を足す。候補の Issue がそのまま担当の Issue になる（game-dev.md A 手順1の Issue を新しく立てない）。
 - 途中で止めてブランチだけ push したときは、本文に `branch: <ブランチ名>` の行を足す。次の回の `game-wip.mjs` が「そのブランチから続ける」と出す。
 - ラベル needs-decision の付いた作りかけは止めているものとし、2本の数に入れない（`game-wip.mjs` が数えない）。
+- 毎日の回とは別のスレッドが satou さんに頼まれて作るときは、そのスレッドが本文に `repo:` と `thread: <スレッドの題>` の行を足す。毎日の回は触らず、2本の数にも入れない（同じゲームを2つの PR で直さないため。2026-11-17）。Issue が3日動いていなければ、毎日の回がふつうの作りかけとして引き取る。
 - 公開したら Issue に公開先を書いて completed で閉じる。やめたら not planned で閉じる。
 
 ## 手順
@@ -43,6 +44,7 @@
    | 「作りかけ … ブランチ X を checkout して続ける」 | `git -C ../<名前> fetch origin X` と `git -C ../<名前> checkout X` をしてから、続きを作る。PR を出したら Issue の `branch:` の行を消す |
 | 「作りかけ … needs-decision を付ける」 | 止まっている理由を Issue に書き、ラベル needs-decision を付ける。そのあと手順5のとおり `game-wip.mjs` を回し直す |
 | 「止めている …」 | 何もしない（satou さんの答えを待つ） |
+| 「別スレッドが担当 …」 | 何もしない（そのスレッドが公開して Issue を閉じる） |
 | 「作りかけ … PR #1 を作る」 | game-dev.md A 手順4〜6。始めは `node scripts/new-game.mjs ../<名前>` で、古いゲームから写さない |
    | 「作りかけ … リポジトリを作る」 | game-dev.md A 手順3（onboarding.md 手順0） |
    | 「作りかけ … 公開済み」 | Post-deploy check が緑か見る。緑なら game-dev.md A 手順8（一覧の PR）をし、Issue を completed で閉じ、報告する（手順6） |
