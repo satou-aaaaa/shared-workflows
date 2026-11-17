@@ -308,6 +308,7 @@ const results = await pool(REPOS, 4, async (r) => {
       const store = (page.match(STORE) || [''])[0];
       if (store && store !== STORE_HTML) flag('store:block', 'index.html の保存の共通部品がひな形とちがう（node scripts/sync-template.mjs で写す。写しを直さない）');
       else if (!store && /JSON\.parse\(mem\)/.test(page)) flag('store:load', 'load() が保存の写しを自分で合わせている（共通部品 template/store/store.js に切り替える。routines/game-dev.md「保存の読み直し」）');
+      if (paths.has('store/store.js')) flag('store:file', 'store/store.js をファイルで置いている（部品は index.html の store:begin〜end にだけ写す。ファイルは消す。incidents/2026-11-17-new-game-store-file.md）');
     }
 
     // QA の「この問題は作れない」検査に、問題 id を文字で書かない。別のゲームから写した id がそのゲームに無いと、
