@@ -23,4 +23,8 @@
 - [x] 直す: mizu-mamoru で、新しいほうが null のとことんは古い途中経過で戻さないようにし、QA に「終えた保存が失敗しても戻らない」を足した（mizu-mamoru #1）
 - [x] 防ぐ: `scripts/game-patterns.mjs` の playerBugs に endless:revive を足し、ゲームの PR が新しく持ち込んだら game-qa の「遊ぶ人が困る作り」で落とす（この PR）
 - [x] 見つける: drift-check でも endless:revive を出す（`scripts/drift-check.mjs`、この PR）
-- [ ] 直す: すでにある各ゲーム（2026-11-17 に main の index.html を見て73本）を mizu-mamoru と同じ1行に直す。この作業のリポジトリへの権限が無いので、まとめて直すスレッドを別に立てて同じ日に進める（#329 と合わせる。担当: 一括で直すスレッド、期限: 2026-11-18）
+- [x] 直す: すでにある各ゲームを mizu-mamoru と同じ1行に直した。73本のうち69本に PR（各ゲームの枝 claude/project-thread-pfnbek、題「保存に失敗したあと終えたとことんが、読み直しで古い途中経過に戻らないようにする」）。4本（終わりを `gone` で別に持つ形）は直し済み。とことんの無い6本は、終えるまで途中経過を null にしないので起きない
+- [x] 防ぐ: 2つの写しを合わせる決まりを共通部品 `template/store/store.js`（GameStore）に集め、ゲームの load() はそれを呼ぶだけにする（satou さん 2026-11-17「共通化をし、そこを修正する」）。次に同じ種類の直しが要っても、store.js だけを直せばよい。index.html の `<!-- store:begin -->`〜`end` に写すので、sw.js・電波の無いときの動きは変わらない
+- [x] 見つける: `scripts/check-store.mjs`（check.sh と Lint）が、とことんを終えたあとに戻らないこと・数が減らないことと、12本のゲームの load() とでたらめな写し3000組で同じ答えになることを毎回見る
+- [x] 防ぐ: 共通部品を全ゲームへ PR で配る `Template sync`（`.github/workflows/template-sync.yml`）。まだ切り替えていないゲームは drift-check が `store:load` で週次まとめに出す
+- [ ] 直す: 各ゲームの load() を共通部品へ切り替える（形の同じゲームの組から。1本目 dento-kogei。担当: 一括で直すスレッド、期限: 2026-11-24）

@@ -27,6 +27,8 @@
 //   - ゲーム（index.html と sw.js がある）に、遊ぶ量を縛るチケット🎫や「○○すると開く」のモードの鍵がある（routines/game-dev.md「好きなだけ遊べるように」。satou さん 2026-11-06）
 //   - 公開リポジトリなのに repos.txt に無い（一覧の足し忘れ。API で読むときだけ。incidents/2026-11-07-repo-list-conflicts.md）
 //   - ゲームの sw.js が、入れるとき（install）に HTTP の保存を通して SHELL を取る（cache: 'reload' が無い。古い画面が新しい版に入る。routines/game-dev.md「PWA」）
+//   - ゲームの index.html の保存の共通部品（<!-- store:begin -->〜end）がひな形（template/store/store.js）とちがう・
+//     保存に失敗したときの写し（mem）を自分の load() で合わせていて、共通部品に切り替えていない（incidents/2026-11-17-endless-revive-after-save-failure.md）
 //   - ゲームの sw.js・qa/sw-check.mjs がひな形（template/sw.js の game:begin〜game:end の外）とちがう（scripts/sync-template.mjs で写す）
 //   - とことんの「ここで降りる」が正解の直後に効かない形がある・manifest がふつうのアイコンを maskable にも使い回す
 //   - ゲームの save が、localStorage に書けなかったときに黙っている（開き直すと記録が消える。incidents/2026-11-07-save-failure-silent.md）
@@ -82,6 +84,8 @@ const FEEDBACK_NAME = formProblems(readFileSync(join(here, '..', 'template', '.g
 const A11Y_BLOCK = (t) => (t.match(/<!-- a11y:begin[\s\S]*?<!-- a11y:end -->/) || [''])[0];
 const A11Y_HTML = A11Y_BLOCK(readFileSync(join(here, '..', 'template', 'a11y', 'a11y.html'), 'utf8'));
 const A11Y_QA = readFileSync(join(here, '..', 'template', 'qa', 'a11y.mjs'), 'utf8');
+import { STORE, storeBlock } from './sync-template.mjs';
+const STORE_HTML = storeBlock();
 const SW_QA = readFileSync(join(here, '..', 'template', 'qa', 'sw-check.mjs'), 'utf8');
 
 const allowPath = join(here, 'drift-allow.json');
@@ -300,6 +304,10 @@ const results = await pool(REPOS, 4, async (r) => {
         if ((await src.read('qa/a11y.mjs')) !== A11Y_QA) flag('a11y:qa', 'qa/a11y.mjs がひな形とちがう（template/qa/a11y.mjs をもう一度写す。ゲームごとの許しは qa/a11y.json に理由つきで）');
         if (paths.has('qa/run.mjs') && !(await src.read('qa/run.mjs')).includes('a11y.mjs')) flag('a11y:run', 'qa/run.mjs が qa/a11y.mjs を回していない（CI の QA で見やすさが見られない）');
       }
+      // 保存の読み直し：2つの写しを合わせる決まりは共通部品だけに置く（直すときに1か所で済むように。2026-11-17 satou さん）
+      const store = (page.match(STORE) || [''])[0];
+      if (store && store !== STORE_HTML) flag('store:block', 'index.html の保存の共通部品がひな形とちがう（node scripts/sync-template.mjs で写す。写しを直さない）');
+      else if (!store && /JSON\.parse\(mem\)/.test(page)) flag('store:load', 'load() が保存の写しを自分で合わせている（共通部品 template/store/store.js に切り替える。routines/game-dev.md「保存の読み直し」）');
     }
 
     // QA の「この問題は作れない」検査に、問題 id を文字で書かない。別のゲームから写した id がそのゲームに無いと、
