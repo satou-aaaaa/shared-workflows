@@ -32,6 +32,7 @@ ekisei-yomi game
 endaka-enyasu game
 energy-shurui game
 funka-level game
+fuyo-ikura game
 gairai-miwake game
 gamen-no-wana game
 ganseki-nakama game
@@ -40,6 +41,7 @@ gensen-ikura game
 genso-kigo game
 gogen-suiri game
 gurafu-minuki game
+haigusha-ikura game
 haku-uchi game
 hataraku-kimari game
 hatsuden-kurabe game
