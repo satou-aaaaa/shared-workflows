@@ -22,6 +22,21 @@ const withFont = oldSw.replace(/^(const CACHE\s*=.*)$/m, '$1\nconst FONT_CACHE =
 check('写す道具：古い sw.js に FLAGS があると写さない（消えるので）', withFlags !== oldSw && makeSw(withFlags) === null);
 check('写す道具：古い sw.js に FONT_CACHE があると写さない（消えるので）', withFont !== oldSw && makeSw(withFont) === null);
 check('写す道具：枠のある sw.js は、枠の外の定数があっても写す（枠の外はひな形のもの）', makeSw(once) === once);
+// sw.js を写せないゲームには sw の検査も写さない（写すとひな形の sw.js を前にした検査が QA を落とす。2026-11-17 kokki-shuto）
+{
+  const { plan } = await import('./sync-template.mjs');
+  const { mkdtempSync, mkdirSync, writeFileSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const g = mkdtempSync(`${tmpdir()}/swstuck-`);
+  mkdirSync(`${g}/qa`);
+  writeFileSync(`${g}/sw.js`, withFlags);
+  writeFileSync(`${g}/qa/sw-check.mjs`, '// 古い検査\n');
+  const paths = plan(g).map((x) => x.path);
+  check('写す道具：sw.js を写せないときは qa/sw-check.mjs も写さない', paths.includes('sw.js') && !paths.includes('qa/sw-check.mjs'), paths);
+  writeFileSync(`${g}/sw.js`, oldSw);
+  check('写す道具：sw.js を写せるときは qa/sw-check.mjs も写す', plan(g).some((x) => x.path === 'qa/sw-check.mjs'));
+  rmSync(g, { recursive: true, force: true });
+}
 check('前の sw.js（本文を読む前に切り替えを外す）は落ちる', !bad.ok && bad.stalled !== 'cached-page', bad);
 check('切り替えが20秒の sw.js は落ちる（4秒を見る）', !slow.ok, slow);
 if (ng) process.exit(1);

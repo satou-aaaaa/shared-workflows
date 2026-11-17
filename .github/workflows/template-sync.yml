@@ -84,7 +84,8 @@ jobs:
             if [ -z "$(git -C "$dir" status --porcelain)" ]; then echo "✓ $r: ひな形どおり"; rm -rf "$dir"; continue; fi
             git -C "$dir" -c user.name="template-sync" -c user.email="41898283+github-actions[bot]@users.noreply.github.com" \
               commit -qam "ひな形の共通部品を写す（shared-workflows ${SHA:0:7}）"
-            git -C "$dir" push -q -f origin HEAD:refs/heads/template-sync
+            # 1本で書けなくても残りは配る（鍵にそのリポジトリへの書き込みが無いときなど。2026-11-17 kokki-shuto で全体が止まった）
+            if ! git -C "$dir" push -q -f origin HEAD:refs/heads/template-sync; then echo "::warning::$r に書けない（鍵の Contents の書き込み・対象のリポジトリを見る）"; failed=1; rm -rf "$dir"; continue; fi
             if [ -z "$(gh pr list -R "$OWNER/$r" --head template-sync --state open --json number --jq '.[].number')" ]; then
               body="shared-workflows の template/ を scripts/sync-template.mjs で写した（Template sync が自動で開いた PR）。中身は shared-workflows ${SHA:0:7} のひな形と同じ。QA が ✅ なら自動でマージされる。落ちたら shared-workflows のひな形を直す（ここの写しは直さない）。"
               gh pr create -R "$OWNER/$r" --head template-sync --base main --title "ひな形の共通部品を写す" --body "$body" >/dev/null && opened=$((opened+1)) || failed=1
