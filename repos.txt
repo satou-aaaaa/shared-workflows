@@ -90,6 +90,7 @@ otsukai-memo game
 pikuto-yomi game
 recycle-mark game
 rekishi-narabe game
+rosai-shikumi game
 rosen-hitofude game
 sagi-minuki game
 saibanin-shikumi game
