@@ -16,6 +16,12 @@ const oldSw = read('sw-good.js');
 const once = makeSw(oldSw);
 check('写す道具：古い sw.js の CACHE と SHELL を枠に入れて残す', once && swRegion(once) === swRegion(oldSw) && /const CACHE = /.test(swRegion(once)), swRegion(oldSw));
 check('写す道具：二度写しても同じ', once && makeSw(once) === once);
+// 枠の無い古い sw.js に CACHE・SHELL のほかの働き（国旗の FLAGS・文字の FONT_CACHE）があるときは写さない（incidents/2026-11-17-sw-migration-drops-extras.md）
+const withFlags = oldSw.replace(/^(const SHELL\s*=[\s\S]*?\];.*)$/m, '$1\nconst FLAGS = ["./flags/jp.svg"];');
+const withFont = oldSw.replace(/^(const CACHE\s*=.*)$/m, '$1\nconst FONT_CACHE = "game-fonts-v1";');
+check('写す道具：古い sw.js に FLAGS があると写さない（消えるので）', withFlags !== oldSw && makeSw(withFlags) === null);
+check('写す道具：古い sw.js に FONT_CACHE があると写さない（消えるので）', withFont !== oldSw && makeSw(withFont) === null);
+check('写す道具：枠のある sw.js は、枠の外の定数があっても写す（枠の外はひな形のもの）', makeSw(once) === once);
 check('前の sw.js（本文を読む前に切り替えを外す）は落ちる', !bad.ok && bad.stalled !== 'cached-page', bad);
 check('切り替えが20秒の sw.js は落ちる（4秒を見る）', !slow.ok, slow);
 if (ng) process.exit(1);
