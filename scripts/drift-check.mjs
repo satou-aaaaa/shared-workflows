@@ -241,6 +241,11 @@ const results = await pool(REPOS, 4, async (r) => {
       const am = await src.read('.github/workflows/automerge.yml');
       const on = (am.match(/^\s*workflows:\s*\[([^\]]*)\]/m) || [, ''])[1].split(',').map((x) => x.trim().replace(/^["']|["']$/g, ''));
       if (/^\s*scan \/ scan\s*$/m.test(am) && !on.includes('Secret scan')) flag('automerge:scan', '.github/workflows/automerge.yml の require_checks に scan / scan があるのに、on.workflow_run.workflows に Secret scan が無い（Secret scan が後に終わるとマージされない。workflows に Secret scan を足す）');
+      // Secret scan を入れたのに require_checks に scan / scan が無いと、QA だけ ✅ で scan の前にマージされる。
+      // ゲームの問題の表（data.js）を変える PR は CodeRabbit を読んでから手でマージする（hold_paths）。ひな形から始めた新作で両方抜けた
+      // （2026-11-17 gairai-miwake #1 の CodeRabbit。incidents/2026-11-17-new-game-automerge-gaps.md）
+      if (paths.has('.github/workflows/secret-scan.yml') && !/^\s*scan \/ scan\s*$/m.test(am)) flag('automerge:scan-required', '.github/workflows/automerge.yml の require_checks に scan / scan が無い（Secret scan の前にマージされる。require_checks に scan / scan を足す）');
+      if (paths.has('data.js') && paths.has('sw.js') && !/hold_paths:[^\n]*data\\\.js/.test(am)) flag('automerge:hold-data', '.github/workflows/automerge.yml の hold_paths に data.js が無い（問題の表を変える PR が CodeRabbit を待たずにマージされる。hold_paths に data\\.js を足す）');
     }
 
     // main の守り（削除と force push の禁止）。設定画面でしか入れられず、Chrome が無い日の受け入れで抜けたまま気づかれなかった
