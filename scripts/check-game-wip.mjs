@@ -3,7 +3,7 @@ import { mkdtempSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { collect, plan, repoOf, branchOf, threadOf, WIP_LIMIT } from './game-wip.mjs';
-import { scaffold, templateFiles, TODO } from './new-game.mjs';
+import { scaffold, templateFiles, TODO, SKIP } from './new-game.mjs';
 
 const errors = [];
 const ok = (cond, msg) => { if (!cond) errors.push(msg); };
@@ -61,7 +61,9 @@ const dir = mkdtempSync(join(tmpdir(), 'new-game-'));
 writeFileSync(join(dir, 'AGENTS.md'), 'もとから');
 const r = scaffold(dir);
 ok(readFileSync(join(dir, 'AGENTS.md'), 'utf8') === 'もとから', 'もうあるファイルを上書きした');
-ok(r.copied.length === templateFiles().length - 1, 'ひな形を全部写していない');
+ok(r.copied.length === templateFiles().filter((f) => !SKIP.some((d) => f.startsWith(d))).length - 1, 'ひな形を全部写していない');
+ok(!existsSync(join(dir, 'store', 'store.js')), 'store/store.js をファイルで写した（index.html の印のあいだにだけ写す。incidents/2026-11-17-new-game-store-file.md）');
+ok(TODO.some((t) => /store:begin/.test(t) && /GameStore\.load/.test(t)), '新作の「このあと書くもの」に保存の共通部品（store の印・GameStore.load）が無い');
 for (const f of ['.github/workflows/qa.yml', 'transfer.js', 'depth.js', 'qa/depth-check.mjs', 'sw.js', 'qa/a11y.mjs', 'scripts/setup.sh']) ok(existsSync(join(dir, f)), `${f} を写していない`);
 
 ok(TODO.some((t) => /depth\.js/.test(t)) && TODO.some((t) => /Depth\.mark/.test(t) && /checkDepth/.test(t)), '新作の「このあと書くもの」に深さ（depth.js のつなぎ）が無い');

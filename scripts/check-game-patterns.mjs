@@ -1,6 +1,6 @@
 // ゲームの作りの見分け（scripts/game-patterns.mjs）が、事故の形を見つけ、直した形・コメントに残った古い形では出さないかを確かめる（Lint）
 // depth:*（depth.js を写したのにつないでいない）・hint:cut-moves（ヒント2で消した選び肢が戻る）・hint:left-fixed（のこりの数が決まった数）・stars:role（星の表示が読まれない・色だけで分ける）・qa:url-includes（URL を includes で探して CodeQL が赤）
-import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted, playerBugs, heightRaw } from './game-patterns.mjs';
+import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted, playerBugs, heightRaw, roundSizes } from './game-patterns.mjs';
 
 const cases = [
   ['事故の形（1行・left.length - 1）', true, 'const cutOf = () => { if (cur.hints < 2) return []; const left = P.opts.map((_, i) => i).filter((i) => i !== P.ans && !cur.wrong.includes(i)); return left.slice(0, Math.max(0, left.length - 1)); };'],
@@ -60,7 +60,20 @@ const heights = [
   ['高さを丸めずに 44 とくらべる（動きの途中で 43.98 と測れる）', true, '.filter((b) => b.getBoundingClientRect().height < 44)'],
   ['丸めてくらべる', false, '.filter((b) => Math.round(b.getBoundingClientRect().height) < 44)'],
   ['44 でない数は見ない', false, 'r.getBoundingClientRect().height < 10'],
+  ['幅も見る', true, 'b.getBoundingClientRect().width < 44'],
+  ['測った箱を変数に入れてから（r.height < 44）', true, 'const r = e.getBoundingClientRect(); return r.width > 0 && r.height < 44;'],
+  ['以上をたしかめる（>= 44）', true, 'q.getBoundingClientRect().height >= 44'],
+  ['querySelector から測る', true, 'document.querySelector("#a").getBoundingClientRect().height < 44'],
+  ['offsetHeight は整数なので見ない', false, 'b.offsetHeight < 44'],
 ];
+// roundSizes：書きかえたあとは heightRaw が出さず、2回かけても同じ（sync-template が毎回かけるため）
+for (const [name, want, src] of heights) {
+  if (!want) continue;
+  const once = roundSizes(src);
+  const ok = !heightRaw(once) && roundSizes(once) === once && once.includes('Math.round(');
+  console.log(`${ok ? '✓' : '✗'} 丸めに書きかえる：${name}`);
+  if (!ok) bad++;
+}
 for (const [name, want, src] of heights) {
   const got = heightRaw(src);
   console.log(`${got === want ? '✓' : '✗'} ${name}（${want ? '出す' : '出さない'}）`);
