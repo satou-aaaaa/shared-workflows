@@ -74,10 +74,12 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
     if (sayBtn) sayBtn.hidden = !on("say");
     if (!on("say")) stop();
   };
+  // 保存できなかった変更。読み直した古い値で戻さないよう、保存できるまで上に重ねる（2026-11-17 mizu-mamoru #1 の CodeRabbit）
+  let unsaved = {};
   const set = (k, v) => {
-    S = { ...S, ...load() }; // 別のタブで変えた設定を消さないよう、書く前に読み直す
+    S = { ...S, ...load(), ...unsaved }; // 別のタブで変えた設定を消さないよう、書く前に読み直す
     S[k] = !!v;
-    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* 保存できなくても今の画面には効かせる */ }
+    try { localStorage.setItem(KEY, JSON.stringify(S)); unsaved = {}; } catch { unsaved[k] = !!v; /* 保存できなくても今の画面には効かせる */ }
     apply();
     document.dispatchEvent(new CustomEvent("a11ychange", { detail: { key: k, on: !!v } }));
   };

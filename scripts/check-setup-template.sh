@@ -192,5 +192,13 @@ if [ -d "$repo/app/.setup-lock" ] && ! grep -q '残したロックを外す' "$t
 else ng "19. 作ったばかりの名札の無いロックを外した"; fi
 rm -rf "$repo/app/.setup-lock"
 
+# 20. 外す人を1人にする小さなロック（.setup-lock.reclaim）が止まって残っても、1分より古ければ外して進む。ロックの中へ移す形（版12）に戻っていない（版13）
+mkdir -p "$repo/app/.setup-lock" "$repo/app/.setup-lock.reclaim" && echo "$(hostname 2>/dev/null || echo local) 999999" > "$repo/app/.setup-lock/owner" && touch -d '2 minutes ago' "$repo/app/.setup-lock.reclaim"
+if run CLAUDE_ENV_FILE="$envf" && grep -q '残したロックを外す' "$tmp/out" && [ ! -d "$repo/app/.setup-lock" ] && [ ! -d "$repo/app/.setup-lock.reclaim" ]; then ok "止まって残った外す人のロックも外して進む"
+else ng "20. 外す人のロックが残って止まる"; fi
+if ! grep -q 'mv "\$lock"' template/scripts/setup.sh; then ok "古いロックを移して戻す形（ほかの人のロックの中へ移す）を使っていない"
+else ng "20. ロックを mv で移して戻している（戻すあいだに取られると中へ移り、npm ci が重なる）"; fi
+rm -rf "$repo/app/.setup-lock" "$repo/app/.setup-lock.reclaim"
+
 [ "$bad" = 0 ] || { echo "✗ ひな形 template/scripts/setup.sh の検査が落ちた" >&2; exit 1; }
 echo "✓ ひな形の準備スクリプトの検査が通った"

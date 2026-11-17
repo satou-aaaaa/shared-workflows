@@ -111,6 +111,20 @@ export async function checkDepth(code) {
     t.window.saveWarn(false);
     ok("nosave: 控えを書けたら、ゲームの保存で帯が消える", t.warn.on === false);
 
+    // nosave で覚えきった項目：保存側の古い項目で戻さない（2026-11-17 mizu-mamoru #1 の CodeRabbit）
+    {
+      const ls2 = store({ "t-depth": JSON.stringify({ v: 1, rv: { "g|1": { s: 2, due: "2026-11-01", t: 1, lab: "" } }, sure: 0, sureOk: 0, learned: 0 }) });
+      t = boot(code, { ls: ls2 });
+      ls2.break(true); t.D.mark("g|1", 0);
+      ok("nosave: 覚えきって外した項目が、保存に失敗しても読み直しで戻らない", t.D.waiting() === 0 && t.D.due().length === 0 && t.D.stats().learned === 1);
+      t.D.mark("g|1", 0);
+      ok("nosave: 戻らないので、もう一度正解しても覚えた数を足さない", t.D.stats().learned === 1);
+      ls2.break(false); t.D.mark("h|1", 1);
+      ok("nosave: 保存できたら外した項目は保存側からも消える", !JSON.parse(ls2.getItem("t-depth")).rv["g|1"]);
+      t.D.mark("g|1", 1);
+      ok("nosave: 外した項目も、またまちがえたら復習に入る", t.D.waiting() === 2);
+    }
+
     // junk
     for (const v of ['[1,2]', '"x"', '{"rv":[1],"sure":"a"}', '{"rv":{"k":{"due":"2026-99-99","s":9}},"sure":-3,"sureOk":5}', "{bad"]) {
       t = boot(code, { ls: store({ "t-depth": v }) });
