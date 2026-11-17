@@ -40,6 +40,10 @@ export function swRegion(old) {
   const items = shell[0].replace(/\/\/.*$/, '').replace(/^const SHELL\s*=\s*\[/, '').replace(/\];\s*$/, '');
   if (!/^\s*(?:"[^"]*"|'[^']*')(?:\s*,\s*(?:"[^"]*"|'[^']*'))*\s*,?\s*$/.test(items)) return null;
   if (!/^const CACHE\s*=\s*["'][\w-]+-v\d+["'];/.test(cache[0])) return null;
+  // 枠の無い古い sw.js に CACHE・SHELL のほかの定数や関数（国旗を入れる FLAGS、文字の FONT_CACHE など）があるときは写さない。
+  // 写すと CACHE と SHELL だけが残り、その働きが黙って消える（2026-11-17 kokki-shuto の国旗・batsu-doko の文字。incidents/2026-11-17-sw-migration-drops-extras.md）
+  const extra = [...old.matchAll(/^(?:const|let|var|function)\s+([A-Za-z_$][\w$]*)/gm)].map((x) => x[1]).filter((n) => n !== 'CACHE' && n !== 'SHELL');
+  if (extra.length) return null;
   return `// game:begin\n${cache[0]}\n${shell[0]}\n// game:end\n`;
 }
 
@@ -84,7 +88,7 @@ export function plan(dir) {
   }
   if (has('sw.js')) {
     const next = makeSw(read('sw.js'));
-    if (next === null) out.push({ path: 'sw.js', next: null, note: 'const CACHE と const SHELL の行が見つからない（手で game:begin〜game:end の枠を作る）' });
+    if (next === null) out.push({ path: 'sw.js', next: null, note: '枠が無く、CACHE・SHELL を拾えないか、ほかの定数・関数（FLAGS・FONT_CACHE など）がある。写すと消えるので写さない（手で game:begin〜game:end の枠を作り、その働きを枠に入れる）' });
     else want('sw.js', next);
   }
   if (has('scripts/setup.sh')) want('scripts/setup.sh', makeSetup(read('scripts/setup.sh')));

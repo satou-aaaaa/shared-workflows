@@ -31,6 +31,7 @@ satou-aaaaa の各リポジトリで、PR を作る・CI を通す・コンフ�
   Permission guard は作ってから3分ラベルを待ち、付かなければ落ちる。「はい」が無いなら、その3ファイルの変更を PR から外す（2026-10-31 #98 は途中で外した）。
 - 作ったら subscribe_pr_activity で見張る。CI の失敗とレビューには自分で対応する（見張りは待つだけで届くので、ポーリングしない）。
 - 着手前にベストプラクティスを調べたなら、要点と出典を本文に1〜3行（common.md）。
+- 出す前に `git diff --stat origin/main HEAD` を見て、差が空でなく、変えるつもりのファイルだけであることを確かめる。とくに「戻す」PR は、戻したい中身（消えた定数など）が入ったことを grep で確かめる（空の PR は CI が緑のままマージされ、直ったように見える。incidents/2026-11-17-sw-migration-drops-extras.md）。
 - 本文をシェルで書くときは引用したヒアドキュメント（`<<'EOB'`）か `--body-file` にし、出す前に `node scripts/check-pr-body.mjs <本文>` を回す（引用しないと `` `…` `` がコマンドとして走り、本文から消える。incidents/2026-11-07-pr-body-backtick-ran.md）。
 
 ## 3. CI とレビュー
