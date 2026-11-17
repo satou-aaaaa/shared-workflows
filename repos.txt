@@ -90,6 +90,7 @@ rosen-hitofude game
 sagi-minuki game
 saibanin-shikumi game
 sandbox app
+sdgs-mokuhyo game
 seiza-tsunagi game
 sekai-isan game
 sekai-jikoku game
