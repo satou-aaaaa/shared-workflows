@@ -103,6 +103,7 @@ const bugCases = [
   ['困る作り：正解の直後に降りられない', 'endless:stuck', 'if ($("quit")) $("quit").onclick = () => { if (cur && cur.done) return; finish(); };'],
   ['困る作り：endFinish の形でも降りられない', 'endless:stuck', 'if ($("quit")) $("quit").onclick = () => { if (cur && cur.done) return; endFinish(); };'],
   ['困る作り：正解したらボタンを隠す', 'endless:stuck', 'if ($("hint")) $("hint").disabled = true; if ($("quit")) $("quit").hidden = true;'],
+  ['困る作り：降りる前に保存を挟んでも、正解の直後に止める', 'endless:stuck', 'if ($("quit")) $("quit").onclick = () => { if (cur && cur.done) return; save((s2) => { s2.runs.e.over = true; }); finish(); };'],
   ['困る作り：ボタンを出し直すのは困らない', '', 'if ($("quit")) $("quit").hidden = false;'],
   ['困る作り：コメントの古い形は見ない', '', '// 前は catch (e) { mem = j; } と if (cur && cur.done) return; finish(); だった\nconst x = 1;'],
   ['困る作り：モードの鍵', 'free:gate', '<button id="go-e">🔗 連戦（今日の5体に出会うと開く）</button>'],

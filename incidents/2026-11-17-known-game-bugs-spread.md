@@ -26,3 +26,4 @@
 - [x] 防ぐ: routines/game-dev-detail.md の「共通の形」に「知らせ」の行を足した（この PR）
 - [x] 見つける: drift-check に `toast:blocks` を足し、コメントの中の「押すと開く」を鍵と見ないようにした（kimari-sagashi の見まちがい）（この PR）
 - [x] 見つける: `endless:stuck` が `endFinish()` の形と、正解したときに `$("quit").hidden = true` でボタンを隠す形を見落としていた（gurafu-minuki・rosen-hitofude・kusuri-yomi・taikyo-hiyo・tenkizu-yomi で見つけた）。両方を見分けに足した（2つ目の PR）
+- [x] 見つける: `endless:stuck` が、降りるボタンの中で `if (cur && cur.done) return;` のあとに保存や読み直しを挟む形（`save(...); finish();`・`const r = load()...`）を見落としていた（tani-kankaku・sentaku-hyoji・sekai-jikoku・bousai-handan・onpu-yomi・hyakunin-awase・wareki-yomi・shukujitsu-yurai・kyukoku-mei・kakuritsu-dotchi）。`$("quit").onclick = () => { if (cur && cur.done) return;` そのものを見分けに足した（3つ目の PR）
