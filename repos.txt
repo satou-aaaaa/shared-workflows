@@ -95,6 +95,7 @@ sekai-jikoku game
 senkyo-shikumi game
 sentaku-hyoji game
 setsuden-kotsu game
+shindo-yomi game
 shiritori-saitan game
 shokuchudoku-yobo game
 shokuhin-hyoji game
