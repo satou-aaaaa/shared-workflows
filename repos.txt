@@ -109,6 +109,7 @@ mansion-kimari game
 meirei-narabe game
 menkyo-nenrei game
 mizu-mamoru game
+moraisugi-kimari game
 mukashi-narabe game
 musekitsui-nakama game
 naitei-no-michi app
@@ -153,6 +154,7 @@ taikyo-hiyo game
 taishoku-ikura game
 taiyokei-kurabe game
 tani-kankaku game
+tanpo-kimari game
 teate-junban game
 teko-tsuriai game
 tenbin app
