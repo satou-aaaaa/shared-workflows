@@ -15,6 +15,14 @@ ok(`${SRC} に「共通部品の版: N」の行がある`, /共通部品の版:\
 const code = src.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
 ok(`${SRC} が外へ通信しない`, !/\bfetch\(|XMLHttpRequest|WebSocket|sendBeacon|\bimport\(/.test(code));
 ok(`${SRC} に </script> が無い（index.html に写すと途中で切れる）`, !/<\/script/i.test(src));
+// 印（<!-- store:end -->）を中に書くと、写すたびに区切りを取りちがえて写しが2重になる（2026-11-17）。HTML のコメントの形も書かない
+ok(`${SRC} に HTML のコメント（<!-- -->）が無い（写しの区切りを取りちがえる）`, !/<!--|-->/.test(src));
+{
+  const { STORE, storeBlock } = await import('./sync-template.mjs');
+  const page = `<head>\n${storeBlock()}\n<script>x</script>`;
+  const again = page.replace(STORE, storeBlock());
+  ok('写しを2回かけても同じ（区切りを取りちがえない）', again === page && (again.match(/store:end -->/g) || []).length === 1);
+}
 
 const S = createRequire(import.meta.url)('../' + SRC);
 const J = (x) => JSON.stringify(x);

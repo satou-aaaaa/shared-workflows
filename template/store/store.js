@@ -1,5 +1,5 @@
 // 保存の読み直し（2つの写しを合わせる）の共通部品。ひな形: satou-aaaaa/shared-workflows の template/store/store.js。
-// ゲームでは直さない。index.html の <!-- store:begin -->〜<!-- store:end --> に node scripts/sync-template.mjs <ゲームのフォルダ> で写す（ファイルを足さないので sw.js の SHELL は変えない）。
+// ゲームでは直さない。index.html の store:begin〜store:end の印のあいだに node scripts/sync-template.mjs <ゲームのフォルダ> で写す（ファイルを足さないので sw.js の SHELL は変えない）。
 // 共通部品の版: 1（上げたら写しの版も上がる。scripts/drift-check.mjs がずれを週次まとめに出す）
 //   1: とことんを終えた保存が失敗したあと、読み直しで古い回が戻る不具合が73本に広がっていた（incidents/2026-11-17-endless-revive-after-save-failure.md）。
 //      load() の合わせ方を1か所に集め、直すときはここだけ直す。
