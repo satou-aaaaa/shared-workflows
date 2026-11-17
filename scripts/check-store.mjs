@@ -60,6 +60,16 @@ for (const strictBook of [false, true]) {
 const m3b = S.merge({ v: 1, t: 1, runs: { e: null } }, { v: 1, t: 5, runs: { e } }, hooks());
 ok('とことんの途中が新しいなら、そのまま', J(m3b.runs.e) === J(e));
 
+// 3b. 終えた回の印 gone（震度よみ型）：新しい写しに終えた回が残っていても、gone にあれば消す（hataraku-kimari #1 で発見、版2）
+{
+  const d = { mode: 'd', id: 'g1', date: '2000-01-01', res: [1], cur: null };
+  const newer = S.merge({ v: 1, t: 1, gone: { g1: 1 }, runs: { d: null } }, { v: 1, t: 5, runs: { d } }, hooks());
+  const older = S.merge({ v: 1, t: 5, gone: { g1: 1 }, runs: { d: null } }, { v: 1, t: 1, runs: { d } }, hooks());
+  const keep = S.merge({ v: 1, t: 1, gone: { other: 1 }, runs: { d: null } }, { v: 1, t: 5, runs: { d } }, hooks());
+  ok('gone にある回は、新しい写しにあっても戻さない', newer.runs.d === null && older.runs.d === null);
+  ok('gone に無い回は、これまでどおり（記録帳になければ戻す）', keep.runs.d && keep.runs.d.id === 'g1');
+}
+
 // 4. 今日の回：終えた側が null でも、記録帳になければ戻す・あれば戻さない
 const d = { mode: 'd', id: 'd1', date: '2026-11-17', res: [1], cur: null };
 ok('今日の途中は記録帳に無ければ戻す', J(S.merge({ v: 1, t: 5, runs: { d: null } }, { v: 1, t: 1, runs: { d } }, hooks()).runs.d) === J(d));
