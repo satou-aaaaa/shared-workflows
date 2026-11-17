@@ -30,6 +30,7 @@ dungeon-boardgame app
 ekisei-yomi game
 endaka-enyasu game
 funka-level game
+fuyo-ikura game
 gairai-miwake game
 gamen-no-wana game
 ganseki-nakama game
