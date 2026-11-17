@@ -75,6 +75,7 @@ kanji-tsukaiwake game
 kansen-yobo game
 kasane-zome game
 kaseki-ate game
+kazoku-kigen game
 kazoku-kimari game
 keigen-zeiritsu game
 keigo-naoshi game
