@@ -85,15 +85,13 @@ stale() {
   if ! o=$(cat "$lock/owner" 2>/dev/null); then [ -d "$lock" ] && [ -n "$(find "$lock" -maxdepth 0 -mmin +1 2>/dev/null)" ] && echo "（名札なし）"; return; fi
   [ "${o% *}" = "${me% *}" ] && ! alive "${o##* }" && echo "$o"
 }
-# 外すのは、外す人を1人にする小さなロック（$lock.reclaim）を取ったときだけ。取ったあとにもう一度持ち主を見て、同じ古いロックなら消す。
-# ロックを移して戻す形（版12）は、戻すあいだに別の人がロックを取ると、そのロックの中へ移してしまい、2人が npm ci を重ねた（版13、mizu-mamoru #1 の CodeRabbit）。
-# 外す人が1人なら、ロックが在るあいだはだれも mkdir できないので、見た持ち主と同じなら消してよい。小さなロックが止まって残ったら、1分で外す
+# 外すときは、まず自分だけの名前へ移す（移せるのは1つだけ）。移したものが見たときと同じ持ち主のときだけ消し、ちがえば戻す。
+# 2つの setup.sh が同じ古いロックを同時に外して、あとから取った新しいロックまで消すのを防ぐ（版12、shokuhin-hyoji #3 などの CodeRabbit）
 reclaim() {
-  local seen=$1 m="$lock.reclaim" now
-  if ! mkdir "$m" 2>/dev/null; then [ -n "$(find "$m" -maxdepth 0 -mmin +1 2>/dev/null)" ] && rmdir "$m" 2>/dev/null; return 0; fi
-  now=$(stale)
-  if [ -n "$now" ] && [ "$now" = "$seen" ]; then echo "前の setup.sh が残したロックを外す（$seen）"; rm -rf "$lock"; fi
-  rmdir "$m" 2>/dev/null || true
+  local seen=$1 aside="$lock.gone.$$" now
+  mv "$lock" "$aside" 2>/dev/null || return 0
+  now=$(cat "$aside/owner" 2>/dev/null || echo "（名札なし）")
+  if [ "$now" = "$seen" ]; then echo "前の setup.sh が残したロックを外す（$seen）"; rm -rf "$aside"; else mv "$aside" "$lock" 2>/dev/null || rm -rf "$aside"; fi
 }
 for _ in $(seq 1 600); do
   if mkdir "$lock" 2>/dev/null; then echo "$me" > "$lock/owner"; got=1; break; fi

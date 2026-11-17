@@ -46,8 +46,7 @@
   var num = function (v) { return Number.isFinite(+v) && +v >= 0 ? Math.floor(+v) : 0; };
   var okDate = function (v) { return typeof v === "string" && /^\d{4}-\d\d-\d\d$/.test(v) && Number.isFinite(Date.parse(v + "T00:00:00Z")); };
   // rv はプロトタイプの無い辞書にする（鍵が constructor・__proto__ などでも、もとからある値と混ざらない）
-  // gone は覚えきって復習から外した鍵と時刻。保存に失敗したあと、保存側の古い項目で戻さないために残す（2026-11-17 mizu-mamoru #1 の CodeRabbit）
-  var fresh = function () { return { v: 1, rv: Object.create(null), gone: Object.create(null), sure: 0, sureOk: 0, learned: 0 }; };
+  var fresh = function () { return { v: 1, rv: Object.create(null), sure: 0, sureOk: 0, learned: 0 }; };
 
   // 形を直す（引き継ぎコードなどから入った値で画面を壊さない）
   function tidy(s) {
@@ -63,10 +62,6 @@
     }
     list.sort(function (a, b) { return b[1].t - a[1].t; });
     list.slice(0, MAX).forEach(function (e) { o.rv[e[0]] = e[1]; });
-    var gn = s.gone && typeof s.gone === "object" && !Array.isArray(s.gone) ? s.gone : {}, gl = [];
-    for (var g in gn) if (Object.prototype.hasOwnProperty.call(gn, g) && g !== "__proto__" && g.length <= 200 && num(gn[g]) > 0) gl.push([g, num(gn[g])]);
-    gl.sort(function (a, b) { return b[1] - a[1]; });
-    gl.slice(0, MAX).forEach(function (e) { o.gone[e[0]] = e[1]; });
     return o;
   }
   function read() {
@@ -79,8 +74,7 @@
     a = tidy(a); b = tidy(b);
     var s = fresh();
     s.sure = Math.max(a.sure, b.sure); s.sureOk = Math.max(a.sureOk, b.sureOk); s.learned = Math.max(a.learned, b.learned);
-    [b.gone, a.gone].forEach(function (gn) { for (var k in gn) if (!(gn[k] <= s.gone[k])) s.gone[k] = gn[k]; });
-    [b.rv, a.rv].forEach(function (rv) { for (var k in rv) if ((!s.rv[k] || rv[k].t >= s.rv[k].t) && !(s.gone[k] >= rv[k].t)) s.rv[k] = rv[k]; });
+    [b.rv, a.rv].forEach(function (rv) { for (var k in rv) if (!s.rv[k] || rv[k].t >= s.rv[k].t) s.rv[k] = rv[k]; });
     return tidy(s);
   }
   function write(fn) {
@@ -101,7 +95,7 @@
       var x = s.rv[key];
       if (bad) { s.rv[key] = { s: 0, due: addDays(d, GAPS[0]), t: now, lab: String(label || (x && x.lab) || "").slice(0, 60) }; return; }
       if (!x || x.due > d) return; // 復習に入っていない・まだ日が来ていない問題は動かさない
-      if (x.s + 1 >= GAPS.length) { delete s.rv[key]; s.gone[key] = now; s.learned++; return; }
+      if (x.s + 1 >= GAPS.length) { delete s.rv[key]; s.learned++; return; }
       s.rv[key] = { s: x.s + 1, due: addDays(d, GAPS[x.s + 1]), t: now, lab: x.lab };
     });
   }

@@ -362,22 +362,6 @@ export async function checkTransfer({ browser, url, game, sample, check, open })
   await old2.waitForTimeout(300);
   const band = (await old2.evaluate(() => sessionStorage.getItem("hk-qa-band")).catch(() => null)) === "true";
   check("引き継ぎ：古いタブの保存を捨てたら、「保存できない・読み直して」の帯を出す（ボタンは44px以上）", band);
-  // 保存できていない記録があるタブは、別のタブで入れ替えても自動で読み直さない（手元だけの記録が消える。版13、mizu-mamoru #1 の CodeRabbit）
-  const old3 = watch(await D.newPage());
-  await old3.goto(url);
-  await old3.waitForTimeout(300);
-  const failed = await old3.evaluate((k) => {
-    window.__qaStay = 1;
-    const big = "x".repeat(1 << 20); let i = 0;
-    for (; i < 40; i++) { try { localStorage.setItem("qa-fill" + i, big); } catch (e) { break; } }
-    let threw = false; try { localStorage.setItem(k, JSON.stringify({ qa: "y".repeat(1 << 20) })); } catch (e) { threw = true; }
-    for (let j = 0; j <= i; j++) localStorage.removeItem("qa-fill" + j);
-    return threw;
-  }, firstKey);
-  await pd.evaluate((g) => localStorage.setItem("hk-sync:" + g, "ほかのタブで入れ替えた.unsaved." + Date.now()), game);
-  await old3.waitForTimeout(500);
-  const stay = await old3.evaluate(() => window.__qaStay === 1 && !!document.getElementById("hk-stale-tab")).catch(() => false);
-  check("引き継ぎ：保存できていない記録があるタブは、別のタブで入れ替えても自動で読み直さず帯で知らせる", failed && stay, `failed=${failed} stay=${stay}`);
   await D.close();
 
   check("引き継ぎ：エラーが出ない", errors.length === 0, errors.join(" / "));

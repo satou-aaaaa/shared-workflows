@@ -289,13 +289,6 @@ for (const sc of screens) {
   // 別のタブで変えた設定を、このタブの保存で消さない（2026-11-05 CodeRabbit）
   const merged = await page.evaluate(() => { const s = JSON.parse(localStorage.getItem("a11y-v1") || "{}"); s.ruby = true; localStorage.setItem("a11y-v1", JSON.stringify(s)); window.A11y.set("calm", true); const t = JSON.parse(localStorage.getItem("a11y-v1") || "{}"); return t.ruby === true && t.calm === true && t.read === true; });
   check("別のタブで変えた見やすさの設定を、このタブの保存で消さない", merged);
-  // 保存に失敗したあとに続けて変えても、保存できなかった変更を古い保存値で戻さない（2026-11-17 mizu-mamoru #1 の CodeRabbit）
-  const keepUnsaved = await page.evaluate(() => {
-    localStorage.setItem("a11y-v1", JSON.stringify({ read: false, cvd: false }));
-    const o = Storage.prototype.setItem; Storage.prototype.setItem = function () { throw new Error("full"); };
-    try { window.A11y.set("read", true); window.A11y.set("cvd", true); return window.A11y.on("read") && window.A11y.on("cvd") && document.documentElement.classList.contains("a11y-read"); } finally { Storage.prototype.setItem = o; }
-  });
-  check("保存に失敗したあと続けて設定を変えても、さっきの変更が戻らない", keepUnsaved);
   // 保存した値がオブジェクトでなくても、設定のボタンと window.A11y が動く
   await page.evaluate(() => localStorage.setItem("a11y-v1", "true"));
   await page.reload(); await page.waitForTimeout(300);

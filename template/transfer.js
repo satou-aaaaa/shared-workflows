@@ -36,8 +36,6 @@
 //     古いタブの保存を捨てたときは、帯（#hk-stale-tab）で「保存できない・読み直して」と知らせる（読み直しが遅れても、黙って記録が消えない）・
 //     読み直しが例外で止まったら、次の保存でまた読み直す。
 //   - 版12（2026-11-07 dento-kogei #5 などの CodeRabbit）: 控え（hk-backup:・hk-prev:）の d が配列なら記録として使わない。
-//   - 版13（2026-11-17 mizu-mamoru #1 の CodeRabbit）: 保存できていない記録があるタブは、別のタブで入れ替えても自動で読み直さない（手元だけの記録が消える）。
-//     帯で知らせ、そのタブの保存は失敗として返す（ゲームはメモリに持ったまま、保存できない帯を出す）。
 (function () {
   "use strict";
   var VERSION = 4; // コードの形の版（形を変えたときだけ上げる。上の「引き継ぎの版」とは別）
@@ -92,8 +90,6 @@
         // 別のタブで入れ替えたあとの古いタブは、手元の古い記録を書かずに読み直す（storage の知らせが届かなくても。版10）
         if (isLocal(this) && ours(String(k)) && syncNo() !== mySync) {
           staleTab();
-          // 手元にだけある記録（保存できていない分）があるときは自動で読み直さず、失敗を返してゲームに持たせておく（読み直すと消える。版13）
-          if (stale()) { unsaved[String(k)] = 1; throw new Error("stale tab"); }
           if (!reloading) { reloading = true; try { location.reload(); } catch (e) { reloading = false; /* 次の保存でまた読み直す（版11） */ } }
           return;
         }
@@ -114,7 +110,7 @@
       b.id = "hk-stale-tab";
       b.setAttribute("role", "alert");
       b.style.cssText = "position:fixed;left:8px;right:8px;top:8px;z-index:2147483001;background:#fff3cd;color:#3d2c00;border:2px solid #8a6d00;border-radius:10px;padding:10px 12px;font:15px/1.5 system-ui,-apple-system,'Hiragino Sans','Noto Sans JP',sans-serif";
-      b.textContent = "別の画面で記録が入れ替わったので、この画面の記録は保存できません。読み直してください。" + (stale() ? "（この画面には保存できていない記録があり、読み直すと消えます）" : "");
+      b.textContent = "別の画面で記録が入れ替わったので、この画面の記録は保存できません。読み直してください。";
       var r = document.createElement("button");
       r.type = "button";
       r.textContent = "読み直す";
@@ -663,8 +659,7 @@
     checkHash();
     window.addEventListener("hashchange", checkHash);
     // 別のタブで記録を入れ替えたら、このタブも読み直す（手元に残った古い記録で、取り込んだ記録を上書きしない。版7）
-    // ただし保存できていない記録があるタブは、自動で読み直さず帯で知らせる（読み直すと手元だけの記録が消える。版13、2026-11-17 mizu-mamoru #1 の CodeRabbit）
-    window.addEventListener("storage", function (e) { if (e.key === SYNC && e.newValue) { if (stale()) staleTab(); else location.reload(); } });
+    window.addEventListener("storage", function (e) { if (e.key === SYNC && e.newValue) location.reload(); });
   }
   // QR の URL（#hk=コード）で開かれたら、取り込みの確認を出す（開いている画面で URL が変わったときも）
   function checkHash() {
