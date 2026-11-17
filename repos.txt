@@ -36,6 +36,7 @@ haku-uchi game
 hataraku-kimari game
 hatsuden-kurabe game
 hikari-michi game
+hoken-dore game
 hyakunin-awase game
 hyoshiki-yomi game
 ikukyu-shikumi game
@@ -47,6 +48,7 @@ kabu-news game
 kaden-anzen game
 kaji-mamoru game
 kakuritsu-dotchi game
+kanazukai-dotchi game
 kansen-yobo game
 kasane-zome game
 keigen-zeiritsu game
