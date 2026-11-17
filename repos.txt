@@ -145,6 +145,7 @@ shukujitsu-yurai game
 shukushaku-yomi game
 souzoku-kihon game
 taikyo-hiyo game
+taishoku-ikura game
 taiyokei-kurabe game
 tani-kankaku game
 teate-junban game
