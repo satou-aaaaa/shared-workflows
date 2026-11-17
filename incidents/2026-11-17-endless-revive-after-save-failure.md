@@ -27,4 +27,6 @@
 - [x] 防ぐ: 2つの写しを合わせる決まりを共通部品 `template/store/store.js`（GameStore）に集め、ゲームの load() はそれを呼ぶだけにする（satou さん 2026-11-17「共通化をし、そこを修正する」）。次に同じ種類の直しが要っても、store.js だけを直せばよい。index.html の `<!-- store:begin -->`〜`end` に写すので、sw.js・電波の無いときの動きは変わらない
 - [x] 見つける: `scripts/check-store.mjs`（check.sh と Lint）が、とことんを終えたあとに戻らないこと・数が減らないことと、12本のゲームの load() とでたらめな写し3000組で同じ答えになることを毎回見る
 - [x] 防ぐ: 共通部品を全ゲームへ PR で配る `Template sync`（`.github/workflows/template-sync.yml`）。まだ切り替えていないゲームは drift-check が `store:load` で週次まとめに出す
+- [x] 直す: store.js の頭の説明に区切りの印 `store:end` をコメントの形のまま書いていたため、2回目に写すと区切りを取りちがえて写しが2重になった（1組目9本を写し直す前に気づいた。公開中のゲームには出ていない）。説明から印の形を外した
+- [x] 防ぐ: `scripts/check-store.mjs` が、store.js に HTML のコメントの形が無いこと・写しを2回かけても同じになることを毎回見る
 - [ ] 直す: 各ゲームの load() を共通部品へ切り替える（形の同じゲームの組から。1本目 dento-kogei。担当: 一括で直すスレッド、期限: 2026-11-24）
