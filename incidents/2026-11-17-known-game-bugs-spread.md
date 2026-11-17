@@ -29,3 +29,5 @@
 - [x] 見つける: `endless:stuck` が、降りるボタンの中で `if (cur && cur.done) return;` のあとに保存や読み直しを挟む形（`save(...); finish();`・`const r = load()...`）を見落としていた（tani-kankaku・sentaku-hyoji・sekai-jikoku・bousai-handan・onpu-yomi・hyakunin-awase・wareki-yomi・shukujitsu-yurai・kyukoku-mei・kakuritsu-dotchi）。`$("quit").onclick = () => { if (cur && cur.done) return;` そのものを見分けに足した（3つ目の PR）
 - [x] 防ぐ: 作業用の木（worktree）で `.tools` を記号リンクにして `git add -A` すると、`.gitignore` の `.tools/`（フォルダだけに当たる）をすり抜けてリンクがコミットされ、CI の setup.sh が「mkdir: Already exists」で止まった（#342）。`.gitignore` を `.tools` にしてリンクも外す
 - [x] 見つける: 出典のリンクの `.src a{min-height:32px}` が、前の行の `min-height:44px` を上書きしていた（funka-level・kenko-minuki・kumo-namae・nemuri-kotsu・taikyo-hiyo）。出典が2行に折れる日だけ QA の「押せる所は44px以上」が落ちる（funka-level #3 の CI）。44px に直し、リンクの min-height が44pxより低い形を `tap:low-link` として見分けに足した（#342）
+- [x] 見つける: QA が「今日の問題は決まった形」と決めつけ、日によって落ちていた（kengen-check：文だけの問題の日に「スマホの場面」が無い。kyukoku-mei：むずかしいに選び肢の形 `n` を足したあと、5問目が `n` の日に「読みを入れる欄」が無い）。kengen-check は両方の形を受け、kyukoku-mei はその形が出る日まで進めてから確かめるようにした
+- [x] 防ぐ: routines/game-dev-detail.md の「A. 新しいゲームを作る」に「形を見る検査は、その形が出る日を選ぶ。形を足したら30日分ずらして回す」を足した（#342）
