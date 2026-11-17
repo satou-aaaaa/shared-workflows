@@ -138,6 +138,8 @@ export function playerBugs(page) {
   // 押せる所の高さを、あとの行の a{min-height:32px} が上書きする（出典が2行に折れた日だけ QA が落ちる。2026-11-17 funka-level ほか5本）
   const lowLink = s.replace(/\/\*[\s\S]*?\*\//g, '').match(/[^{}\s]*\ba\s*\{[^}]*min-height\s*:\s*(?:[0-3]?\d|4[0-3])px/);
   if (lowLink) out.push(['tap:low-link', `index.html のリンクの高さが44pxより低い「${lowLink[0].replace(/\s+/g, ' ').slice(0, 60)}」（出典などが2行に折れると押しにくく、QA も日によって落ちる。min-height:44px に。routines/game-dev.md「共通の形」の押せる所）`]);
+  // 自信のボタンに回の印を渡していない（別のタブ・開き直したあとで同じ問題に答えると「自信あり」が2回数えられる。2026-11-17 shared-workflows #352）
+  if (/Depth\.bindSure\(\s*[^,()]+\)/.test(s)) out.push(['depth:twice', 'index.html の Depth.bindSure に回の印が無い（別のタブで先に答えると「自信あり」が2回数えられる。Depth.bindSure(tag, cur.id + "|" + cur.i) にし、depth.js を深さの版5以上に。routines/game-dev-detail.md「1問を深くする」）']);
   if (cutMoves(page)) out.push(['hint:cut-moves', 'index.html の cutOf が、まちがいの数で消す選び肢を変える（しぼったあとにまちがいを選ぶと、消した選び肢が戻る。正解でない選び肢のうち最後の1つ以外を消す形にし、QA に検査を足す。routines/game-dev.md「共通の形」のヒント）']);
   if (leftFixed(page)) out.push(['hint:left-fixed', 'index.html のヒント2の「のこりは2つです」が決まった数（先に最後のまちがいを選んでいると押せるのは正解だけ。いま押せる選び肢の数を出す。routines/game-dev.md「共通の形」のヒント）']);
   if (starsBare(page)) out.push(['stars:role', 'index.html の星の表示（class="stars"）に role="img" が無いか、取れなかった星も ★ で色だけで分けている（<span class="stars" role="img" aria-label="星Nつ"> にし、取れなかった星は ☆。routines/game-dev.md「共通の形」の星）']);
