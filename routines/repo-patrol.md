@@ -54,6 +54,7 @@ A. **新しい対象の自動検出**（毎回。軽い比較だけ）: チー�
      - shoka-koso: data.js（消化酵素）に触れる PR は、大阪府のプリント・兵庫県立高校の授業資料ほか（SRC）と、QA の消化の表（CL・TB）と照らす。
      - kaseki-ate: data.js（化石）に触れる PR は、大阪府のプリント・群馬県立自然史博物館ほか（SRC）と、QA の化石の表（CL・TB）と照らす。
      - kankaku-ate: data.js（感覚器官）に触れる PR は、千葉県の問題・学習指導案ほか（SRC）と、QA の感覚器官の表（CL・TB）と照らす。
+     - suiyoeki-ate: data.js（水溶液）に触れる PR は、岡山県・仙台市の学習指導案ほか（SRC）と、QA の水溶液の表（CL・TB）と照らす。
      - shokubutsu-nakama: data.js（植物・なかま・胚珠・維管束）に触れる PR は、大阪府教育委員会の理科プリントと QA のなかまの表（CL・TB）と照らす。
      - funka-level: data.js（レベルとキーワード・警報・場面の答え）に触れる PR は、src の気象庁の資料と照らす。
      - gairai-miwake: data.js（区分・産地）に触れる PR と巡回のときは、環境省「特定外来生物等一覧」（新しい指定・条件付特定外来生物）と照らす。

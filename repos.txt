@@ -154,6 +154,7 @@ shotokuzei-ikura game
 shukujitsu-yurai game
 shukushaku-yomi game
 souzoku-kihon game
+suiyoeki-ate game
 taikyo-hiyo game
 taishoku-ikura game
 taiyokei-kurabe game
