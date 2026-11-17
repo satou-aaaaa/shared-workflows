@@ -38,9 +38,12 @@ haku-uchi game
 hataraku-kimari game
 hatsuden-kurabe game
 hikari-michi game
+hiraku-tojiru game
+hoken-dore game
 hyakunin-awase game
 hyoshiki-yomi game
 ikukyu-shikumi game
+inshi-ikura game
 isle-routes-research app
 jidosha-shurui game
 jiko-kihon game
@@ -52,6 +55,8 @@ kaden-anzen game
 kagaku-henka game
 kaji-mamoru game
 kakuritsu-dotchi game
+kanazukai-dotchi game
+kanji-tsukaiwake game
 kansen-yobo game
 kasane-zome game
 keigen-zeiritsu game
