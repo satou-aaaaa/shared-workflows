@@ -177,4 +177,5 @@ yarikuri-shotengai game
 yohou-kotoba game
 youto-chiiki game
 zeikin-nanizei game
+zeimu-kigen game
 zoyozei-ikura game
