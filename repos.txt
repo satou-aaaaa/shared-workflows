@@ -46,6 +46,7 @@ hikari-susumi game
 hiraku-tojiru game
 hoken-dore game
 hosho-kimari game
+hozon-kikan game
 hyakunin-awase game
 hyoshiki-yomi game
 ikukyu-shikumi game
@@ -60,6 +61,7 @@ jotai-henka game
 kabu-news game
 kaden-anzen game
 kagaku-henka game
+kaisha-kigen game
 kaji-mamoru game
 kakuritsu-dotchi game
 kanazukai-dotchi game
@@ -152,6 +154,7 @@ tenkizu-yomi game
 toan-kumitate game
 todofuken-relay game
 todokede-kigen game
+tokkyo-kikan game
 tonari-kimari game
 tsuki-katachi game
 usotsuki-roppo game

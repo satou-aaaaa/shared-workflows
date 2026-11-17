@@ -86,6 +86,9 @@ A. **新しい対象の自動検出**（毎回。軽い比較だけ）: チー�
      - kanji-tsukaiwake: data.js（文・漢字・読み）に触れる PR は、「「異字同訓」の漢字の使い分け例（報告）」と QA の表（TB）と照らす。
      - todokede-kigen: data.js（期限・出す先）に触れる PR は、e-Gov の各法令の条文と照らし、qa/run.mjs の TB も同じに直す。法改正で期限が変わったら（所得税法 第229条のように）条文を読み直す。
      - menkyo-nenrei: data.js（年齢・なかま）に触れる PR は、e-Gov の道路交通法 第88条・第96条と照らし、qa/run.mjs の TB も同じに直す。特例教習の年齢（19歳）が変わったら条文を読み直す。
+     - tokkyo-kikan: data.js（期間・法律）に触れる PR は、e-Gov の特許法・実用新案法・意匠法・商標法の条文と照らし、qa/run.mjs の TB も同じに直す。
+     - hozon-kikan: data.js（年数・分野）に触れる PR は、e-Gov の各法令（商法・会社法・医師法・薬剤師法・各施行規則）と照らし、qa/run.mjs の TB も同じに直す。経過措置のある書類（労働基準法 第109条など）は足さない。
+     - kaisha-kigen: data.js（期間・なかま）に触れる PR は、e-Gov の会社法（417AC0000000086）の条文と照らし、qa/run.mjs の別の表も同じに直す。
      - chusha-kyori: data.js（場所・範囲・停車か駐車か）に触れる PR は、e-Gov の道路交通法 第44条・第45条と照らし、qa/run.mjs の TB も同じに直す。
      - shotokuzei-ikura: data.js（速算表・種類）に触れる PR は、国税庁タックスアンサー No.2260 と QA の表（QT）と照らす。毎年4月の税制改正で変わっていないか見る。
      - zoyozei-ikura: data.js（速算表2つ・だれからの場面）に触れる PR は、国税庁タックスアンサー No.4408 と QA の表（QT・TB）と照らす。毎年4月の税制改正で変わっていないか見る。
