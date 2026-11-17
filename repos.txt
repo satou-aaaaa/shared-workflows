@@ -124,6 +124,7 @@ risoku-jogen game
 rosai-shikumi game
 rosen-hitofude game
 sagi-minuki game
+saiban-kigen game
 saibanin-shikumi game
 saibo-tsukuri game
 sandbox app
