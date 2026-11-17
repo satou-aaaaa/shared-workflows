@@ -24,6 +24,7 @@ denkidai-ikura game
 dento-kogei game
 doubutsu-nakama game
 dungeon-boardgame app
+ekisei-yomi game
 endaka-enyasu game
 funka-level game
 gairai-miwake game
@@ -46,6 +47,7 @@ jitensha-rule game
 jobun-tobatsu game
 kabu-news game
 kaden-anzen game
+kagaku-henka game
 kaji-mamoru game
 kakuritsu-dotchi game
 kansen-yobo game
@@ -58,6 +60,8 @@ kenpo-shikumi game
 kikigaki-techo game
 kimari-sagashi game
 kippu-10 game
+kisetsu-tenki game
+kitai-ate game
 kitte-ikura game
 kokki-shuto game
 kokoku-minuki game
