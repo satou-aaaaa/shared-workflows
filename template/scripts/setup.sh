@@ -95,14 +95,15 @@ stale() {
 # 札を取れなかったときは 1 を返す（待ってから見直す。すぐ回すと10分の待ちを一瞬で使い切る）
 ino() { ls -di "$lock" 2>/dev/null | awk '{print $1}'; }
 reclaim() {
-  local seen=$1 id guard o
+  local seen=$1 id guard o dead=()
   id=$(ino); [ -n "$id" ] || return 0
   guard="$lock.reclaim.$id"
   for _ in 1 2 3 4 5 6 7 8; do
     if mkdir "$guard" 2>/dev/null; then
       echo "$me" > "$guard/owner"
       if [ "$(ino)" = "$id" ] && [ "$(stale)" = "$seen" ]; then echo "前の setup.sh が残したロックを外す（$seen）"; rm -rf "$lock"; fi
-      rm -rf "$guard"
+      # 自分の札と、通ってきた止まった人の札を片づける（札を取った人は、消したあとのロックをもう一度見るので、片づけてもあとの人は消さない）
+      rm -rf "$guard" ${dead[@]+"${dead[@]}"}   # 空の配列でも bash 3.2（macOS）の set -u で止まらない書き方
       return 0
     fi
     if ! o=$(cat "$guard/owner" 2>/dev/null); then
@@ -111,6 +112,7 @@ reclaim() {
     elif [ "${o% *}" != "${me% *}" ] || alive "${o##* }"; then
       return 1
     fi
+    dead+=("$guard")
     guard="$guard.${o##* }"
   done
   return 1

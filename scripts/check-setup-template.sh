@@ -207,7 +207,7 @@ else echo "終了コード $rc" >> "$tmp/out"; ng "20a. 札を持たずに古い
 kill $holder 2>/dev/null || true; wait $holder 2>/dev/null || true
 #   20b. 札の持ち主がもう動いていない（外す途中で止まった）なら、次の札を取って古いロックを外して進み、自分の札を残さない
 echo "$dead" > "$g/owner"
-if run CLAUDE_ENV_FILE="$envf" && grep -q '残したロックを外す' "$tmp/out" && [ ! -d "$repo/app/.setup-lock" ] && [ -z "$(find "$repo/app" -maxdepth 1 -name '.setup-lock.reclaim.*.*' 2>/dev/null)" ]; then ok "止まった人の札のあとの札を取り、古いロックを外して進む"
+if run CLAUDE_ENV_FILE="$envf" && grep -q '残したロックを外す' "$tmp/out" && [ ! -d "$repo/app/.setup-lock" ] && [ -z "$(find "$repo/app" -maxdepth 1 -name '.setup-lock.reclaim*' 2>/dev/null)" ]; then ok "止まった人の札のあとの札を取り、古いロックを外して進む（札を残さない）"
 else ng "20b. 止まった人の札が残って進めない・自分の札かロックが残る"; fi
 rm -rf "$repo/app/.setup-lock" "$repo/app"/.setup-lock.reclaim.*
 #   20c. 古いロックがあるところへ4つ同時に動かしても、npm ci は重ならない（npm ci の間だけ印のフォルダを置き、重なれば記録する）
