@@ -92,6 +92,7 @@ otsukai-memo game
 pikuto-yomi game
 recycle-mark game
 rekishi-narabe game
+rosai-shikumi game
 rosen-hitofude game
 sagi-minuki game
 saibanin-shikumi game
@@ -105,6 +106,7 @@ sentaku-hyoji game
 setsuden-kotsu game
 shindo-yomi game
 shiritori-saitan game
+shitsugyo-teate game
 shokubutsu-nakama game
 shokuchudoku-yobo game
 shokuhin-hyoji game
