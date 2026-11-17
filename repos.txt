@@ -128,6 +128,7 @@ shitsugyo-teate game
 shokubutsu-nakama game
 shokuchudoku-yobo game
 shokuhin-hyoji game
+shotokuzei-ikura game
 shukujitsu-yurai game
 shukushaku-yomi game
 souzoku-kihon game
@@ -150,3 +151,4 @@ yarikuri-shotengai game
 yohou-kotoba game
 youto-chiiki game
 zeikin-nanizei game
+zoyozei-ikura game
