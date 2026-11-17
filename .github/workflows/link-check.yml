@@ -3,6 +3,9 @@ name: Link check (共通部品)
 # リポジトリの HTML のリンク切れを調べる（Claude は使わない）。外部サイトへのリンクも確かめ、
 # 一時的な揺れで失敗しないよう3回まで試す。失敗すると呼び出し元の ci-failure-issue.yml が Issue を立てる。
 # 結果の一覧は Actions の Summary に出る。
+# 時間切れ（Timeouts）だけのときは落とさず警告にする。国内の役所・大学などのサイトは GitHub の実行機から
+# ときどき応答しないだけで、リンクは生きている（2026-11-17 bushu-tashizan・taiyokei-kurabe が日によって赤・緑。
+# incidents/2026-11-17-link-check-timeout-flaky.md）。404 などのリンク切れ（Errors）は今までどおり落とす。
 on:
   workflow_call:
     inputs:
@@ -35,7 +38,33 @@ jobs:
           for f in $FILES; do a="$a '$f'"; done
           echo "args=$a" >> "$GITHUB_OUTPUT"
       - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        id: lychee
         with:
           args: ${{ steps.args.outputs.args }}
-          fail: true
+          # 落とすかどうかは次の手順で決める（リンクが0本のときは failIfEmpty でこの手順が落ちる）
+          fail: false
           jobSummary: true
+      # lychee の終わりの番号：0 は全部よし、2 はリンクの失敗あり、ほかは lychee 自身の失敗。
+      # 2 のときは結果の表（lychee/out.md）の Errors と Unknown を読み、どちらも 0 で Timeouts だけなら警告で通す。
+      # 表を読めないときは落とす（見逃さない側に倒す）。scripts/check-link-check-judge.sh が Lint でこの手順を試す
+      - name: リンク切れがあれば落とす（時間切れだけなら警告）
+        env:
+          CODE: ${{ steps.lychee.outputs.exit_code }}
+        run: |
+          # ==judge-begin==
+          out=lychee/out.md
+          [ "$CODE" = 0 ] && exit 0
+          if [ "$CODE" != 2 ] || [ ! -f "$out" ]; then echo "::error::lychee が終わりの番号 ${CODE:-なし} で止まりました（ログを見る）"; exit 1; fi
+          row() { grep -E "^\|[^|]*$1[^|]*\|" "$out" | head -n1 | awk -F'|' '{gsub(/ /,"",$3); print $3}'; }
+          err=$(row Errors); unk=$(row Unknown); tmo=$(row Timeouts)
+          for n in "$err" "$unk" "$tmo"; do
+            case "$n" in ''|*[!0-9]*) echo "::error::結果の表（Errors・Unknown・Timeouts）を読めませんでした。Summary を見る"; exit 1 ;; esac
+          done
+          if [ "$err" -gt 0 ] || [ "$unk" -gt 0 ]; then echo "::error::リンク切れが ${err} 件・分からないものが ${unk} 件あります（一覧は Summary）"; exit 1; fi
+          if [ "$tmo" -gt 0 ]; then
+            grep -F '[TIMEOUT]' "$out" | while IFS= read -r l; do echo "::warning title=時間切れ（リンク切れではない）::${l#\* }"; done
+            echo "時間切れ ${tmo} 件だけなので通します（相手のサイトが実行機に答えなかっただけ。続くようならリンクを確かめる）"
+            exit 0
+          fi
+          echo "::error::lychee は失敗を返したのに、表に Errors・Unknown・Timeouts がありません（Summary を見る）"; exit 1
+          # ==judge-end==

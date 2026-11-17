@@ -19,4 +19,5 @@
 ## 対策
 - [x] 直す: shokuhin-hyoji #8 で高さを `Math.round` で丸めてくらべる
 - [x] 見つける: `scripts/game-patterns.mjs` の `heightRaw` と drift-check の `qa:height-raw` が、丸めずに 44 とくらべる QA を週次まとめに出す（`scripts/check-game-patterns.mjs` で検査。この PR）
+- [x] 直す: 11/17 に gogen-suiri の main の QA が同じ理由で落ちたので丸めた（gogen-suiri #9）
 - [ ] 直す: 同じ書き方の残り 85 本を、次にそのゲームを直すときに丸める（週次まとめの qa:height-raw で追う）。担当: 一括で直すスレッド。期限: 2026-11-24
