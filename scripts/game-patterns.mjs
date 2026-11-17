@@ -113,8 +113,9 @@ export function playerBugs(page) {
   const s = stripComments(page), out = [];
   // 保存に失敗しても黙っている（incidents/2026-11-07-save-failure-silent.md）
   if (/catch\s*\(e\)\s*\{\s*mem\s*=\s*j;\s*\}/.test(s)) out.push(['save:silent', 'index.html の save が、保存に失敗しても黙っている（開き直すと記録が消える。保存できないあいだは帯 #savewarn を出したままにし、QA に検査を足す。routines/game-dev.md「共通の形」の記録）']);
-  // とことんで正解した直後に「ここで降りる」が効かない（2026-11-07 kyuyo-meisai #1 の CodeRabbit）
-  if (/if\s*\(\s*cur\s*&&\s*cur\.done\s*\)\s*return;\s*finish\(\)/.test(s)) out.push(['endless:stuck', 'index.html の「ここで降りる」が正解した直後に効かない（if (cur && cur.done) return; finish(); の行。kyuyo-meisai 1bebfdc の直し方）']);
+  // とことんで正解した直後に「ここで降りる」が効かない（2026-11-07 kyuyo-meisai #1 の CodeRabbit）。
+  // endFinish() の形と、正解したときにボタンを隠す形も同じ不具合（2026-11-17 gurafu-minuki）
+  if (/if\s*\(\s*cur\s*&&\s*cur\.done\s*\)\s*return;\s*(?:end)?[fF]inish\(\)/.test(s) || /\$\(\s*["']quit["']\s*\)\.hidden\s*=\s*true/.test(s)) out.push(['endless:stuck', 'index.html の「ここで降りる」が正解した直後に効かない（if (cur && cur.done) return; finish(); の行か、正解したときの $("quit").hidden = true。消して、ボタンの数を正解した分を入れた数に直す。kyuyo-meisai 1bebfdc の直し方）']);
   // 遊ぶ前の鍵（satou さん 2026-11-06「好きなだけ遊んでほしい」）。実績の 🔒 は鍵ではない。コメントの中の「押すと開く」は見ない
   if (page.includes('🎫')) out.push(['free:ticket', 'index.html にチケット🎫がある（遊ぶ量を縛らない。とことんは、まちがえても続き「ここで降りる」で終わる形に。routines/game-dev.md「好きなだけ遊べるように」）']);
   const gate = s.match(/[^<>`'"\n]{0,24}(?:と|たら)開く|🔒 [^<>`'"\n]{2,40}/);
