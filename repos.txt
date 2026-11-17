@@ -103,6 +103,7 @@ sentaku-hyoji game
 setsuden-kotsu game
 shindo-yomi game
 shiritori-saitan game
+shitsugyo-teate game
 shokubutsu-nakama game
 shokuchudoku-yobo game
 shokuhin-hyoji game
