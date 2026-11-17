@@ -23,4 +23,4 @@
 - [x] 直す: mizu-mamoru で、新しいほうが null のとことんは古い途中経過で戻さないようにし、QA に「終えた保存が失敗しても戻らない」を足した（mizu-mamoru #1）
 - [x] 防ぐ: `scripts/game-patterns.mjs` の playerBugs に endless:revive を足し、ゲームの PR が新しく持ち込んだら game-qa の「遊ぶ人が困る作り」で落とす（この PR）
 - [x] 見つける: drift-check でも endless:revive を出す（`scripts/drift-check.mjs`、この PR）
-- [ ] 直す: すでにある各ゲームを mizu-mamoru と同じ1行に直す（#329 と合わせる。合わせ方を template/ の共通部品へ移す案もそこにある。担当: 新作ゲームを作る(並列3)、期限: 2026-11-24）
+- [ ] 直す: すでにある各ゲーム（2026-11-17 に main の index.html を見て73本）を mizu-mamoru と同じ1行に直す。この作業のリポジトリへの権限が無いので、まとめて直すスレッドを別に立てて同じ日に進める（#329 と合わせる。担当: 一括で直すスレッド、期限: 2026-11-18）

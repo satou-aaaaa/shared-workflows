@@ -134,7 +134,7 @@ export function playerBugs(page) {
   const toastCss = (s.replace(/\/\*[\s\S]*?\*\//g, '').match(/\.toast\s*\{[^}]*\}/) || [''])[0];
   if (/position\s*:\s*(?:fixed|absolute)/.test(toastCss) && !/pointer-events\s*:\s*none/.test(toastCss)) out.push(['toast:blocks', 'index.html の .toast に pointer-events:none が無い（知らせが出ている2秒ほど、その下のボタンを押しても効かない。.toast{pointer-events:none;…}。routines/game-dev-detail.md「共通の形」の知らせ）']);
   // 保存に失敗したあと、とことんを終えた（新しいほうが null）のに、読み直しで古い途中経過が戻る（2026-11-17 mizu-mamoru #1 の CodeRabbit）
-  if (/if\s*\(\s*!r\s*\|\|\s*bank\(s,\s*r\)\s*\|\|\s*doneOf\(r\)\s*\)\s*continue;/.test(s)) out.push(['endless:revive', 'index.html の load() が、保存に失敗したあと終えたとことんを古い途中経過で戻す（「もう一度とことん」で終えた回の続きになる。if (!r || bank(s, r) || doneOf(r) || (r.mode === "e" && n.runs[m] === null)) continue; にし、QA に検査を足す。mizu-mamoru の直し方）']);
+  if (/if\s*\(\s*!r\s*\|\|\s*bank\(\s*s\s*,\s*r\s*\)\s*\|\|\s*doneOf\(\s*r\s*\)\s*\)\s*continue;/.test(s)) out.push(['endless:revive', 'index.html の load() が、保存に失敗したあと終えたとことんを古い途中経過で戻す（「もう一度とことん」で終えた回の続きになる。if (!r || bank(s, r) || doneOf(r) || (r.mode === "e" && n.runs[m] === null)) continue; にし、QA に検査を足す。mizu-mamoru の直し方）']);
   // 押せる所の高さを、あとの行の a{min-height:32px} が上書きする（出典が2行に折れた日だけ QA が落ちる。2026-11-17 funka-level ほか5本）
   const lowLink = s.replace(/\/\*[\s\S]*?\*\//g, '').match(/[^{}\s]*\ba\s*\{[^}]*min-height\s*:\s*(?:[0-3]?\d|4[0-3])px/);
   if (lowLink) out.push(['tap:low-link', `index.html のリンクの高さが44pxより低い「${lowLink[0].replace(/\s+/g, ' ').slice(0, 60)}」（出典などが2行に折れると押しにくく、QA も日によって落ちる。min-height:44px に。routines/game-dev.md「共通の形」の押せる所）`]);
