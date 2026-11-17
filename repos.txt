@@ -83,6 +83,7 @@ kenbikyo-buhin game
 kengen-check game
 kenko-minuki game
 kenpo-shikumi game
+kifukin-ikura game
 kikenbutsu-rui game
 kikigaki-techo game
 kimari-sagashi game
@@ -138,6 +139,7 @@ saibanin-shikumi game
 saibo-tsukuri game
 sandbox app
 sdgs-mokuhyo game
+seiho-ikura game
 seiza-tsunagi game
 sekai-isan game
 sekai-jikoku game
