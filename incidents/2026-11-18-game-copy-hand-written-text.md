@@ -19,4 +19,4 @@
 ## 対策
 - [x] 直す: 3本の5か所を、それぞれのゲームのきまりの名前と期限の幅で書き直した（zeimu-kigen#1・kuruma-kigen#1・kazoku-kigen#1）
 - [x] 防ぐ: 3本の `qa/run.mjs` に「遊び方・説明・まちがいの案内が、このゲームのきまりの名前（`G.GROUPS`）と期限の幅（`G.LEVELS` の最初と最後）で書いてある」検査を足し、写し元の言葉の一覧にすぐ前の写し元の言葉も足した（zeimu-kigen#1・kuruma-kigen#1・kazoku-kigen#1）
-- [x] 防ぐ: `routines/game-dev.md` A 手順5 に、写したときに必ず書き直す手書きの5か所と、すぐ前の写し元の言葉を登録することを書いた（この PR）
+- [x] 防ぐ: `routines/game-dev-detail.md` A 手順5 に、写したときに必ず書き直す手書きの5か所と、すぐ前の写し元の言葉を登録することを書いた（この PR）
