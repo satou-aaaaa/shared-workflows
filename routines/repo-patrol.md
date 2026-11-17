@@ -53,6 +53,9 @@ A. **新しい対象の自動検出**（毎回。軽い比較だけ）: チー�
      - kenko-minuki: data.js（見分け方の中身）に触れる PR は、src の公的な資料と照らす。
      - kikigaki-techo: data.js（手がかり・出典）に触れる直しは出典の資料で確かめる。
      - kimari-sagashi: 問題の作り方（gen.js）に触れる PR は QA の解き直しが通っているか、言い方に触れる PR は README の出典と照らす。
+     - kitte-ikura: data.js（料金表）に触れる PR は、日本郵便の料金表（手紙・はがきの料金・オプション）と照らす。料金改定の知らせがあれば直す。
+     - shukushaku-yomi: data.js に触れる PR は、国土地理院の地形図の縮尺・等高線の間隔（主曲線・計曲線）と照らす。
+     - denkidai-ikura: data.js の PRICE（31円/kWh）は全国家庭電気製品公正取引協議会の目安単価。改定の知らせがあれば PRICE と画面の文を一緒に直す。
      - kondate-koma: gen.js の料理と「つ」に触れる PR は、農水省の料理例と照らす。
      - machi-michijun: 言い方（予防と言い切らない）に触れる PR は README の出典と照らす。
      - mizu-mamoru: gen.js（危ない所の なぜ・どうする・出典）に触れる PR は、src の2つの資料（政府広報オンライン・消費者庁）と照らす。資料に無いことを足さない。
