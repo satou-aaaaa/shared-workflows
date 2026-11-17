@@ -11,7 +11,8 @@
 //   nosave:  保存に失敗しても開いているあいだは覚え、saveWarn(true) を呼ぶ。控えがあるあいだはゲームの saveWarn(false) で帯を消さない。保存できるようになったら合わせて書く
 //   nosave-tabs: 保存できないタブで足した数と、そのあいだにほかのタブが保存した数を両方残す（版6、recycle-mark #7 の CodeRabbit）
 //   nosave-del: 保存に失敗したまま「覚えた」で消した項目を、保存できるようになったとき戻さない・覚えた数を重ねない（版4）
-//   junk:    壊れた記録（配列・文字・変な日付）でも止まらず、空の形に直す
+//   junk:    壊れた記録（配列・文字・変な日付・数の代わりのオブジェクト）でも止まらず、空の形に直す（オブジェクトは版6、kimari-sagashi #17）
+//   mix-uneven: 種類の数がかたよっていても、続けずに並べられるなら続けない（版6、teate-junban #9）
 //   proto:   鍵が constructor・__proto__・toString でも止まらず、ふつうの鍵として数える（2026-11-11 CodeRabbit）
 //   valid:   setValid で作り直せないと言われた鍵は数えず、出さない（引き継ぎで入った・種類が消えた鍵）
 //   offline: 外へ通信する書き方が無い
@@ -115,6 +116,14 @@ export async function checkDepth(code) {
     const d = t.D.due();
     ok("mix: 多くて10問", d.length === 10);
     ok("mix: 種類が続かない", d.every((k, i) => i === 0 || k.split("|")[0] !== d[i - 1].split("|")[0]));
+    // mix-uneven：数がかたよっていても（a2・b3・c5）、続けずに並べられるなら続けない（版6、teate-junban #9 の CodeRabbit）
+    {
+      const u = boot(code);
+      [["a", 2], ["b", 3], ["c", 5]].forEach(([g, c]) => { for (let i = 0; i < c; i++) u.D.mark(`${g}|${i}`, 1); });
+      u.day(1);
+      const du = u.D.due();
+      ok("mix-uneven: 10問ぜんぶ出て、同じ種類が続かない", du.length === 10 && du.every((k, i) => i === 0 || k.split("|")[0] !== du[i - 1].split("|")[0]), du.join(","));
+    }
 
     // nosave
     const ls = store();
@@ -182,9 +191,9 @@ export async function checkDepth(code) {
     }
 
     // junk
-    for (const v of ['[1,2]', '"x"', '{"rv":[1],"sure":"a"}', '{"rv":{"k":{"due":"2026-99-99","s":9}},"sure":-3,"sureOk":5}', "{bad"]) {
+    for (const v of ['[1,2]', '"x"', '{"rv":[1],"sure":"a"}', '{"rv":{"k":{"due":"2026-99-99","s":9}},"sure":-3,"sureOk":5}', "{bad", '{"sure":{"toString":null},"learned":{"valueOf":null}}', '{"rv":{"k|1":{"due":"2026-11-01","s":{"toString":null},"t":{"toString":null}}}}']) {
       t = boot(code, { ls: store({ "t-depth": v }) });
-      let s = null; try { s = t.D.stats(); t.D.due(); } catch (e) { s = null; }
+      let s = null; try { s = t.D.stats(); t.D.due(); t.D.count(); } catch (e) { s = null; }
       ok(`junk: 壊れた記録 ${v} でも止まらない`, s && s.sure >= 0 && s.sureOk <= s.sure);
     }
 

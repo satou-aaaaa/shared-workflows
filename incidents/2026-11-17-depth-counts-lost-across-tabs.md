@@ -22,3 +22,5 @@
 - [x] 見つける: `template/qa/depth-check.mjs` に nosave-tabs（片方のタブだけ保存できない・両方の数が残る・二重に数えない）を足した。古い版では3つとも落ちることを確かめた（この PR）
 - [x] 防ぐ: `routines/game-dev-detail.md` の「自信をかける」に、judge の前に `same()` で別のタブの進みを見る・鍵を作り直して同じ文字になるかで受ける、を書いた（この PR）
 - [x] 直す: recycle-mark #7 で `itOf` と `tap`・`solve` を直した。ほかの depth の PR にも同じ形があれば同じ夜に直す（recycle-mark #7）
+- [x] 直す: 同じ夜のレビュー（kimari-sagashi #17・teate-junban #9）で出た depth.js の残り2つも版6で直した。数の代わりにオブジェクト（`{"toString":null}`）が入った記録でホームが止まる（`num` が先に外す）・種類の数がかたよると同じ種類が続く（`due` は直前と別で残りの多い種類から出す）（この PR）
+- [x] 見つける: `template/qa/depth-check.mjs` の junk にオブジェクトの記録を足し、mix-uneven（a2・b3・c5 でも続かない）を足した。直す前の版では落ちることを確かめた（この PR）

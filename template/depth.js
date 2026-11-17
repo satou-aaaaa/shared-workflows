@@ -49,7 +49,8 @@
   var last = null; // いまの問題の { key, sure, ok }（自信ありでまちがえたら、mark で復習に入れる）
   var today = function () { return new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10); };
   var addDays = function (d, n) { return new Date(Date.parse(d + "T00:00:00Z") + n * 864e5).toISOString().slice(0, 10); };
-  var num = function (v) { return Number.isFinite(+v) && +v >= 0 ? Math.floor(+v) : 0; };
+  // 文字・数でないもの（{ toString: null } など）は + で例外になるので先に外す（版6、kimari-sagashi #17 の CodeRabbit）
+  var num = function (v) { if (typeof v !== "number" && typeof v !== "string") return 0; return Number.isFinite(+v) && +v >= 0 ? Math.floor(+v) : 0; };
   var okDate = function (v) { return typeof v === "string" && /^\d{4}-\d\d-\d\d$/.test(v) && Number.isFinite(Date.parse(v + "T00:00:00Z")); };
   // rv はプロトタイプの無い辞書にする（鍵が constructor・__proto__ などでも、もとからある値と混ざらない）
   // gone は「覚えた」で消した鍵と消した時刻（保存に失敗した控えと合わせるとき、保存済みの古い項目を戻さない。版4、hatsuden-kurabe #1 の CodeRabbit）
@@ -138,8 +139,15 @@
     list.sort(function (a, b) { return a[1].due < b[1].due ? -1 : a[1].due > b[1].due ? 1 : a[1].t - b[1].t; });
     var groups = Object.create(null), order = [];
     list.forEach(function (e) { var g = kindOf(e[0]); if (!groups[g]) { groups[g] = []; order.push(g); } groups[g].push(e[0]); });
-    var out = [];
-    while (out.length < Math.min(DUE_MAX, list.length)) order.forEach(function (g) { if (groups[g].length && out.length < DUE_MAX) out.push(groups[g].shift()); });
+    // 毎回、直前と別の種類のうち残りが多いものから出す（同じなら古いほう）。数がかたよっていても、続けずに並べられるなら続けない
+    // （順に1つずつ取ると a2・b3・c5 で c が4つ続いていた。版6、teate-junban #9 の CodeRabbit）
+    var out = [], prev = null, n = Math.min(DUE_MAX, list.length);
+    while (out.length < n) {
+      var pick = null;
+      order.forEach(function (g) { if (groups[g].length && g !== prev && (pick === null || groups[g].length > groups[pick].length)) pick = g; });
+      if (pick === null) pick = prev;
+      out.push(groups[pick].shift()); prev = pick;
+    }
     return out;
   }
   function okKey(k) { try { return !!valid(k); } catch (e) { return false; } }
