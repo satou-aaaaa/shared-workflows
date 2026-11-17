@@ -20,4 +20,4 @@
 - [x] 直す: depth.js（深さの版5）で、Depth.bindSure(鍵, 回の印) の回の印を記録（at）に残し、judge の前に読み直してほかのタブ・開き直す前に数えていたら null にする（この PR）
 - [x] 見つける: `template/qa/depth-check.mjs` の tabs が、2つのタブ・開き直したあと・別の回・回の印なしを毎回見る（直す前の depth.js では落ちる）
 - [x] 防ぐ: `scripts/game-patterns.mjs` の playerBugs に depth:twice（回の印の無い Depth.bindSure）を足し、ゲームの PR が新しく持ち込んだら game-qa で落とす。new-game.mjs と routines/game-dev-detail.md の書き方も回の印つきに
-- [ ] 直す: 13本で depth.js・qa/depth-check.mjs を写し、Depth.bindSure(tag, cur.id + "|" + cur.i) にする（担当: 一括で直すスレッド、期限: 2026-11-24）
+- [x] 直す: 13本で depth.js・qa/depth-check.mjs を写し、Depth.bindSure(tag, cur.id + "|" + cur.i) にした（各ゲームの PR、題「別のタブで「自信あり」を2回数えないようにする（深さの版5）」。13本とも 2026-11-17 にマージ）
