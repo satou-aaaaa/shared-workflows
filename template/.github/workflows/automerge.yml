@@ -25,9 +25,10 @@ jobs:
       pages_build: true
       delete_branch: true
       # 同じコミットで ✅ が要る検査（改行区切り）。きっかけが Setup check のときも QA が通っていなければマージしない
-      # Secret scan を入れたリポジトリは "scan / scan" も足す
+      # Secret scan を外したリポジトリは scan / scan を消す（入れているのに無いと、鍵が見つかっても QA が通ればマージされる。2026-11-17 mizu-mamoru #1 の CodeRabbit）
       require_checks: |
         qa / qa
+        scan / scan
       # 動いたときだけ成功を待つ検査。準備のファイルを変えた PR は Setup check が通るまでマージしない（2026-11-07 atsusa-shisu #1・#252 の CodeRabbit）
       present_checks: |
         setup / setup

@@ -240,6 +240,9 @@ const results = await pool(REPOS, 4, async (r) => {
     if (paths.has('.github/workflows/automerge.yml')) {
       const am = await src.read('.github/workflows/automerge.yml');
       const on = (am.match(/^\s*workflows:\s*\[([^\]]*)\]/m) || [, ''])[1].split(',').map((x) => x.trim().replace(/^["']|["']$/g, ''));
+      // 逆向き：Secret scan があるのに require_checks に scan / scan が無いと、鍵が見つかっても（scan が実行中・失敗でも）QA が通ればマージされる
+      // （2026-11-17 ひな形の automerge.yml が qa / qa だけで、mizu-mamoru #1 で CodeRabbit が指摘。incidents/2026-11-17-automerge-scan-not-required.md）
+      if (paths.has('.github/workflows/secret-scan.yml') && on.includes('Secret scan') && !/^\s*scan \/ scan\s*$/m.test(am)) flag('automerge:scan-required', '.github/workflows/automerge.yml の workflows に Secret scan があるのに、require_checks に scan / scan が無い（鍵が見つかっても QA が通ればマージされる。require_checks に scan / scan を足す）');
       if (/^\s*scan \/ scan\s*$/m.test(am) && !on.includes('Secret scan')) flag('automerge:scan', '.github/workflows/automerge.yml の require_checks に scan / scan があるのに、on.workflow_run.workflows に Secret scan が無い（Secret scan が後に終わるとマージされない。workflows に Secret scan を足す）');
     }
 
@@ -334,7 +337,7 @@ const results = await pool(REPOS, 4, async (r) => {
     // 黙っていると遊ぶ人は気づけない（2026-11-07 暑さ指数よみの PR のレビューで見つけ、同じ作りのゲーム14本を直した。incidents/2026-11-07-save-failure-silent.md）
     if (paths.has('index.html')) {
       const page = pageCache ?? await src.read('index.html');
-      for (const [id, msg] of playerBugs(page)) if (['save:silent', 'hint:cut-moves', 'hint:left-fixed', 'stars:role', 'endless:stuck', 'toast:blocks'].includes(id)) flag(id, msg); // 見分けは scripts/game-patterns.mjs の playerBugs（ゲームの PR の QA も同じものを使う）
+      for (const [id, msg] of playerBugs(page)) if (['save:silent', 'hint:cut-moves', 'hint:left-fixed', 'stars:role', 'endless:stuck', 'endless:revive', 'toast:blocks'].includes(id)) flag(id, msg); // 見分けは scripts/game-patterns.mjs の playerBugs（ゲームの PR の QA も同じものを使う）
       // ヒント2：まちがいを除いてから消す数を決めると、しぼったあとにまちがいを選んだとき、消した選び肢が戻る（saibanin-shikumi #1 の CodeRabbit）
       // コメントを除き、複数行の定義も終わりまで見る（scripts/game-patterns.mjs。見分けの検査は scripts/check-game-patterns.mjs）
       // ヒント2のあとの「のこりは○つ」は、いま押せる選び肢の数を出す（決まった「2つ」だと、先に最後のまちがいを選んだとき、のこり1つでも2つと出る）

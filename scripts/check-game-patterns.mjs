@@ -111,6 +111,8 @@ const bugCases = [
   ['困る作り：知らせがボタンの上で押すのを止める', 'toast:blocks', '<style>.toast{position:fixed;left:50%;bottom:24px;z-index:9}</style>'],
   ['困る作り：知らせは押すのを通す', '', '<style>.toast{pointer-events:none;position:fixed;left:50%;bottom:24px}</style>'],
   ['困る作り：CSS のコメントの古い形は見ない', '', '<style>/* .toast{position:fixed} */ .toast{position:fixed;pointer-events:none}</style>'],
+  ['困る作り：終えたとことんが読み直しで戻る', 'endless:revive', 'if (!x || !y) { const r = x || y; if (!r || bank(s, r) || doneOf(r)) continue; }'],
+  ['困る作り：終えたとことんは戻さない', '', 'if (!x || !y) { const r = x || y; if (!r || bank(s, r) || doneOf(r) || (r.mode === "e" && n.runs[m] === null)) continue; }'],
   ['困る作り：cancel が無い', 'howto:close', HOWTO_OK.split('\n').slice(0, 2).join('\n')],
 ];
 for (const [name, want, src] of bugCases) {
