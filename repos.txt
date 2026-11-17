@@ -43,6 +43,7 @@ hyoshiki-yomi game
 ikukyu-shikumi game
 isle-routes-research app
 jidosha-shurui game
+jiko-kihon game
 jintai-shikumi game
 jitensha-rule game
 jobun-tobatsu game
@@ -55,6 +56,7 @@ kansen-yobo game
 kasane-zome game
 keigen-zeiritsu game
 keigo-naoshi game
+keiyaku-torikeshi game
 kengen-check game
 kenko-minuki game
 kenpo-shikumi game
@@ -95,6 +97,7 @@ nijushi-sekki game
 okane-kihon game
 onpu-yomi game
 osatsu-himitsu game
+otoshimono-kimari game
 otsukai-memo game
 pikuto-yomi game
 recycle-mark game
