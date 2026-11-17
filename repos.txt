@@ -13,6 +13,7 @@ bousai-handan game
 bunshi-tsukuri game
 bushu-tashizan game
 carcassonne-research app
+chiho-jichi game
 chikara-shurui game
 chikei-ate game
 chintai-kimari game

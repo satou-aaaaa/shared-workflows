@@ -94,6 +94,7 @@ A. **新しい対象の自動検出**（毎回。軽い比較だけ）: チー�
      - saiban-kigen: data.js（期限・手続き）に触れる PR は、e-Gov の刑事訴訟法（323AC0000000131）・民事訴訟法（408AC0000000109）の今の条文と照らし、qa/run.mjs の別の表も同じに直す。
      - shakuchi-shakuya: data.js（期間・きまり）に触れる PR は、e-Gov の借地借家法（403AC0000000090）・民法（129AC0000000089）の今の条文と照らし、qa/run.mjs の別の表も同じに直す。
      - kokkai-nissu: data.js（日数・任期）に触れる PR は、e-Gov の日本国憲法・国会法（322AC1000000079）などの今の条文と照らし、qa/run.mjs の別の表も同じに直す。
+     - chiho-jichi: data.js（日数・期間）に触れる PR は、e-Gov の地方自治法（322AC0000000067）の今の条文と照らし、qa/run.mjs の別の表も同じに直す。
      - chusha-kyori: data.js（場所・範囲・停車か駐車か）に触れる PR は、e-Gov の道路交通法 第44条・第45条と照らし、qa/run.mjs の TB も同じに直す。
      - shotokuzei-ikura: data.js（速算表・種類）に触れる PR は、国税庁タックスアンサー No.2260 と QA の表（QT）と照らす。毎年4月の税制改正で変わっていないか見る。
      - zoyozei-ikura: data.js（速算表2つ・だれからの場面）に触れる PR は、国税庁タックスアンサー No.4408 と QA の表（QT・TB）と照らす。毎年4月の税制改正で変わっていないか見る。
