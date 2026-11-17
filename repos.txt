@@ -41,6 +41,7 @@ hyakunin-awase game
 hyoshiki-yomi game
 ikukyu-shikumi game
 isle-routes-research app
+jidosha-shurui game
 jintai-shikumi game
 jitensha-rule game
 jobun-tobatsu game
@@ -55,6 +56,7 @@ keigo-naoshi game
 kengen-check game
 kenko-minuki game
 kenpo-shikumi game
+kikenbutsu-rui game
 kikigaki-techo game
 kimari-sagashi game
 kippu-10 game
