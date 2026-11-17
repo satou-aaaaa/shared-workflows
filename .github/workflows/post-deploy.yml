@@ -119,7 +119,10 @@ jobs:
           fi
           # 404 などだけで JavaScript のエラーが無く、そのページのファイルがこの版にあるなら、コードでなく公開側（Pages の作り直し中・設定）の問題。
           # 差し戻すと正しい版まで戻してしまうので、公開を起こし直して知らせるだけにする（2026-11-07 gogen-suiri #1 の CodeRabbit）
-          if jq -e 'all(.[]; (.status < 400 or .status >= 500) or (.errors | length) == 0)' <<<"$PAGES" >/dev/null; then
+          # JavaScript のエラーが1つでもあれば（5xx を除く）コードの問題なので差し戻しへ進む。前は 200 のページのエラーを見落とし、
+          # 壊れた版を公開側の問題と取りちがえて残していた（incidents/2026-11-17-post-deploy-js-error-not-reverted.md。判定の見本は scripts/check-post-deploy-judge.sh）
+          PUBLIC_SIDE='all(.[]; .status >= 500 or (.errors | length) == 0)'
+          if jq -e "$PUBLIC_SIDE" <<<"$PAGES" >/dev/null; then
             missing=0
             while IFS= read -r p; do
               f="$p"; [ "$f" = "（トップ）" ] && f=""; case "$f" in ""|*/) f="${f}index.html" ;; esac
