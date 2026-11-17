@@ -25,9 +25,13 @@ jobs:
       pages_build: true
       delete_branch: true
       # 同じコミットで ✅ が要る検査（改行区切り）。きっかけが Setup check のときも QA が通っていなければマージしない
-      # Secret scan を入れたリポジトリは "scan / scan" も足す
+      # Secret scan を外したリポジトリは "scan / scan" を消す（drift-check の automerge:scan-required が見る）
       require_checks: |
         qa / qa
+        scan / scan
+      # 問題の表（data.js など）・PWA の仕組みを変える PR は自動ではマージせず、CodeRabbit を読んでから手でマージ。表のファイル名はゲームに合わせる
+      # （drift-check の automerge:hold-data が見る。incidents/2026-11-17-new-game-automerge-gaps.md）
+      hold_paths: '^(sw\.js|manifest\.webmanifest|data\.js)$'
       # 動いたときだけ成功を待つ検査。準備のファイルを変えた PR は Setup check が通るまでマージしない（2026-11-07 atsusa-shisu #1・#252 の CodeRabbit）
       present_checks: |
         setup / setup

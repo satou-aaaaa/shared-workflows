@@ -245,6 +245,11 @@ const results = await pool(REPOS, 4, async (r) => {
       // （2026-11-17 hatsuden-kurabe #1 の CodeRabbit。incidents/2026-11-17-template-review-gaps-again.md）
       const disp = (am.match(/^\s*dispatch:\s*(.*)$/m) || [, ''])[1];
       if (on.includes('Secret scan') && paths.has('.github/workflows/secret-scan.yml') && /recheck_main:\s*false/.test(am) && !/\bsecret-scan\.yml\b/.test(disp)) flag('automerge:scan-dispatch', '.github/workflows/automerge.yml の dispatch に secret-scan.yml が無い（自動マージのあと main で Secret scan が動かず、失敗の Issue が閉じない。template/.github/workflows/automerge.yml を写す）');
+      // Secret scan を入れたのに require_checks に scan / scan が無いと、QA だけ ✅ で scan の前にマージされる。
+      // ゲームの問題の表（data.js）を変える PR は CodeRabbit を読んでから手でマージする（hold_paths）。ひな形から始めた新作で両方抜けた
+      // （2026-11-17 gairai-miwake #1 の CodeRabbit。incidents/2026-11-17-new-game-automerge-gaps.md）
+      if (paths.has('.github/workflows/secret-scan.yml') && !/^\s*scan \/ scan\s*$/m.test(am)) flag('automerge:scan-required', '.github/workflows/automerge.yml の require_checks に scan / scan が無い（Secret scan の前にマージされる。require_checks に scan / scan を足す）');
+      if (paths.has('data.js') && paths.has('sw.js') && !/hold_paths:[^\n]*data\\\.js/.test(am)) flag('automerge:hold-data', '.github/workflows/automerge.yml の hold_paths に data.js が無い（問題の表を変える PR が CodeRabbit を待たずにマージされる。hold_paths に data\\.js を足す）');
     }
 
     // main の守り（削除と force push の禁止）。設定画面でしか入れられず、Chrome が無い日の受け入れで抜けたまま気づかれなかった
@@ -338,7 +343,7 @@ const results = await pool(REPOS, 4, async (r) => {
     // 黙っていると遊ぶ人は気づけない（2026-11-07 暑さ指数よみの PR のレビューで見つけ、同じ作りのゲーム14本を直した。incidents/2026-11-07-save-failure-silent.md）
     if (paths.has('index.html')) {
       const page = pageCache ?? await src.read('index.html');
-      for (const [id, msg] of playerBugs(page)) if (['save:silent', 'hint:cut-moves', 'hint:left-fixed', 'stars:role', 'endless:stuck', 'toast:blocks'].includes(id)) flag(id, msg); // 見分けは scripts/game-patterns.mjs の playerBugs（ゲームの PR の QA も同じものを使う）
+      for (const [id, msg] of playerBugs(page)) if (['save:silent', 'hint:cut-moves', 'hint:left-fixed', 'stars:role', 'endless:stuck', 'endless:revive', 'toast:blocks'].includes(id)) flag(id, msg); // 見分けは scripts/game-patterns.mjs の playerBugs（ゲームの PR の QA も同じものを使う）
       // ヒント2：まちがいを除いてから消す数を決めると、しぼったあとにまちがいを選んだとき、消した選び肢が戻る（saibanin-shikumi #1 の CodeRabbit）
       // コメントを除き、複数行の定義も終わりまで見る（scripts/game-patterns.mjs。見分けの検査は scripts/check-game-patterns.mjs）
       // ヒント2のあとの「のこりは○つ」は、いま押せる選び肢の数を出す（決まった「2つ」だと、先に最後のまちがいを選んだとき、のこり1つでも2つと出る）
