@@ -75,10 +75,13 @@ export function plan(dir) {
   const out = [];
   const want = (p, next, note) => { if (next !== null && read(p) !== next) out.push({ path: p, next, note }); };
   if (has('qa/run.mjs') && has('sw.js') && !read('qa/run.mjs').includes('checkSwStall')) out.push({ path: 'qa/run.mjs', next: null, note: 'checkSwStall を呼んでいない（import { checkSwStall } from "./sw-check.mjs" と、sw.js の中身で check を1行足す）' });
-  for (const p of ['transfer.js', 'depth.js', 'qa/a11y.mjs', 'qa/transfer-check.mjs', 'qa/sw-check.mjs', 'qa/depth-check.mjs']) if (has(p)) want(p, tpl(p));
+  // sw.js を写せない（独自の働きがある）ゲームには、ひな形の sw.js を前にした sw の検査も写さない。写すと QA が「FLAGS が無い」などで落ちる
+  // （2026-11-17 kokki-shuto。incidents/2026-11-17-sw-migration-drops-extras.md）
+  const swStuck = has('sw.js') && makeSw(read('sw.js')) === null;
+  for (const p of ['transfer.js', 'depth.js', 'qa/a11y.mjs', 'qa/transfer-check.mjs', 'qa/sw-check.mjs', 'qa/depth-check.mjs']) if (has(p) && !(swStuck && p === 'qa/sw-check.mjs')) want(p, tpl(p));
   if (has('depth.js') && has('qa') && !has('qa/depth-check.mjs')) out.push({ path: 'qa/depth-check.mjs', next: tpl('qa/depth-check.mjs'), note: '足した。qa/run.mjs から checkDepth を呼ぶ' });
   // sw.js があるのに sw の検査が無いゲームには足す（qa/run.mjs から呼ぶのは手で。下で知らせる）
-  if (has('sw.js') && has('qa') && !has('qa/sw-check.mjs')) out.push({ path: 'qa/sw-check.mjs', next: tpl('qa/sw-check.mjs'), note: '足した。qa/run.mjs から checkSwStall を呼ぶ' });
+  if (has('sw.js') && !swStuck && has('qa') && !has('qa/sw-check.mjs')) out.push({ path: 'qa/sw-check.mjs', next: tpl('qa/sw-check.mjs'), note: '足した。qa/run.mjs から checkSwStall を呼ぶ' });
   if (has('index.html')) {
     const html = read('index.html');
     const block = tpl('a11y/a11y.html').match(A11Y)[0];

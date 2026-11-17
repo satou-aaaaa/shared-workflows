@@ -24,3 +24,5 @@
 - [x] 見つける: `scripts/check-sw-check.mjs` に、FLAGS・FONT_CACHE のある古い sw.js を写さないことと、枠のある sw.js はこれまでどおり写すことを足した（この PR）
 - [x] 直す: これまでに枠を入れたゲームすべてで、枠を入れる前の sw.js に CACHE・SHELL のほかの定数が無かったことを確かめた（消えたものは無い）
 - [x] 防ぐ: `routines/pr.md`「PR を作る」に、出す前に main との差が空でないこと・戻したい中身が入ったことを確かめる手順を足した（この PR）
+- [x] 防ぐ: sw.js を写せないゲームには `qa/sw-check.mjs` も写さない（ひな形の sw.js を前にした検査で QA が落ちる。`scripts/check-sw-check.mjs` で検査。この PR）
+- [x] 弱める: Template sync は、1本に書けなくても警告を出して残りのゲームへ配り続ける（2026-11-17 の初回は kokki-shuto で止まり、後ろの 60 本に届かなかった。`.github/workflows/template-sync.yml`。この PR）
