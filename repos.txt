@@ -101,6 +101,7 @@ login-mamori game
 machi-michijun game
 madori-puzzle game
 mannaka-kanji game
+mansion-kimari game
 meirei-narabe game
 menkyo-nenrei game
 mizu-mamoru game
