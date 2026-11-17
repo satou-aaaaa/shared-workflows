@@ -14,6 +14,7 @@ bunshi-tsukuri game
 bushu-tashizan game
 carcassonne-research app
 chikei-ate game
+chintai-kimari game
 chizu-kigo game
 chosakuken game
 dashisugi-check game
@@ -23,6 +24,7 @@ denkidai-ikura game
 dento-kogei game
 doubutsu-nakama game
 dungeon-boardgame app
+ekisei-yomi game
 endaka-enyasu game
 funka-level game
 gairai-miwake game
@@ -41,11 +43,13 @@ hyakunin-awase game
 hyoshiki-yomi game
 ikukyu-shikumi game
 isle-routes-research app
+jidosha-shurui game
 jintai-shikumi game
 jitensha-rule game
 jobun-tobatsu game
 kabu-news game
 kaden-anzen game
+kagaku-henka game
 kaji-mamoru game
 kakuritsu-dotchi game
 kanazukai-dotchi game
@@ -56,9 +60,12 @@ keigo-naoshi game
 kengen-check game
 kenko-minuki game
 kenpo-shikumi game
+kikenbutsu-rui game
 kikigaki-techo game
 kimari-sagashi game
 kippu-10 game
+kisetsu-tenki game
+kitai-ate game
 kitte-ikura game
 kokki-shuto game
 kokoku-minuki game
@@ -114,6 +121,7 @@ shokuchudoku-yobo game
 shokuhin-hyoji game
 shukujitsu-yurai game
 shukushaku-yomi game
+souzoku-kihon game
 taikyo-hiyo game
 taiyokei-kurabe game
 tani-kankaku game
