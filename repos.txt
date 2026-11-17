@@ -20,11 +20,13 @@ dashisugi-check game
 dema-tashikame game
 denki-kairo game
 dento-kogei game
+doubutsu-nakama game
 dungeon-boardgame app
 endaka-enyasu game
 funka-level game
 gairai-miwake game
 gamen-no-wana game
+ganseki-nakama game
 gem-merchant-research app
 genso-kigo game
 gogen-suiri game
@@ -75,6 +77,7 @@ meirei-narabe game
 mizu-mamoru game
 mukashi-narabe game
 naitei-no-michi app
+nanban-soudan game
 nemuri-kotsu game
 nenkin-shikumi game
 nijushi-sekki game
@@ -89,6 +92,7 @@ rosen-hitofude game
 sagi-minuki game
 saibanin-shikumi game
 sandbox app
+sdgs-mokuhyo game
 seiza-tsunagi game
 sekai-isan game
 sekai-jikoku game
@@ -97,6 +101,7 @@ sentaku-hyoji game
 setsuden-kotsu game
 shindo-yomi game
 shiritori-saitan game
+shokubutsu-nakama game
 shokuchudoku-yobo game
 shokuhin-hyoji game
 shukujitsu-yurai game
