@@ -44,6 +44,7 @@ gurafu-minuki game
 gyosei-kigen game
 haigusha-ikura game
 haku-uchi game
+hataraku-kigen game
 hataraku-kimari game
 hatsuden-kurabe game
 hikari-michi game
