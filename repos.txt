@@ -21,6 +21,7 @@ dema-tashikame game
 denki-kairo game
 dento-kogei game
 dungeon-boardgame app
+endaka-enyasu game
 funka-level game
 gairai-miwake game
 gamen-no-wana game
