@@ -23,6 +23,7 @@ node scripts/check-template-watch.mjs
 node scripts/check-sw-check.mjs
 node scripts/check-game-patterns.mjs
 node scripts/check-link-text.mjs
+bash scripts/check-link-check-judge.sh
 node scripts/check-budgets.mjs
 node scripts/fit-body.mjs
 node scripts/check-game-wip.mjs
