@@ -133,6 +133,9 @@ export function playerBugs(page) {
   // 知らせ（.toast）が画面の下に出ているあいだ、その下のボタン（次へ・ここで降りる）を押しても効かない（2026-11-17 全ゲームの点検で、29本中27本）
   const toastCss = (s.replace(/\/\*[\s\S]*?\*\//g, '').match(/\.toast\s*\{[^}]*\}/) || [''])[0];
   if (/position\s*:\s*(?:fixed|absolute)/.test(toastCss) && !/pointer-events\s*:\s*none/.test(toastCss)) out.push(['toast:blocks', 'index.html の .toast に pointer-events:none が無い（知らせが出ている2秒ほど、その下のボタンを押しても効かない。.toast{pointer-events:none;…}。routines/game-dev-detail.md「共通の形」の知らせ）']);
+  // 押せる所の高さを、あとの行の a{min-height:32px} が上書きする（出典が2行に折れた日だけ QA が落ちる。2026-11-17 funka-level ほか5本）
+  const lowLink = s.replace(/\/\*[\s\S]*?\*\//g, '').match(/[^{}\s]*\ba\s*\{[^}]*min-height\s*:\s*(?:[0-3]?\d|4[0-3])px/);
+  if (lowLink) out.push(['tap:low-link', `index.html のリンクの高さが44pxより低い「${lowLink[0].replace(/\s+/g, ' ').slice(0, 60)}」（出典などが2行に折れると押しにくく、QA も日によって落ちる。min-height:44px に。routines/game-dev.md「共通の形」の押せる所）`]);
   if (cutMoves(page)) out.push(['hint:cut-moves', 'index.html の cutOf が、まちがいの数で消す選び肢を変える（しぼったあとにまちがいを選ぶと、消した選び肢が戻る。正解でない選び肢のうち最後の1つ以外を消す形にし、QA に検査を足す。routines/game-dev.md「共通の形」のヒント）']);
   if (leftFixed(page)) out.push(['hint:left-fixed', 'index.html のヒント2の「のこりは2つです」が決まった数（先に最後のまちがいを選んでいると押せるのは正解だけ。いま押せる選び肢の数を出す。routines/game-dev.md「共通の形」のヒント）']);
   if (starsBare(page)) out.push(['stars:role', 'index.html の星の表示（class="stars"）に role="img" が無いか、取れなかった星も ★ で色だけで分けている（<span class="stars" role="img" aria-label="星Nつ"> にし、取れなかった星は ☆。routines/game-dev.md「共通の形」の星）']);

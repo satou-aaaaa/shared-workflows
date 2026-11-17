@@ -109,6 +109,8 @@ const bugCases = [
   ['困る作り：モードの鍵', 'free:gate', '<button id="go-e">🔗 連戦（今日の5体に出会うと開く）</button>'],
   ['困る作り：コメントの「押すと開く」は鍵ではない', '', '// 引き継ぎ（transfer.js）は data-hk を押すと開く\nconst x = 1;'],
   ['困る作り：遊び方を Esc で閉じると残らない', 'howto:close', '$("howto-ok").onclick = () => { save((s) => { s.tut = true; }); $("howto").close(); };'],
+  ['困る作り：出典のリンクが44pxより低い', 'tap:low-link', '<style>.note a,.src a{min-height:44px} .src a{min-height:32px;padding:6px 0}</style>'],
+  ['困る作り：リンクが44pxなら困らない', '', '<style>.src a{min-height:44px;padding:6px 0} .btn{min-height:30px}</style>'],
   ['困る作り：知らせがボタンの上で押すのを止める', 'toast:blocks', '<style>.toast{position:fixed;left:50%;bottom:24px;z-index:9}</style>'],
   ['困る作り：知らせは押すのを通す', '', '<style>.toast{pointer-events:none;position:fixed;left:50%;bottom:24px}</style>'],
   ['困る作り：CSS のコメントの古い形は見ない', '', '<style>/* .toast{position:fixed} */ .toast{position:fixed;pointer-events:none}</style>'],
