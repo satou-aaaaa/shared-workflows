@@ -15,10 +15,12 @@
 ## なぜ見つからなかったか
 - sw.js を変える PR は、ゲームの自動マージ（automerge）が人の確認待ちに残す。けれど手でまとめてマージする輪（スレッドの道具）は、QA が緑なら sw.js の PR もマージしていた。
 - 文字の保存（FONT_CACHE）は、電波の無いときの文字の見た目にしか出ず、ゲームの QA も sw の検査も見ていなかった。国旗は kokki-shuto の QA が見ていたので止まった。
+- 戻しの PR は差が空でも CI が緑になり、出す前に main との差を見ていなかった。
 - 写す道具の検査（`scripts/check-sw-check.mjs`）は CACHE と SHELL だけの古い sw.js しか試していなかった。
 
 ## 対策
-- [x] 直す: kokki-shuto #5 は sw.js と qa/sw-check.mjs を main のものに戻した。マージ済みの batsu-doko・usotsuki-roppo は sw.js を写す前のものに戻す PR（batsu-doko #36・usotsuki-roppo #31）を出した。この 3 本の sw.js をひな形に寄せるのは、その働きを枠に入れてから手で行う
+- [x] 直す: kokki-shuto #5 は sw.js と qa/sw-check.mjs を main のものに戻した。マージ済みの batsu-doko・usotsuki-roppo は sw.js を写す前のものに戻す PR（batsu-doko #36・usotsuki-roppo #31）を出した。ところがこの 2 本は、壊れた版がマージされたあとの main から作ったため差が空のままマージされていた。写す前のコミットから sw.js を取り直して出し直した（batsu-doko #37・usotsuki-roppo #32）。この 3 本の sw.js をひな形に寄せるのは、その働きを枠に入れてから手で行う
 - [x] 防ぐ: `swRegion` は、枠の無い古い sw.js に CACHE・SHELL のほかの `const`・`let`・`var`・`function` があれば写さず、手で枠を作るよう知らせる（この PR）
 - [x] 見つける: `scripts/check-sw-check.mjs` に、FLAGS・FONT_CACHE のある古い sw.js を写さないことと、枠のある sw.js はこれまでどおり写すことを足した（この PR）
 - [x] 直す: これまでに枠を入れたゲームすべてで、枠を入れる前の sw.js に CACHE・SHELL のほかの定数が無かったことを確かめた（消えたものは無い）
+- [x] 防ぐ: `routines/pr.md`「PR を作る」に、出す前に main との差が空でないこと・戻したい中身が入ったことを確かめる手順を足した（この PR）
