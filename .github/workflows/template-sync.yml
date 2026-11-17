@@ -1,0 +1,98 @@
+name: Template sync
+run-name: "Template sync"
+
+# ひな形（template/）の共通部品を、全ゲームへ PR で配る（Claude は使わない）。
+# 2026-11-17 satou さん「共通化をし、そこを修正する、というかたちに」→「共通部品を自動で配る」（incidents/2026-11-17-endless-revive-after-save-failure.md）。
+# 各ゲームで node scripts/sync-template.mjs を回し、ちがいがあれば枝 template-sync に積んで PR を開く（あれば中身を入れ替える）。
+# PR はゲームの QA と Secret scan が ✅ になると、ゲームの automerge.yml が自動でマージする（sw.js を変える PR は手で。hold_paths）。
+# .github/ は写さない（鍵に Workflows の権限を持たせない。呼び出しの写しは今までどおり手で）。
+# 鍵は環境「template-sync」の秘密 TEMPLATE_SYNC_TOKEN（fine-grained PAT。satou-aaaaa の全リポジトリ・Contents と Pull requests の書き込みだけ）。
+# GITHUB_TOKEN では他のリポジトリへ書けず、GITHUB_TOKEN で開いた PR では QA も動かないため（GitHub Docs「Triggering a workflow from a workflow」）。
+# 環境は main からしか使えないようにする（PR の枝のワークフローから鍵を読めない）。鍵が無いあいだは何もせずに知らせるだけ。
+on:
+  push:
+    branches: [main]
+    paths:
+      - "template/**"
+      - "!template/.github/**"
+      - "scripts/sync-template.mjs"
+  schedule:
+    - cron: "40 22 * * 0" # 週1（日本時間の月曜 7:40）。配りそびれ・新作の拾い直し
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "このゲームだけ（空なら repos.txt の game 全部）"
+        required: false
+        type: string
+        default: ""
+
+permissions: {}
+
+concurrency:
+  group: template-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: template-sync
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: 各ゲームへ配る
+        env:
+          GH_TOKEN: ${{ secrets.TEMPLATE_SYNC_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          ONLY: ${{ inputs.only }}
+          SHA: ${{ github.sha }}
+          # 鍵が読めないときに、どこにずれがあるかを出す（値は出さず、あるか無いかだけ。2026-11-17 鍵が空で読まれた件）
+          HAS_VAR: ${{ vars.TEMPLATE_SYNC_TOKEN != '' }}
+          HAS_OTHER: >-
+            TEMPLATE_SYNC=${{ secrets.TEMPLATE_SYNC != '' }}
+            TEMPLATE_TOKEN=${{ secrets.TEMPLATE_TOKEN != '' }}
+            SYNC_TOKEN=${{ secrets.SYNC_TOKEN != '' }}
+            TEMPLATE_SYNC_PAT=${{ secrets.TEMPLATE_SYNC_PAT != '' }}
+            GH_TOKEN=${{ secrets.GH_TOKEN != '' }}
+            PAT=${{ secrets.PAT != '' }}
+            TOKEN=${{ secrets.TOKEN != '' }}
+            REPO_CREATE_TOKEN=${{ secrets.REPO_CREATE_TOKEN != '' }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::TEMPLATE_SYNC_TOKEN が空。同じ名前の変数（Variables）にある: $HAS_VAR。ほかの名前の秘密（true があればその名前で入っている）: $HAS_OTHER"
+            echo "::warning::環境 template-sync に TEMPLATE_SYNC_TOKEN が無いので配らない（routines/game-dev.md「保存の読み直し」の配り方。手で配るときは shared-workflows のルートで sync-template.mjs をゲームのフォルダに向けて回す）"
+            exit 0
+          fi
+          root=$PWD
+          games=${ONLY:-$(node scripts/repos.mjs game)}
+          opened=0; failed=0; start=$SECONDS
+          for r in $games; do
+            # 時間切れでジョブごと止まらないよう、45分で切り上げる（残りは次の回が拾う。週1と次の push）
+            if [ $((SECONDS - start)) -gt 2700 ]; then echo "::warning::45分たったので $r から先は次の回に回す"; break; fi
+            if ! [[ "$r" =~ ^[a-z0-9-]+$ ]]; then echo "::error::名前の形でない: $r"; failed=1; continue; fi
+            dir="$RUNNER_TEMP/$r"
+            if ! git clone -q --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/$OWNER/$r.git" "$dir"; then echo "::warning::$r を取れない"; failed=1; continue; fi
+            # 新作を作っている途中（PR が開いたまま）のゲームの main にも配ってよい（写すのはひな形の範囲だけ）
+            (cd "$dir" && node "$root/scripts/sync-template.mjs" . >/dev/null) || true
+            git -C "$dir" checkout -q -- .github 2>/dev/null || true
+            if [ -z "$(git -C "$dir" status --porcelain)" ]; then echo "✓ $r: ひな形どおり"; rm -rf "$dir"; continue; fi
+            git -C "$dir" -c user.name="template-sync" -c user.email="41898283+github-actions[bot]@users.noreply.github.com" \
+              commit -qam "ひな形の共通部品を写す（shared-workflows ${SHA:0:7}）"
+            # 1本で書けなくても残りは配る（鍵にそのリポジトリへの書き込みが無いときなど。2026-11-17 kokki-shuto で全体が止まった）
+            if ! git -C "$dir" push -q -f origin HEAD:refs/heads/template-sync; then echo "::warning::$r に書けない（鍵の Contents の書き込み・対象のリポジトリを見る）。鍵から見えるこのリポジトリの権限: $(gh api "repos/$OWNER/$r" --jq '.permissions // "なし"' 2>&1 | tr -d '\n')"; failed=1; rm -rf "$dir"; continue; fi
+            if [ -z "$(gh pr list -R "$OWNER/$r" --head template-sync --state open --json number --jq '.[].number')" ]; then
+              body="shared-workflows の template/ を scripts/sync-template.mjs で写した（Template sync が自動で開いた PR）。中身は shared-workflows ${SHA:0:7} のひな形と同じ。QA が ✅ なら自動でマージされる。落ちたら shared-workflows のひな形を直す（ここの写しは直さない）。"
+              gh pr create -R "$OWNER/$r" --head template-sync --base main --title "ひな形の共通部品を写す" --body "$body" >/dev/null && opened=$((opened+1)) || failed=1
+            fi
+            echo "→ $r: 配った"
+            rm -rf "$dir"
+            sleep 10 # 同時に多くの QA を走らせない
+          done
+          echo "新しく開いた PR: $opened"
+          exit $failed

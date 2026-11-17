@@ -15,7 +15,8 @@ const read = (p) => readFileSync(p, 'utf8');
 const notRoutines = new Set(['README.md', 'common.md', 'common-detail.md', 'autonomy.md', 'catalog.md', 'agent-practices.md', 'project-practices.md', 'onboarding.md', 'pr.md', 'history.md', 'STYLE.md', 'tool-map.md', 'without-claude.md', 'known-limits.md', 'events.md', 'parallel.md']);
 const routinesDoc = read('bootstrap/routines.md');
 for (const f of readdirSync('routines')) {
-  if (!f.endsWith('.md') || notRoutines.has(f)) continue;
+  // <名前>-detail.md は本体の手順書から移した本文（routines/token-check.md「手順書が 15KB を超えた」）。ルーティンではない
+  if (!f.endsWith('.md') || notRoutines.has(f) || f.endsWith('-detail.md')) continue;
   if (!routinesDoc.includes(`routines/${f}`)) errors.push(`bootstrap/routines.md に routines/${f} が載っていない`);
 }
 

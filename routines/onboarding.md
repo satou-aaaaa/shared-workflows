@@ -13,7 +13,7 @@ satou さんは「リポジトリの作成も AI に任せる。今後も新作�
 
 ### A. CI で作る（先にこれ）
 
-1. shared-workflows の Actions「Create repo」（`.github/workflows/create-repo.yml`）を workflow_dispatch で起こす（GitHub MCP の `actions_run_trigger`、ref は `main`、inputs は `name` と `description`）。
+1. shared-workflows の Actions「Create repo」（`.github/workflows/create-repo.yml`）を workflow_dispatch で起こす（GitHub MCP の `actions_run_trigger`、ref は `main`、inputs は `name`・`description`・`claim`（題材の担当の Issue 番号。[game-dev.md](game-dev.md) 手順A の1）・`topic`（題材の言葉、日本語2字以上）。ゲーム以外のリポジトリも「題材: 〇〇」の Issue を立てて渡す）。同じ題材の言葉で先に立った「題材:」Issue があるか、公開済みのゲームの表にその言葉があると止まる（incidents/2026-11-07-topic-claim-overwritten.md）。
 2. 公開・README だけの main で作り、Pages（main の /）と main のルールセット（削除・force push 禁止・必須チェック `qa / qa` と `scan / scan`）・Allow auto-merge まで入れる。PR #1 の QA と Secret scan は、ひな形の qa.yml・secret-scan.yml を写して名前を合わせる（ちがう名前だとマージできない）。手順5の1・2 はやらなくてよい。
 3. 起こしたあと、自分の実行（入力の name が同じもの）が緑かを見る。「cancelled」なら同じ inputs でもう一度起こす（2026-11-07 まで、並行で起こした別の作成に取り消されていた）。
    実行が緑になったら `add_repo`（access: push）で足して、手順2へ。赤なら、ログの `::error::` の1行を見る。

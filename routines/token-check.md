@@ -45,7 +45,7 @@
 | --- | --- |
 | MEMORY.md が 8KB を超えた | 長い行の本文をトピックのファイル（`[[名前]]`）へ移し、索引は1行40字ほどにする。本文は消さずに移すだけ。移す前に読み直し、10秒おいて読み直す（ほかのスレッドも書く） |
 | CLAUDE.md が `@` で 4KB を超えるファイルを取り込んでいる | template/CLAUDE.md の1行の形にする PR（drift-check の `claude:big-import` も見る） |
-| 手順書が 15KB を超えた | 要点だけの本体と `<名前>-detail.md` に分ける PR を1本（common.md と common-detail.md の形）。common.md は権限の表があるので触らない |
+| 手順書が 15KB を超えた | 要点だけの本体と `<名前>-detail.md` に分ける PR を1本（common.md と common-detail.md、game-dev.md と game-dev-detail.md の形）。分けた本体は Lint（check-routines）が 15KB 以下か見る。common.md は権限の表があるので触らない |
 | 定期実行が1時間おき以下 | イベント（push・Issue・API 起動）で起こせないか、間隔を2倍にできないかを考え、取り消せるなら update_trigger で変える。変えられない型（毎回新しい会話）は案として報告に書く |
 | 定期実行が Opus で動いている | 決まり（token-rules）どおり Sonnet・low を、報告で一度だけ satou さんにお願いする（同じものを2回言わない） |
 | 長寿命のスレッドが前回より大きく増えた | 要点をメモリに書いて新しいスレッドへ付け替える案を報告に書く（routine-review.md A-d） |

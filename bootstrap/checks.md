@@ -25,6 +25,7 @@
 | Permission guard（このリポジトリ） | `routines/autonomy.md`・`common.md` を変える PR にラベル「satou承認」が無い | `permission-guard.yml` | ラベル「satou承認」 |
 | UI check | 画面の使いやすさの悪化（開いてすぐ押せる部品の数が基準 +1 を超える・24px 未満の押す所や 12px 未満の字が増える・名前の無いボタン・横のはみ出し）。詳細などは click で開いてから数える | `ui-check.yml`・`scripts/ui-check.mjs` | 呼ぶ側の `qa/ui-check.json` と基準（`--update-baseline`） |
 | 見やすさの検査（ゲーム） | 色だけに頼る・字のコントラスト不足・字間を広げると崩れる・動き続ける・Tab の枠が無い・名前の無いボタン・知らせの場所が無い・斜体・決めつけの言葉。見やすさの設定がひな形とちがう | 各ゲームの `qa/a11y.mjs`（`template/qa/a11y.mjs` の写し。`qa/run.mjs` から回す）・`template/a11y/a11y.html`。写しのずれは `scripts/drift-check.mjs` | 新作に2つを写す（[game-dev.md](../routines/game-dev.md)「だれでも遊べるように」） |
+| 保存の読み直しの共通部品（ゲーム） | 2つの写しの合わせ方のまちがい（とことんを終えたあとに古い回が戻る・数が減る・別の回の取りちがえ）。共通部品を使わず自分で合わせている・写しがひな形とちがう | `template/store/store.js`・`scripts/check-store.mjs`（check.sh と Lint）・`scripts/drift-check.mjs`（store:load・store:block）・写しは `scripts/sync-template.mjs` | 新作は index.html に store:begin〜end を置き、load() を GameStore.load にする（[game-dev.md](../routines/game-dev.md)「保存の読み直し」） |
 | CodeQL | AI が書いたコードの脆弱性（無料、公開リポジトリ） | `codeql.yml` | 呼び出し側の `languages` |
 | Secret scan | PR と main への push に入った秘密（gitleaks） | `secret-scan.yml` | 呼び出し側を入れる、★ Push protection |
 | Game QA | ゲームをブラウザで自動で遊ぶ検査（PR と main。検査の名前 qa / qa を main の必須チェックに） | `game-qa.yml` | `template/.github/workflows/qa.yml`（呼び出し側）と、Actions「Add ruleset」で必須チェック |
@@ -49,12 +50,14 @@
 
 | 仕組み | 見つけるもの | どこ | 立ち上げで要るもの |
 | --- | --- | --- | --- |
-| 週次まとめ Issue | 開いたままの PR・CI 失敗・Dependabot の更新待ち（監督・巡回が最初に読む） | `weekly-summary.yml`（月曜 06:17 JST） | `repos.txt` に全リポジトリ |
-| ひな形からのずれ | 全リポジトリにあるはずのファイル・AGENTS.md の節・共通部品の呼び出し・@main 以外や無い部品の呼び出し（新しい部品の配り忘れ） | `scripts/drift-check.mjs`（週次まとめの節）。ずれてよいものは `scripts/drift-allow.json` に理由つき | `repos.txt` に全リポジトリ |
-| 成績表 Issue とブレーキ | マージ数・壊れた割合・直るまでの時間。壊れた割合 30% 超・4件以上で「自動マージ停止: <repo>」Issue → Auto merge が止まる | `scorecard.yml`（月曜 06:07 JST）、autonomy.md「ブレーキ」 | `REPOS`、ラベル「成績表」「自動マージ停止」（Labels で揃う） |
+| 週次まとめ Issue | 開いたままの PR・CI 失敗・Dependabot の更新待ち（監督・巡回が最初に読む） | `weekly-summary.yml`（月曜 06:17 JST）。全リポジトリを読む定期の検査（週次まとめ・成績表・CI時間）は `scripts/gh-api.mjs` で並べて読み、予算（BUDGET_SEC）で止まって Issue を必ず出し、予算の6割を超えたら ⏱ を出す。本文は `scripts/fit-body.mjs` で 65,536 字に収め、前の Issue は作ったあとに閉じる。形は `scripts/check-budgets.mjs`（Lint）が見る | `repos.txt` に全リポジトリ |
+| ひな形を写す | ひな形（sw.js・setup.sh・transfer.js・depth.js・qa/*.mjs・見やすさの設定）の直しが、写し忘れで一部のゲームにしか届かない | `scripts/sync-template.mjs`（写す・`--check` でちがいを出す）。道具そのものは `scripts/check-sw-check.mjs`（Lint） | 新作は先に `template/sw.js` を写して `CACHE`・`SHELL` を書き、shared-workflows のルートで `node scripts/sync-template.mjs <ゲームのフォルダ>` を回す（無いファイルは作らない） |
+| ひな形からのずれ | 全リポジトリにあるはずのファイル・AGENTS.md の節・共通部品の呼び出し・@main 以外や無い部品の呼び出し（新しい部品の配り忘れ） | `scripts/drift-check.mjs`（週次まとめの節）。ずれてよいものは `scripts/drift-allow.json` に理由つき。ヒント2・星の表示の見分け（`scripts/game-patterns.mjs`）の検査は `scripts/check-game-patterns.mjs`（Lint）。Link check が読み違える URL（すぐ後ろに全角の字）は `scripts/link-text.mjs`（ゲームの PR の QA と週次まとめ）、その検査は `scripts/check-link-text.mjs`（Lint）。Link check の時間切れだけなら警告にする判定は `scripts/check-link-check-judge.sh`（Lint） | `repos.txt` に全リポジトリ |
+| 成績表 Issue とブレーキ | マージ数・壊れた割合・直るまでの時間。壊れた割合 30% 超・4件以上で「自動マージ停止: <repo>」Issue → Auto merge が止まる | `scorecard.yml`（月曜 04:07 JST）、autonomy.md「ブレーキ」 | `REPOS`、ラベル「成績表」「自動マージ停止」（Labels で揃う） |
 | 不安定な検査 Issue | 3つ以上の別々の PR で落ちた検査 → 「不安定な検査: <repo>」（自動で開閉）→ 監督が担当へ1回渡す | `scripts/pr-quality.mjs`（成績表の中で動く）、supervisor.md 7b | 同上 |
 | CI時間 Issue | CI の実行時間（遅い検査） | `ci-time-report.yml`（木曜 05:29 JST）、ルーティン CI の時間短縮 | `repos.txt` |
 | このリポジトリの定期実行の失敗 | 週次まとめ・CI時間・成績表・Lint が main で落ちた → ci-failure の Issue（次に成功したら閉じる） | `watch-failures.yml`（中身は `ci-failure-issue.yml`） | なし |
+| 研究の重い計算 | （見張りではなく実行の部品）研究の毎日の回（routines/research-loop.md）が起こす何百局の対戦・学習を Actions で回し、結果をブランチ research-results の runs/<name>/ に残す。今日の1件の選び方は `scripts/research-next.mjs`（Lint の `scripts/check-research-next.mjs` が見方を確かめる） | `research-run.yml`（各研究リポジトリの同名の呼び出しから。contents: write） | 研究リポジトリに呼び出しと `docs/BACKLOG.md` |
 | Labels | 自動化が使うラベルの抜け | `labels.yml` | 呼び出し側を入れて1回動かす |
 | Branch cleanup | 使い終わったブランチ | `branch-cleanup.yml` | `keep`（last-tell は qa-results・source-backup） |
 | 監督の巡回（見回りの中で1日2回） | 失敗・止まったルーティンとスレッド、赤い PR、許可待ち、期限切れの約束。担当に直させ、satou さん本人のものだけ知らせる。状況ページを更新 | [supervisor.md](../routines/supervisor.md) | ルーティン（[routines.md](routines.md)）、状況ページの Artifact |
@@ -64,7 +67,7 @@
 | 約束の台帳 | 「あとで確かめる」のまま忘れた作業（監督が期限切れを催促） | common.md「対応漏れを防ぐ」、共有フォルダ `notes/todo.md` | 共有フォルダに todo.md |
 | 節約モード | 利用上限での失敗が続く（提案・巡回を最小にする） | common.md「お金と利用枠」 | なし |
 
-チェックではない共通部品: `changes-page.yml`（マージした PR の題から遊ぶ人向けの更新情報ページを作る。呼び出し側の `app_name`・`ignore_paths`）、`fetch-page.yml`（クラウドから開けないページを Actions から読む。このリポジトリで workflow_dispatch。[known-limits.md](../routines/known-limits.md)）、`create-repo.yml`（新作のリポジトリを公開で作り、Pages とルールセットも入れる。このリポジトリで workflow_dispatch。鍵は環境 repo-create の REPO_CREATE_TOKEN ★。[onboarding.md](../routines/onboarding.md) 手順0）、`add-ruleset.yml`（あるリポジトリの main にルールセットだけを入れる。もうあれば何もしない。同じ鍵。onboarding.md 手順5）。
+チェックではない共通部品: `template-sync.yml`（ひな形の共通部品を全ゲームへ PR で配る。環境「template-sync」の `TEMPLATE_SYNC_TOKEN`。無いあいだは何もしない。routines/game-dev.md「保存の読み直し」）、`changes-page.yml`（マージした PR の題から遊ぶ人向けの更新情報ページを作る。呼び出し側の `app_name`・`ignore_paths`）、`fetch-page.yml`（クラウドから開けないページを Actions から読む。このリポジトリで workflow_dispatch。[known-limits.md](../routines/known-limits.md)）、`create-repo.yml`（新作のリポジトリを公開で作り、Pages とルールセットも入れる。このリポジトリで workflow_dispatch。鍵は環境 repo-create の REPO_CREATE_TOKEN ★。[onboarding.md](../routines/onboarding.md) 手順0）、`add-ruleset.yml`（あるリポジトリの main にルールセットだけを入れる。もうあれば何もしない。同じ鍵。onboarding.md 手順5）。
 
 ★ は satou さん本人の画面操作（onboarding.md の 5）。
 

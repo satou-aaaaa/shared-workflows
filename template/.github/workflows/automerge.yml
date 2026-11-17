@@ -1,11 +1,13 @@
 name: Auto merge
 
 # 検査（QA）がプルリクエストで ✅ になったら自動で squash マージする。中身と条件は共通部品 satou-aaaaa/shared-workflows。
-# Secret scan を入れたリポジトリは、workflows を [QA, Secret scan] にして require_checks に QA の check 名と scan / scan を書く
-# （QA が先に終わると scan 待ちで止まり、後から scan が通っても再実行されないため。2026-10-31。下の例）。
+# QA・Setup check・Secret scan のどれが後に終わっても判定し直す（先に終わった方の回は、ほかを待って止まり、後から再実行されないため。2026-10-31）。
+# Secret scan を外したリポジトリは、workflows から Secret scan、require_checks から scan / scan、dispatch から secret-scan.yml を消す（drift-check の automerge:scan が見る）。
 on:
   workflow_run:
-    workflows: [QA]   # Secret scan を入れたら [QA, Secret scan]
+    # Setup check（準備のファイルを変えた PR だけで動く）・Secret scan が終わったときにも判定し直す
+    # （前は Secret scan が無く、ひな形から作った yarikuri-shotengai #1 で CodeRabbit が指摘。2026-11-11）
+    workflows: [QA, Setup check, Secret scan]
     types: [completed]
 
 permissions:
@@ -22,10 +24,21 @@ jobs:
       # Pages を「ブランチから公開」にしているときは true。Actions で公開しているときは dispatch: "pages.yml"
       pages_build: true
       delete_branch: true
-      # 同じコミットで ✅ が要る検査（改行区切り）。Secret scan を入れたリポジトリは QA の check 名（ひな形の qa.yml なら "qa / qa"）と "scan / scan"
-      # きっかけが Secret scan のとき recheck_main は secret-scan.yml を起こそうとするので、false にして dispatch に qa.yml を足す
-      # require_checks: |
-      #   qa / qa
-      #   scan / scan
-      # dispatch: qa.yml
-      # recheck_main: false
+      # 同じコミットで ✅ が要る検査（改行区切り）。きっかけが Setup check のときも QA が通っていなければマージしない
+      # Secret scan を外したリポジトリは "scan / scan" を消す（drift-check の automerge:scan-required が見る）
+      require_checks: |
+        qa / qa
+        scan / scan
+      # 問題の表（data.js など）・PWA の仕組みを変える PR は自動ではマージせず、CodeRabbit を読んでから手でマージ。表のファイル名はゲームに合わせる
+      # （drift-check の automerge:hold-data が見る。incidents/2026-11-17-new-game-automerge-gaps.md）
+      hold_paths: '^(sw\.js|manifest\.webmanifest|data\.js)$'
+      # 動いたときだけ成功を待つ検査。準備のファイルを変えた PR は Setup check が通るまでマージしない（2026-11-07 atsusa-shisu #1・#252 の CodeRabbit）
+      present_checks: |
+        setup / setup
+      # きっかけが Setup check（や Secret scan）のとき recheck_main はそのワークフローを起こすので、false にして main では QA と Setup check を起こす
+      # （GITHUB_TOKEN のマージでは main の push で動かないため。Setup check を起こさないと、月1の失敗の Issue が次の月まで閉じない。#252 の CodeRabbit）
+      recheck_main: false
+      # Link check も起こす（GITHUB_TOKEN のマージでは main の push で動かず、直したリンクが次の週まで赤のまま。版11の CodeRabbit）
+      # Secret scan も起こす（main で一度落ちると、次のマージでも main では動かず、失敗の Issue が古いまま残る。2026-11-17 hatsuden-kurabe #1 の CodeRabbit）
+      # Secret scan を外したリポジトリは、ここからも secret-scan.yml を消す（無いワークフローを起こすと赤になる）
+      dispatch: qa.yml setup-check.yml link-check.yml secret-scan.yml

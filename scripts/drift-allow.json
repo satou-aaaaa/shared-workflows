@@ -26,5 +26,21 @@
       "id": "call:setup-check",
       "reason": "CI を置かない非公開リポジトリ（Actions の無料枠を他と分け合うため。routines/onboarding.md「2026-10-28 security-toolkit」）。秘密の検査は手元の run_tests.sh の gitleaks"
     }
+  ],
+  "local-kanban": [
+    {
+      "id": "sw:template",
+      "reason": "ボードの画面を出すアプリで、ゲームの sw.js（ひな形）とは仕組みがちがう（ボードの HTML を保存する。local-kanban の AGENTS.md）"
+    },
+    {
+      "id": "sw:qa",
+      "reason": "ボードの画面を出すアプリで、ゲームの sw.js（ひな形）とは仕組みがちがう（ボードの HTML を保存する。local-kanban の AGENTS.md）"
+    }
+  ],
+  "kippu-10": [
+    {
+      "id": "depth:sure",
+      "reason": "式を作るパズルで、答えを選ばないので「自信あり？」は置かない（routines/game-dev.md「1問を深くする」：自信は答えを選ぶゲームだけ。代わりに挑戦条件「別の式でも」）"
+    }
   ]
 }

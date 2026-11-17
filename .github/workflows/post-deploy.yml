@@ -91,6 +91,15 @@ jobs:
       - name: 正常なら last-good として覚える
         if: steps.smoke.outputs.result == 'ok'
         run: |
+          set -euo pipefail
+          # 開いたのは今の公開（main の先頭）なので、この版が main の先頭のときだけ覚える。古い版の実行を再実行すると、
+          # 今の版を開いて ok になり、壊れていた古い版を last-good にしていた（2026-11-17 nenkin-shikumi #1 の CodeRabbit）
+          git fetch -q origin main
+          head=$(git rev-parse origin/main)
+          if [ "$head" != "$SHA" ]; then
+            echo "main が ${head:0:7} に進んでいて、開いたのはこの版（${SHA:0:7}）とは限らないので、last-good は変えません" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           gh api -X PATCH "repos/$R/git/refs/tags/last-good" -f sha="$SHA" -F force=true --jq .object.sha 2>/dev/null \
             || gh api -X POST "repos/$R/git/refs" -f ref=refs/tags/last-good -f sha="$SHA" --jq .object.sha
       - name: 壊れていたら last-good に戻す
