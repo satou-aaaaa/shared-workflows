@@ -29,4 +29,6 @@
 - [x] 防ぐ: 共通部品を全ゲームへ PR で配る `Template sync`（`.github/workflows/template-sync.yml`）。まだ切り替えていないゲームは drift-check が `store:load` で週次まとめに出す
 - [x] 直す: store.js の頭の説明に区切りの印 `store:end` をコメントの形のまま書いていたため、2回目に写すと区切りを取りちがえて写しが2重になった（1組目9本を写し直す前に気づいた。公開中のゲームには出ていない）。説明から印の形を外した
 - [x] 防ぐ: `scripts/check-store.mjs` が、store.js に HTML のコメントの形が無いこと・写しを2回かけても同じになることを毎回見る
+- [x] 直す: 終えた回の id を gone に持つゲーム（震度よみ型）で、GameStore は新しい写しに残った終えた回を消さなかった（hataraku-kimari #1 で発見）。片方が null の回がどちらかの写しの gone にあれば消すようにし、共通部品の版を2に上げた（`template/store/store.js`）
+- [x] 見つける: `scripts/check-store.mjs` に「gone にある回は新しい写しにあっても戻さない」を足した（直す前の store.js では落ちることを確かめた）
 - [ ] 直す: 各ゲームの load() を共通部品へ切り替える（形の同じゲームの組から。1本目 dento-kogei。担当: 一括で直すスレッド、期限: 2026-11-24）
