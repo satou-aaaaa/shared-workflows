@@ -20,6 +20,7 @@ dashisugi-check game
 dema-tashikame game
 denki-kairo game
 dento-kogei game
+doubutsu-nakama game
 dungeon-boardgame app
 endaka-enyasu game
 funka-level game
