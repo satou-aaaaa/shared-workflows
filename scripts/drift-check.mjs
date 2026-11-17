@@ -339,7 +339,7 @@ const results = await pool(REPOS, 4, async (r) => {
     // 黙っていると遊ぶ人は気づけない（2026-11-07 暑さ指数よみの PR のレビューで見つけ、同じ作りのゲーム14本を直した。incidents/2026-11-07-save-failure-silent.md）
     if (paths.has('index.html')) {
       const page = pageCache ?? await src.read('index.html');
-      for (const [id, msg] of playerBugs(page)) if (['save:silent', 'hint:cut-moves', 'hint:left-fixed', 'stars:role', 'endless:stuck', 'toast:blocks'].includes(id)) flag(id, msg); // 見分けは scripts/game-patterns.mjs の playerBugs（ゲームの PR の QA も同じものを使う）
+      for (const [id, msg] of playerBugs(page)) if (['save:silent', 'hint:cut-moves', 'hint:left-fixed', 'stars:role', 'endless:stuck', 'endless:revive', 'toast:blocks'].includes(id)) flag(id, msg); // 見分けは scripts/game-patterns.mjs の playerBugs（ゲームの PR の QA も同じものを使う）
       // ヒント2：まちがいを除いてから消す数を決めると、しぼったあとにまちがいを選んだとき、消した選び肢が戻る（saibanin-shikumi #1 の CodeRabbit）
       // コメントを除き、複数行の定義も終わりまで見る（scripts/game-patterns.mjs。見分けの検査は scripts/check-game-patterns.mjs）
       // ヒント2のあとの「のこりは○つ」は、いま押せる選び肢の数を出す（決まった「2つ」だと、先に最後のまちがいを選んだとき、のこり1つでも2つと出る）

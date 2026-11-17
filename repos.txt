@@ -68,6 +68,7 @@ machi-michijun game
 madori-puzzle game
 mannaka-kanji game
 meirei-narabe game
+mizu-mamoru game
 mukashi-narabe game
 naitei-no-michi app
 nemuri-kotsu game
