@@ -115,7 +115,7 @@ export function playerBugs(page) {
   if (/catch\s*\(e\)\s*\{\s*mem\s*=\s*j;\s*\}/.test(s)) out.push(['save:silent', 'index.html の save が、保存に失敗しても黙っている（開き直すと記録が消える。保存できないあいだは帯 #savewarn を出したままにし、QA に検査を足す。routines/game-dev.md「共通の形」の記録）']);
   // とことんで正解した直後に「ここで降りる」が効かない（2026-11-07 kyuyo-meisai #1 の CodeRabbit）。
   // endFinish() の形と、正解したときにボタンを隠す形も同じ不具合（2026-11-17 gurafu-minuki）
-  if (/if\s*\(\s*cur\s*&&\s*cur\.done\s*\)\s*return;\s*(?:end)?[fF]inish\(\)/.test(s) || /\$\(\s*["']quit["']\s*\)\.hidden\s*=\s*true/.test(s)) out.push(['endless:stuck', 'index.html の「ここで降りる」が正解した直後に効かない（if (cur && cur.done) return; finish(); の行か、正解したときの $("quit").hidden = true。消して、ボタンの数を正解した分を入れた数に直す。kyuyo-meisai 1bebfdc の直し方）']);
+  if (/if\s*\(\s*cur\s*&&\s*cur\.done\s*\)\s*return;\s*(?:end)?[fF]inish\(\)/.test(s) || /\$\(\s*["']quit["']\s*\)\.hidden\s*=\s*true/.test(s) || /\$\(\s*["']quit["']\s*\)\.onclick\s*=\s*(?:async\s*)?\([^)]*\)\s*=>\s*\{\s*if\s*\(\s*cur\s*&&\s*cur\.done\s*\)\s*return;/.test(s)) out.push(['endless:stuck', 'index.html の「ここで降りる」が正解した直後に効かない（if (cur && cur.done) return; finish(); の行か、正解したときの $("quit").hidden = true。消して、ボタンの数を正解した分を入れた数に直す。kyuyo-meisai 1bebfdc の直し方）']);
   // 遊ぶ前の鍵（satou さん 2026-11-06「好きなだけ遊んでほしい」）。実績の 🔒 は鍵ではない。コメントの中の「押すと開く」は見ない
   if (page.includes('🎫')) out.push(['free:ticket', 'index.html にチケット🎫がある（遊ぶ量を縛らない。とことんは、まちがえても続き「ここで降りる」で終わる形に。routines/game-dev.md「好きなだけ遊べるように」）']);
   const gate = s.match(/[^<>`'"\n]{0,24}(?:と|たら)開く|🔒 [^<>`'"\n]{2,40}/);
@@ -135,6 +135,9 @@ export function playerBugs(page) {
   if (/position\s*:\s*(?:fixed|absolute)/.test(toastCss) && !/pointer-events\s*:\s*none/.test(toastCss)) out.push(['toast:blocks', 'index.html の .toast に pointer-events:none が無い（知らせが出ている2秒ほど、その下のボタンを押しても効かない。.toast{pointer-events:none;…}。routines/game-dev-detail.md「共通の形」の知らせ）']);
   // 保存に失敗したあと、とことんを終えた（新しいほうが null）のに、読み直しで古い途中経過が戻る（2026-11-17 mizu-mamoru #1 の CodeRabbit）
   if (/if\s*\(\s*!r\s*\|\|\s*bank\(s,\s*r\)\s*\|\|\s*doneOf\(r\)\s*\)\s*continue;/.test(s)) out.push(['endless:revive', 'index.html の load() が、保存に失敗したあと終えたとことんを古い途中経過で戻す（「もう一度とことん」で終えた回の続きになる。if (!r || bank(s, r) || doneOf(r) || (r.mode === "e" && n.runs[m] === null)) continue; にし、QA に検査を足す。mizu-mamoru の直し方）']);
+  // 押せる所の高さを、あとの行の a{min-height:32px} が上書きする（出典が2行に折れた日だけ QA が落ちる。2026-11-17 funka-level ほか5本）
+  const lowLink = s.replace(/\/\*[\s\S]*?\*\//g, '').match(/[^{}\s]*\ba\s*\{[^}]*min-height\s*:\s*(?:[0-3]?\d|4[0-3])px/);
+  if (lowLink) out.push(['tap:low-link', `index.html のリンクの高さが44pxより低い「${lowLink[0].replace(/\s+/g, ' ').slice(0, 60)}」（出典などが2行に折れると押しにくく、QA も日によって落ちる。min-height:44px に。routines/game-dev.md「共通の形」の押せる所）`]);
   if (cutMoves(page)) out.push(['hint:cut-moves', 'index.html の cutOf が、まちがいの数で消す選び肢を変える（しぼったあとにまちがいを選ぶと、消した選び肢が戻る。正解でない選び肢のうち最後の1つ以外を消す形にし、QA に検査を足す。routines/game-dev.md「共通の形」のヒント）']);
   if (leftFixed(page)) out.push(['hint:left-fixed', 'index.html のヒント2の「のこりは2つです」が決まった数（先に最後のまちがいを選んでいると押せるのは正解だけ。いま押せる選び肢の数を出す。routines/game-dev.md「共通の形」のヒント）']);
   if (starsBare(page)) out.push(['stars:role', 'index.html の星の表示（class="stars"）に role="img" が無いか、取れなかった星も ★ で色だけで分けている（<span class="stars" role="img" aria-label="星Nつ"> にし、取れなかった星は ☆。routines/game-dev.md「共通の形」の星）']);
