@@ -11,8 +11,12 @@
 //   scripts/setup.sh …… ひな形を写し、npm_dir= と next= の行はゲームのものを残す
 //   .github/workflows/{qa,setup-check,link-check,ci-failure-issue}.yml …… jobs: から下（呼び出しと設定値）がひな形と同じときだけ写す
 //            （きっかけ・権限・concurrency だけを直す。設定値を変えているゲームは手で。.github/ を変える PR は自動マージされないので手でマージ）
+// 写す前に、手元の shared-workflows のひな形が origin/main より古くないかを見る（古ければ止める。2026-11-17 二重に配るおそれ。
+//   incidents/2026-11-17-template-sync-from-stale-copy.md）。--check では見ない。見られない（git・ネットが無い）ときは知らせて続ける。
+//   わざと古いひな形で写すときだけ SYNC_ALLOW_STALE=1。
 // きっかけ: 2026-11-07 sw.js が28本で28通りになり、同じ直しを1本ずつ手で入れていた（incidents/2026-11-07-template-copies-drift.md）。
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -93,6 +97,15 @@ export function plan(dir) {
   return out;
 }
 
+// 手元のひな形が origin/main より古ければ、足りないコミットの数を返す（見られなければ null）
+export function staleCount(root = join(T, '..')) {
+  const git = (...a) => execFileSync('git', ['-C', root, ...a], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 60000 }).trim();
+  try {
+    git('fetch', '-q', '--depth=50', 'origin', 'main');
+    return Number(git('rev-list', '--count', 'HEAD..FETCH_HEAD', '--', 'template', 'scripts/sync-template.mjs'));
+  } catch { return null; }
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   let args = process.argv.slice(2);
   const check = args[0] === '--check';
@@ -101,6 +114,14 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const only = args[0] && args[0].startsWith('--only=') ? args.shift().slice(7).split(',').filter(Boolean) : null;
   const dirs = args;
   if (!dirs.length) { console.error('使い方: node scripts/sync-template.mjs [--check] [--only=<ファイル,...>] <ゲームのフォルダ> [...]'); process.exit(2); }
+  if (!check && process.env.SYNC_ALLOW_STALE !== '1') {
+    const n = staleCount();
+    if (n === null) console.log('⚠ 手元のひな形が最新か確かめられなかった（git かネットが無い）。写す前に shared-workflows で git pull しておく');
+    else if (n > 0) {
+      console.error(`✗ 手元の shared-workflows のひな形が origin/main より ${n} コミット古い。古いひな形で写すと、新しい直しを消してしまう。shared-workflows で git pull してからもう一度（わざとなら SYNC_ALLOW_STALE=1）`);
+      process.exit(3);
+    }
+  }
   let diff = 0;
   for (const dir of dirs) {
     const todo = plan(dir).filter((t) => !only || only.includes(t.path));
