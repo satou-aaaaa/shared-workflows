@@ -51,6 +51,7 @@ hyakunin-awase game
 hyoshiki-yomi game
 ikukyu-shikumi game
 inshi-ikura game
+iryohi-ikura game
 isle-routes-research app
 jidosha-shurui game
 jiko-kihon game
