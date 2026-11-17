@@ -105,3 +105,35 @@ export function depthGaps({ page = '', sw = '', run = '' }) {
   if (!/checkDepth\s*\(/.test(stripComments(run))) out.push(['depth:run', 'qa/run.mjs が checkDepth を呼んでいない（template/qa/depth-check.mjs の検査が走らない）']);
   return out;
 }
+
+// playerBugs：遊ぶ人が困る作りのうち、index.html だけで見分けられるもの（drift-check と、ゲームの PR の QA の check-game-new.mjs が使う）。返すのは [id, 説明] の並び
+// 2026-11-17：drift-check が週次まとめに出し続けても、直されないまま新作に写って16本に広がっていた（incidents/2026-11-17-known-game-bugs-spread.md）。
+// 週に1回知らせるだけでは止まらないので、ゲームの PR で「新しく持ち込んだ」ときに落とす（もとからあるものは週次まとめで直す）
+export function playerBugs(page) {
+  const s = stripComments(page), out = [];
+  // 保存に失敗しても黙っている（incidents/2026-11-07-save-failure-silent.md）
+  if (/catch\s*\(e\)\s*\{\s*mem\s*=\s*j;\s*\}/.test(s)) out.push(['save:silent', 'index.html の save が、保存に失敗しても黙っている（開き直すと記録が消える。保存できないあいだは帯 #savewarn を出したままにし、QA に検査を足す。routines/game-dev.md「共通の形」の記録）']);
+  // とことんで正解した直後に「ここで降りる」が効かない（2026-11-07 kyuyo-meisai #1 の CodeRabbit）
+  if (/if\s*\(\s*cur\s*&&\s*cur\.done\s*\)\s*return;\s*finish\(\)/.test(s)) out.push(['endless:stuck', 'index.html の「ここで降りる」が正解した直後に効かない（if (cur && cur.done) return; finish(); の行。kyuyo-meisai 1bebfdc の直し方）']);
+  // 遊ぶ前の鍵（satou さん 2026-11-06「好きなだけ遊んでほしい」）。実績の 🔒 は鍵ではない。コメントの中の「押すと開く」は見ない
+  if (page.includes('🎫')) out.push(['free:ticket', 'index.html にチケット🎫がある（遊ぶ量を縛らない。とことんは、まちがえても続き「ここで降りる」で終わる形に。routines/game-dev.md「好きなだけ遊べるように」）']);
+  const gate = s.match(/[^<>`'"\n]{0,24}(?:と|たら)開く|🔒 [^<>`'"\n]{2,40}/);
+  if (gate) out.push(['free:gate', `index.html に遊ぶ前の鍵がある「${gate[0].trim()}」（どのモードも最初から遊べるように。routines/game-dev.md「好きなだけ遊べるように」）`]);
+  // 遊び方の「見た」は「わかった」ですぐ残し、dialog の cancel と close でも残す（incidents/2026-11-07-howto-esc-not-saved.md）
+  const ok = s.match(/\$\("howto-ok"\)\.onclick\s*=\s*\(\)\s*=>\s*\{[^\n]*/);
+  if (ok) {
+    const onClose = /\$\("howto"\)\.addEventListener\("close"[^\n]*tut\s*=\s*true/.test(s);
+    const onCancel = /\$\("howto"\)\.addEventListener\("cancel"[^\n]*tut\s*=\s*true/.test(s);
+    const atOnce = /^\$\("howto-ok"\)\.onclick\s*=\s*\(\)\s*=>\s*\{\s*save\(/.test(ok[0]);
+    if (!onClose) out.push(['howto:close', 'index.html が遊び方の「見た」を dialog の close で残していない（Esc で閉じた人に毎回出る。$("howto").addEventListener("close", () => { if (!load().tut) save(…) })。routines/game-dev.md「共通の形」の遊び方）']);
+    else if (!onCancel) out.push(['howto:close', 'index.html が遊び方の「見た」を dialog の cancel（Esc を押したその場）で残していない（close の知らせは遅れて届き、Esc の直後に読み直すとまた出る。$("howto").addEventListener("cancel", …)。routines/game-dev.md「共通の形」の遊び方）']);
+    else if (!atOnce) out.push(['howto:close', 'index.html の「わかった」が「見た」をすぐ残していない（close の知らせは遅れて届き、押した直後に読み直すとまた出る。onclick の最初で save(…)。routines/game-dev.md「共通の形」の遊び方）']);
+  }
+  // 知らせ（.toast）が画面の下に出ているあいだ、その下のボタン（次へ・ここで降りる）を押しても効かない（2026-11-17 全ゲームの点検で、29本中27本）
+  const toastCss = (s.replace(/\/\*[\s\S]*?\*\//g, '').match(/\.toast\s*\{[^}]*\}/) || [''])[0];
+  if (/position\s*:\s*(?:fixed|absolute)/.test(toastCss) && !/pointer-events\s*:\s*none/.test(toastCss)) out.push(['toast:blocks', 'index.html の .toast に pointer-events:none が無い（知らせが出ている2秒ほど、その下のボタンを押しても効かない。.toast{pointer-events:none;…}。routines/game-dev-detail.md「共通の形」の知らせ）']);
+  if (cutMoves(page)) out.push(['hint:cut-moves', 'index.html の cutOf が、まちがいの数で消す選び肢を変える（しぼったあとにまちがいを選ぶと、消した選び肢が戻る。正解でない選び肢のうち最後の1つ以外を消す形にし、QA に検査を足す。routines/game-dev.md「共通の形」のヒント）']);
+  if (leftFixed(page)) out.push(['hint:left-fixed', 'index.html のヒント2の「のこりは2つです」が決まった数（先に最後のまちがいを選んでいると押せるのは正解だけ。いま押せる選び肢の数を出す。routines/game-dev.md「共通の形」のヒント）']);
+  if (starsBare(page)) out.push(['stars:role', 'index.html の星の表示（class="stars"）に role="img" が無いか、取れなかった星も ★ で色だけで分けている（<span class="stars" role="img" aria-label="星Nつ"> にし、取れなかった星は ☆。routines/game-dev.md「共通の形」の星）']);
+  return out;
+}

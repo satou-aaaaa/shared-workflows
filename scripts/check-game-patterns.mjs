@@ -1,6 +1,6 @@
 // ゲームの作りの見分け（scripts/game-patterns.mjs）が、事故の形を見つけ、直した形・コメントに残った古い形では出さないかを確かめる（Lint）
 // depth:*（depth.js を写したのにつないでいない）・hint:cut-moves（ヒント2で消した選び肢が戻る）・hint:left-fixed（のこりの数が決まった数）・stars:role（星の表示が読まれない・色だけで分ける）・qa:url-includes（URL を includes で探して CodeQL が赤）
-import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted } from './game-patterns.mjs';
+import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted, playerBugs } from './game-patterns.mjs';
 
 const cases = [
   ['事故の形（1行・left.length - 1）', true, 'const cutOf = () => { if (cur.hints < 2) return []; const left = P.opts.map((_, i) => i).filter((i) => i !== P.ans && !cur.wrong.includes(i)); return left.slice(0, Math.max(0, left.length - 1)); };'],
@@ -94,5 +94,52 @@ for (const [name, want, files] of depthCases) {
   console.log(`${got === want ? '✓' : '✗'} ${name}（${want || '出さない'}${got === want ? '' : ` ← ${got || 'なし'}`}）`);
   if (got !== want) bad++;
 }
+
+// 遊ぶ人が困る作り（playerBugs）：事故の形だけを出し、直した形・コメントの中の古い形では出さない（id の並びで見る）
+const HOWTO_OK = '$("howto-ok").onclick = () => { save((s) => { s.tut = true; }); $("howto").close(); };\n$("howto").addEventListener("close", () => { if (!load().tut) save((s) => { s.tut = true; }); });\n$("howto").addEventListener("cancel", () => { if (!load().tut) save((s) => { s.tut = true; }); });';
+const bugCases = [
+  ['困る作り：直した形', '', 'function save(fn) { try { localStorage.setItem(KEY, j); mem = null; saveWarn(false); } catch (e) { mem = j; saveWarn(true); } }\n$("quit").onclick = () => finish();\n' + HOWTO_OK],
+  ['困る作り：保存に失敗しても黙る', 'save:silent', 'function save(fn) { try { localStorage.setItem(KEY, j); mem = null; } catch (e) { mem = j; } }'],
+  ['困る作り：正解の直後に降りられない', 'endless:stuck', 'if ($("quit")) $("quit").onclick = () => { if (cur && cur.done) return; finish(); };'],
+  ['困る作り：コメントの古い形は見ない', '', '// 前は catch (e) { mem = j; } と if (cur && cur.done) return; finish(); だった\nconst x = 1;'],
+  ['困る作り：モードの鍵', 'free:gate', '<button id="go-e">🔗 連戦（今日の5体に出会うと開く）</button>'],
+  ['困る作り：コメントの「押すと開く」は鍵ではない', '', '// 引き継ぎ（transfer.js）は data-hk を押すと開く\nconst x = 1;'],
+  ['困る作り：遊び方を Esc で閉じると残らない', 'howto:close', '$("howto-ok").onclick = () => { save((s) => { s.tut = true; }); $("howto").close(); };'],
+  ['困る作り：知らせがボタンの上で押すのを止める', 'toast:blocks', '<style>.toast{position:fixed;left:50%;bottom:24px;z-index:9}</style>'],
+  ['困る作り：知らせは押すのを通す', '', '<style>.toast{pointer-events:none;position:fixed;left:50%;bottom:24px}</style>'],
+  ['困る作り：CSS のコメントの古い形は見ない', '', '<style>/* .toast{position:fixed} */ .toast{position:fixed;pointer-events:none}</style>'],
+  ['困る作り：cancel が無い', 'howto:close', HOWTO_OK.split('\n').slice(0, 2).join('\n')],
+];
+for (const [name, want, src] of bugCases) {
+  const got = playerBugs(src).map((x) => x[0]).join();
+  console.log(`${got === want ? '✓' : '✗'} ${name}（${want || '出さない'}${got === want ? '' : ` ← ${got || 'なし'}`}）`);
+  if (got !== want) bad++;
+}
+// check-game-new.mjs：もとからあるものは通し、新しく持ち込んだものだけで落とす
+{
+  const { mkdtempSync, writeFileSync } = await import('node:fs');
+  const { execFileSync } = await import('node:child_process');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const d = mkdtempSync(join(tmpdir(), 'gnew-'));
+  const SILENT = 'function save(fn) { try { localStorage.setItem(K, j); } catch (e) { mem = j; } }';
+  const GOODSAVE = 'function save(fn) { try { localStorage.setItem(K, j); saveWarn(false); } catch (e) { mem = j; saveWarn(true); } }';
+  const STUCK = '$("quit").onclick = () => { if (cur && cur.done) return; finish(); };';
+  const run = (base, head) => {
+    const b = join(d, 'base.html'), h = join(d, 'head.html');
+    if (base != null) writeFileSync(b, base); writeFileSync(h, head);
+    try { execFileSync('node', [new URL('./check-game-new.mjs', import.meta.url).pathname, base != null ? b : join(d, 'none.html'), h], { stdio: 'pipe' }); return 0; } catch (e) { return e.status; }
+  };
+  const newCases = [
+    ['新しく持ち込む：もとからあるだけなら通す', 0, run(SILENT, SILENT + '\nconst y = 2;')],
+    ['新しく持ち込む：別の困る作りを足したら落とす', 1, run(SILENT, SILENT + '\n' + STUCK)],
+    ['新しく持ち込む：新作（main に無い）は全部見る', 1, run(null, SILENT)],
+    ['新しく持ち込む：直した PR は通す', 0, run(SILENT, GOODSAVE)],
+  ];
+  for (const [name, want, got] of newCases) {
+    console.log(`${got === want ? '✓' : '✗'} ${name}（終わりの数 ${want}${got === want ? '' : ` ← ${got}`}）`);
+    if (got !== want) bad++;
+  }
+}
 if (bad) { console.error(`✗ ゲームの作りの見分けが ${bad} 件ちがう`); process.exit(1); }
-console.log('✓ hint:cut-moves・hint:left-fixed・stars:role・qa:url-includes・depth:* の見分けが通った');
+console.log('✓ hint:cut-moves・hint:left-fixed・stars:role・qa:url-includes・depth:*・遊ぶ人が困る作り（playerBugs・check-game-new）の見分けが通った');

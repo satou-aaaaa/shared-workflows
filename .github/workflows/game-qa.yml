@@ -49,12 +49,25 @@ jobs:
           sparse-checkout: |
             scripts/sync-template.mjs
             scripts/link-text.mjs
+            scripts/game-patterns.mjs
+            scripts/check-game-new.mjs
             template
       # Link check（週1）が調べる .md に、すぐ後ろに全角の字が続く URL が無いか。lychee はそこまで URL と読んで 404 で落ちる。
       # 週1の検査で初めて落ちていた（2026-11-07 rosen-hitofude・seiza-tsunagi。incidents/2026-11-08-link-check-wide-char-after-url.md）
       - name: リンクの書き方
         if: github.event_name == 'pull_request'
         run: node .shared-workflows/scripts/link-text.mjs .
+      # 遊ぶ人が困る作り（保存に失敗しても黙る・正解の直後に降りられない・遊び方を Esc で閉じると毎回出る・モードの鍵など）を、
+      # この PR で新しく持ち込んだら落とす。もとからあるものは警告だけ（週次まとめで直す）。incidents/2026-11-17-known-game-bugs-spread.md
+      - name: 遊ぶ人が困る作り
+        if: github.event_name == 'pull_request' && hashFiles('index.html') != ''
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch -q --depth=1 origin "$BASE"
+          main_page="$RUNNER_TEMP/main-index.html"
+          git show "$BASE:index.html" > "$main_page" 2>/dev/null || rm -f "$main_page"
+          node .shared-workflows/scripts/check-game-new.mjs "$main_page" index.html
       - name: ひな形の写し
         if: github.event_name == 'pull_request'
         env:

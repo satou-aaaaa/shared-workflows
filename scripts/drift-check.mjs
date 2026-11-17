@@ -44,7 +44,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formProblems } from './check-issue-forms.mjs';
 import { readRepos, repoNames } from './repos.mjs';
-import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted } from './game-patterns.mjs';
+import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted, playerBugs } from './game-patterns.mjs';
 import { bareUrls, linkFiles, checkedMd } from './link-text.mjs';
 
 const OWNER = process.env.OWNER || 'satou-aaaaa';
@@ -309,25 +309,15 @@ const results = await pool(REPOS, 4, async (r) => {
     // 実績の 🔒（まだ取っていない印）は鍵ではないので見ない。「○○すると開く」のようにモードを閉じる文だけを見る
     if (paths.has('index.html') && paths.has('sw.js')) {
       const page = await src.read('index.html');
-      if (page.includes('🎫')) flag('free:ticket', 'index.html にチケット🎫がある（遊ぶ量を縛らない。とことんは、まちがえても続き「ここで降りる」で終わる形に。routines/game-dev.md「好きなだけ遊べるように」）');
+      for (const [id, msg] of playerBugs(page)) if (id.startsWith('free:')) flag(id, msg); // コメントの中の「押すと開く」は見ない
       // 「巻を1回読むと開く」「🔒 上級の5本は、今日の5本のあとで」のような文（「設定を開く」「アプリで開く」は鍵ではない。CSS のコメントは見ない）
-      const gate = page.replace(/\/\*[\s\S]*?\*\//g, '').match(/[^<>`'"\n]{0,24}(?:と|たら)開く|🔒 [^<>`'"\n]{2,40}/);
-      if (gate) flag('free:gate', `index.html に遊ぶ前の鍵がある「${gate[0].trim()}」（どのモードも最初から遊べるように。routines/game-dev.md「好きなだけ遊べるように」）`);
       pageCache = page;
     }
 
     // 遊び方の「見た」は「わかった」を押したらすぐ残し、dialog の cancel（Esc のその場）と close でも残す（ボタンだけだと Esc で閉じた人に毎回出る。close だけだと知らせが遅れて届き、押した直後に読み直すとまた出る。2026-11-07 incidents/2026-11-07-howto-esc-not-saved.md）
     if (paths.has('index.html')) {
       const page = pageCache ?? await src.read('index.html');
-      const ok = page.match(/\$\("howto-ok"\)\.onclick\s*=\s*\(\)\s*=>\s*\{[^\n]*/);
-      if (ok) {
-        const onClose = /\$\("howto"\)\.addEventListener\("close"[^\n]*tut\s*=\s*true/.test(page);
-        const onCancel = /\$\("howto"\)\.addEventListener\("cancel"[^\n]*tut\s*=\s*true/.test(page);
-        const atOnce = /^\$\("howto-ok"\)\.onclick\s*=\s*\(\)\s*=>\s*\{\s*save\(/.test(ok[0]);
-        if (!onClose) flag('howto:close', 'index.html が遊び方の「見た」を dialog の close で残していない（Esc で閉じた人に毎回出る。$("howto").addEventListener("close", () => { if (!load().tut) save(…) })。routines/game-dev.md「共通の形」の遊び方）');
-        else if (!onCancel) flag('howto:close', 'index.html が遊び方の「見た」を dialog の cancel（Esc を押したその場）で残していない（close の知らせは遅れて届き、Esc の直後に読み直すとまた出る。$("howto").addEventListener("cancel", …)。routines/game-dev.md「共通の形」の遊び方）');
-        else if (!atOnce) flag('howto:close', 'index.html の「わかった」が「見た」をすぐ残していない（close の知らせは遅れて届き、押した直後に読み直すとまた出る。onclick の最初で save(…)。routines/game-dev.md「共通の形」の遊び方）');
-      }
+      for (const [id, msg] of playerBugs(page)) if (id === 'howto:close') flag(id, msg);
     }
 
     // ホームの題（h1.title）は、上の帯の h1{flex:1} を受け継ぐと、縦に並べた画面で余った高さを全部取って伸びる（820×1180 で 277〜450px のすき間。2026-11-07 incidents/2026-11-07-title-stretched.md）
@@ -344,14 +334,11 @@ const results = await pool(REPOS, 4, async (r) => {
     // 黙っていると遊ぶ人は気づけない（2026-11-07 暑さ指数よみの PR のレビューで見つけ、同じ作りのゲーム14本を直した。incidents/2026-11-07-save-failure-silent.md）
     if (paths.has('index.html')) {
       const page = pageCache ?? await src.read('index.html');
-      if (/catch\s*\(e\)\s*\{\s*mem\s*=\s*j;\s*\}/.test(page)) flag('save:silent', 'index.html の save が、保存に失敗しても黙っている（開き直すと記録が消える。保存できないあいだは帯 #savewarn を出したままにし、QA に検査を足す。routines/game-dev.md「共通の形」の記録）');
+      for (const [id, msg] of playerBugs(page)) if (['save:silent', 'hint:cut-moves', 'hint:left-fixed', 'stars:role', 'endless:stuck', 'toast:blocks'].includes(id)) flag(id, msg); // 見分けは scripts/game-patterns.mjs の playerBugs（ゲームの PR の QA も同じものを使う）
       // ヒント2：まちがいを除いてから消す数を決めると、しぼったあとにまちがいを選んだとき、消した選び肢が戻る（saibanin-shikumi #1 の CodeRabbit）
       // コメントを除き、複数行の定義も終わりまで見る（scripts/game-patterns.mjs。見分けの検査は scripts/check-game-patterns.mjs）
-      if (cutMoves(page)) flag('hint:cut-moves', 'index.html の cutOf が、まちがいの数で消す選び肢を変える（しぼったあとにまちがいを選ぶと、消した選び肢が戻る。正解でない選び肢のうち最後の1つ以外を消す形にし、QA に検査を足す。routines/game-dev.md「共通の形」のヒント）');
       // ヒント2のあとの「のこりは○つ」は、いま押せる選び肢の数を出す（決まった「2つ」だと、先に最後のまちがいを選んだとき、のこり1つでも2つと出る）
-      if (leftFixed(page)) flag('hint:left-fixed', 'index.html のヒント2の「のこりは2つです」が決まった数（先に最後のまちがいを選んでいると押せるのは正解だけ。いま押せる選び肢の数を出す。routines/game-dev.md「共通の形」のヒント）');
       // 星の表示：span に role="img" が無いと aria-label が読まれないことがあり、取れなかった星も ★ だと色だけで分ける（2026-11-07 食中毒よぼうの CodeRabbit）
-      if (starsBare(page)) flag('stars:role', 'index.html の星の表示（class="stars"）に role="img" が無いか、取れなかった星も ★ で色だけで分けている（<span class="stars" role="img" aria-label="星Nつ"> にし、取れなかった星は ☆。routines/game-dev.md「共通の形」の星）');
     }
 
     // 引き継ぎコード：記録が端末の中だけにあるゲームは、機種変更で記録が消える（2026-11-05 satou さん「PWA 型のゲームでデータの引継ぎを」）。
@@ -391,7 +378,7 @@ const results = await pool(REPOS, 4, async (r) => {
       else if ((await src.read('qa/sw-check.mjs')) !== SW_QA) flag('sw:qa', 'qa/sw-check.mjs がひな形とちがう（node scripts/sync-template.mjs で写す）');
       else if (!paths.has('qa/run.mjs') || !/checkSwStall\(/.test(await src.read('qa/run.mjs'))) flag('sw:run', 'qa/run.mjs が checkSwStall を呼んでいない（sw.js の検査が CI で走らない）');
       // とことんで正解した直後に「ここで降りる」が効かない形（2026-11-07 kyuyo-meisai #1 の CodeRabbit。同じ行が8本にあった）
-      if (paths.has('index.html') && /if\s*\(\s*cur\s*&&\s*cur\.done\s*\)\s*return;\s*finish\(\)/.test(await src.read('index.html'))) flag('endless:stuck', 'index.html の「ここで降りる」が正解した直後に効かない（if (cur && cur.done) return; finish(); の行。kyuyo-meisai 1bebfdc の直し方）');
+      // playerBugs の endless:stuck で見る（上の「遊ぶ人が困る作り」）
       // ふつうのアイコンを maskable にも使い回すと、Android で丸く切られて絵の端が欠ける（2026-11-07 tani-kankaku #1 の CodeRabbit）
       if (paths.has('manifest.webmanifest')) {
         let icons = [];
