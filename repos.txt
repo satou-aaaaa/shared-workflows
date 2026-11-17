@@ -112,4 +112,5 @@ usotsuki-roppo game
 wagamama-burger game
 wareki-yomi game
 yarikuri-shotengai game
+yohou-kotoba game
 zeikin-nanizei game
