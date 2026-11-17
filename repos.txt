@@ -121,6 +121,7 @@ rosai-shikumi game
 rosen-hitofude game
 sagi-minuki game
 saibanin-shikumi game
+saibo-tsukuri game
 sandbox app
 sdgs-mokuhyo game
 seiza-tsunagi game
