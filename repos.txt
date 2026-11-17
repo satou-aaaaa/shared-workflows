@@ -20,6 +20,7 @@ dashisugi-check game
 dema-tashikame game
 denki-kairo game
 dento-kogei game
+doubutsu-nakama game
 dungeon-boardgame app
 endaka-enyasu game
 funka-level game
@@ -98,6 +99,7 @@ sentaku-hyoji game
 setsuden-kotsu game
 shindo-yomi game
 shiritori-saitan game
+shokubutsu-nakama game
 shokuchudoku-yobo game
 shokuhin-hyoji game
 shukujitsu-yurai game
