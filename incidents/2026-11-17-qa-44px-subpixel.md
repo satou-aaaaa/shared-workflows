@@ -20,4 +20,6 @@
 - [x] 直す: shokuhin-hyoji #8 で高さを `Math.round` で丸めてくらべる
 - [x] 見つける: `scripts/game-patterns.mjs` の `heightRaw` と drift-check の `qa:height-raw` が、丸めずに 44 とくらべる QA を週次まとめに出す（`scripts/check-game-patterns.mjs` で検査。この PR）
 - [x] 直す: 11/17 に gogen-suiri の main の QA が同じ理由で落ちたので丸めた（gogen-suiri #9）
-- [ ] 直す: 同じ書き方の残り 85 本を、次にそのゲームを直すときに丸める（週次まとめの qa:height-raw で追う）。担当: 一括で直すスレッド。期限: 2026-11-24
+- [x] 直す: 同じ書き方の残り 85 本は、11/17 夜に前倒しで直した。ゲームごとの手直しでなく、`scripts/sync-template.mjs` が qa/run.mjs の「丸めずに 44 とくらべる所」だけを `Math.round(…) < 44` に書きかえ、Template sync が全ゲームへ PR で配る（`game-patterns.mjs` の `roundSizes`。何度かけても同じ）
+- [x] 見つける: 高さだけでなく幅（`.width < 44`）・測った箱を変数に入れた形（`r.height < 44`）・以上をたしかめる形（`>= 44`）も同じ穴なので、見つける検査（`heightRaw`）も書きかえも両方見る（この PR）。ひな形の `template/qa/transfer-check.mjs` にも3か所あったので丸めた
+- [x] 防ぐ: Template sync は週1でも回るので、写し合いで丸めない書き方がまた入っても、次の配布で自動で丸まる（`scripts/check-game-patterns.mjs` が書きかえの結果と2回かけても同じかを検査）

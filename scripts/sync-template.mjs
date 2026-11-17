@@ -9,6 +9,8 @@
 //   sw.js …… ひな形を写し、// game:begin〜// game:end の間（CACHE・SHELL）はゲームのものを残す。
 //            まだ枠の無い古い sw.js からは const CACHE と const SHELL の行を拾って枠に入れる
 //   scripts/setup.sh …… ひな形を写し、npm_dir= と next= の行はゲームのものを残す
+//   qa/run.mjs …… 押せる所の高さ・幅を丸めずに 44 とくらべる所だけを Math.round(…) < 44 に書きかえる（ほかは変えない。2026-11-17 から。
+//            動きの途中で 43.98px と測れてときどき落ちる。incidents/2026-11-17-qa-44px-subpixel.md）
 //   .github/workflows/{qa,setup-check,link-check,ci-failure-issue}.yml …… jobs: から下（呼び出しと設定値）がひな形と同じときだけ写す
 //            （きっかけ・権限・concurrency だけを直す。設定値を変えているゲームは手で。.github/ を変える PR は自動マージされないので手でマージ）
 // 写す前に、手元の shared-workflows のひな形が origin/main より古くないかを見る（古ければ止める。2026-11-17 二重に配るおそれ。
@@ -19,6 +21,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { roundSizes } from './game-patterns.mjs';
 
 const T = join(dirname(fileURLToPath(import.meta.url)), '..', 'template');
 const tpl = (p) => readFileSync(join(T, p), 'utf8');
@@ -75,6 +78,7 @@ export function plan(dir) {
   const out = [];
   const want = (p, next, note) => { if (next !== null && read(p) !== next) out.push({ path: p, next, note }); };
   if (has('qa/run.mjs') && has('sw.js') && !read('qa/run.mjs').includes('checkSwStall')) out.push({ path: 'qa/run.mjs', next: null, note: 'checkSwStall を呼んでいない（import { checkSwStall } from "./sw-check.mjs" と、sw.js の中身で check を1行足す）' });
+  if (has('qa/run.mjs')) want('qa/run.mjs', roundSizes(read('qa/run.mjs')), '押せる所の 44px を丸めてくらべる');
   // sw.js を写せない（独自の働きがある）ゲームには、ひな形の sw.js を前にした sw の検査も写さない。写すと QA が「FLAGS が無い」などで落ちる
   // （2026-11-17 kokki-shuto。incidents/2026-11-17-sw-migration-drops-extras.md）
   const swStuck = has('sw.js') && makeSw(read('sw.js')) === null;
