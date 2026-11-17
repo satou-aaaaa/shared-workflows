@@ -19,6 +19,7 @@ chosakuken game
 dashisugi-check game
 dema-tashikame game
 denki-kairo game
+denkidai-ikura game
 dento-kogei game
 doubutsu-nakama game
 dungeon-boardgame app
@@ -56,6 +57,7 @@ kenpo-shikumi game
 kikigaki-techo game
 kimari-sagashi game
 kippu-10 game
+kitte-ikura game
 kokki-shuto game
 kokoku-minuki game
 kondate-koma game
@@ -107,6 +109,7 @@ shokubutsu-nakama game
 shokuchudoku-yobo game
 shokuhin-hyoji game
 shukujitsu-yurai game
+shukushaku-yomi game
 taikyo-hiyo game
 taiyokei-kurabe game
 tani-kankaku game
