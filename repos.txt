@@ -64,6 +64,7 @@ kyuyo-meisai game
 last-tell app
 last-tell-godot private
 local-kanban app
+login-mamori game
 machi-michijun game
 madori-puzzle game
 mannaka-kanji game
