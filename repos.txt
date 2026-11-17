@@ -43,6 +43,7 @@ hikari-michi game
 hikari-susumi game
 hiraku-tojiru game
 hoken-dore game
+hozon-kikan game
 hyakunin-awase game
 hyoshiki-yomi game
 ikukyu-shikumi game
@@ -145,6 +146,7 @@ tenkizu-yomi game
 toan-kumitate game
 todofuken-relay game
 todokede-kigen game
+tokkyo-kikan game
 tsuki-katachi game
 usotsuki-roppo game
 wagamama-burger game
