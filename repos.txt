@@ -41,6 +41,7 @@ hyakunin-awase game
 hyoshiki-yomi game
 ikukyu-shikumi game
 isle-routes-research app
+jidosha-shurui game
 jintai-shikumi game
 jitensha-rule game
 jobun-tobatsu game
