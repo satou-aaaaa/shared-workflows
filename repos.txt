@@ -72,6 +72,7 @@ kazoku-kimari game
 keigen-zeiritsu game
 keigo-naoshi game
 keiyaku-torikeshi game
+kenbikyo-buhin game
 kengen-check game
 kenko-minuki game
 kenpo-shikumi game
