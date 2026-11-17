@@ -133,6 +133,7 @@ tenji-yomi game
 tenkizu-yomi game
 toan-kumitate game
 todofuken-relay game
+todokede-kigen game
 tsuki-katachi game
 usotsuki-roppo game
 wagamama-burger game
