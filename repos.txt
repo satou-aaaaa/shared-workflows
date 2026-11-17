@@ -39,6 +39,7 @@ gensen-ikura game
 genso-kigo game
 gogen-suiri game
 gurafu-minuki game
+gyosei-kigen game
 haku-uchi game
 hataraku-kimari game
 hatsuden-kurabe game
