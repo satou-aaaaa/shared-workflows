@@ -182,6 +182,7 @@ tokkyo-kikan game
 tonari-kimari game
 toppu-yomi game
 tsuki-katachi game
+tsunami-yomi game
 usotsuki-roppo game
 wagamama-burger game
 wareki-yomi game
