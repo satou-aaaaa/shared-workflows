@@ -50,6 +50,7 @@ hatsuden-kurabe game
 hikari-michi game
 hikari-susumi game
 hiraku-tojiru game
+hitorioya-ikura game
 hoken-dore game
 hosho-kimari game
 hozon-kikan game
@@ -62,6 +63,7 @@ isle-routes-research app
 jidosha-shurui game
 jiko-kihon game
 jintai-shikumi game
+jishin-ikura game
 jitensha-rule game
 jobun-tobatsu game
 jotai-henka game
@@ -154,6 +156,7 @@ shigaisen-yomi game
 shindo-yomi game
 shiritori-saitan game
 shitsugyo-teate game
+shogai-ikura game
 shoka-koso game
 shokubutsu-nakama game
 shokuchudoku-yobo game
