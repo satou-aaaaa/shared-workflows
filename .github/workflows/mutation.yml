@@ -1,0 +1,113 @@
+name: Mutation (共通部品)
+
+# ミューテーションテスト（Stryker）：問題の作り方（data.js）をわざと少しずつ壊し（> を >= に、+ を - に…）、
+# QA が気づくか（壊れたものを落とせるか）を見る。気づかなかった壊し方（生き残り）は「検査の穴」なので、ジョブのまとめに一覧で出す。
+# sandbox の ADR-0011・weekly-mutation.yml と同じ考え方。1回が長いので PR では回さず、週1と手で回す。点数で落とさない（落ちるのは動かせなかったときだけ）。
+# 呼ぶ側の QA は QA_DATA_ONLY=1 のとき、ブラウザを使わない検査だけで終わるようにしておく（1回 数秒。shindo-yomi の qa/run.mjs が見本）。
+# 出典：Stryker「Incremental」https://stryker-mutator.io/docs/stryker-js/incremental/ ・「Configuration」https://stryker-mutator.io/docs/stryker-js/configuration/
+on:
+  workflow_call:
+    inputs:
+      mutate:
+        description: '壊すファイル（カンマ区切り）'
+        type: string
+        default: data.js
+      command:
+        description: '検査のコマンド（QA_DATA_ONLY=1 で動く）'
+        type: string
+        default: node qa/run.mjs
+      npm_dir:
+        description: 'package-lock.json のあるフォルダ'
+        type: string
+        default: qa
+      timeout:
+        description: '時間切れ（分）'
+        type: number
+        default: 60
+
+permissions:
+  contents: read
+
+jobs:
+  mutation:
+    name: mutation
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: ${{ inputs.npm_dir }}/package-lock.json
+      - run: npm ci --no-audit --no-fund
+        working-directory: ${{ inputs.npm_dir }}
+      - name: Stryker を入れる
+        env:
+          STRYKER_DIR: ${{ runner.temp }}/stryker
+        run: npm i --no-save --no-audit --no-fund --prefix "$STRYKER_DIR" @stryker-mutator/core@10.1.1 >/dev/null
+      - name: ミューテーションテスト
+        env:
+          STRYKER_DIR: ${{ runner.temp }}/stryker
+          MUTATE: ${{ inputs.mutate }}
+          QA_COMMAND: ${{ inputs.command }}
+          QA_DATA_ONLY: '1'
+        run: |
+          # 設定はここで作る（呼ぶ側に置かない。部品の中身は shared-workflows だけに置く）
+          cat > "$RUNNER_TEMP/stryker-config.cjs" <<'JS'
+            const cfg = {
+              testRunner: "command",
+              commandRunner: { command: process.env.QA_COMMAND },
+              mutate: process.env.MUTATE.split(",").map((s) => s.trim()).filter(Boolean),
+              coverageAnalysis: "off",
+              concurrency: 4,
+              timeoutMS: 60000,
+              reporters: ["clear-text", "progress-append-only", "json"],
+              jsonReporter: { fileName: "qa-report/mutation.json" },
+              tempDirName: ".stryker-tmp",
+              ignorePatterns: ["qa-report", ".stryker-tmp"],
+              // typescript@7 で Stryker の tsconfig の前処理が落ちる既知の問題を避ける（sandbox ADR-0011）
+              tsconfigFile: "no-such-tsconfig.json",
+            };
+            require("fs").writeFileSync(process.env.RUNNER_TEMP + "/stryker.config.json", JSON.stringify(cfg, null, 2));
+          JS
+          node "$RUNNER_TEMP/stryker-config.cjs"
+          "$STRYKER_DIR/node_modules/.bin/stryker" run "$RUNNER_TEMP/stryker.config.json"
+      - name: 生き残りのまとめ
+        if: always()
+        run: |
+          [ -f qa-report/mutation.json ] || { echo "結果が無い（Stryker が途中で止まった）" >> "$GITHUB_STEP_SUMMARY"; exit 0; }
+          cat > "$RUNNER_TEMP/mutation-summary.cjs" <<'JS'
+            const r = JSON.parse(require("fs").readFileSync("qa-report/mutation.json", "utf8"));
+            const all = Object.entries(r.files).flatMap(([f, x]) => x.mutants.map((m) => ({ f, ...m, src: x.source })));
+            const n = (s) => all.filter((m) => m.status === s).length;
+            const killed = n("Killed") + n("Timeout");
+            // 文字の置きかえ（StringLiteral）は説明の文などで数が多いので後ろに回し、式の壊し方（検査の穴になりやすい）を先に出す
+            const survived = all.filter((m) => m.status === "Survived").sort((a, b) => (a.mutatorName === "StringLiteral") - (b.mutatorName === "StringLiteral"));
+            const logic = survived.filter((m) => m.mutatorName !== "StringLiteral").length;
+            const valid = killed + survived.length + n("NoCoverage");
+            const score = valid ? (100 * killed / valid).toFixed(1) : "-";
+            const line = (m) => { const l = m.src.split("\n")[m.location.start.line - 1] || ""; return l.slice(Math.max(0, m.location.start.column - 30), m.location.start.column + 50).trim(); };
+            const out = [
+              "## ミューテーションテスト",
+              "",
+              `点数 ${score}%（気づいた ${killed}・生き残り ${survived.length}（うち式の壊し方 ${logic}・文字の置きかえ ${survived.length - logic}）・全部 ${all.length}）`,
+              "",
+              "生き残り＝わざと壊しても QA が通ったところ。検査の穴か、壊しても同じ動きになる所（直さなくてよい）かを見て、穴なら qa/run.mjs に検査を足す。",
+              "",
+              "| 場所 | 壊し方 | 置きかえ | 前後 |",
+              "| --- | --- | --- | --- |",
+              ...survived.slice(0, 40).map((m) => `| ${m.f}:${m.location.start.line} | ${m.mutatorName} | \`${String(m.replacement || "").replace(/[|\n`]/g, " ").slice(0, 40)}\` | \`${line(m).replace(/[|`]/g, " ")}\` |`),
+              survived.length > 40 ? `\nほか ${survived.length - 40} 件は成果物の mutation.json` : "",
+            ];
+            require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY, out.join("\n") + "\n");
+          JS
+          node "$RUNNER_TEMP/mutation-summary.cjs"
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mutation-report
+          path: qa-report/mutation.json
+          if-no-files-found: ignore

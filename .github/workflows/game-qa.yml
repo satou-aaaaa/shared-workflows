@@ -51,6 +51,8 @@ jobs:
             scripts/link-text.mjs
             scripts/game-patterns.mjs
             scripts/check-game-new.mjs
+            scripts/game-props.mjs
+            scripts/game-lint.mjs
             template
       # Link check（週1）が調べる .md に、すぐ後ろに全角の字が続く URL が無いか。lychee はそこまで URL と読んで 404 で落ちる。
       # 週1の検査で初めて落ちていた（2026-11-07 rosen-hitofude・seiza-tsunagi。incidents/2026-11-08-link-check-wide-char-after-url.md）
@@ -68,6 +70,25 @@ jobs:
           main_page="$RUNNER_TEMP/main-index.html"
           git show "$BASE:index.html" > "$main_page" 2>/dev/null || rm -f "$main_page"
           node .shared-workflows/scripts/check-game-new.mjs "$main_page" index.html
+      # 性質テスト（fast-check）：でたらめな種・日付で問題を何百回も作り、壊れた字・NaN・重なる選び肢・答えが1つでない・
+      # 同じ種で中身が変わる、を探す（sandbox の ADR-0011 と同じ考え方）。data.js に make() が無いゲームは飛ばす。
+      # 落ちたらログの「再現: FC_SEED=…」で同じ回を手元で回せる。出典 https://fast-check.dev/docs/introduction/why-property-based/
+      - name: 問題の作り方の性質テスト
+        if: github.event_name == 'pull_request' && hashFiles('data.js') != ''
+        env:
+          FC_DIR: ${{ runner.temp }}/fc
+        run: |
+          npm i --no-save --no-audit --no-fund --prefix "$FC_DIR" fast-check@4.10.2 >/dev/null
+          node .shared-workflows/scripts/game-props.mjs .
+      # ESLint：書き間違えた変数（no-undef）・届かない行など、遊ぶ前に止まる書き間違いを探す（sandbox の npm run lint と同じ考え方）。
+      # 入れはじめなので警告だけ（--warn。PR の画面に注釈が出る）。2026-11-18 に公開中の 190 本で回して指摘は 1 件だった
+      - name: ESLint（警告だけ）
+        if: github.event_name == 'pull_request' && hashFiles('index.html') != ''
+        env:
+          LINT_DIR: ${{ runner.temp }}/lint
+        run: |
+          npm i --no-save --no-audit --no-fund --prefix "$LINT_DIR" eslint@10.14.0 @eslint/js@10.0.1 globals@17.14.0 eslint-plugin-html@8.2.1 >/dev/null
+          node .shared-workflows/scripts/game-lint.mjs --warn .
       - name: ひな形の写し
         if: github.event_name == 'pull_request'
         env:
