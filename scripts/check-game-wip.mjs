@@ -18,6 +18,9 @@ ok(repoOf('* repo: `okurigana-dotchi`\n') === 'okurigana-dotchi', '* と ` で�
 ok(threadOf('- repo: a\n- thread: 新作ゲームを作る(夜・並列1)\n') === '新作ゲームを作る(夜・並列1)', '箇条書きの thread: の行を読めない');
 ok(branchOf('- branch: claude/x-1\n') === 'claude/x-1', '箇条書きの branch: の行を読めない');
 ok(repoOf('このゲームの repo: は未定') === null, '文の途中の repo: を作りかけと読んだ');
+ok(repoOf('+ repo: shingo-yomi\n') === 'shingo-yomi', '+ の箇条書きの repo: の行を読めない（#521 の CodeRabbit）');
+ok(threadOf('repo: a\n- thread:\n- branch: claude/x-1\n') === null, '空の thread: で次の行を thread と読んだ（#521 の CodeRabbit）');
+ok(repoOf('- repo:\nshingo-yomi\n') === null, '空の repo: で次の行を repo と読んだ');
 
 const old = new Date(Date.now() - 3 * 864e5).toISOString();
 const day1 = new Date(Date.now() - 1.5 * 864e5).toISOString();

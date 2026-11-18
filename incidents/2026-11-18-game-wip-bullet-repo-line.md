@@ -19,5 +19,5 @@
 
 ## 対策
 - [x] 直す: #509 の本文に `repo: dairi-kimari` と `thread:` の行を足した（Issue #509）
-- [x] 防ぐ: `scripts/game-wip.mjs` が、行の頭の `- `・`* ` と、名前を囲む `` ` `` も読む（この PR）
+- [x] 防ぐ: `scripts/game-wip.mjs` が、行の頭の `- `・`* `・`+ ` と、名前を囲む `` ` `` も読む。キーと値のあいだの空白は改行を越えない（空の thread: が次の行を読まない。#521 の CodeRabbit）（この PR）
 - [x] 見つける: `scripts/check-game-wip.mjs` に箇条書き・`` ` `` 囲み・文の途中の `repo:` を足した。直す前の game-wip.mjs では4つ落ちることを確かめた（この PR）
