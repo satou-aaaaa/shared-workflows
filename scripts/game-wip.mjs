@@ -17,13 +17,16 @@ const STALL_DAYS = 1; // PR がこれ以上動いていなければ「止まっ�
 export const PARK_DAYS = 3; // これ以上動いていなければ needs-decision を付けて、作りかけに数えない
 
 // 「題材:」Issue の本文から repo: の行を読む
-export const repoOf = (body) => (body || '').match(/^repo:\s*([\w.-]+)\s*$/m)?.[1] || null;
+// 行の頭の「- 」「* 」（箇条書き）と、名前を囲む ` も許す（2026-11-18 別スレッドが「- repo: shingo-yomi」と書き、作りかけを候補と読んで
+// 公開済みの題材をもう一度始める行を出した。incidents/2026-11-18-game-wip-bullet-repo-line.md）
+const PRE = String.raw`^[ \t]*(?:[-*+][ \t]+)?`; // 箇条書きの頭（- * +）。空白は改行を越えない（空の thread: が次の行を読まないように）
+export const repoOf = (body) => (body || '').match(new RegExp(PRE + String.raw`repo:[ \t]*` + '`?' + String.raw`([\w.-]+)` + '`?' + String.raw`[ \t]*$`, 'm'))?.[1] || null;
 // 途中で止めたときに push したブランチ（`branch: <名前>` の行）
-export const branchOf = (body) => (body || '').match(/^branch:\s*([\w./-]+)\s*$/m)?.[1] || null;
+export const branchOf = (body) => (body || '').match(new RegExp(PRE + String.raw`branch:[ \t]*` + '`?' + String.raw`([\w./-]+)` + '`?' + String.raw`[ \t]*$`, 'm'))?.[1] || null;
 // 毎日の回とは別のスレッドが作っているとき（`thread: <スレッドの題>` の行）。毎日の回は触らず、作りかけの数にも入れない。
 // ただし Issue が PARK_DAYS 日動いていなければ、スレッドが止まったものとして毎日の回が引き取る（取り残し防止）。
 // きっかけ: 2026-11-17 satou さんの頼みで別スレッドが新作2本を並行で作るとき、毎日の回と同じゲームを2つの PR で直すおそれがあった。
-export const threadOf = (body) => (body || '').match(/^thread:\s*(\S.*?)\s*$/m)?.[1] || null;
+export const threadOf = (body) => (body || '').match(new RegExp(PRE + String.raw`thread:[ \t]*(\S.*?)[ \t]*$`, 'm'))?.[1] || null;
 const parked = (i) => (i.labels || []).some((l) => (l.name || l) === 'needs-decision');
 export const isTopic = (i) => !i.pull_request && /^題材:/.test(i.title);
 

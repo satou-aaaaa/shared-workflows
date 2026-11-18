@@ -69,6 +69,14 @@ export function heightRaw(qa) {
   return roundSizes(s) !== s;
 }
 
+// todayOnly：QA が時計を「今日」（Date.now() から作った日）に止めているのに、日付を外から変える口（QA_DATE・QA_SHIFT_DAYS）が無い（drift-check の qa:today-only）
+// 今日の問題は日付で変わるので、QA が日によって通ったり落ちたりし、翌日には手元で同じ日の問題を作れず再現できない
+// （2026-11-18 sagi-minuki #12：11/18 の問題でだけ古いタブの検査が止まった。incidents/2026-11-18-qa-passes-only-some-days.md）
+export function todayOnly(qa) {
+  const s = stripComments(qa);
+  return /\.clock\.setFixedTime\(/.test(s) && /Date\.now\(\)/.test(s) && !/\bQA_(?:DATE|SHIFT_DAYS)\b/.test(s);
+}
+
 // waitCounted：回数で区切るくり返し（for (let k = 0; k < N; k++)）の中に、待つだけの回 { await p.waitForTimeout(…); continue; } があり、時間（Date.now()）で区切っていない所の行番号（drift-check の qa:wait-count）
 // 2026-11-11 yarikuri-shotengai #4：店主の番を待つ回まで80回に数え、遅い CI で増築できる日まで進まずに落ちた（incidents/2026-11-11-qa-loop-counts-waits.md）
 export function waitCounted(qa) {

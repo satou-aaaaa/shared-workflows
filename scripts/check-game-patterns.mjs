@@ -1,6 +1,6 @@
 // ゲームの作りの見分け（scripts/game-patterns.mjs）が、事故の形を見つけ、直した形・コメントに残った古い形では出さないかを確かめる（Lint）
 // depth:*（depth.js を写したのにつないでいない）・hint:cut-moves（ヒント2で消した選び肢が戻る）・hint:left-fixed（のこりの数が決まった数）・stars:role（星の表示が読まれない・色だけで分ける）・qa:url-includes（URL を includes で探して CodeQL が赤）
-import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted, playerBugs, heightRaw, roundSizes } from './game-patterns.mjs';
+import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted, playerBugs, heightRaw, roundSizes, todayOnly } from './game-patterns.mjs';
 
 const cases = [
   ['事故の形（1行・left.length - 1）', true, 'const cutOf = () => { if (cur.hints < 2) return []; const left = P.opts.map((_, i) => i).filter((i) => i !== P.ans && !cur.wrong.includes(i)); return left.slice(0, Math.max(0, left.length - 1)); };'],
@@ -77,6 +77,18 @@ for (const [name, want, src] of heights) {
 for (const [name, want, src] of heights) {
   const got = heightRaw(src);
   console.log(`${got === want ? '✓' : '✗'} ${name}（${want ? '出す' : '出さない'}）`);
+  if (got !== want) bad++;
+}
+const todays = [
+  ['時計を今日に止め、日付を変える口が無い', true, 'const FIXED = new Date(new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10) + "T03:00:00Z");\nawait page.clock.setFixedTime(FIXED);'],
+  ['QA_DATE で日付を変えられる', false, 'const FIXED = new Date((process.env.QA_DATE || new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10)) + "T03:00:00Z");\nawait page.clock.setFixedTime(FIXED);'],
+  ['QA_SHIFT_DAYS で日をずらせる', false, 'const SHIFT = +(process.env.QA_SHIFT_DAYS || 0);\nawait q.clock.setFixedTime(new Date(Date.now() + SHIFT * 864e5));'],
+  ['決まった日に止める（今日に頼らない）', false, 'await page.clock.setFixedTime(new Date("2026-01-05T03:00:00Z"));'],
+  ['コメントの中の QA_DATE は数えない', true, '// QA_DATE を足す\nawait page.clock.setFixedTime(new Date(Date.now()));'],
+];
+for (const [name, want, src] of todays) {
+  const got = todayOnly(src);
+  console.log(`${got === want ? '✓' : '✗'} 今日だけの QA：${name}（${want ? '出す' : '出さない'}）`);
   if (got !== want) bad++;
 }
 const waits = [
