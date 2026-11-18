@@ -167,8 +167,20 @@ jobs:
           🔧 この Issue を直す PR ${prs} が開いたままです。新しく直すより先に、その PR を CI が緑ならマージする（赤なら直す）。"
               fi
             fi
+            # 実行した日（日本時間）を書き添える。今日のお題が日付で変わるゲームは、その日の問題でだけ QA が落ちることがあり、
+            # 翌日には手元で再現できなくなる（2026-11-18 sagi-minuki #12。incidents/2026-11-18-qa-passes-only-some-days.md）
+            local day=""
+            if [ -n "$rid" ]; then
+              day=$(gh run view "$rid" --json createdAt --jq .createdAt 2>/dev/null) || day=""
+              if [ -n "$day" ]; then day=$(TZ=Asia/Tokyo date -d "$day" +%F 2>/dev/null) || day=""; fi
+            fi
+            local dayline=""
+            if [ -n "$day" ]; then
+              dayline="
+          実行を始めた日（日本時間）: ${day}。日付で問題が変わるゲームは、その日（0時をまたいだ実行は次の日も）の問題で回し直す（QA_DATE=${day} node qa/run.mjs。QA_DATE が無いゲームは足す。routines/game-dev.md の QA の行）。"
+            fi
             local body="main で「${wf}」が ${conclusion} になりました（きっかけ: ${event}、コミット ${sha:0:7}）。
-          実行: ${url}
+          実行: ${url}${dayline}
 
           同じワークフローが次に成功すると、この Issue は自動で閉じます。${stale}${waiting}"
             if [ -n "$num" ]; then
