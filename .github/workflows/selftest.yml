@@ -76,6 +76,27 @@ jobs:
           if node scripts/game-props.mjs scripts/fixtures/props/bad; then echo "::error::壊れた作りを通した"; exit 1; fi
           echo "見分けられた"
 
+  game-lint-script:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: ESLint が「正しい作り」と「書き間違い」を見分けられるか
+        env:
+          LINT_DIR: ${{ runner.temp }}/lint
+        run: |
+          set -uo pipefail
+          npm i --no-save --no-audit --no-fund --prefix "$LINT_DIR" eslint@10.14.0 @eslint/js@10.0.1 globals@17.14.0 eslint-plugin-html@8.2.1 >/dev/null
+          node scripts/game-lint.mjs scripts/fixtures/lint/good || { echo "::error::正しい作りを落とした"; exit 1; }
+          if node scripts/game-lint.mjs scripts/fixtures/lint/bad; then echo "::error::書き間違い（GRET）を通した"; exit 1; fi
+          node scripts/game-lint.mjs --warn scripts/fixtures/lint/bad || { echo "::error::--warn なのに失敗にした"; exit 1; }
+          echo "見分けられた"
+
   ui-check-script:
     runs-on: ubuntu-latest
     timeout-minutes: 8

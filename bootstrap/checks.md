@@ -30,6 +30,7 @@
 | Secret scan | PR と main への push に入った秘密（gitleaks） | `secret-scan.yml` | 呼び出し側を入れる、★ Push protection |
 | Game QA | ゲームをブラウザで自動で遊ぶ検査（PR と main。検査の名前 qa / qa を main の必須チェックに） | `game-qa.yml` | `template/.github/workflows/qa.yml`（呼び出し側）と、Actions「Add ruleset」で必須チェック |
 | 性質テスト（ゲーム） | でたらめな種・日付で問題を何百回も作って、壊れた字・NaN・重なる選び肢・答えが1つでない・同じ種で中身が変わる問題（決まった種の qa/run.mjs では出ない組み合わせ）。sandbox の ADR-0011 と同じ fast-check | `game-qa.yml` の「問題の作り方の性質テスト」（PR、data.js に make() があるゲームだけ）・`scripts/game-props.mjs`。見分けられるかは Selftest（`scripts/fixtures/props/`） | なし（共通部品なので全ゲームに届く） |
+| ESLint（ゲーム） | 書き間違えた変数（no-undef）・届かない行・同じキーの2回書きなど、遊ぶ前に止まる書き間違い。sandbox の `npm run lint` と同じ考え方。ほかのファイルで決めた名前（data.js・共通部品）は index.html が読むファイルから集める | `game-qa.yml` の「ESLint（警告だけ）」（PR）・`scripts/game-lint.mjs`。見分けられるかは Selftest（`scripts/fixtures/lint/`） | なし（共通部品なので全ゲームに届く） |
 | CodeRabbit のレビュー（2人目の目） | 正しさ・要件の見落とし | 各リポジトリの `.coderabbit.yaml`、common.md「CodeRabbit のレビュー」 | `template/.coderabbit.yaml` を入れる、★ CodeRabbit のアプリ |
 | /code-review（新しい文脈のレビュー） | CodeRabbit が付かない PR・判定ロジック・3ファイル以上の変更の見落とし | common.md「エージェントの使い方」 | なし |
 | 2人目の確認（tenbin の論文問題・usotsuki-roppo の話） | 条文・判例の誤り | [repo-patrol.md](../routines/repo-patrol.md)、autonomy.md「確かめてから任せること」 | ラベル「確認済み」「satou確認」 |

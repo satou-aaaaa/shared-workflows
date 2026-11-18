@@ -52,6 +52,7 @@ jobs:
             scripts/game-patterns.mjs
             scripts/check-game-new.mjs
             scripts/game-props.mjs
+            scripts/game-lint.mjs
             template
       # Link check（週1）が調べる .md に、すぐ後ろに全角の字が続く URL が無いか。lychee はそこまで URL と読んで 404 で落ちる。
       # 週1の検査で初めて落ちていた（2026-11-07 rosen-hitofude・seiza-tsunagi。incidents/2026-11-08-link-check-wide-char-after-url.md）
@@ -79,6 +80,15 @@ jobs:
         run: |
           npm i --no-save --no-audit --no-fund --prefix "$FC_DIR" fast-check@4.10.2 >/dev/null
           node .shared-workflows/scripts/game-props.mjs .
+      # ESLint：書き間違えた変数（no-undef）・届かない行など、遊ぶ前に止まる書き間違いを探す（sandbox の npm run lint と同じ考え方）。
+      # 入れはじめなので警告だけ（--warn。PR の画面に注釈が出る）。2026-11-18 に公開中の 190 本で回して指摘は 1 件だった
+      - name: ESLint（警告だけ）
+        if: github.event_name == 'pull_request' && hashFiles('index.html') != ''
+        env:
+          LINT_DIR: ${{ runner.temp }}/lint
+        run: |
+          npm i --no-save --no-audit --no-fund --prefix "$LINT_DIR" eslint@10.14.0 @eslint/js@10.0.1 globals@17.14.0 eslint-plugin-html@8.2.1 >/dev/null
+          node .shared-workflows/scripts/game-lint.mjs --warn .
       - name: ひな形の写し
         if: github.event_name == 'pull_request'
         env:
