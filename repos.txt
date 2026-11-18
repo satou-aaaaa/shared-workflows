@@ -150,6 +150,7 @@ senkyo-shikumi game
 sentaku-hyoji game
 setsuden-kotsu game
 shakuchi-shakuya game
+shigaisen-yomi game
 shindo-yomi game
 shiritori-saitan game
 shitsugyo-teate game
@@ -161,6 +162,7 @@ shotokuzei-ikura game
 shukujitsu-yurai game
 shukushaku-yomi game
 souzoku-kihon game
+taifu-yomi game
 taikyo-hiyo game
 taishoku-ikura game
 taiyokei-kurabe game
@@ -175,6 +177,7 @@ todofuken-relay game
 todokede-kigen game
 tokkyo-kikan game
 tonari-kimari game
+toppu-yomi game
 tsuki-katachi game
 usotsuki-roppo game
 wagamama-burger game
