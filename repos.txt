@@ -132,6 +132,7 @@ nijushi-sekki game
 okane-kihon game
 onpu-yomi game
 osatsu-himitsu game
+otoku-dotchi game
 otoshimono-kimari game
 otsukai-memo game
 pikuto-yomi game
