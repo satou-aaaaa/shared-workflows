@@ -147,6 +147,7 @@ saibo-tsukuri game
 sandbox app
 sdgs-mokuhyo game
 seiho-ikura game
+seinen-nenrei game
 seiza-tsunagi game
 sekai-isan game
 sekai-jikoku game
