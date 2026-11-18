@@ -83,14 +83,17 @@ jobs:
             const r = JSON.parse(require("fs").readFileSync("qa-report/mutation.json", "utf8"));
             const all = Object.entries(r.files).flatMap(([f, x]) => x.mutants.map((m) => ({ f, ...m, src: x.source })));
             const n = (s) => all.filter((m) => m.status === s).length;
-            const killed = n("Killed") + n("Timeout"), survived = all.filter((m) => m.status === "Survived");
+            const killed = n("Killed") + n("Timeout");
+            // 文字の置きかえ（StringLiteral）は説明の文などで数が多いので後ろに回し、式の壊し方（検査の穴になりやすい）を先に出す
+            const survived = all.filter((m) => m.status === "Survived").sort((a, b) => (a.mutatorName === "StringLiteral") - (b.mutatorName === "StringLiteral"));
+            const logic = survived.filter((m) => m.mutatorName !== "StringLiteral").length;
             const valid = killed + survived.length + n("NoCoverage");
             const score = valid ? (100 * killed / valid).toFixed(1) : "-";
             const line = (m) => { const l = m.src.split("\n")[m.location.start.line - 1] || ""; return l.slice(Math.max(0, m.location.start.column - 30), m.location.start.column + 50).trim(); };
             const out = [
               "## ミューテーションテスト",
               "",
-              `点数 ${score}%（気づいた ${killed}・生き残り ${survived.length}・全部 ${all.length}）`,
+              `点数 ${score}%（気づいた ${killed}・生き残り ${survived.length}（うち式の壊し方 ${logic}・文字の置きかえ ${survived.length - logic}）・全部 ${all.length}）`,
               "",
               "生き残り＝わざと壊しても QA が通ったところ。検査の穴か、壊しても同じ動きになる所（直さなくてよい）かを見て、穴なら qa/run.mjs に検査を足す。",
               "",
