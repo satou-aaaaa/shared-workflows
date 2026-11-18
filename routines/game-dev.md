@@ -72,7 +72,7 @@ F1〜F7：遊ぶ量を縛らない（チケット・ライフなし）・遊ぶ�
 2. 動く見本（単体の HTML）を Artifact で出し、satou さんに選んでもらう（カード）。
 3. リポジトリは [onboarding.md](onboarding.md) 手順0で AI が作る（A：Actions「Create repo」を、担当の Issue 番号 `claim` と題材の言葉 `topic` を付けて起こす。先の担当・公開済みの表にあれば止まる。だめなら B：Chrome。そのときはこのスレッドに satou さんの一言を頼む）。リンクを渡すのは両方使えないときだけ。
 4. はじめの commit は README だけ。workflows・`qa/`・本体は同じ PR #1 で入れる（incidents/2026-11-04-new-repo-main-qa-without-qa-dir.md）。PR #1 の中身は `node scripts/new-game.mjs ../<名前>` で、いまのひな形から始める（古いゲームのフォルダから写さない。出た「このあと書くもの」の順に書く）。
-5. 上の「共通の形」と「だれでも遊べるように」を全部入れる。AGENTS.md は既存のゲーム（kippu-10 など）を写して直す。写したときは写し元ごとの言葉を `qa/run.mjs` に登録し、残っていれば落とす。
+5. 上の「共通の形」と「だれでも遊べるように」を全部入れる。AGENTS.md は既存のゲーム（kippu-10 など）を写して直す。写したときは写し元ごとの言葉を `qa/run.mjs` に登録し、残っていれば落とす。共有画像も毎回直す（detail 手順5）。
    `.github/workflows/` は `template/.github/workflows/` から写す（QA は `template/.github/workflows/qa.yml`、検査の名前 `qa / qa` を必須チェックと `require_checks` に書く）。PR #1 を出す前に `LOCAL_ROOT=<clone の親> REPOS=<リポジトリ> node scripts/drift-check.mjs` を回し、出た行を直す。PR #1 が1日以上止まったあとでマージするときは、shared-workflows を `git pull origin main` → `node scripts/sync-template.mjs <ゲームのフォルダ>` → drift-check をやり直す。
    shared-workflows を `git pull` してから `node scripts/sync-template.mjs --check ../<ゲーム>` を回し、ちがえば `node scripts/sync-template.mjs ../<ゲーム>` で写す。
    CodeRabbit がひな形の写しに指摘したら、ゲームでは直さず、その日のうちに shared-workflows でひな形を直す PR を出して全部のゲームへ配る（ゲームの PR は待たずに進めてよい）。
