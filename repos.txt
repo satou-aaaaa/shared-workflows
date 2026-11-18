@@ -61,6 +61,7 @@ inshi-ikura game
 iryohi-ikura game
 isle-routes-research app
 jidosha-shurui game
+jikken-kigu game
 jiko-kihon game
 jintai-shikumi game
 jishin-ikura game
@@ -75,6 +76,7 @@ kaji-mamoru game
 kakuritsu-dotchi game
 kanazukai-dotchi game
 kanji-tsukaiwake game
+kankaku-ate game
 kansen-yobo game
 kasane-zome game
 kaseki-ate game
@@ -165,6 +167,7 @@ shotokuzei-ikura game
 shukujitsu-yurai game
 shukushaku-yomi game
 souzoku-kihon game
+suiyoeki-ate game
 taifu-yomi game
 taikyo-hiyo game
 taishoku-ikura game
