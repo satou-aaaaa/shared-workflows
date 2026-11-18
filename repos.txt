@@ -32,6 +32,7 @@ ekisei-yomi game
 endaka-enyasu game
 energy-shurui game
 funka-level game
+fuyo-ikura game
 gairai-miwake game
 gamen-no-wana game
 ganseki-nakama game
@@ -40,12 +41,16 @@ gensen-ikura game
 genso-kigo game
 gogen-suiri game
 gurafu-minuki game
+gyosei-kigen game
+haigusha-ikura game
 haku-uchi game
+hataraku-kigen game
 hataraku-kimari game
 hatsuden-kurabe game
 hikari-michi game
 hikari-susumi game
 hiraku-tojiru game
+hitorioya-ikura game
 hoken-dore game
 hosho-kimari game
 hozon-kikan game
@@ -59,6 +64,7 @@ jidosha-shurui game
 jikken-kigu game
 jiko-kihon game
 jintai-shikumi game
+jishin-ikura game
 jitensha-rule game
 jobun-tobatsu game
 jotai-henka game
@@ -74,6 +80,7 @@ kankaku-ate game
 kansen-yobo game
 kasane-zome game
 kaseki-ate game
+kazoku-kigen game
 kazoku-kimari game
 keigen-zeiritsu game
 keigo-naoshi game
@@ -82,6 +89,7 @@ kenbikyo-buhin game
 kengen-check game
 kenko-minuki game
 kenpo-shikumi game
+kifukin-ikura game
 kikenbutsu-rui game
 kikigaki-techo game
 kimari-sagashi game
@@ -98,6 +106,7 @@ kotoba-narabe game
 kotowaza-awase game
 kotowaza-bamen game
 kumo-namae game
+kuruma-kigen game
 kusuri-yomi game
 kyukoku-mei game
 kyukyusha-yobu game
@@ -137,6 +146,7 @@ saibanin-shikumi game
 saibo-tsukuri game
 sandbox app
 sdgs-mokuhyo game
+seiho-ikura game
 seiza-tsunagi game
 sekai-isan game
 sekai-jikoku game
@@ -144,9 +154,11 @@ senkyo-shikumi game
 sentaku-hyoji game
 setsuden-kotsu game
 shakuchi-shakuya game
+shigaisen-yomi game
 shindo-yomi game
 shiritori-saitan game
 shitsugyo-teate game
+shogai-ikura game
 shoka-koso game
 shokubutsu-nakama game
 shokuchudoku-yobo game
@@ -156,6 +168,7 @@ shukujitsu-yurai game
 shukushaku-yomi game
 souzoku-kihon game
 suiyoeki-ate game
+taifu-yomi game
 taikyo-hiyo game
 taishoku-ikura game
 taiyokei-kurabe game
@@ -170,7 +183,9 @@ todofuken-relay game
 todokede-kigen game
 tokkyo-kikan game
 tonari-kimari game
+toppu-yomi game
 tsuki-katachi game
+tsunami-yomi game
 usotsuki-roppo game
 wagamama-burger game
 wareki-yomi game
@@ -178,4 +193,5 @@ yarikuri-shotengai game
 yohou-kotoba game
 youto-chiiki game
 zeikin-nanizei game
+zeimu-kigen game
 zoyozei-ikura game
