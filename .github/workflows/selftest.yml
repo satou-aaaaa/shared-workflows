@@ -56,6 +56,26 @@ jobs:
           if [ "$badst" = 0 ] || [ "${badst:-0}" -ge 500 ]; then echo "::warning::無いページが $badst（Pages の障害）。今回は見分けの検査ができない"; exit 0; fi
           if [ "$ok" = ok ] && [ "$bad" != broken ]; then echo "::error::無いページを $bad と判定しました（broken のはず）"; exit 1; fi
 
+  game-props-script:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: 性質テストが「正しい作り」と「壊れた作り」を見分けられるか
+        env:
+          FC_DIR: ${{ runner.temp }}/fc
+        run: |
+          set -uo pipefail
+          npm i --no-save --no-audit --no-fund --prefix "$FC_DIR" fast-check@4.10.2 >/dev/null
+          node scripts/game-props.mjs scripts/fixtures/props/good || { echo "::error::正しい作りを落とした"; exit 1; }
+          if node scripts/game-props.mjs scripts/fixtures/props/bad; then echo "::error::壊れた作りを通した"; exit 1; fi
+          echo "見分けられた"
+
   ui-check-script:
     runs-on: ubuntu-latest
     timeout-minutes: 8
