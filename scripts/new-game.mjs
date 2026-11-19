@@ -4,7 +4,7 @@
 //           scripts/setup.sh・transfer.js・depth.js・sw.js）を写す。フォルダにもうあるファイルは上書きしない（あとから写すのは sync-template.mjs）。
 // 写したあとに書くもの（ゲームごとの中身）は最後に出す一覧のとおり。
 // きっかけ: 2026-11-07 新作を古いゲームから写して始め、ひな形の直しが届かないまま PR #1 を出した（incidents/2026-11-07-new-game-old-template.md）。
-import { readdirSync, statSync, mkdirSync, copyFileSync, existsSync } from 'node:fs';
+import { readdirSync, statSync, mkdirSync, copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -29,7 +29,11 @@ export function scaffold(to) {
     const dest = join(to, f);
     if (existsSync(dest)) { kept.push(f); continue; }
     mkdirSync(dirname(dest), { recursive: true });
-    copyFileSync(join(T, f), dest);
+    // ゲームの package.json は qa/ にあるので、Dependabot の npm は /qa を見る（ひな形はゲーム以外にも使うので "/" のまま）。
+    // 写すその時に書きかえる（あとで書きかえると、途中で止まって次に回したとき "/" のまま kept になる。#533 の CodeRabbit）。
+    // 2026-11-19 kenketsu-dekiru #1 で "/" のまま写り、drift-check で見つかった
+    if (f.replaceAll('\\', '/') === '.github/dependabot.yml') writeFileSync(dest, readFileSync(join(T, f), 'utf8').replace(/(package-ecosystem: "npm"\r?\n\s+directory: )"\/"/, '$1"/qa"'));
+    else copyFileSync(join(T, f), dest);
     copied.push(f);
   }
   return { copied, kept };
