@@ -1,7 +1,7 @@
 name: CI failure issue (共通部品)
 
 # 呼び出し元の既定ブランチ（main）でワークフローが失敗したら、ラベル ci-failure の Issue を1件立てる
-# （同じワークフローの Issue が開いていればコメントを足す）。次に成功したら、その Issue を自動で閉じる。
+# （同じワークフローの Issue が開いていればコメントを足す）。次に成功したら、その Issue を見回り（6時間ごと）が自動で閉じる。
 # 監督エージェントが毎回 API で失敗を探す代わりに、この Issue を見るだけで済むようにするためのもの（Claude は使わない）。
 #
 # 呼び出し元（各リポジトリの .github/workflows/ci-failure-issue.yml）の書き方は template/ を見る。
@@ -32,12 +32,16 @@ jobs:
   report:
     # フォークの「main」という名前のブランチの PR を、このリポジトリの main と取り違えない。
     # PR で動いた実行（CodeQL など）も main の結果として数えない（2026-11-07 CodeRabbit）
+    # 成功の知らせ（workflow_run の success）ではジョブを起こさない。閉じるのは見回り（呼び出し元の schedule、6時間ごと）に任せる。
+    # 成功の知らせは1週間に約3,600回あり、ほとんど閉じる Issue が無いのに実行機を1つずつ取り、無料枠の同時実行（20）を埋めて
+    # QA などの待ちを10〜25分にしていた（2026-11-19 CI時間 #530）。ジョブの if が偽なら実行機は使わない。
+    # 呼び出し元に見回りがあることは drift-check（週次まとめ）が見る。shared-workflows 自身は watch-failures.yml の schedule。
     if: >-
       github.event_name != 'workflow_run' || (
       github.event.workflow_run.head_branch == github.event.repository.default_branch &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
       !startsWith(github.event.workflow_run.event, 'pull_request') &&
-      contains(fromJSON('["failure","success","timed_out","cancelled"]'), github.event.workflow_run.conclusion))
+      contains(fromJSON('["failure","timed_out","cancelled"]'), github.event.workflow_run.conclusion))
     runs-on: ${{ fromJSON(inputs.runner) }}
     timeout-minutes: 5
     concurrency:
