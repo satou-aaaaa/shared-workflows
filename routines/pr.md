@@ -22,6 +22,8 @@ satou-aaaaa の各リポジトリで、PR を作る・CI を通す・コンフ�
 3. `.github/workflows/` を変えたら actionlint で構文を確かめる。CI の部品は shared-workflows の共通部品を呼ぶだけにし、中身をコピーしない。
 4. 秘密の文字列・個人情報・顧客の実データを入れない（各リポジトリの secret-scan も見る）。
 5. 差分を自分で読み直す（CI が落ちそうな所・関係ない変更が混ざっていないか）。
+6. push したら、`git ls-remote origin <ブランチ>` の先が手元の `git rev-parse HEAD` と同じかを確かめてから PR を作る。
+   違えば push が断られている。リモートの枝がマージ済みの古いものなら `git push --force-with-lease=<ブランチ>:<リモートの先> origin <ブランチ>` で置きかえる（incidents/2026-11-19-empty-pr-merged.md）。
 
 ## 2. PR を作る
 
