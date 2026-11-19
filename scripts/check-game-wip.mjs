@@ -75,6 +75,8 @@ ok(!existsSync(join(dir, 'store', 'store.js')), 'store/store.js をファイル�
 ok(TODO.some((t) => /store:begin/.test(t) && /GameStore\.load/.test(t)), '新作の「このあと書くもの」に保存の共通部品（store の印・GameStore.load）が無い');
 for (const f of ['.github/workflows/qa.yml', 'transfer.js', 'depth.js', 'qa/depth-check.mjs', 'sw.js', 'qa/a11y.mjs', 'scripts/setup.sh']) ok(existsSync(join(dir, f)), `${f} を写していない`);
 
+{ const dep = readFileSync(join(dir, '.github', 'dependabot.yml'), 'utf8'); // ゲームの package.json は qa/ にある（2026-11-19 kenketsu-dekiru #1 で "/" のまま写った）
+  ok(/package-ecosystem: "npm"\r?\n\s+directory: "\/qa"/.test(dep) && /package-ecosystem: "github-actions"\r?\n\s+directory: "\/"/.test(dep), '新作の Dependabot の npm が /qa を見ていない（または Actions の / まで変えた）'); }
 ok(TODO.some((t) => /depth\.js/.test(t)) && TODO.some((t) => /Depth\.mark/.test(t) && /checkDepth/.test(t)), '新作の「このあと書くもの」に深さ（depth.js のつなぎ）が無い');
 
 if (errors.length) { console.error(errors.map((e) => `::error::${e}`).join('\n')); process.exit(1); }

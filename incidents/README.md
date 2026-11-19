@@ -80,6 +80,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-11-19 | 手順の抜け | [新作を new-game.mjs で始めると、Dependabot の npm がリポジトリの根（/）を見ていた](2026-11-19-new-game-dependabot-root.md) | 対策済み |
 | 2026-11-18 | 動作 | [別スレッドが箇条書きで書いた「- repo:」を読めず、作りかけの題材を候補と数えた](2026-11-18-game-wip-bullet-repo-line.md) | 対策済み |
 | 2026-11-18 | 検査の見逃し | [新作の学習ゲームに、写し元のリンク名と、取り違えた出典が残っていた](2026-11-18-game-copy-leftovers-and-source-mixup.md) | 済み |
 | 2026-11-18 | 公開・CI | [詐欺みぬきの QA が、11/18 の今日の問題でだけ古いタブの検査で止まり、main が赤になった](2026-11-18-qa-passes-only-some-days.md) | 対策済み |
