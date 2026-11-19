@@ -26,6 +26,7 @@
 | 研究（ゲームAI） | 学習の結果は複数のシードで回し、ばらつき（信頼区間）と再現のコマンドを必ず添える。条件をそろえた比較だけを比べる | [Deep Reinforcement Learning that Matters（Henderson ら）](https://arxiv.org/abs/1709.06560) |
 | 業務ツール | 作る人が自分で使う（ドッグフーディング）。実際の案件の流れ（ダミーデータ）で端から端まで通して、詰まった所を次の作業にする | [Dogfooding（GitLab Handbook）](https://handbook.gitlab.com/handbook/product/product-processes/dogfooding-for-r-d) |
 | 業務ツール | 小さく出して早く戻す。変更の量・失敗の率・直すまでの時間を見る | [DORA](https://dora.dev/) |
+| 言語設計（AI 向け） | 型と約束（requires・ensures・example）の検査を必須にし、エラーには決まった番号と具体的な直し方を付けて、AI が自分で直せるようにする。どれだけ間違えにくいかは同じ課題を複数のモデルに解かせて測る | [Type-Constrained Code Generation（Mündler ら, PLDI 2025）](https://arxiv.org/abs/2504.09246)・[Anka（arXiv 2512.23214）](https://arxiv.org/abs/2512.23214)・[Vera](https://github.com/aallan/vera) |
 | 執筆（連載） | 決まった更新の間隔を守る。書きためか少なくとも筋書きを先に作り、間隔が空かないようにする | [What I Learned From 100+ Serials（Erica Drayton）](https://ericadrayton.substack.com/p/what-i-learned-from-70-serials-on) |
 | 執筆（連載） | 読者が付いたら、反応（好き・嫌い）を次の話と直しの材料にする | 同上 |
 
@@ -35,6 +36,7 @@
 
 | プロジェクト | 分野 | 今の流れの置き場所 | 取り入れたこと | 次に試すこと |
 | --- | --- | --- | --- | --- |
+| akashi-lang（AI 向けの言語 Akashi） | 言語設計（AI 向け） | akashi-lang `AGENTS.md`・`docs/SPEC.md` | 型・名前つき引数・副作用・約束の検査、直し方つきのエラー（JSON）、全部のエラー番号の見本とテスト | 同じ課題を Akashi と Python で AI に書かせ、1回で通る割合と直すまでの回数を比べる |
 | last-tell（LAST TELL） | ゲーム開発 | last-tell `CLAUDE.md`・`README.md`、スキル last-tell-release-check・last-tell-proposal-demo | 自動対戦（毎日）・画面の QA・テスターの報告欄（Issues） | 体験目標を短く書き、毎日の改善提案と自動対戦の結果をそれに照らす。テスターの声を「症状」で集計する |
 | last-tell-godot（LAST TELL Godot 版） | ゲーム開発 | last-tell-godot `AGENTS.md`・`README.md` | qa.yml（Web 版との照合・画面・重さ、Linux と Windows） | Web 版と同じ結果になることを自動の照合で確かめてから入れる |
 | naitei-no-michi（内定への道） | ゲーム開発（ノベル） | naitei-no-michi `CLAUDE.md` | 全エンディングに届くかの自動プレイ（QA） | 体験目標（どんな気持ちで終わってほしいか）を書く。遊んだ人の感想の受け口を作るか決める |

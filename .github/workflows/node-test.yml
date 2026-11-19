@@ -1,0 +1,42 @@
+name: Node test (共通部品)
+
+# ブラウザの要らない Node.js のリポジトリ（言語の処理系・道具など）の検査（Claude は使わない）。
+# game-qa.yml は Playwright を入れるので、ブラウザを使わないリポジトリには重い（入れるだけで1〜9分）。こちらは Node を入れてコマンドを回すだけ。
+# 検査の名前は呼び出し側のジョブ名 qa と合わせて「qa / qa」になる（Create repo が入れる main の必須チェックと同じ名前）。
+# 依存は package-lock.json があるときだけ npm ci で入れる（標準ライブラリだけのリポジトリは何も入れない）。
+on:
+  workflow_call:
+    inputs:
+      command:
+        description: '検査のコマンド（空白区切りの1つのコマンド。シェルの式は通さない）'
+        type: string
+        default: npm test
+      timeout:
+        description: '時間切れ（分）'
+        type: number
+        default: 10
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    name: qa
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: 依存を入れる（package-lock.json があるときだけ）
+        if: hashFiles('package-lock.json') != ''
+        run: npm ci --no-audit --no-fund
+      - name: 検査
+        env:
+          QA_COMMAND: ${{ inputs.command }}
+        run: |
+          read -r -a cmd <<< "$QA_COMMAND"
+          "${cmd[@]}"

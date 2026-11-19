@@ -29,6 +29,7 @@
 | CodeQL | AI が書いたコードの脆弱性（無料、公開リポジトリ） | `codeql.yml` | 呼び出し側の `languages` |
 | Secret scan | PR と main への push に入った秘密（gitleaks） | `secret-scan.yml` | 呼び出し側を入れる、★ Push protection |
 | Game QA | ゲームをブラウザで自動で遊ぶ検査（PR と main。検査の名前 qa / qa を main の必須チェックに） | `game-qa.yml` | `template/.github/workflows/qa.yml`（呼び出し側）と、Actions「Add ruleset」で必須チェック |
+| Node test | ブラウザの要らない Node.js のリポジトリ（言語の処理系など）のテストが落ちる（PR と main。検査の名前 qa / qa を main の必須チェックに） | `node-test.yml` | 呼び出し側（`uses: …/node-test.yml@main` のジョブ名 qa）と、Actions「Add ruleset」で必須チェック |
 | 性質テスト（ゲーム） | でたらめな種・日付で問題を何百回も作って、壊れた字・NaN・重なる選び肢・答えが1つでない・同じ種で中身が変わる問題（決まった種の qa/run.mjs では出ない組み合わせ）。sandbox の ADR-0011 と同じ fast-check | `game-qa.yml` の「問題の作り方の性質テスト」（PR、data.js に make() があるゲームだけ）・`scripts/game-props.mjs`。見分けられるかは Selftest（`scripts/fixtures/props/`） | なし（共通部品なので全ゲームに届く） |
 | ESLint（ゲーム） | 書き間違えた変数（no-undef）・届かない行・同じキーの2回書きなど、遊ぶ前に止まる書き間違い。sandbox の `npm run lint` と同じ考え方。ほかのファイルで決めた名前（data.js・共通部品）は index.html が読むファイルから集める | `game-qa.yml` の「ESLint（警告だけ）」（PR）・`scripts/game-lint.mjs`。見分けられるかは Selftest（`scripts/fixtures/lint/`） | なし（共通部品なので全ゲームに届く） |
 | ミューテーションテスト（ゲーム） | 検査の穴（data.js をわざと壊しても QA が通る所）。sandbox の weekly-mutation.yml と同じ Stryker。点数では落とさず、生き残りをジョブのまとめに出す | `mutation.yml`（週1と手で。呼ぶ側の `.github/workflows/mutation.yml`）。QA は `QA_DATA_ONLY=1` でブラウザを使わない検査だけで終わる形にする（見本 shindo-yomi） | 呼び出し側と、qa/run.mjs の `QA_DATA_ONLY` の1行 |

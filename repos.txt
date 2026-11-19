@@ -3,6 +3,7 @@
 # 種類: game＝公開のゲーム（磨く対象）／app＝公開のゲーム以外／private＝非公開（GITHUB_TOKEN で読めないので集計に入れない）／ignore＝公開だが見ない（理由を # で書く）
 # shared-workflows 自身は書かない（要るワークフローが足す）
 # 足し方: 名前の順の位置に1行足すだけ（routines/onboarding.md 手順3）。incidents/2026-11-07-repo-list-conflicts.md
+akashi-lang app
 akushitsu-miyaburi game
 amida-haitatsu game
 articles app
