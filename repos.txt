@@ -92,6 +92,7 @@ keigo-naoshi game
 keiyaku-torikeshi game
 kenbikyo-buhin game
 kengen-check game
+kenketsu-dekiru game
 kenko-minuki game
 kenpo-shikumi game
 kifukin-ikura game
