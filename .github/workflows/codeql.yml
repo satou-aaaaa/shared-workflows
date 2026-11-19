@@ -11,6 +11,10 @@ on:
         description: '調べる言語（カンマ区切り）。例 "javascript-typescript,actions"、"python,actions"'
         type: string
         required: true
+      fail-on-alert:
+        description: '見つかったら検査を失敗にする（PR を止める）。既定は false（Security タブに出すだけ）'
+        type: boolean
+        default: false
 
 jobs:
   analyze:
@@ -29,3 +33,17 @@ jobs:
           languages: ${{ inputs.languages }}
           build-mode: none
       - uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          output: ${{ runner.temp }}/codeql-sarif
+      - name: 見つかったら止める（fail-on-alert のときだけ）
+        if: inputs.fail-on-alert
+        env:
+          SARIF_DIR: ${{ runner.temp }}/codeql-sarif
+        run: |
+          set -euo pipefail
+          n=$(jq -s '[.[].runs[].results[]? | select((.suppressions // []) | length == 0)] | length' "$SARIF_DIR"/*.sarif)
+          if [ "$n" -gt 0 ]; then
+            jq -r '.runs[].results[]? | "::error file=\(.locations[0].physicalLocation.artifactLocation.uri),line=\(.locations[0].physicalLocation.region.startLine // 1)::\(.ruleId): \(.message.text)"' "$SARIF_DIR"/*.sarif
+            echo "::error::CodeQL が $n 件見つけた。直すまでマージしない"; exit 1
+          fi
+          echo "CodeQL の指摘なし"

@@ -31,9 +31,22 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
+      # 保守の終わった Node は使わない（脆弱性が見つかっても直らないため）。予定表は Node.js 公式（nodejs/Release の schedule.json）
+      - name: Node の版がまだ保守されているか
+        run: |
+          set -euo pipefail
+          major=$(node -p 'process.versions.node.split(".")[0]')
+          end=$(curl -fsSL --retry 3 https://raw.githubusercontent.com/nodejs/Release/main/schedule.json | jq -r --arg v "v$major" '.[$v].end // empty')
+          if [ -z "$end" ]; then echo "::error::Node $major は保守の予定表にない"; exit 1; fi
+          if [[ "$end" < "$(date -u +%F)" ]]; then echo "::error::Node $major の保守は $end に終わった。.nvmrc を保守中の版に上げる"; exit 1; fi
+          echo "Node $(node -v)（保守は $end まで）"
       - name: 依存を入れる（package-lock.json があるときだけ）
         if: hashFiles('package-lock.json') != ''
         run: npm ci --no-audit --no-fund
+      # 既知の脆弱性がある依存は使わない（低いものでも止める）。npm audit は GitHub Advisory Database を見る
+      - name: 依存の脆弱性（package-lock.json があるときだけ）
+        if: hashFiles('package-lock.json') != ''
+        run: npm audit --audit-level=low
       - name: 検査
         env:
           QA_COMMAND: ${{ inputs.command }}

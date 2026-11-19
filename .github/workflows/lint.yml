@@ -18,6 +18,16 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # 変更の無い PR を通さない（push が断られたのに気づかず、古い枝の PR を空のままマージした。incidents/2026-11-19-empty-pr-merged.md）
+      - name: PR に変更があるか
+        if: github.event_name == 'pull_request'
+        env:
+          CHANGED: ${{ github.event.pull_request.changed_files }}
+        run: |
+          if [ "${CHANGED:-0}" -eq 0 ]; then
+            echo "::error::この PR には変更が1つも無い。push が断られていないか（git ls-remote の枝の先が手元と同じか）を確かめる"; exit 1
+          fi
+          echo "変更のあるファイル: $CHANGED"
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
