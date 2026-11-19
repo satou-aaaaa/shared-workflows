@@ -7,8 +7,13 @@ on:
   workflow_run:
     workflows: ["Weekly summary", "CI time report", "Scorecard", "Lint"]
     types: [completed]
+  # 見回り: 成功の知らせではジョブを起こさない（共通部品の説明）ので、閉じるのはこの見回り（2026-11-19）
+  schedule:
+    - cron: "29 */6 * * *"
+  workflow_dispatch:
 
 permissions:
+  contents: read
   issues: write
   actions: read
 
