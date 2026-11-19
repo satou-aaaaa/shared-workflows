@@ -29,13 +29,13 @@ export function scaffold(to) {
     const dest = join(to, f);
     if (existsSync(dest)) { kept.push(f); continue; }
     mkdirSync(dirname(dest), { recursive: true });
-    copyFileSync(join(T, f), dest);
+    // ゲームの package.json は qa/ にあるので、Dependabot の npm は /qa を見る（ひな形はゲーム以外にも使うので "/" のまま）。
+    // 写すその時に書きかえる（あとで書きかえると、途中で止まって次に回したとき "/" のまま kept になる。#533 の CodeRabbit）。
+    // 2026-11-19 kenketsu-dekiru #1 で "/" のまま写り、drift-check で見つかった
+    if (f.replaceAll('\\', '/') === '.github/dependabot.yml') writeFileSync(dest, readFileSync(join(T, f), 'utf8').replace(/(package-ecosystem: "npm"\r?\n\s+directory: )"\/"/, '$1"/qa"'));
+    else copyFileSync(join(T, f), dest);
     copied.push(f);
   }
-  // ゲームの package.json は qa/ にあるので、Dependabot の npm は /qa を見る（ひな形はゲーム以外にも使うので "/" のまま。
-  // 2026-11-19 kenketsu-dekiru #1 で "/" のまま写り、drift-check で見つかった）
-  const dep = join(to, '.github', 'dependabot.yml');
-  if (copied.includes(join('.github', 'dependabot.yml'))) writeFileSync(dep, readFileSync(dep, 'utf8').replace(/(package-ecosystem: "npm"\r?\n\s+directory: )"\/"/, '$1"/qa"'));
   return { copied, kept };
 }
 
