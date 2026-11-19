@@ -137,6 +137,7 @@ nemuri-kotsu game
 nenkin-shikumi game
 nijushi-sekki game
 okane-kihon game
+okurigana-dotchi game
 onpu-yomi game
 osatsu-himitsu game
 otoku-dotchi game
@@ -165,6 +166,7 @@ setsuden-kotsu game
 shakuchi-shakuya game
 shigaisen-yomi game
 shindo-yomi game
+shingo-yomi game
 shiritori-saitan game
 shitsugyo-teate game
 shogai-ikura game
