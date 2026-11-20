@@ -56,6 +56,7 @@ hiraku-tojiru game
 hitorioya-ikura game
 hoken-dore game
 hosho-kimari game
+hotei-sokudo game
 hozon-kikan game
 hyakunin-awase game
 hyoshiki-yomi game
