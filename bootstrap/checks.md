@@ -62,6 +62,7 @@
 | CI時間 Issue | CI の実行時間（遅い検査） | `ci-time-report.yml`（木曜 05:29 JST）、ルーティン CI の時間短縮 | `repos.txt` |
 | このリポジトリの定期実行の失敗 | 週次まとめ・CI時間・成績表・Lint が main で落ちた → ci-failure の Issue（次に成功したら6時間ごとの見回りが閉じる） | `watch-failures.yml`（中身は `ci-failure-issue.yml`） | なし |
 | 研究の重い計算 | （見張りではなく実行の部品）研究の毎日の回（routines/research-loop.md）が起こす何百局の対戦・学習を Actions で回し、結果をブランチ research-results の runs/<name>/ に残す。今日の1件の選び方は `scripts/research-next.mjs`（Lint の `scripts/check-research-next.mjs` が見方を確かめる） | `research-run.yml`（各研究リポジトリの同名の呼び出しから。contents: write） | 研究リポジトリに呼び出しと `docs/BACKLOG.md` |
+| 古くなる情報の見張り（Freshness） | 学習ゲームの法律・税の金額・料金・制度・一覧が古くなる（見直しの日が来た・e-Gov 法令API v2 で法令の改正が公布・施行された）→ Issue「古くなる情報の見直し」（自動で開閉）→ 火曜の見直しの回が直す | `freshness.yml`（火曜 05:43 JST）・台帳 `freshness.md`・`scripts/freshness.mjs`。台帳の抜け（repos.txt の game が全部あるか）・形と見分け方は `--lint`・`--self-test`（Lint）。直し方は [freshness.md](../routines/freshness.md) | ルーティン（[routines.md](routines.md) の 9）、ラベル「情報の見直し」（ワークフローが作る） |
 | Labels | 自動化が使うラベルの抜け | `labels.yml` | 呼び出し側を入れて1回動かす |
 | Branch cleanup | 使い終わったブランチ | `branch-cleanup.yml` | `keep`（last-tell は qa-results・source-backup） |
 | 監督の巡回（見回りの中で1日2回） | 失敗・止まったルーティンとスレッド、赤い PR、許可待ち、期限切れの約束。担当に直させ、satou さん本人のものだけ知らせる。状況ページを更新 | [supervisor.md](../routines/supervisor.md) | ルーティン（[routines.md](routines.md)）、状況ページの Artifact |

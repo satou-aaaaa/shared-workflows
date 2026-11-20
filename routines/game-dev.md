@@ -79,11 +79,12 @@ F1〜F7：遊ぶ量を縛らない（チケット・ライフなし）・遊ぶ�
 6. `node qa/run.mjs` が全部通ってから PR。記録のキー（localStorage）は `<短い名>-v1` のように短くし、`gh api -X GET search/code -f q='"<キー>" user:satou-aaaaa'` と各ゲームの `data-keys` の `*` で終わる名前（前方一致）とも重ならないことを確かめる（探せなかったら先へ進まない）。決めたキーは「題材:」Issue に書き、開いている「題材:」Issue のキーとも比べる。Secret scan がキーを鍵と読み違えたら、キーを短く替えて確かめ直す（古いコミットの分は [game-dev-detail.md](game-dev-detail.md)）。`sw.js` を含む PR は `@coderabbitai review` とコメントし、レビューを読んでから手でマージする。
    - 印刷用の紙（`print.html` など、A4 の `.page`）を持つゲームは、QA で「はみ出さない」だけでなく「下に 5mm 以上の空きがある」も見る。字の形は手元と CI でちがい、手元でぎりぎり入っても CI ではみ出す（`incidents/2026-11-11-yarikuri-print-overflow-ci.md`）。
 7. マージの直前にもう一度 `node scripts/sync-template.mjs --check ../<ゲーム>` を回す（ちがえば写して push し直す）。`scripts/check-game-new.mjs`（PR の QA と同じ）も回す。Pages を main のルートで公開する（[onboarding.md](onboarding.md) 手順5の1）。`node scripts/drift-check.mjs` に `pages` の行が出ないこと、Post-deploy check が緑になったことを見るまで、X などで紹介しない。
-8. shared-workflows に PR を1つ出し、一覧に足す（[onboarding.md](onboarding.md) 手順3）。次の3か所に、どれも**名前の ABC 順の位置**に1行入れる（末尾に足さない）。
+8. shared-workflows に PR を1つ出し、一覧に足す（[onboarding.md](onboarding.md) 手順3）。次の4か所に、どれも**名前の ABC 順の位置**に1行入れる（末尾に足さない）。
    - [repos.txt](../repos.txt) に `<名前> game`（ワークフロー・巡回・監督・週次まとめはここを読む。ほかのファイルに一覧を書かない）
    - [project-practices.md](project-practices.md) の「ゲーム」の表に1行
    - 中身に事実・出典があり、巡回で特に照らすことがあれば [repo-patrol.md](repo-patrol.md) の「ゲームで特に照らすこと」に1行（無ければ足さない）
-   Lint（`node scripts/check-repo-lists.mjs`）が、並び・ゲームの表の抜け・ほかのファイルに書いた一覧を見る。
+   - [freshness.md](../freshness.md) に1行（古くなる情報）
+   Lint（check-repo-lists.mjs・freshness.mjs）が並びと抜けを見る。
 9. 公開を知らせたら、同じターンで次の候補（「題材:」Issue の候補の列の番号順。作りかけが2本あれば始めない：game-factory.md）の手順1に入る。satou さんの返事を待たない。レビュー待ちなどで止まるときは、再開の予約（send_later など。ほかの AI は [tool-map.md](tool-map.md)）を入れてからターンを終える。予約なしで終えない。
 
 ### B. 公開中のゲームを1本磨く（週1・水曜）
