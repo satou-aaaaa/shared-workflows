@@ -78,6 +78,7 @@ kagaku-henka game
 kaisha-kigen game
 kaji-mamoru game
 kakuritsu-dotchi game
+kaminari-mamoru game
 kanazukai-dotchi game
 kanji-tsukaiwake game
 kankaku-ate game
