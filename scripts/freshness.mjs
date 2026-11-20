@@ -10,9 +10,12 @@
 //      （確認した日に、その日までに公布された改正は施行予定のものも含めて見た、という約束。先の施行は見直すときに「次に見る日」で受ける）
 // 考え方: routines/freshness.md と freshness.md の「考え方」（GOV.UK の見直し日、e-Gov 法令API v2 の改正履歴）
 import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import { readRepos } from './repos.mjs';
 
 export const DUE_DAYS = 14;
+// 法令を読む時間の上限（秒）。超えたら残りを「読めなかった」にして本文は必ず出す（freshness.yml の timeout-minutes より短く）
+const BUDGET_SEC = Number(process.env.BUDGET_SEC || 480);
 const HEADER = '| リポジトリ | 古くなる情報 | 見直しの時期 | 法令 | 確認した日 | 次に見る日 |';
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const LAW = /^[0-9]{3}[0-9A-Z]{12}$/;
@@ -88,10 +91,12 @@ export function pickRevisions(revisions, checked, today) {
   return out.sort((a, b) => (a.enforced < b.enforced ? -1 : 1));
 }
 
-async function fetchRevisions(id) {
+async function fetchRevisions(id, deadline = Infinity) {
   for (let i = 0; i < 3; i++) {
+    const left = deadline - Date.now();
+    if (left < 1000) return { error: '時間切れで読まなかった' };
     try {
-      const res = await fetch(API + id, { signal: AbortSignal.timeout(30000), headers: { accept: 'application/json' } });
+      const res = await fetch(API + id, { signal: AbortSignal.timeout(Math.min(30000, left)), headers: { accept: 'application/json' } });
       if (res.status === 404) return { error: '法令ID が見つからない（e-Gov）' };
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
@@ -107,8 +112,10 @@ export async function report(rows, today, get = fetchRevisions) {
   const due = rows.filter((r) => r.next && r.next <= addDays(today, DUE_DAYS));
   const lawIds = [...new Set(rows.flatMap((r) => r.laws))];
   const cache = new Map();
+  const deadline = Date.now() + BUDGET_SEC * 1000;
   for (const id of lawIds) {
-    cache.set(id, await get(id));
+    if (Date.now() > deadline) { cache.set(id, { error: '時間切れで読まなかった' }); continue; }
+    cache.set(id, await get(id, deadline));
     await new Promise((r) => setTimeout(r, 200)); // e-Gov に負担をかけない
   }
   const changed = [];
@@ -117,7 +124,7 @@ export async function report(rows, today, get = fetchRevisions) {
     if (hits.length) changed.push({ r, hits });
   }
   const failed = lawIds.filter((id) => cache.get(id).error).map((id) => `${id}（${cache.get(id).error}）`);
-  const lines = [`<!-- count: ${due.length + changed.length} -->`];
+  const lines = [`<!-- count: ${due.length + changed.length} -->`, `<!-- failed: ${failed.length} -->`];
   lines.push(`${today} の見直し（自動。台帳は freshness.md、直し方は routines/freshness.md）。見直しの日が来た ${due.length} 本・法令が変わった ${changed.length} 本。`, '');
   if (due.length) {
     lines.push('## 見直しの日が来た', '', '| リポジトリ | 古くなる情報 | 次に見る日 |', '| --- | --- | --- |');
@@ -138,7 +145,7 @@ export async function report(rows, today, get = fetchRevisions) {
   return { text: lines.join('\n'), count: due.length + changed.length, failed: failed.length };
 }
 
-function selfTest() {
+async function selfTest() {
   const errors = [];
   const t = (cond, what) => { if (!cond) errors.push(what); };
   const table = (rows) => `<!-- freshness:begin -->\n${HEADER}\n| --- | --- | --- | --- | --- | --- |\n${rows.join('\n')}\n<!-- freshness:end -->`;
@@ -163,6 +170,9 @@ function selfTest() {
   t(got.includes('新しい改正'), '確認した日より後の公布を出す');
   t(got.includes('前から決まっていた改正'), '確認した日のあとに施行された改正を出す');
   t(!got.includes('古い改正') && !got.includes('ずっと先の施行') && !got.includes('もうすぐの施行') && got.length === 2, '関係ない改正・まだ施行されていない前からの改正・最初の制定を出さない');
+  const rows = parse(ok).rows;
+  const r1 = await report(rows, '2026-11-20', async () => ({ error: 'HTTP 500' }));
+  t(r1.count === 0 && r1.failed === 1 && r1.text.split('\n')[1] === '<!-- failed: 1 -->', '法令を読めなかった数を2行目に出す（0件で Issue を閉じないため）');
   if (errors.length) {
     console.error(errors.map((e) => `::error::freshness の見分けがこわれている: ${e}`).join('\n'));
     process.exit(1);
@@ -170,10 +180,10 @@ function selfTest() {
   console.log('✓ freshness の見分け（自己検査）');
 }
 
-const isMain = import.meta.url === `file://${process.argv[1]}`;
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {
   const arg = process.argv[2];
-  if (arg === '--self-test') selfTest();
+  if (arg === '--self-test') await selfTest();
   else {
     const text = readFileSync('freshness.md', 'utf8');
     const repos = readRepos();

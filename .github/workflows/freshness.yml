@@ -38,11 +38,17 @@ jobs:
           body="$RUNNER_TEMP/body.md"
           node scripts/freshness.mjs > "$body"
           count=$(sed -n '1s/^<!-- count: \([0-9]*\) -->$/\1/p' "$body")
-          [ -n "$count" ] || { echo "::error::freshness.mjs の出力の1行目に件数が無い"; exit 1; }
+          failed=$(sed -n '2s/^<!-- failed: \([0-9]*\) -->$/\1/p' "$body")
+          [ -n "$count" ] && [ -n "$failed" ] || { echo "::error::freshness.mjs の出力の1・2行目に件数が無い"; exit 1; }
           title="古くなる情報の見直し"
           gh label create 情報の見直し --color 0E8A16 --description "Freshness が開け閉めする、古くなる情報の見直し（自動）" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
           open=$(gh issue list -R "$GITHUB_REPOSITORY" --label 情報の見直し --state open --limit 20 --json number,title --jq ".[] | select(.title == \"$title\") | .number" | head -1)
           if [ "$count" -eq 0 ]; then
+            # 法令を読めなかったときは「見直し不要」と決めない（Issue を閉じず、失敗にして Watch failures に知らせる）
+            if [ "$failed" -gt 0 ]; then
+              cat "$body" >> "$GITHUB_STEP_SUMMARY"
+              echo "::error::法令を ${failed} 本読めなかったので、見直し不要とは決めない（Issue はそのまま）"; exit 1
+            fi
             if [ -n "$open" ]; then
               gh issue close "$open" -R "$GITHUB_REPOSITORY" --reason completed --comment "今週は見直しが要るゲームがありません（自動）"
             fi
