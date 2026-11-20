@@ -34,6 +34,8 @@ const fake = {
     { number: 10, title: '題材: 己（己）', body: 'repo: game-f', html_url: 'u10' },
     { number: 11, title: '題材: 庚（庚）', body: 'repo: game-g\nthread: 別の作業', html_url: 'u11', updated_at: new Date().toISOString() },
     { number: 12, title: '題材: 辛（辛）', body: 'repo: game-h\nthread: 止まった作業', html_url: 'u12', updated_at: old },
+    { number: 13, title: '題材: 壬（壬）', body: 'repo: game-i', html_url: 'u13' },
+    { number: 14, title: '題材: 癸（癸）', body: 'repo: game-j', html_url: 'u14' },
     { number: 4, title: 'ほかの Issue', body: 'repo: x', html_url: 'u4' },
     { number: 6, title: '題材: PR', body: '', html_url: 'u6', pull_request: {} },
   ],
@@ -46,10 +48,17 @@ const fake = {
   'repos/satou-aaaaa/game-f/pulls?state=open&per_page=10': [{ number: 1, updated_at: day1 }],
   'repos/satou-aaaaa/game-h': { has_pages: false },
   'repos/satou-aaaaa/game-h/pulls?state=open&per_page=10': [],
+  // Pages は入っているが README だけ（Create repo の直後。2026-11-20 kaminari-mamoru）と、index.html があって公開済み
+  'repos/satou-aaaaa/game-i': { has_pages: true },
+  'repos/satou-aaaaa/game-i/pulls?state=open&per_page=10': [],
+  'repos/satou-aaaaa/game-i/contents/index.html': null,
+  'repos/satou-aaaaa/game-j': { has_pages: true },
+  'repos/satou-aaaaa/game-j/pulls?state=open&per_page=10': [],
+  'repos/satou-aaaaa/game-j/contents/index.html': { name: 'index.html' },
 };
 const api = async (p) => (p in fake ? fake[p] : (() => { throw new Error(`読まないはずの所 ${p}`); })());
 const data = await collect(api);
-ok(data.wip.map((w) => w.number).join() === '5,8,9,10,12', `作りかけの見分けがちがう: ${data.wip.map((w) => w.number)}`);
+ok(data.wip.map((w) => w.number).join() === '5,8,9,10,12,13,14', `作りかけの見分けがちがう: ${data.wip.map((w) => w.number)}`);
 ok(data.others.map((w) => w.number).join() === '11', '別スレッドが作っているものを作りかけに数えた（3日動かないものは引き取る）');
 ok(data.parked.map((w) => w.number).join() === '7', 'needs-decision の作りかけを数えている');
 ok(data.queue.map((q) => q.number).join() === '3', `候補の列がちがう: ${data.queue.map((q) => q.number)}`);
@@ -58,6 +67,8 @@ ok(/needs-decision を付ける/.test(byNo[5]), `3日動かない PR を止め�
 ok(/1日動きなし/.test(byNo[10]) && !/needs-decision/.test(byNo[10]), `1日動かない PR の出し方がちがう: ${byNo[10]}`);
 ok(/ブランチ claude\/e-1 を checkout/.test(byNo[8]), `push したブランチから続けるよう出さない: ${byNo[8]}`);
 ok(/リポジトリを作る/.test(byNo[9]), 'リポジトリが無いのに作るよう出さない');
+ok(/PR #1 を作る/.test(byNo[13]) && !/公開済み/.test(byNo[13]), `Pages だけ入って index.html の無いリポジトリを公開済みと出した: ${byNo[13]}`);
+ok(/公開済み/.test(byNo[14]), `index.html がある Pages のリポジトリを公開済みと出さない: ${byNo[14]}`);
 const lines = plan(data);
 ok(WIP_LIMIT !== 2 || lines.some((l) => /空きなし/.test(l)), '上限に達しても新しい候補を始めようとする');
 ok(lines.some((l) => /候補が 1 本/.test(l)), '候補が少ないのに足すよう出さない');

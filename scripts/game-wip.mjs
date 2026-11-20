@@ -62,7 +62,9 @@ export async function collect(api) {
     if (thread && idle < PARK_DAYS) { others.push({ number: i.number, title: i.title, url: i.html_url, repo, thread }); continue; }
     const r = await api(`repos/${OWNER}/${repo}`, { nullOn404: true });
     const prs = r ? await api(`repos/${OWNER}/${repo}/pulls?state=open&per_page=10`) : [];
-    const pages = r ? Boolean(r.has_pages) : false;
+    // Pages が入っていても、main に index.html が無ければまだ公開していない（Create repo は README だけで Pages を入れる。
+    // 2026-11-20 kaminari-mamoru を「公開済み」と出した。incidents/2026-11-20-game-wip-empty-pages.md）
+    const pages = r && r.has_pages && !prs.length ? Boolean(await api(`repos/${OWNER}/${repo}/contents/index.html`, { nullOn404: true })) : false;
     const w = { number: i.number, title: i.title, url: i.html_url, repo, branch: branchOf(i.body), exists: Boolean(r), pages, pr: prs.sort((a, b) => a.number - b.number)[0] || null };
     w.next = nextStep(w);
     wip.push(w);
