@@ -1,0 +1,58 @@
+name: Freshness
+
+# 学習ゲームの「古くなる情報」（法律・税の金額・料金・制度・一覧）を毎週見張り、見直しが要るゲームを Issue 1件にまとめる（Claude は使わない）。
+# 台帳は freshness.md、見分けは scripts/freshness.mjs、直し方は routines/freshness.md（毎週の「古くなる情報の見直し」の回が読む）。
+# - 見直しの日が来た行（次に見る日が14日以内）と、法令が変わった行（e-Gov 法令API v2 の改正履歴。確認した日より後の公布・施行）を出す
+# - 見直しが要る行があれば Issue「古くなる情報の見直し」（ラベル「情報の見直し」）を作るか本文を替える。無くなれば閉じる
+# GitHub の API は Issue の読み書きだけ（数回）。e-Gov の API は無料・登録不要で、1本ずつ間をあけて読む。
+on:
+  schedule:
+    # 毎週火曜 05:43 JST（= 月曜 20:43 UTC）。月曜の Scorecard（04:07）・Weekly summary（06:17）と重ねない
+    - cron: "43 20 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: freshness
+  cancel-in-progress: false
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: 見直しが要るゲームを Issue にする
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          body="$RUNNER_TEMP/body.md"
+          node scripts/freshness.mjs > "$body"
+          count=$(sed -n '1s/^<!-- count: \([0-9]*\) -->$/\1/p' "$body")
+          [ -n "$count" ] || { echo "::error::freshness.mjs の出力の1行目に件数が無い"; exit 1; }
+          title="古くなる情報の見直し"
+          gh label create 情報の見直し --color 0E8A16 --description "Freshness が開け閉めする、古くなる情報の見直し（自動）" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
+          open=$(gh issue list -R "$GITHUB_REPOSITORY" --label 情報の見直し --state open --limit 20 --json number,title --jq ".[] | select(.title == \"$title\") | .number" | head -1)
+          if [ "$count" -eq 0 ]; then
+            if [ -n "$open" ]; then
+              gh issue close "$open" -R "$GITHUB_REPOSITORY" --reason completed --comment "今週は見直しが要るゲームがありません（自動）"
+            fi
+            cat "$body" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          node scripts/fit-body.mjs "$body"
+          if [ -n "$open" ]; then
+            gh issue edit "$open" -R "$GITHUB_REPOSITORY" --body-file "$body"
+            gh issue comment "$open" -R "$GITHUB_REPOSITORY" --body "今週の見直し ${count} 本で本文を替えました（自動）。直し方は routines/freshness.md。"
+          else
+            gh issue create -R "$GITHUB_REPOSITORY" --label 情報の見直し --title "$title" --body-file "$body"
+          fi

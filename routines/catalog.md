@@ -24,6 +24,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | LAST TELL ソースの控え | [last-tell-backup.md](last-tell-backup.md) | 日曜 8:52 JST |
 | sandbox Issue/PR定期対応（kensetsu-kyoka-toolkit） | [sandbox-issue-pr.md](sandbox-issue-pr.md) | 月曜 4:35 JST |
 | 研究を毎日1件ずつ進める（carcassonne・gem-merchant・isle-routes の研究を日替わり） | [research-loop.md](research-loop.md) | 毎日 14:23 JST（重い計算は各リポジトリの research-run.yml） |
+| ゲームの古くなる情報の見直し（法律・税の金額・料金・制度・一覧。Freshness の Issue を読む） | [freshness.md](freshness.md) | 火曜 10:43 JST |
 | 新しいリポジトリ・プロジェクトの受け入れ | [onboarding.md](onboarding.md) | 増えたとき |
 
 ## Claude のルーティン（手順書がほかにあるもの）
@@ -51,6 +52,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | 週次まとめ Issue（開いた PR・CI 失敗・次にやること・再発防止の残った対策と繰り返し・ひな形からのずれ） | このリポジトリ `weekly-summary.yml`（ずれは `scripts/drift-check.mjs`） | 月曜の朝 |
 | 控えの見張り（毎朝の書き出しが止まったら Issue。Claude が止まった合図） | satou-aaaaa/ops-backup（非公開）`watch.yml` | 毎日 12:23 JST |
 | CI時間 Issue | このリポジトリ `ci-time-report.yml` | 木曜 05:29 JST |
+| 古くなる情報の見張り Issue（台帳 `freshness.md`、e-Gov 法令API v2 の改正履歴） | このリポジトリ `freshness.yml` | 火曜 05:43 JST |
 | 成績表 Issue | このリポジトリ `scorecard.yml` | 月曜 04:07 JST（週次まとめと2時間ずらす） |
 | 死活監視・Lighthouse・リンク切れ・ブランチ片付け・ラベル・CodeQL | 各リポジトリの `.github/workflows/`（中身はこのリポジトリの共通部品） | 毎日〜週1 |
 | CI 失敗 Issue・自動マージ・更新情報・公開後の確認 | 同上 | PR・push のたび |

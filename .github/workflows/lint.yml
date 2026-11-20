@@ -59,6 +59,11 @@ jobs:
       # Link check が読み違える URL の書き方（すぐ後ろに全角の字）を見分けるか（incidents/2026-11-08-link-check-wide-char-after-url.md）
       - name: リンクの書き方の見分け
         run: node scripts/check-link-text.mjs
+      # ゲームの古くなる情報の台帳（freshness.md）に repos.txt の game が全部あり、形が正しいか。見分け方そのものも（routines/freshness.md）
+      - name: 古くなる情報の台帳
+        run: |
+          node scripts/freshness.mjs --self-test
+          node scripts/freshness.mjs --lint
       # 全リポジトリを読む定期のワークフローが、本数が増えても予算で止まって Issue を出す形か（incidents/2026-11-09-weekly-jobs-timeout.md）
       - name: 全リポジトリを読む検査の予算
         run: |
