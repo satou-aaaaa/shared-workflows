@@ -19,7 +19,8 @@
 //   --self-test：決まりが「直すもの」と「よい文」を見分けられるかを確かめる（scripts/check.sh・Lint）。
 //   わざとの例外は、ゲームの qa/ja-allow.txt に「規則名<TAB>字の一部」を1行ずつ書く（# のあとは理由）。
 import { createRequire } from "node:module";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 const require = createRequire(import.meta.url);
@@ -117,14 +118,56 @@ function loadAllow(dir) {
   return readFileSync(f, "utf8").split("\n").map((l) => l.replace(/#.*/, "").trim()).filter(Boolean).map((l) => l.split("\t"));
 }
 
+// make() が無いゲーム（パズル・独自の作り）は、.js の文字列と index.html の字をそのまま集めて、文の決まり（選び肢・問い以外）だけを当てる。
+// 2026-11-21 までは飛ばしていて、35本が一度も見られていなかった（incidents/2026-11-21-game-ja-unclear.md）。
+// 字のかけら（「（」で切れた文字列・空白つきの継ぎ目）が多いので、かっこ・空白・句読点の決まりは当てない。
+const TEXT_RULES = new Set(["word:nonstd", "neg:double", "particle:double", "youna:noun", "law:raw", "neg:double-soft", "len:sentence", "kanji:run"]);
+const TEXT_SKIP = new Set(["sw.js", "transfer.js", "store.js", "depth.js", "gender-ng.js", "a11y.js"]);
+export function textStrings(dir) {
+  const out = [];
+  let files = [];
+  try { files = readdirSync(dir).filter((f) => (f.endsWith(".js") && !TEXT_SKIP.has(f)) || f === "index.html"); } catch { return out; }
+  for (const f of files) {
+    let src = readFileSync(path.join(dir, f), "utf8");
+    if (f.endsWith(".html")) {
+      // 画面の字（タグの間）と、script の中の文字列の両方を見る
+      const scripts = [...src.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]).join("\n");
+      const body = src.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<!--[\s\S]*?-->/g, "");
+      for (const m of body.matchAll(/>([^<>]+)</g)) { const t = m[1].trim(); if (/[ぁ-んァ-ヶ一-龯]/.test(t)) out.push([f, t]); }
+      src = scripts;
+    }
+    src = src.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
+    for (const m of src.matchAll(/(["'`])((?:\\.|(?!\1)[^\\\n])*)\1/g)) {
+      const t = m[2].replace(/\$\{[^}]*\}/g, "○");
+      if (/[ぁ-んァ-ヶ一-龯]/.test(t)) out.push([f, t]);
+    }
+  }
+  return out;
+}
+function checkText(dir, only = null) {
+  const ss = textStrings(dir);
+  if (!ss.length) return null;
+  const allow = loadAllow(dir);
+  const found = new Map();
+  for (const [f, s] of ss) for (const [rule, R] of Object.entries(RULES)) {
+    if (R.opt || R.q || !TEXT_RULES.has(rule) || (only && !only.includes(rule))) continue;
+    if (R.test ? R.test(s) : R.re.test(plain(s))) {
+      if (allow.some(([r, part]) => r === rule && (!part || s.includes(part)))) continue;
+      const k = rule + "\t" + s;
+      const x = found.get(k);
+      if (x) x.n++; else found.set(k, { rule, lv: R.lv, msg: R.msg, text: `[${f}] ` + s.slice(0, 160), n: 1 });
+    }
+  }
+  return { name: path.basename(path.resolve(dir)), problems: 0, texts: ss.length, findings: [...found.values()] };
+}
+
 export function check(dir) {
   const file = path.resolve(dir, "data.js");
   const alt = path.resolve(dir, "gen.js");
   const src = existsSync(file) ? file : existsSync(alt) ? alt : null;
-  if (!src) return null;
   let G;
-  try { G = require(src); } catch { return null; }
-  if (!G || typeof G.make !== "function") return null;
+  try { G = src && require(src); } catch { G = null; }
+  if (!G || typeof G.make !== "function") return checkText(dir);
   const allow = loadAllow(dir);
   const found = new Map(); // 規則+字 → 1件
   const add = (rule, lv, msg, text, n = 1) => {
@@ -145,6 +188,9 @@ export function check(dir) {
     }
     for (const [rule, lv, msg, text] of optFindings(P)) add(rule, lv, msg, text);
   }
+  // 画面の決まった字（index.html・ヒント・説明の部品）も、言葉の決まりだけ当てる（2026-11-21「選び肢」が9本の画面に出ていた）
+  const t = checkText(dir, ["word:nonstd", "neg:double", "particle:double"]);
+  for (const f of t ? t.findings : []) add(f.rule, f.lv, f.msg, f.text, f.n);
   return { name: path.basename(path.resolve(dir)), problems: ps.length, findings: [...found.values()] };
 }
 
@@ -157,6 +203,7 @@ const BAD = [
   ["quote:unbalanced", "その送付を受けた日）から十日以内に"],
   ["punct:double", "取り消せる、。"],
   ["particle:double", "家をを買った。"],
+  ["word:nonstd", "ヒントで選び肢を減らせます。"],
 ];
 const GOOD = [
   "みなと町で「どしゃ降り」のような雨。", "「バケツをひっくり返したように降る」ような雨。", "処分があったことを知った日の翌日から3か月",
@@ -171,6 +218,17 @@ function selfTest() {
   for (const s of GOOD) if (hits(s).length) fails.push(`よい文を落とした ${hits(s).join(",")}: ${s}`);
   for (const P of OPT_BAD) if (!optFindings(P).length) fails.push(`選び肢を見のがした: ${P.opts.join(" / ")}`);
   for (const P of OPT_GOOD) if (optFindings(P).length) fails.push(`よい選び肢を落とした: ${optFindings(P).map((f) => f[0]).join(",")}`);
+  // make() が無いゲームも、画面（index.html）と .js の字を見る（2026-11-21 まで35本を飛ばしていた）
+  const tmp = mkdtempSync(path.join(os.tmpdir(), "game-ja-"));
+  mkdirSync(path.join(tmp, "qa"));
+  writeFileSync(path.join(tmp, "index.html"), "<p>ヒントで選び肢を減らせます。</p><script>const a = \"進めないわけではないが、まず止まる。\";</script>");
+  writeFileSync(path.join(tmp, "game.js"), "// 選び肢（コメントは見ない）\nconst T = \"家をを買った。\";");
+  const tr = checkText(tmp), got = new Set(tr.findings.map((f) => f.rule));
+  for (const r of ["word:nonstd", "neg:double", "particle:double"]) if (!got.has(r)) fails.push(`画面の字で見のがした ${r}`);
+  if (tr.findings.some((f) => f.text.includes("コメント"))) fails.push("コメントの字まで見た");
+  writeFileSync(path.join(tmp, "qa", "ja-allow.txt"), "word:nonstd\t選び肢 # 見本\nneg:double\nparticle:double\n");
+  if (checkText(tmp).findings.length) fails.push("ja-allow.txt の例外が画面の字に効かない");
+  rmSync(tmp, { recursive: true, force: true });
   if (fails.length) { console.log(fails.map((f) => "✗ game-ja: " + f).join("\n")); process.exit(1); }
   console.log(`✓ game-ja：見本 ${BAD.length + GOOD.length + OPT_BAD.length + OPT_GOOD.length} 件を見分けた`);
 }
@@ -204,7 +262,7 @@ else if (import.meta.url === `file://${process.argv[1]}`) {
     errors += e.length;
     if (JSON_OUT) continue;
     const w = r.findings.length - e.length;
-    console.log(`${e.length ? "✗" : "✓"} ${r.name}: 問題 ${r.problems} 通り・直す ${e.length}・読んで判断 ${w}`);
+    console.log(`${e.length ? "✗" : "✓"} ${r.name}: ${r.texts ? `make() が無いので字 ${r.texts} 個を見た` : `問題 ${r.problems} 通り`}・直す ${e.length}・読んで判断 ${w}`);
     // CI（--strict）では △ を 15 行までにする（長い文だけで数百行になり、✗ が埋もれる）
     let shown = 0;
     for (const f of r.findings.sort((a, b) => (a.lv === b.lv ? 0 : a.lv === "error" ? -1 : 1))) {
