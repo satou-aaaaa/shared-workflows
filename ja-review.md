@@ -7,20 +7,20 @@
 | akushitsu-miyaburi |  |  |
 | amida-haitatsu |  |  |
 | atsusa-shisu |  |  |
-| baibai-kimari |  |  |
+| baibai-kimari | 2026-11-21 | baibai-kimari#2（第2弾） |
 | batsu-doko |  |  |
 | bento-zume |  |  |
-| bousai-handan |  |  |
+| bousai-handan | 2026-11-21 | bousai-handan#12（第2弾） |
 | bunshi-tsukuri |  |  |
 | bushu-tashizan |  |  |
 | chiho-jichi | 2026-11-21 | chiho-jichi#2（第1弾） |
 | chikara-shurui |  |  |
 | chikei-ate |  |  |
-| chintai-kimari |  |  |
+| chintai-kimari | 2026-11-21 | chintai-kimari#2（第2弾） |
 | chizu-kigo |  |  |
 | chosakuken |  |  |
 | chusha-kyori |  |  |
-| dairi-kimari | 2026-11-21 | dairi-kimari#2（第1弾） |
+| dairi-kimari | 2026-11-21 | dairi-kimari#2（第1弾）・dairi-kimari#3（第2弾） |
 | dare-bensho |  |  |
 | dashisugi-check |  |  |
 | dema-tashikame |  |  |
@@ -44,7 +44,7 @@
 | haigusha-ikura |  |  |
 | haku-uchi |  |  |
 | hataraku-kigen | 2026-11-21 | hataraku-kigen#2（第1弾） |
-| hataraku-kimari |  |  |
+| hataraku-kimari | 2026-11-21 | hataraku-kimari#2（第2弾） |
 | hatsuden-kurabe |  |  |
 | hikari-michi |  |  |
 | hikari-susumi |  |  |
@@ -62,19 +62,19 @@
 | iryohi-ikura |  |  |
 | jidosha-shurui |  |  |
 | jikken-kigu |  |  |
-| jiko-kihon |  |  |
+| jiko-kihon | 2026-11-21 | jiko-kihon#2（第2弾） |
 | jintai-shikumi |  |  |
 | jishin-ikura |  |  |
 | jitensha-rule |  |  |
 | jobun-tobatsu |  |  |
 | jotai-henka |  |  |
 | kabu-news |  |  |
-| kaden-anzen |  |  |
+| kaden-anzen | 2026-11-21 | kaden-anzen#6（第2弾） |
 | kagaku-henka |  |  |
 | kaisha-kigen | 2026-11-21 | kaisha-kigen#2（第1弾） |
 | kaji-mamoru |  |  |
 | kakuritsu-dotchi |  |  |
-| kaminari-mamoru |  |  |
+| kaminari-mamoru | 2026-11-21 | kaminari-mamoru#2（第2弾） |
 | kanazukai-dotchi |  |  |
 | kanji-tsukaiwake |  |  |
 | kankaku-ate |  |  |
@@ -83,7 +83,7 @@
 | kaseki-ate |  |  |
 | kashikari-kimari |  |  |
 | kazoku-kigen | 2026-11-21 | kazoku-kigen#2（第1弾） |
-| kazoku-kimari | 2026-11-21 | kazoku-kimari#2（第1弾） |
+| kazoku-kimari | 2026-11-21 | kazoku-kimari#2（第1弾）・kazoku-kimari#3（第2弾） |
 | keigen-zeiritsu |  |  |
 | keigo-naoshi |  |  |
 | keiyaku-torikeshi | 2026-11-21 | keiyaku-torikeshi#2（第1弾） |
@@ -110,7 +110,7 @@
 | kotowaza-bamen |  |  |
 | kumo-namae |  |  |
 | kuruma-kigen | 2026-11-21 | kuruma-kigen#3（第1弾） |
-| kusuri-yomi |  |  |
+| kusuri-yomi | 2026-11-21 | kusuri-yomi#10（第2弾） |
 | kyukoku-mei |  |  |
 | kyukyusha-yobu |  |  |
 | kyuyo-meisai |  |  |
@@ -122,7 +122,7 @@
 | meirei-narabe |  |  |
 | menkyo-nenrei | 2026-11-21 | menkyo-nenrei#2（第1弾） |
 | mizu-mamoru |  |  |
-| moraisugi-kimari |  |  |
+| moraisugi-kimari | 2026-11-21 | moraisugi-kimari#2（第2弾） |
 | mukashi-narabe |  |  |
 | musekitsui-nakama |  |  |
 | nanban-soudan |  |  |
@@ -160,7 +160,7 @@
 | shindo-yomi |  |  |
 | shingo-yomi | 2026-11-21 | shingo-yomi#2（第1弾） |
 | shiritori-saitan |  |  |
-| shitsugyo-teate | 2026-11-21 | shitsugyo-teate#2（第1弾） |
+| shitsugyo-teate | 2026-11-21 | shitsugyo-teate#2（第1弾）・shitsugyo-teate#3（第2弾） |
 | shogai-ikura |  |  |
 | shohisha-keiyaku |  |  |
 | shoka-koso |  |  |
@@ -173,7 +173,7 @@
 | shukushaku-yomi |  |  |
 | souzoku-kihon |  |  |
 | suiyoeki-ate |  |  |
-| taifu-yomi |  |  |
+| taifu-yomi | 2026-11-21 | taifu-yomi#2（第2弾） |
 | taikyo-hiyo |  |  |
 | taishoku-ikura |  |  |
 | taiyokei-kurabe |  |  |
@@ -188,15 +188,15 @@
 | todokede-kigen | 2026-11-21 | todokede-kigen#2（第1弾） |
 | tokkyo-kikan | 2026-11-21 | tokkyo-kikan#3（第1弾） |
 | tonari-kimari |  |  |
-| toppu-yomi |  |  |
+| toppu-yomi | 2026-11-21 | toppu-yomi#2（第2弾） |
 | tsuki-imei |  |  |
 | tsuki-katachi |  |  |
-| tsunami-yomi |  |  |
+| tsunami-yomi | 2026-11-21 | tsunami-yomi#2（第2弾） |
 | usotsuki-roppo |  |  |
 | wagamama-burger |  |  |
 | wareki-yomi |  |  |
 | yarikuri-shotengai |  |  |
-| yohou-kotoba | 2026-11-21 | yohou-kotoba#6（第1弾） |
+| yohou-kotoba | 2026-11-21 | yohou-kotoba#6（第1弾）・yohou-kotoba#7（第2弾） |
 | youto-chiiki |  |  |
 | zeikin-nanizei |  |  |
 | zeimu-kigen | 2026-11-21 | zeimu-kigen#3（第1弾） |
