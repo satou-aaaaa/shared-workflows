@@ -44,6 +44,7 @@ const len = (o) => (typeof o === "string" ? o.length : JSON.stringify(o).length)
 export function measure(G) {
   const kinds = kindIds(G);
   const m = { problems: 0, notes: [] };
+  const daily = []; // 今日の問題（KINDS が無いゲームの手がかりも、これで数える）
   const add = (msg) => m.notes.push(msg);
 
   // 1. 今日の問題：前の7日と同じ問題・出る種類
@@ -54,7 +55,7 @@ export function measure(G) {
       const today = new Set();
       for (const t of tags) {
         const P = tryMake(G, t); if (!P) continue;
-        total++; usedKinds.add(kindOf(t));
+        total++; usedKinds.add(kindOf(t)); daily.push(P);
         const k = key(P);
         if (seen.slice(-7).some((s) => s.has(k))) rep++;
         today.add(k);
@@ -84,15 +85,18 @@ export function measure(G) {
   if (m.narrow.length) add(`単調：30回作っても ${LIMITS.kindWidth} 通りに満たない種類 ${m.narrow.slice(0, 6).join("・")}`);
 
   // 3. 見ただけで当たる手がかり（正解の位置・正解だけ長い・選び肢が少ない）
-  const qs = all.filter((P) => Array.isArray(P.opts) && P.opts.length > 1 && P.ans !== undefined);
+  const qs = [...all, ...daily].filter((P) => Array.isArray(P.opts) && P.opts.length > 1 && P.ans !== undefined);
   if (qs.length) {
     const pos = new Map(); let longest = 0, few = 0;
+    const byType = new Map(); // 問いの種類（type・なければ問いの字）ごとの「正解だけ長い」。全体では目安以下でも、1つの種類が長さで当たることがある
     for (const P of qs) {
       const at = typeof P.ans === "number" && !P.opts.includes(P.ans) ? P.ans : P.opts.findIndex((o) => JSON.stringify(o) === JSON.stringify(P.ans));
       if (at < 0) continue;
       pos.set(at, (pos.get(at) || 0) + 1);
       const L = P.opts.map(len), others = L.filter((_, i) => i !== at);
+      const ty = String(P.type ?? P.q ?? ""), bt = byType.get(ty) || [0, 0];
       if (L[at] > Math.max(...others)) longest++;
+      if (P.opts.length >= 3) { bt[0]++; if (L[at] > Math.max(...others)) bt[1]++; byType.set(ty, bt); } // 2択は長さの差が当て推量（50%）と変わらない
       if (P.opts.length < LIMITS.fewOpts) few++;
     }
     const n = [...pos.values()].reduce((a, b) => a + b, 0) || 1;
@@ -100,6 +104,8 @@ export function measure(G) {
     m.posBias = topN / n; m.longest = longest / n; m.fewOpts = few / n;
     if (m.posBias > LIMITS.posBias && n >= 10) add(`簡単すぎ：正解の ${pct(m.posBias)} が ${topAt + 1} 番目（並べ替えていない？）`);
     if (m.longest > LIMITS.longest) add(`簡単すぎ：正解だけがいちばん長い問題が ${pct(m.longest)}（長さで当たる。目安 ${pct(LIMITS.longest)} 以下）`);
+    m.longType = [...byType.entries()].filter(([, [n, l]]) => n >= 10 && l / n > LIMITS.longest).map(([t, [n, l]]) => `${t.slice(0, 20)}（${l}/${n}）`);
+    if (m.longest <= LIMITS.longest && m.longType.length) add(`簡単すぎ：正解だけがいちばん長い問いの種類 ${m.longType.slice(0, 4).join("・")}（長い選び肢を選べば当たる）`);
     if (m.fewOpts > 0.5) add(`簡単すぎ：選び肢が ${LIMITS.fewOpts - 1} つ以下の問題が ${pct(m.fewOpts)}（当てずっぽうで半分当たる）`);
   }
 
@@ -149,6 +155,17 @@ function selfTest() {
   };
   const b = measure(bad).notes.join("\n");
   for (const want of ["前の7日", "出る種類", "通りに満たない", "番目", "いちばん長い", "当てずっぽう", "上級の問題の段階"]) ok(b.includes(want), `悪い見本で「${want}」を見つけられない`);
+  // 種類が混ざると全体では目安以下でも、1つの種類だけ長さで当たる（2026-11-21 悪質商法みやぶりの「どうする？」が 29/44）
+  const mixed = {
+    KINDS: [{ id: "a" }, { id: "b" }, { id: "c" }],
+    make: (t) => {
+      let h = 0; for (const c of String(t)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+      const k = kindOf(t);
+      const opts = k === "a" ? ["とても長い正解の選び肢", "短い", "みじかい"] : ["いち", "にい", "さん"];
+      return { tag: t, type: k, q: `問${h % 997}`, opts, ans: k === "a" ? 0 : h % 3 };
+    },
+  };
+  ok(measure(mixed).notes.join("").includes("問いの種類"), "1つの種類だけ長さで当たるのを見つけられない");
   console.log(fails ? `✗ game-fun の self-test が ${fails} 件落ちた` : "✓ game-fun の self-test が通った");
   process.exit(fails ? 1 : 0);
 }
@@ -165,6 +182,8 @@ else {
     const G = load(d);
     if (!G || typeof G.make !== "function") { out.push({ name, make: false }); if (!json) console.log(`- ${name}: make() が無いので数えられない（遊んで見る）`); continue; }
     const m = measure(G);
+    // make() はあっても、札（tag）で問題を作らないゲーム（パズルなど make(seed, 大きさ)）は1問も作れない。✓ と出さない
+    if (!m.problems) { out.push({ name, make: false }); if (!json) console.log(`- ${name}: make() で問題を作れなかった（札で作らないゲーム）。遊んで見る`); continue; }
     out.push({ name, make: true, ...m });
     if (!json) {
       console.log(`${m.notes.length ? "△" : "✓"} ${name}: 問題 ${m.problems} 個を見た・読んで判断 ${m.notes.length}`);

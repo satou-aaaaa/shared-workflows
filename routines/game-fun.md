@@ -28,7 +28,7 @@
 ## 使う道具
 
 - `node scripts/game-fun.mjs <ゲームのフォルダ>`：簡単すぎ・単調の数（△ は遊んで判断。make() が無いゲームは「遊んで見る」と出る）
-- Playwright（クラウドの会話に入っている。`require('playwright')`）：スマホ幅（390×844）で遊ぶ
+- `node scripts/game-play.mjs <フォルダ> <go-d|go-h|go-p> <long|first|rand> [回数]`：スマホ幅（390×844）で通しで遊び、初めの1回で当たった数を出す（ひな形の画面のゲーム）
 - 台帳 [`fun-review.md`](../fun-review.md)：どのゲームをいつ見たか
 - 報告の返信：Claude 以外は [tool-map.md](tool-map.md) の置き換え先
 
@@ -43,10 +43,10 @@
 7. 1本ずつ `git clone --depth 1 https://github.com/satou-aaaaa/<ゲーム>` する。
 8. `node scripts/game-fun.mjs ../<ゲーム>` を回し、△ を書き出す。
 9. `bash scripts/setup.sh` を回す（そのゲームのフォルダで）。
-10. Playwright でスマホ幅にし、次の3つを遊ぶ。1つにつき、かかった秒数・まちがえた数・「読まずに当たった問題」の数を書く。
-   - 今日の問題を最後まで（初めての人として。ヒントは使わない）
-   - 練習かとことんで、同じ種類を3回続けて（同じ問題が出たら数える）
-   - 上級（あれば）
+10. 遊ぶ。ブラウザはクラウドの会話では `CHROMIUM_PATH=/opt/pw-browsers/chromium` を前につける。
+    - 選ぶ問題のゲーム：`node ../shared-workflows/scripts/game-play.mjs . go-d rand 3`・`long 3`・`first 3` を回し、初めの1回で当たった数（first）を比べる。long か first が rand より3割以上多ければ「見ただけで当たる」。上級（`go-h`）と練習（`go-p`）も1回ずつ。
+    - パズルなど選び肢の無いゲーム：その日の問題を、いちばん得になる手を毎回選ぶだけのやり方（欲ばり）で解くスクリプトを書き、大きさごとに「欲ばりで最少の手数に届く割合」を出す。いちばん大きい問題・上級で5割を超えたら簡単すぎ。
+    - どちらも、かかった秒数・まちがえた数・「読まずに当たった問題」の数を書く。
 11. 下の「直すもの」の表で、いちばん効くものを1つ決める。
 12. 直す。`qa/run.mjs` に、直したことの検査を1つ足す。
 13. `node qa/run.mjs` を通す（同時に回すのは2本まで）。
