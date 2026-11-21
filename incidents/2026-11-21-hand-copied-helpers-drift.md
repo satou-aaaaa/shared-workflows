@@ -20,4 +20,4 @@
 ## 対策
 - [x] 直す: 小さな関数とはじめての案内・感想のリンクを共通部品 game-core（`template/core/core.js`）にまとめ、`scripts/sync-template.mjs` で配る（この PR。各ゲームへは移す PR で入れる）
 - [x] 防ぐ: `scripts/check-core.mjs`（check.sh・Lint）が、esc・num・日付・連続・「動きを減らす」の振動・お知らせの読み上げ・感想のリンクを確かめる。画面の動きは `template/qa/core-check.mjs` を各ゲームの QA から呼ぶ（この PR）
-- [ ] 見つける: 全ゲームの関数を名前と中身で数え、共通部品と同じ役目の手書きが残っていたら知らせる週1の検査を足す（次の PR。satou さんの「未知の不具合を探索する仕組み」と合わせて作る。担当: Claude（スレッド「ゲームの共通部品と遊び方を改善する」） 期限: 2026-11-28）
+- [x] 見つける: `scripts/game-patterns.mjs` の playerBugs が、手で写した古い形（core:buzz・core:esc・core:num・core:toast）を見分ける。週次まとめ（drift-check）が全ゲームの残りを出し、ゲームの PR（check-game-new）は新しく持ち込むと落ちる。見分けの検査は `scripts/check-game-patterns.mjs`。初回は 40本中28本で見つかった（この PR）

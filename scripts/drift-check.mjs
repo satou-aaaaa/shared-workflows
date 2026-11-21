@@ -35,6 +35,7 @@
 //   - ゲームのヒント2（cutOf）が、まちがいの数で消す数を変える（しぼったあとにまちがいを選ぶと、消した選び肢が戻る。incidents/2026-11-07-hint-cut-comes-back.md）
 //   - 星の表示（class="stars"）に role="img" が無い・取れなかった星も ★（読まれない・色だけで分ける）
 //   - ゲームの qa/run.mjs が URL を文字のまま includes・indexOf で探している（CodeQL が赤になる。incidents/2026-11-11-codeql-url-includes-in-qa.md）
+//   - ゲームの index.html に、手で写した小さな関数の古い形（buzz が動きを減らすでも震える・esc が " を変えない・num が配列を数にする・toast が読み上げに届かない）が残っている（共通部品 game-core に切り替える。incidents/2026-11-21-hand-copied-helpers-drift.md）
 //   - ゲームの qa/run.mjs の回数で区切るくり返しが、相手（AI）の番を待つ回まで数えている（遅い CI で回数が尽きて落ちる。incidents/2026-11-11-qa-loop-counts-waits.md）
 // きっかけ: 2026-10-22 新しい部品（ui-check など）を作るたびに、全リポジトリへ配り忘れが出る（「手順の抜け」の繰り返し）。
 import { readFileSync, existsSync, readdirSync, mkdirSync } from 'node:fs';
@@ -354,7 +355,7 @@ const results = await pool(REPOS, 4, async (r) => {
     // 黙っていると遊ぶ人は気づけない（2026-11-07 暑さ指数よみの PR のレビューで見つけ、同じ作りのゲーム14本を直した。incidents/2026-11-07-save-failure-silent.md）
     if (paths.has('index.html')) {
       const page = pageCache ?? await src.read('index.html');
-      for (const [id, msg] of playerBugs(page)) if (['save:silent', 'hint:cut-moves', 'hint:left-fixed', 'stars:role', 'endless:stuck', 'endless:revive', 'toast:blocks'].includes(id)) flag(id, msg); // 見分けは scripts/game-patterns.mjs の playerBugs（ゲームの PR の QA も同じものを使う）
+      for (const [id, msg] of playerBugs(page)) if (['save:silent', 'hint:cut-moves', 'hint:left-fixed', 'stars:role', 'endless:stuck', 'endless:revive', 'toast:blocks', 'core:buzz', 'core:esc', 'core:num', 'core:toast'].includes(id)) flag(id, msg); // 見分けは scripts/game-patterns.mjs の playerBugs（ゲームの PR の QA も同じものを使う）
       // ヒント2：まちがいを除いてから消す数を決めると、しぼったあとにまちがいを選んだとき、消した選び肢が戻る（saibanin-shikumi #1 の CodeRabbit）
       // コメントを除き、複数行の定義も終わりまで見る（scripts/game-patterns.mjs。見分けの検査は scripts/check-game-patterns.mjs）
       // ヒント2のあとの「のこりは○つ」は、いま押せる選び肢の数を出す（決まった「2つ」だと、先に最後のまちがいを選んだとき、のこり1つでも2つと出る）
