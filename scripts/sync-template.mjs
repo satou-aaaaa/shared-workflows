@@ -23,6 +23,7 @@ import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { roundSizes } from './game-patterns.mjs';
+import { LEGACY_LOADS } from './store-legacy.mjs';
 
 const T = join(dirname(fileURLToPath(import.meta.url)), '..', 'template');
 const tpl = (p) => readFileSync(join(T, p), 'utf8');
@@ -36,6 +37,60 @@ export const storeBlock = () => `<!-- store:begin（template/store/store.js の�
 export const CORE = /<!-- core:begin[\s\S]*?<!-- core:end -->/;
 // index.html に写す game-core のかたまり（window.Core。ゲームの script より前、<head> の中に置く）
 export const coreBlock = () => `<!-- core:begin（template/core/core.js の写し。ここでは直さない。node scripts/sync-template.mjs で写す） -->\n<script id="game-core">\n${tpl('core/core.js')}</script>\n<!-- core:end -->`;
+
+// game-core に切り替える（2026-11-22。何度かけても同じ）。どのゲームでも同じ形の所だけを、決まった文字どおりに替える（形のちがう所は触らない）:
+//   - <head> の終わりに game-core のかたまりを足す（ゲームの script より前に window.Core ができる）
+//   - 手で写した小さな関数の、不具合のある古い形（incidents/2026-11-21-hand-copied-helpers-drift.md。scripts/game-patterns.mjs の core:*）を Core.* にする
+//   - 「感想を送る」（FEEDBACK のリンク・遊び方の窓の fb2）を、全ゲームで1つの Googleフォームの事前入力リンクにする（data-feedback。押したその時に作る）
+// はじめての案内（練習1問の吹き出し）はゲームごとに問題の作り方がちがうので、ここでは入れない（ゲームごとの PR で。routines/game-dev-detail.md）
+export const CORE_SWAPS = [
+  ['const num = (v) => (Number.isFinite(+v) && +v >= 0 ? Math.floor(+v) : 0);', 'const num = Core.num; // 共通部品 game-core（配列・true を数にしない #410）'],
+  ['const buzz = (n = 12) => { try { navigator.vibrate && navigator.vibrate(n); } catch (e) {} };', 'const buzz = Core.buzz; // 共通部品 game-core（「動きを減らす」では震わせない）'],
+  ['const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");', 'const esc = Core.esc; // 共通部品 game-core（" と \' も変える。属性の中でも切れない）'],
+  ['function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1800); }', 'function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.setAttribute("aria-hidden", "true"); d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1800); Core.say(t); } // 読み上げにも届ける（共通部品 game-core）'],
+  // 日付の小さな関数（どのゲームでも同じ文字。ひとつにまとめて直す所を1か所にする。2026-11-22 satou さん「画面の共通部品」）
+  ['const ymOf = (k) => k.slice(0, 7);', 'const ymOf = Core.ymOf;'],
+  ['const ymAdd = (ym, n) => { const d = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + n, 1)); return d.toISOString().slice(0, 7); };', 'const ymAdd = Core.ymAdd;'],
+  ['const ymAdd = (ym, n) => new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + n, 1)).toISOString().slice(0, 7);', 'const ymAdd = Core.ymAdd;'],
+  ['const prevDay = (k) => new Date(Date.parse(k) - 864e5).toISOString().slice(0, 10);', 'const prevDay = Core.prevDay;'],
+  ['const md = (k) => `${+k.slice(5, 7)}/${+k.slice(8, 10)}`;', 'const md = Core.md;'],
+  ['const dayNo = (k) => Math.round((Date.parse(k) - Date.parse(EPOCH)) / 864e5) + 1;', 'const dayNo = (k) => Core.dayNo(k, EPOCH);'],
+  ['function streak(days) { let k = todayKey(), n = 0; if (!days[k]) k = prevDay(k); while (days[k]) { n++; k = prevDay(k); } return n; }', 'function streak(days) { return Core.streak(days); } // 続けて遊んだ日数（共通部品 game-core。壊れた記録・constructor などの名前を日に数えない）'],
+];
+export function migrateCore(html) {
+  if (!/<\/head>/i.test(html) || !/<script/i.test(html)) return html;
+  let next = html;
+  // 置き場所：見やすさの設定・保存の共通部品のすぐあと（transfer.js・depth.js・</head> の並びを見る QA を崩さない）。無ければ </head> の前
+  if (!CORE.test(next)) {
+    const ends = ['<!-- store:end -->', '<!-- a11y:end -->'].map((m) => [m, next.indexOf(m)]).filter(([, i]) => i >= 0 && i < next.search(/<\/head>/i));
+    if (ends.length) { const [m, i] = ends.sort((x, y) => y[1] - x[1])[0]; next = `${next.slice(0, i + m.length)}\n${coreBlock()}${next.slice(i + m.length)}`; }
+    else next = next.replace(/<\/head>/i, () => `${coreBlock()}\n</head>`);
+  }
+  // 替えるのはゲームの文字だけ（共通部品のかたまりの中には同じ形の関数があるので触らない）
+  const parts = next.split(/(<!-- (?:core|store|a11y):begin[\s\S]*?<!-- (?:core|store|a11y):end -->)/);
+  next = parts.map((x, i) => (i % 2 ? x : CORE_SWAPS.reduce((t, [a, b]) => t.split(a).join(b), x))).join('');
+  next = next.split('href="${FEEDBACK}" target="_blank" rel="noopener"').join('href="${FEEDBACK}" data-feedback="fun" target="_blank" rel="noopener"');
+  next = next.split('<a id="fb2" target="_blank" rel="noopener">').join('<a id="fb2" target="_blank" rel="noopener" data-feedback="fun">');
+  if (!/Core\.bindFeedback\(/.test(next.replace(CORE, ''))) {
+    next = next.replace(/^(\s*)(const FEEDBACK\s*=\s*["'][^"'\n]*["'];)[^\n]*$/m, (m, sp) => `${m}\n${sp}if (window.Core) Core.bindFeedback({}); // 「感想を送る」は全ゲームで1つの Googleフォームへ（ゲーム名・版などを事前入力。GitHub のアカウントが無くても送れる）`);
+  }
+  return next;
+}
+
+// 古い load()（保存の写しを手で合わせる形）を共通部品 GameStore に切り替える（2026-11-22。表は scripts/store-legacy.mjs。文字が1つでもちがえば替えない）
+// 切り替えたら store:begin〜end の印を game-core のすぐあとに置く（中身は下で storeBlock を写す）
+export function migrateStore(html) {
+  if (STORE.test(html)) return html;
+  for (const L of LEGACY_LOADS) {
+    if (!html.includes(`\n${L.old}\n`)) continue;
+    const call = `function load() {\n  return GameStore.load(KEY, mem, { v: 1, fresh, tidy, bank, doneOf, bookOf${L.opts ? `, ${L.opts}` : ''} }); // 2つの写しの合わせ方は共通部品 GameStore（store:begin〜end）\n}`;
+    let next = html.split(`\n${L.old}\n`).join(`\n${call}\n`);
+    const at = next.indexOf('<!-- core:end -->');
+    next = at >= 0 ? `${next.slice(0, at + 17)}\n<!-- store:begin -->\n<!-- store:end -->${next.slice(at + 17)}` : next.replace(/<\/head>/i, () => '<!-- store:begin -->\n<!-- store:end -->\n</head>');
+    return next;
+  }
+  return html;
+}
 
 // sw.js のゲームの枠を取り出す（無ければ古い形から CACHE と SHELL の行を拾う）
 export function swRegion(old) {
@@ -96,7 +151,7 @@ export function plan(dir) {
   // 版14：transfer.js の QR の部品は transfer-qr.js に分けた。transfer.js のあるゲームには無くても足す（sw.js の SHELL にも下で足す）
   if (has('transfer.js')) want2('transfer-qr.js', tpl('transfer-qr.js'), has('transfer-qr.js') ? '' : '足した（引き継ぎの QR の部品。箱を開いたときにだけ読む）');
   for (const p of ['transfer.js', 'depth.js', 'qa/a11y.mjs', 'qa/transfer-check.mjs', 'qa/sw-check.mjs', 'qa/depth-check.mjs', 'qa/core-check.mjs']) if (has(p) && !(swStuck && p === 'qa/sw-check.mjs')) want(p, tpl(p));
-  if (has('index.html') && CORE.test(read('index.html')) && has('qa') && !has('qa/core-check.mjs')) out.push({ path: 'qa/core-check.mjs', next: tpl('qa/core-check.mjs'), note: '足した。qa/run.mjs から checkCore を呼ぶ' });
+  if (has('index.html') && CORE.test(read('index.html')) && has('qa/run.mjs') && /core-check/.test(read('qa/run.mjs')) && !has('qa/core-check.mjs')) out.push({ path: 'qa/core-check.mjs', next: tpl('qa/core-check.mjs'), note: '足した。qa/run.mjs から checkCore を呼ぶ' });
   if (has('depth.js') && has('qa') && !has('qa/depth-check.mjs')) out.push({ path: 'qa/depth-check.mjs', next: tpl('qa/depth-check.mjs'), note: '足した。qa/run.mjs から checkDepth を呼ぶ' });
   // sw.js があるのに sw の検査が無いゲームには足す（qa/run.mjs から呼ぶのは手で。下で知らせる）
   if (has('sw.js') && !swStuck && has('qa') && !has('qa/sw-check.mjs')) out.push({ path: 'qa/sw-check.mjs', next: tpl('qa/sw-check.mjs'), note: '足した。qa/run.mjs から checkSwStall を呼ぶ' });
@@ -104,14 +159,19 @@ export function plan(dir) {
     const html = read('index.html');
     const block = tpl('a11y/a11y.html').match(A11Y)[0];
     let next = A11Y.test(html) ? html.replace(A11Y, () => block) : html;
-    if (STORE.test(next)) next = next.replace(STORE, () => storeBlock());
     if (CORE.test(next)) next = next.replace(CORE, () => coreBlock());
+    if (A11Y.test(html)) next = migrateStore(migrateCore(next)); // 見やすさの設定のあるゲーム（ひな形からできたゲーム）だけ game-core・GameStore に切り替える
+    if (STORE.test(next)) next = next.replace(STORE, () => storeBlock());
     if (A11Y.test(html) || STORE.test(html) || CORE.test(html)) want('index.html', next, '見やすさの設定・保存の共通部品・game-core');
   }
   if (has('sw.js')) {
     let next = makeSw(read('sw.js'));
     if (next !== null && has('transfer.js')) next = withQrShell(next);
-    if (next === null) out.push({ path: 'sw.js', next: null, note: '枠が無く、CACHE・SHELL を拾えないか、ほかの定数・関数（FLAGS・FONT_CACHE など）がある。写すと消えるので写さない（手で game:begin〜game:end の枠を作り、その働きを枠に入れる）' });
+    const stuckNote = '枠が無く、CACHE・SHELL を拾えないか、ほかの定数・関数（FLAGS・FONT_CACHE など）がある。写すと消えるので写さない（手で game:begin〜game:end の枠を作り、その働きを枠に入れる）';
+    // 写せない sw.js でも、SHELL に transfer-qr.js だけは足す（足さないと電波の無いとき引き継ぎの QR が出ない。2026-11-22 batsu-doko）
+    const qr = next === null && has('transfer.js') ? withQrShell(read('sw.js')) : null;
+    if (qr !== null && qr !== read('sw.js')) want('sw.js', qr, `SHELL に transfer-qr.js だけ足した。ほかは${stuckNote}`);
+    else if (next === null) out.push({ path: 'sw.js', next: null, note: stuckNote });
     else want('sw.js', next);
   }
   if (has('scripts/setup.sh')) want('scripts/setup.sh', makeSetup(read('scripts/setup.sh')));

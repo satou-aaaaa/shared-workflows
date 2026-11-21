@@ -1,7 +1,7 @@
 name: Game explore
 
 # まだ知らない不具合を探す（Claude は使わない）。毎週、公開のゲームを順番に 15 本ずつ「でたらめに」遊び（scripts/game-explore.mjs）、
-# 見つけた不具合を Issue 1件（ラベル「探索の不具合」）にまとめる。約13週で全部を1周する。
+# あわせて、そのゲームの main の QA を回す（日がたつと落ちる検査を見つける）。見つけた不具合を Issue 1件（ラベル「探索の不具合」）にまとめる。約13週で全部を1周する。
 # 直し方は routines/game-explore.md：再現ファイル（成果物 explore）をゲームの qa/repro/ に置いて直す → 以後は毎回の PR の Game QA が確かめる。
 on:
   schedule:
@@ -25,7 +25,7 @@ concurrency:
 jobs:
   explore:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -51,6 +51,7 @@ jobs:
             week=$(( $(date +%s) / 604800 )); n=${#all[@]}; per=15; start=$(( (week * per) % n ))
             games=(); for i in $(seq 0 $((per - 1))); do games+=("${all[$(( (start + i) % n ))]}"); done
           fi
+          CHROME=$(cd "$PW_DIR" && node -e 'console.log(require("playwright").chromium.executablePath())')
           out="$RUNNER_TEMP/explore"; mkdir -p "$out"
           body="$RUNNER_TEMP/body.md"; found=0
           { echo "でたらめに遊んで見つけた不具合です（自動。毎週15本ずつ）。直し方は routines/game-explore.md。再現ファイルは、この回の成果物 explore にあります。"; echo; } > "$body"
@@ -63,6 +64,15 @@ jobs:
             code=$?
             if [ "$code" -eq 1 ]; then found=$((found + 1)); { echo "## $g"; grep '^✗' "$log" | sed 's/^/- /'; echo; } >> "$body"
             elif [ "$code" -ne 0 ]; then { echo "- $g：探す道具が止まった（終了 $code）"; tail -3 "$log" | sed 's/^/  /'; } >> "$body"; fi
+            # main の QA ももう一度回す。日がたつと落ちる検査（月の変わり目・読み直しで消える「検査用の今日」）は PR が来るまで見えないため
+            # （incidents/2026-11-22-qa-rots-with-date.md）
+            if [ -f "$RUNNER_TEMP/g/$g/qa/run.mjs" ] && [ -f "$RUNNER_TEMP/g/$g/qa/package-lock.json" ]; then
+              qlog="$out/$g-qa.txt"
+              ( cd "$RUNNER_TEMP/g/$g/qa" && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --no-audit --no-fund >/dev/null 2>&1 ) \
+                && ( cd "$RUNNER_TEMP/g/$g" && CHROMIUM_PATH="$CHROME" timeout 900 node qa/run.mjs > "$qlog" 2>&1 )
+              qcode=$?
+              if [ "$qcode" -ne 0 ]; then found=$((found + 1)); { echo "## $g（main の QA が落ちた。日付で変わる検査を疑う）"; grep -E '^- ❌|^✗' "$qlog" | head -5 | sed -E 's/^(- |✗ ?)//; s/^/- /'; [ -s "$qlog" ] || echo "- npm ci か QA が動かなかった（終了 $qcode）"; echo; } >> "$body"; fi
+            fi
           done
           echo "見たゲーム: ${games[*]}" >> "$body"
           cat "$body" >> "$GITHUB_STEP_SUMMARY"

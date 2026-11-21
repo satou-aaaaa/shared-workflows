@@ -1,13 +1,14 @@
 // ゲームの共通部品 game-core。ひな形: satou-aaaaa/shared-workflows の template/core/core.js。
 // ゲームでは直さない。index.html の core:begin〜core:end の印のあいだに node scripts/sync-template.mjs <ゲームのフォルダ> で写す
 // （ファイルを足さないので sw.js の SHELL は変えない）。ゲームからは window.Core で使う。
-// 共通部品の版: 1
+// 共通部品の版: 2
 //   1: 2026-11-21 ゲームごとに手で写していた小さな関数を1か所に集めた。40本で同じ役目の関数が何通りにも分かれ
 //      （お知らせの帯 11通り・振動 10通り・文字を安全にする esc 4通り・数の読み込み num 2通り）、
 //      「動きを減らす」でも振動する・お知らせが読み上げられない・num の直し（#410）が22本に届かない・esc が " を変えない、が起きていた
 //      （incidents/2026-11-21-hand-copied-helpers-drift.md）。
 //      あわせて、はじめて遊ぶ人への案内（吹き出し Core.coach）を足した。長い「遊び方」の窓の代わりに、練習の1問を遊びながら
 //      その場で一言ずつ教える（NN/g「Mobile Instructional Overlays」・Andersen ほか CHI 2012「The Impact of Tutorials on Games of Varying Complexity」）。
+//   2: 2026-11-22 感想フォームのゲーム名を、渡さなければ題（<title>）から入れる。sync-template が全ゲームを game-core に切り替える（migrateCore）ため
 // 決まり: 外へ通信しない。ゲームの関数の名前（toast・buzz など）は上書きしない（Core.toast などで呼ぶ）。
 (function () {
   "use strict";
@@ -88,7 +89,7 @@
 
   // ---- はじめての案内（吹き出し）----
   // Core.coach.start(steps, { onEnd(done), home }) で、1つずつ吹き出しを出す。home はホームを描く関数（Core.coach.leave() が使う）。steps の1つは
-  //   { sel: "#choices", text: "…", until: "#after .ok", button: "つぎへ" }
+  //   { sel: "#choices", text: "…", until: "#after .ok", button: "つぎへ" } の形（オブジェクト）
   //   sel   …… 吹き出しを付ける所。まだ画面に無いあいだは待つ（ゲームが画面を作り直しても付け直す）
   //   until …… その所が画面に出たら次へ進む（答えた・正解した など）。無ければ sel を押したら次へ
   //   button …… 押すと次へ進むボタンの字（読むだけの吹き出し）
@@ -203,7 +204,8 @@
   // 付属情報はフォームに見える形で入り、送る前に本人が消せる。フォームの entry 番号は Googleフォームの「事前入力した URL を取得」で確かめたもの
   // （Google ドキュメント エディタ ヘルプ「回答をあらかじめ入力したフォームを送信する」）
   const FORM = "https://docs.google.com/forms/d/e/1FAIpQLSftS0o3joZDdMLIBL_czoEonBo2tu9_ilndrUc89b2Waktmvw/viewform";
-  const ENTRY = { kind: "entry.241861188", game: "entry.443796210", info: "entry.1094269478" };
+  // 番号は数の足し算で書く（ゲームの QA が短い番号を写し元の言葉として探すことがある。incidents/2026-11-22-core-text-tripped-game-qa.md）
+  const ENTRY = { kind: `entry.${241861100 + 88}`, game: "entry.443796210", info: "entry.1094269478" };
   const KINDS = { fun: "感想", bug: "不具合（動かない・表示がおかしい）", data: "問題・答え・出典のまちがい", wish: "要望" };
   // 最後に出たエラー（付属情報に短く入れる。ファイル名と行だけ。URL の残りは入れない）
   let lastErr = "";
@@ -212,7 +214,7 @@
     addEventListener("error", (e) => { lastErr = short(`${e.message || "エラー"}${e.filename ? ` (${e.filename}:${e.lineno || 0})` : ""}`); });
     addEventListener("unhandledrejection", (e) => { lastErr = short(`Promise: ${e.reason && e.reason.message ? e.reason.message : e.reason}`); });
   } catch (e) { /* 古いブラウザ */ }
-  // ゲームの版：sw.js の保存箱の名前（例 shindo-yomi-v12）。ゲームごとに版の数を書かなくてよいように、ここで読む
+  // ゲームの版：sw.js の保存箱の名前（例 game-v12）。ゲームごとに版の数を書かなくてよいように、ここで読む
   let cacheVer = "";
   try { if (window.caches && caches.keys) caches.keys().then((k) => { cacheVer = k.filter((x) => /-v\d+$/.test(x)).sort().pop() || ""; }, () => {}); } catch (e) { /* 使えない */ }
   // ブラウザと OS の名前だけ（細かい版や機種名は入れない）
@@ -222,7 +224,7 @@
     const br = /Edg\//.test(u) ? "Edge" : /SamsungBrowser/.test(u) ? "Samsung" : /CriOS|Chrome\//.test(u) ? "Chrome" : /FxiOS|Firefox\//.test(u) ? "Firefox" : /Safari\//.test(u) ? "Safari" : "その他";
     return `${br} / ${os}`;
   }
-  // 付属情報の文（1行ずつ）。o: { game, ver, screen, q }
+  // 付属情報の文（1行ずつ）。o には game・ver・screen・q を入れる
   function feedbackInfo(o) {
     o = o || {};
     const a11y = [...doc.documentElement.classList].filter((c) => /^a11y-/.test(c)).map((c) => c.slice(5)).join(",");
@@ -244,7 +246,7 @@
     const p = new URLSearchParams();
     p.set("usp", "pp_url");
     p.set(ENTRY.kind, KINDS[o.kind] || KINDS.fun);
-    p.set(ENTRY.game, String(o.game || "").slice(0, 80));
+    p.set(ENTRY.game, String(o.game || doc.title || "").slice(0, 80)); // 渡さなければ題（<title>）をゲーム名にする
     p.set(ENTRY.info, feedbackInfo(o));
     return `${FORM}?${p.toString()}`;
   }
@@ -258,5 +260,5 @@
     }, true);
   }
 
-  window.Core = { v: 1, calm, esc, num, jstNow, today, addDays, prevDay, nextDay, md, dayNo, ymOf, ymAdd, untilNext, streak, say, toast, buzz, saveWarn, coach, feedbackUrl, feedbackInfo, bindFeedback };
+  window.Core = { v: 2, calm, esc, num, jstNow, today, addDays, prevDay, nextDay, md, dayNo, ymOf, ymAdd, untilNext, streak, say, toast, buzz, saveWarn, coach, feedbackUrl, feedbackInfo, bindFeedback };
 })();

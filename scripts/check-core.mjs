@@ -22,6 +22,29 @@ ok(`${SRC} に HTML のコメント（<!-- -->）が無い（写しの区切り�
   const again = page.replace(CORE, () => coreBlock());
   ok('写しを2回かけても同じ（区切りを取りちがえない）', again === page && (again.match(/core:end -->/g) || []).length === 1);
 }
+{
+  // 全ゲームを game-core に切り替える（migrateCore）。決まった古い形だけを替え、何度かけても同じ
+  const { migrateCore, CORE, coreBlock } = await import('./sync-template.mjs');
+  const game = [
+    '<head><!-- a11y:begin -->a<!-- a11y:end -->\n<!-- store:begin -->s<!-- store:end -->',
+    '<script src="transfer.js" data-game="g" data-keys="g-v1"></script>\n<script src="depth.js"></script>\n</head><body><script>',
+    'const FEEDBACK = "https://github.com/satou-aaaaa/g/issues/new?template=feedback.yml";',
+    'const num = (v) => (Number.isFinite(+v) && +v >= 0 ? Math.floor(+v) : 0);',
+    'const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");',
+    'const buzz = (n = 12) => { try { navigator.vibrate && navigator.vibrate(n); } catch (e) {} };',
+    'const f = () => `<a href="${FEEDBACK}" target="_blank" rel="noopener">感想を送る</a>`;',
+    '<a id="fb2" target="_blank" rel="noopener">感想</a>',
+    '</script></body>',
+  ].join('\n');
+  const m = migrateCore(game);
+  const own = m.replace(CORE, '');
+  ok('migrateCore：game-core を保存の共通部品のすぐあと（transfer.js・depth.js・</head> の並びの前）に入れる', /<!-- store:end -->\n<!-- core:begin/.test(m) && /<\/script>\n<script src="depth\.js"><\/script>\n<\/head>/.test(m));
+  ok('migrateCore：古い num・esc・buzz を Core.* にする', /const num = Core\.num;/.test(own) && /const esc = Core\.esc;/.test(own) && /const buzz = Core\.buzz;/.test(own) && !/Number\.isFinite\(\+v\)/.test(own));
+  ok('migrateCore：感想のリンクを Googleフォームへ（data-feedback と bindFeedback を1つ）', (own.match(/data-feedback="fun"/g) || []).length === 2 && (own.match(/Core\.bindFeedback\(/g) || []).length === 1);
+  ok('migrateCore：何度かけても同じ', migrateCore(m) === m);
+  ok('migrateCore：共通部品のかたまりの中は替えない（同じ形の関数がある）', m.match(CORE)[0] === coreBlock());
+  ok('migrateCore：形のちがう関数・head の無いページは触らない', migrateCore('const num = (x) => +x;') === 'const num = (x) => +x;');
+}
 
 // 小さなにせものの画面（要るところだけ）
 function fakeDom({ calm = false, now = Date.parse('2026-11-21T14:00:00Z') } = {}) {
@@ -89,5 +112,28 @@ ok('保存できたら帯を消す', !made.some((m) => m.id === 'savewarn' && m.
 }
 ok('Core.coach に start・stop・active がある', ['start', 'stop', 'leave', 'active'].every((k) => typeof Core.coach[k] === 'function'));
 
+{
+  // 写した中身（core・store・写すときに足す行）が、ゲームの QA の決まりにかからない（2026-11-22 incidents/2026-11-22-core-text-tripped-game-qa.md）
+  //  - jobun-tobatsu など：行の途中の // のあとが ; { } ) で終わるとコードの途中と見る
+  //  - funka-level など：写し元の言葉として、相談窓口の短い番号（188 など）を探す
+  const { migrateCore } = await import('./sync-template.mjs');
+  const added = migrateCore('<head></head><script>\nconst FEEDBACK = "x";\n</script>');
+  for (const [f, t] of [['template/core/core.js', src], ['template/store/store.js', readFileSync('template/store/store.js', 'utf8')], ['migrateCore で足す行', added]]) {
+    const bad = t.split('\n').map((l) => (l.match(/(?:^|\s)\/\/(?!\S*\.)(.*)$/) || [])[1]).filter((c) => c && /(;|\{|\}\)?|=>\s*\S+\))\s*$/.test(c.trim()));
+    ok(`${f}：コメント // のあとを ; { } ) で終えない（${bad.slice(0, 2).join(' | ')}）`, bad.length === 0);
+    //  - 多くのゲーム：写し元のゲームの名前（shindo など）が残っていないかを見る。共通部品にはゲームの名前を書かない
+    const games = readFileSync('repos.txt', 'utf8').split('\n').filter((l) => /^[a-z]/.test(l)).map((l) => l.split(/\s+/)[0]).filter((n) => n.length > 3);
+    const named = games.filter((n) => t.includes(n));
+    ok(`${f}：ゲームの名前（repos.txt）を書かない（${named.join('・')}）`, named.length === 0);
+    ok(`${f}：相談窓口の番号を書かない（188・189 は長い数の一部でも。110・118・119・171 は単独で）`, !/188|189|(?<!\d)(110|118|119|171)(?!\d)/.test(t));
+  }
+}
+{
+  // 枠の無い古い sw.js（FONT_CACHE などがあって写せない）でも、SHELL に transfer-qr.js を足す。2回かけても同じ（2026-11-22 batsu-doko）
+  const { withQrShell } = await import('./sync-template.mjs');
+  const sw = 'const CACHE = "x-v1";\nconst FONT_CACHE = "x-fonts";\nconst SHELL = ["./", "./index.html", "./transfer.js"];\n';
+  const once = withQrShell(sw);
+  ok('写せない sw.js にも SHELL に transfer-qr.js を足す・2回かけても同じ', once.includes('"./transfer.js", "./transfer-qr.js"]') && withQrShell(once) === once && once.includes('FONT_CACHE'));
+}
 if (errors.length) { for (const e of errors) console.error(`✗ ${e}`); process.exit(1); }
 console.log('✓ game-core（template/core/core.js）');
