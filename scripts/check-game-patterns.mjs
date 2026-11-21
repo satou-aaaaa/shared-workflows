@@ -153,6 +153,13 @@ const bugCases = [
   ['困る作り：空白がちがっても終えたとことんが戻る形を見分ける', 'endless:revive', 'if (!r || bank( s, r ) || doneOf( r )) continue;'],
   ['困る作り：終えたとことんは戻さない', '', 'if (!x || !y) { const r = x || y; if (!r || bank(s, r) || doneOf(r) || (r.mode === "e" && n.runs[m] === null)) continue; }'],
   ['困る作り：cancel が無い', 'howto:close', HOWTO_OK.split('\n').slice(0, 2).join('\n')],
+  ['手写しの古い形：buzz が動きを減らすでも震える', 'core:buzz', 'const buzz = (n = 12) => { try { navigator.vibrate && navigator.vibrate(n); } catch (e) {} };'],
+  ['手写しの古い形：calm を見る buzz は出さない', '', 'const buzz = (n = 12) => { if (calm()) return; try { navigator.vibrate(n); } catch (e) {} };'],
+  ['手写しの古い形：esc が " を変えない', 'core:esc', 'const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");'],
+  ['手写しの古い形：num が配列を数にする', 'core:num', 'const num = (v) => (Number.isFinite(+v) && +v >= 0 ? Math.floor(+v) : 0);'],
+  ['手写しの古い形：#410 の num は出さない', '', 'const num = (v) => ((typeof v === "number" || typeof v === "string") && Number.isFinite(+v) && +v >= 0 ? Math.floor(+v) : 0);'],
+  ['手写しの古い形：toast が読み上げに届かない', 'core:toast', 'function toast(t) { const d = document.createElement("div"); d.textContent = t; document.body.appendChild(d); }'],
+  ['手写しの古い形：共通部品の中は見ない', '', '<!-- core:begin -->\nconst esc = (t) => String(t).replace(/&/g, "&amp;");\n<!-- core:end -->'],
 ];
 for (const [name, want, src] of bugCases) {
   const got = playerBugs(src).map((x) => x[0]).join();

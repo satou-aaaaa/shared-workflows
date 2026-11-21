@@ -1,0 +1,88 @@
+name: Game explore
+
+# まだ知らない不具合を探す（Claude は使わない）。毎週、公開のゲームを順番に 15 本ずつ「でたらめに」遊び（scripts/game-explore.mjs）、
+# 見つけた不具合を Issue 1件（ラベル「探索の不具合」）にまとめる。約13週で全部を1周する。
+# 直し方は routines/game-explore.md：再現ファイル（成果物 explore）をゲームの qa/repro/ に置いて直す → 以後は毎回の PR の Game QA が確かめる。
+on:
+  schedule:
+    # 毎週水曜 03:21 JST（= 火曜 18:21 UTC）。月曜の Scorecard・Weekly summary、火曜の Freshness と重ねない
+    - cron: "21 18 * * 2"
+  workflow_dispatch:
+    inputs:
+      games:
+        description: 見るゲーム（空白区切り。空なら今週の順番）
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: game-explore
+  cancel-in-progress: false
+
+jobs:
+  explore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Playwright を入れる
+        run: |
+          mkdir -p "$RUNNER_TEMP/pw" && cd "$RUNNER_TEMP/pw"
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund playwright@1.65.1
+          npx playwright install --with-deps chromium
+      - name: でたらめに遊んで探す
+        env:
+          GAMES_IN: ${{ inputs.games }}
+          PW_DIR: ${{ runner.temp }}/pw
+        run: |
+          set -uo pipefail
+          if [ -n "${GAMES_IN:-}" ]; then read -r -a games <<<"$GAMES_IN"
+          else
+            mapfile -t all < <(awk '$2 == "game" { print $1 }' repos.txt | sort)
+            week=$(( $(date +%s) / 604800 )); n=${#all[@]}; per=15; start=$(( (week * per) % n ))
+            games=(); for i in $(seq 0 $((per - 1))); do games+=("${all[$(( (start + i) % n ))]}"); done
+          fi
+          out="$RUNNER_TEMP/explore"; mkdir -p "$out"
+          body="$RUNNER_TEMP/body.md"; found=0
+          { echo "でたらめに遊んで見つけた不具合です（自動。毎週15本ずつ）。直し方は routines/game-explore.md。再現ファイルは、この回の成果物 explore にあります。"; echo; } > "$body"
+          for g in "${games[@]}"; do
+            [[ "$g" =~ ^[a-z0-9-]+$ ]] || continue
+            git clone -q --depth 1 "https://github.com/satou-aaaaa/$g.git" "$RUNNER_TEMP/g/$g" || { echo "- $g：取ってこれなかった" >> "$body"; continue; }
+            [ -f "$RUNNER_TEMP/g/$g/index.html" ] || continue
+            log="$out/$g.txt"
+            timeout 600 node scripts/game-explore.mjs "$RUNNER_TEMP/g/$g" --runs 4 --steps 30 --out "$out/$g" > "$log" 2>&1
+            code=$?
+            if [ "$code" -eq 1 ]; then found=$((found + 1)); { echo "## $g"; grep '^✗' "$log" | sed 's/^/- /'; echo; } >> "$body"
+            elif [ "$code" -ne 0 ]; then { echo "- $g：探す道具が止まった（終了 $code）"; tail -3 "$log" | sed 's/^/  /'; } >> "$body"; fi
+          done
+          echo "見たゲーム: ${games[*]}" >> "$body"
+          cat "$body" >> "$GITHUB_STEP_SUMMARY"
+          echo "found=$found" >> "$GITHUB_ENV"
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: explore
+          path: ${{ runner.temp }}/explore/
+          if-no-files-found: ignore
+      - name: Issue にまとめる
+        if: env.found != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          body="$RUNNER_TEMP/body.md"
+          node scripts/fit-body.mjs "$body"
+          title="探索で見つけた不具合"
+          gh label create 探索の不具合 --color D93F0B --description "Game explore が見つけた不具合（自動）" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
+          open=$(gh issue list -R "$GITHUB_REPOSITORY" --label 探索の不具合 --state open --limit 20 --json number,title --jq ".[] | select(.title == \"$title\") | .number" | head -1)
+          if [ -n "$open" ]; then gh issue comment "$open" -R "$GITHUB_REPOSITORY" --body-file "$body"
+          else gh issue create -R "$GITHUB_REPOSITORY" --label 探索の不具合 --title "$title" --body-file "$body"; fi

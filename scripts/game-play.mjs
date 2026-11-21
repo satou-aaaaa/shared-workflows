@@ -19,7 +19,7 @@ const out = [];
 for (let k = 0; k < +runs; k++) {
   const p = await b.newPage({ viewport: { width: 390, height: 844 } });
   await p.goto(`http://localhost:${port}/`); await p.waitForTimeout(400);
-  await p.evaluate(() => document.querySelectorAll("dialog[open]").forEach((d) => d.close()));
+  await p.evaluate(() => { document.querySelectorAll("dialog[open]").forEach((d) => d.close()); if (window.Core && Core.coach && Core.coach.active()) Core.coach.leave(); }); // はじめての練習1問と吹き出し（game-core）はやめてホームへ
   await p.click("#" + btn); await p.waitForTimeout(200);
   const t0 = Date.now(); let qs = 0, tries = 0, first = 0, seen = [];
   for (let step = 0; step < 400; step++) {

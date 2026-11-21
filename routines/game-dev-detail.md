@@ -153,6 +153,14 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 
 保存に失敗したときの写し `mem` と localStorage を合わせる決まりは、共通部品 `template/store/store.js` だけに置く。ゲームの `load()` は `return GameStore.load(KEY, mem, { v: 1, fresh, tidy, bank, doneOf, bookOf, objs: [...] })` の1つにし、合わせ方を自分で書かない（ちがうところは `join`・`field`・`differ`・`after` などの手で渡す。手の一覧は store.js の頭）。部品は index.html の `<!-- store:begin -->`〜`<!-- store:end -->` に `node scripts/sync-template.mjs <ゲームのフォルダ>` で写す（ファイルを足さないので sw.js の SHELL は変えない）。直すときは store.js と `scripts/check-store.mjs` を直し、写しを配る。まだ切り替えていないゲームは drift-check が `store:load` で出す（incidents/2026-11-17-endless-revive-after-save-failure.md）。
 
+## 共通部品 game-core（小さな関数・はじめての案内・感想。satou さん 2026-11-21「共通部品 game-core」「遊び方を練習1問＋吹き出しに」）
+
+- `template/core/core.js` を index.html の `<!-- core:begin -->`〜`<!-- core:end -->` に `node scripts/sync-template.mjs` で写す（ゲームでは直さない）。ゲームの script より前、`<head>` の中に置く。
+- 手で書かない：日付（`Core.today`・`prevDay`・`md`・`dayNo`・`ymAdd`・`untilNext`）・連続（`Core.streak`）・お知らせ（`Core.toast`。読み上げにも届く）・振動（`Core.buzz`。「動きを減らす」では震えない）・`Core.esc`（属性にも入れてよい）・`Core.num`・保存できない帯（`Core.saveWarn`）。手で写すと何通りにも分かれて不具合が出る（incidents/2026-11-21-hand-copied-helpers-drift.md）。
+- はじめての案内：初回は「遊び方」の窓を開かず、点数に入らない練習の1問を出して `Core.coach.start(steps, { home })` で吹き出しを2〜4個。`s.tut` は始めたその場で true。くわしい遊び方はフッターに残す。吹き出しは押す所を隠さない（`pos`）。根拠：NN/g「Mobile Instructional Overlays」（前置きの説明は飛ばされ忘れられる・その場で短く）、Andersen ほか CHI 2012（簡単なゲームでは前置きのチュートリアルの効果は薄い）、Apple「Onboarding for Games」（遊びながら教える）。
+- 感想：リンクに `data-feedback="fun|bug|data|wish"` を付け、`Core.bindFeedback(() => ({ game, screen, q }))` を1回呼ぶ。全ゲームで1つの Googleフォームの事前入力リンクになる（GitHub のアカウントが無くても送れる。入力は「内容」だけ。名前・メール・記録は入れない）。問題の解説には「この問題のまちがいを知らせる」（data）を置く。
+- 検査：`template/qa/core-check.mjs` の `checkCore({ browser, url, check, solve })` を qa/run.mjs から呼ぶ。
+
 ## トークンを節約する（satou さん 2026-11-07「トークンを節約するための改善も」）
 
 ゲームのスレッドは十数本が同時に動くので、1本の読みすぎが全部の利用枠を減らす。出典：[Claude Code: Manage costs](https://code.claude.com/docs/en/costs)（CLAUDE.md は短く・長い出力はしぼる）、[Memory](https://code.claude.com/docs/en/memory)（`@` で取り込んだファイルは全文が毎回読まれる）。

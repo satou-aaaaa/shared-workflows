@@ -6,6 +6,7 @@
 //   transfer.js・depth.js・qa/a11y.mjs・qa/transfer-check.mjs・qa/sw-check.mjs・qa/depth-check.mjs …… そのまま写す（depth.js は 2026-11-11 から。入れたゲームだけ）
 //   index.html の <!-- a11y:begin -->〜<!-- a11y:end --> …… その間だけ写す
 //   index.html の <!-- store:begin -->〜<!-- store:end --> …… template/store/store.js を <script> に包んで写す（保存の読み直しの共通部品。2026-11-17 から）
+//   index.html の <!-- core:begin -->〜<!-- core:end --> …… template/core/core.js を <script> に包んで写す（小さな関数と、はじめての案内の吹き出し。2026-11-21 から）
 //   sw.js …… ひな形を写し、// game:begin〜// game:end の間（CACHE・SHELL）はゲームのものを残す。
 //            まだ枠の無い古い sw.js からは const CACHE と const SHELL の行を拾って枠に入れる
 //   scripts/setup.sh …… ひな形を写し、npm_dir= と next= の行はゲームのものを残す
@@ -32,6 +33,10 @@ export const STORE = /<!-- store:begin[\s\S]*?<!-- store:end -->/;
 // index.html に写す保存の共通部品のかたまり（ファイルを足さないので、sw.js の SHELL も電波の無いときの動きも変わらない）
 export const storeBlock = () => `<!-- store:begin（template/store/store.js の写し。ここでは直さない。node scripts/sync-template.mjs で写す） -->\n<script id="game-store">\n${tpl('store/store.js')}</script>\n<!-- store:end -->`;
 
+export const CORE = /<!-- core:begin[\s\S]*?<!-- core:end -->/;
+// index.html に写す game-core のかたまり（window.Core。ゲームの script より前、<head> の中に置く）
+export const coreBlock = () => `<!-- core:begin（template/core/core.js の写し。ここでは直さない。node scripts/sync-template.mjs で写す） -->\n<script id="game-core">\n${tpl('core/core.js')}</script>\n<!-- core:end -->`;
+
 // sw.js のゲームの枠を取り出す（無ければ古い形から CACHE と SHELL の行を拾う）
 export function swRegion(old) {
   const m = old.match(REGION);
@@ -57,6 +62,11 @@ export function makeSw(old) {
   return tpl('sw.js').replace(REGION, () => region);
 }
 
+// sw.js の SHELL に transfer-qr.js を足す（transfer.js のすぐあと。電波の無いときも引き継ぎの QR を出せるように）。何度かけても同じ
+export function withQrShell(sw) {
+  return sw.replace(/^(const SHELL\s*=\s*\[[^\]]*?)(["'])\.\/transfer\.js\2/m, (m, head, q) => (/transfer-qr\.js/.test(sw) ? m : `${head}${q}./transfer.js${q}, ${q}./transfer-qr.js${q}`));
+}
+
 // ひな形の setup.sh に、ゲームの npm_dir= と next= を入れたもの
 export function makeSetup(old) {
   let out = tpl('scripts/setup.sh');
@@ -77,12 +87,16 @@ export function plan(dir) {
   const read = (p) => readFileSync(join(dir, p), 'utf8');
   const out = [];
   const want = (p, next, note) => { if (next !== null && read(p) !== next) out.push({ path: p, next, note }); };
+  const want2 = (p, next, note) => { if (!has(p) || read(p) !== next) out.push({ path: p, next, note }); }; // 無いファイルも足す
   if (has('qa/run.mjs') && has('sw.js') && !read('qa/run.mjs').includes('checkSwStall')) out.push({ path: 'qa/run.mjs', next: null, note: 'checkSwStall を呼んでいない（import { checkSwStall } from "./sw-check.mjs" と、sw.js の中身で check を1行足す）' });
   if (has('qa/run.mjs')) want('qa/run.mjs', roundSizes(read('qa/run.mjs')), '押せる所の 44px を丸めてくらべる');
   // sw.js を写せない（独自の働きがある）ゲームには、ひな形の sw.js を前にした sw の検査も写さない。写すと QA が「FLAGS が無い」などで落ちる
   // （2026-11-17 kokki-shuto。incidents/2026-11-17-sw-migration-drops-extras.md）
   const swStuck = has('sw.js') && makeSw(read('sw.js')) === null;
-  for (const p of ['transfer.js', 'depth.js', 'qa/a11y.mjs', 'qa/transfer-check.mjs', 'qa/sw-check.mjs', 'qa/depth-check.mjs']) if (has(p) && !(swStuck && p === 'qa/sw-check.mjs')) want(p, tpl(p));
+  // 版14：transfer.js の QR の部品は transfer-qr.js に分けた。transfer.js のあるゲームには無くても足す（sw.js の SHELL にも下で足す）
+  if (has('transfer.js')) want2('transfer-qr.js', tpl('transfer-qr.js'), has('transfer-qr.js') ? '' : '足した（引き継ぎの QR の部品。箱を開いたときにだけ読む）');
+  for (const p of ['transfer.js', 'depth.js', 'qa/a11y.mjs', 'qa/transfer-check.mjs', 'qa/sw-check.mjs', 'qa/depth-check.mjs', 'qa/core-check.mjs']) if (has(p) && !(swStuck && p === 'qa/sw-check.mjs')) want(p, tpl(p));
+  if (has('index.html') && CORE.test(read('index.html')) && has('qa') && !has('qa/core-check.mjs')) out.push({ path: 'qa/core-check.mjs', next: tpl('qa/core-check.mjs'), note: '足した。qa/run.mjs から checkCore を呼ぶ' });
   if (has('depth.js') && has('qa') && !has('qa/depth-check.mjs')) out.push({ path: 'qa/depth-check.mjs', next: tpl('qa/depth-check.mjs'), note: '足した。qa/run.mjs から checkDepth を呼ぶ' });
   // sw.js があるのに sw の検査が無いゲームには足す（qa/run.mjs から呼ぶのは手で。下で知らせる）
   if (has('sw.js') && !swStuck && has('qa') && !has('qa/sw-check.mjs')) out.push({ path: 'qa/sw-check.mjs', next: tpl('qa/sw-check.mjs'), note: '足した。qa/run.mjs から checkSwStall を呼ぶ' });
@@ -91,10 +105,12 @@ export function plan(dir) {
     const block = tpl('a11y/a11y.html').match(A11Y)[0];
     let next = A11Y.test(html) ? html.replace(A11Y, () => block) : html;
     if (STORE.test(next)) next = next.replace(STORE, () => storeBlock());
-    if (A11Y.test(html) || STORE.test(html)) want('index.html', next, '見やすさの設定・保存の共通部品');
+    if (CORE.test(next)) next = next.replace(CORE, () => coreBlock());
+    if (A11Y.test(html) || STORE.test(html) || CORE.test(html)) want('index.html', next, '見やすさの設定・保存の共通部品・game-core');
   }
   if (has('sw.js')) {
-    const next = makeSw(read('sw.js'));
+    let next = makeSw(read('sw.js'));
+    if (next !== null && has('transfer.js')) next = withQrShell(next);
     if (next === null) out.push({ path: 'sw.js', next: null, note: '枠が無く、CACHE・SHELL を拾えないか、ほかの定数・関数（FLAGS・FONT_CACHE など）がある。写すと消えるので写さない（手で game:begin〜game:end の枠を作り、その働きを枠に入れる）' });
     else want('sw.js', next);
   }

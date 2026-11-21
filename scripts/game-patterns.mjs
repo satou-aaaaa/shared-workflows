@@ -164,6 +164,14 @@ export function playerBugs(page) {
   if (/Depth\.bindSure\(\s*[^,()]+\)/.test(s)) out.push(['depth:twice', 'index.html の Depth.bindSure に回の印が無い（別のタブで先に答えると「自信あり」が2回数えられる。Depth.bindSure(tag, cur.id + "|" + cur.i) にし、depth.js を深さの版5以上に。routines/game-dev-detail.md「1問を深くする」）']);
   if (cutMoves(page)) out.push(['hint:cut-moves', 'index.html の cutOf が、まちがいの数で消す選び肢を変える（しぼったあとにまちがいを選ぶと、消した選び肢が戻る。正解でない選び肢のうち最後の1つ以外を消す形にし、QA に検査を足す。routines/game-dev.md「共通の形」のヒント）']);
   if (leftFixed(page)) out.push(['hint:left-fixed', 'index.html のヒント2の「のこりは2つです」が決まった数（先に最後のまちがいを選んでいると押せるのは正解だけ。いま押せる選び肢の数を出す。routines/game-dev.md「共通の形」のヒント）']);
+  // 手で写した小さな関数の古い形（共通部品 game-core の Core.* に切り替えると全部直る。incidents/2026-11-21-hand-copied-helpers-drift.md）
+  const own = s.replace(/<!-- core:begin[\s\S]*?<!-- core:end -->/, '');
+  const def = (name) => (own.match(new RegExp(`(?:function\\s+${name}\\s*\\(|(?:const|let)\\s+${name}\\s*=)[^\\n]*`)) || [''])[0];
+  const buzz = def('buzz'), esc = def('esc'), num = def('num'), toast = def('toast');
+  if (/vibrate/.test(buzz) && !/calm|reduced-motion/.test(buzz)) out.push(['core:buzz', 'index.html の buzz が「動きを減らす」の設定でも震わせる（Core.buzz に切り替える。共通部品 game-core。routines/game-dev-detail.md「共通部品 game-core」）']);
+  if (/&amp;/.test(esc) && !/&quot;/.test(esc)) out.push(['core:esc', 'index.html の esc が " と \' を変えない（属性の中に入れると切れる。Core.esc に切り替える。共通部品 game-core）']);
+  if (/Number\.isFinite\(\s*\+v\s*\)/.test(num) && !/typeof/.test(num)) out.push(['core:num', 'index.html の num が配列や true を数にする古い形（#410 の直しが届いていない。Core.num に切り替える。共通部品 game-core）']);
+  if (/createElement/.test(toast) && !/aria-live|role|tell\(|say\(|live/.test(toast)) out.push(['core:toast', 'index.html の toast が読み上げに届かない（画面を読む人に知らせが聞こえない。Core.toast に切り替える。共通部品 game-core）']);
   if (starsBare(page)) out.push(['stars:role', 'index.html の星の表示（class="stars"）に role="img" が無いか、取れなかった星も ★ で色だけで分けている（<span class="stars" role="img" aria-label="星Nつ"> にし、取れなかった星は ☆。routines/game-dev.md「共通の形」の星）']);
   return out;
 }

@@ -40,6 +40,7 @@
 | 9 | 古くなる情報の見直し（週1・火曜朝。Freshness の Issue を読む） | [freshness.md](../routines/freshness.md) | `CRON_TZ=Asia/Tokyo 43 10 * * 2`（毎回新しいセッション） | ゲームの古くなる情報を見張る（報告の届け先） | 既定 |
 | 10 | ゲームの日本語の読み合わせ（週1・金曜朝） | [game-ja.md](../routines/game-ja.md) | `CRON_TZ=Asia/Tokyo 33 10 * * 5`（毎回新しいセッション） | ゲームのわかりにくい日本語を直す（報告の届け先） | 既定 |
 | 11 | ゲームのおもしろさの見直し（週1・月曜午後） | [game-fun.md](../routines/game-fun.md) | `CRON_TZ=Asia/Tokyo 47 15 * * 1`（毎回新しいセッション） | ゲームのおもしろさを週1で見直す（報告の届け先） | 既定 |
+| 12 | 探索で見つけた不具合を直す（Game explore の Issue を読む） | [game-explore.md](../routines/game-explore.md) | 単独の定期実行は作らない。6「ゲームを1本磨く」の回（水曜）が、Issue「探索で見つけた不具合」が開いていれば先に行う（[game-dev.md](../routines/game-dev.md) B 手順3） | — | 既定 |
 
 ## ほかのプロジェクトのルーティン（手順書がこのリポジトリにあるもの）
 
