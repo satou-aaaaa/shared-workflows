@@ -20,3 +20,9 @@
 - [x] 直す: 番号を `241861100 + 88` の足し算で書き、2つのコメントを `}` で終わらない文にし、core.js・store.js からゲームの名前を消した（#568）
 - [x] 防ぐ: check-core.mjs が core.js・store.js・migrateCore で足す行に、3つの決まり（コメントの行末・相談窓口の番号・repos.txt のゲームの名前）を当てる。check.sh と CI の Lint で落ちる（#568）
 - [x] 見つける: 共通部品を変えた PR は、配る前に手元のゲームで sync-template をかけて QA を回す（`routines/game-dev-detail.md` の「全ゲームへ写す前」。#568）
+
+## 追記（2026-11-22 朝、同じ種類の4本目）
+- 起きたこと: Template sync の PR を自動でマージしたとき、inshi-ikura #2 だけ QA で止まった。QA の「写し元（ひらく？とじる？）の言葉が残っていない」が、core.js の吹き出しのボタン「案内をとじる」にかかった。
+- なぜ見つからなかったか: check-core.mjs は決まった3つの形しか見ない。ゲームごとに書く「写し元」の言葉は何でもありうるので、手元の40本だけで試したときは当たらなかった。
+- [x] 直す: ボタンと説明を「案内を閉じる」にした（core-check.mjs の見出しも）。
+- [x] 防ぐ: `copyWordHits`（scripts/game-patterns.mjs）が、各ゲームの qa/run.mjs の「写し元」検査（`!/…/.test(`）の正規表現を、core.js・store.js・migrateCore が足す行に当てる。drift-check が全ゲームを見て `qa:copy-words` で知らせる。Lint（check-game-patterns.mjs）が「いまの core は とじる にかからない」と、見分けの動きを確かめる。全198本の qa/run.mjs に当てて、直したあとはかかる所が無い。

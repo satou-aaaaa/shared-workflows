@@ -175,3 +175,18 @@ export function playerBugs(page) {
   if (starsBare(page)) out.push(['stars:role', 'index.html の星の表示（class="stars"）に role="img" が無いか、取れなかった星も ★ で色だけで分けている（<span class="stars" role="img" aria-label="星Nつ"> にし、取れなかった星は ☆。routines/game-dev.md「共通の形」の星）']);
   return out;
 }
+
+// QA の「写し元の言葉が残っていない」検査（!/…/.test(…)）が、共通部品の文（core・store・migrateCore が足す行）にかかるか。
+// かかると、共通部品を写した PR だけがそのゲームの QA で落ちる（2026-11-22 inshi-ikura #2「とじる」。incidents/2026-11-22-core-text-tripped-game-qa.md）
+// texts は { 名前: 文 }。かかった [名前, かかった言葉] を返す
+export function copyWordHits(qa, texts) {
+  const hits = [];
+  for (const line of qa.split('\n')) {
+    if (!/写し元/.test(line)) continue;
+    for (const m of line.matchAll(/!\/((?:\\.|\[(?:\\.|[^\]\n])*\]|[^\/\n\\[])+)\/([a-z]*)\.test\(/g)) {
+      let re; try { re = new RegExp(m[1], m[2].replace(/[gy]/g, '')); } catch { continue; }
+      for (const [k, t] of Object.entries(texts)) { const h = t.match(re); if (h) hits.push([k, h[0]]); }
+    }
+  }
+  return hits;
+}
