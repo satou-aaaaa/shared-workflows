@@ -48,7 +48,7 @@ F1〜F7：遊ぶ量を縛らない（チケット・ライフなし）・遊ぶ�
 
 ## 引き継ぎコード（別の端末へ記録を移す。satou さん 2026-11-05）
 
-`template/transfer.js` と `template/qa/transfer-check.mjs` を写す（ゲームでは直さない）。取り込みは確認の画面を出し、コードは他人から届くものとして扱う。守ることの表は [game-dev-detail.md](game-dev-detail.md)。load() は GameStore、小さな関数・案内・感想は Core.*（同 game-core）。
+`node scripts/sync-template.mjs <ゲーム>` で写す（ゲームでは直さない）。取り込みは確認を出し、コードは他人から届くものとして扱う。表は [game-dev-detail.md](game-dev-detail.md)。load() は GameStore、小さな関数・案内・感想は Core.*（同 game-core）。
 
 ## トークンを節約する（satou さん 2026-11-07「トークンを節約するための改善も」）
 
@@ -57,7 +57,7 @@ F1〜F7：遊ぶ量を縛らない（チケット・ライフなし）・遊ぶ�
 ## 使う道具
 
 - GitHub の道具（PR を作る・読む・マージ）。検索は `gh api -X GET search/...`。
-- Playwright（クラウドに入っている Chromium。`playwright install` はしない）で、幅320px・390px の画面を撮って自分で見る。
+- Playwright（入っている Chromium。install しない）で幅320px・390px を撮って見る。
 - 報告は元のスレッドへの message_thread（ほかの AI は [tool-map.md](tool-map.md) の「スレッドへの返信」）。
 - 並列にするときは [parallel.md](parallel.md)（同時に3つまで・1つのエージェントは1つのリポジトリ）。
 
@@ -91,7 +91,7 @@ F1〜F7：遊ぶ量を縛らない（チケット・ライフなし）・遊ぶ�
 
 1. 節約モード（common.md）なら何もせず、update_status に1行書いて終える。
 2. 下の一覧を1つずつ `git clone --depth 1 https://github.com/satou-aaaaa/<リポジトリ>` し、`git -C <リポジトリ> log -1 --format=%cs` で最後に直した日を見る。
-3. いちばん日がたったゲームを1つ選ぶ。開いている PR があるゲームは飛ばす。
+3. いちばん日がたったゲームを1つ選ぶ（開いた PR があれば飛ばす）。Issue「探索で見つけた不具合」が開いていれば先に [game-explore.md](game-explore.md)。
 4. `bash scripts/setup.sh` と `node qa/run.mjs` を回し、スマホ幅で3回遊ぶ。
 5. 「退屈・分かりにくい・手ごたえが薄い」所を3つ書き出す。
 6. 下の表で直すものを1つ決める。
@@ -120,7 +120,7 @@ F1〜F7：遊ぶ量を縛らない（チケット・ライフなし）・遊ぶ�
 ## 報告
 
 - マージした PR があるときだけ、元のスレッドに1〜3行（どのゲームの・何を・PR のリンク）。
-- 何も無ければ update_status を1行更新して no_reply_needed で終える。
+- 無ければ update_status を1行更新して終える。
 
 ## やってはいけないこと
 

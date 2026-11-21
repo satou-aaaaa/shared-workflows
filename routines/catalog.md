@@ -55,6 +55,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | 控えの見張り（毎朝の書き出しが止まったら Issue。Claude が止まった合図） | satou-aaaaa/ops-backup（非公開）`watch.yml` | 毎日 12:23 JST |
 | CI時間 Issue | このリポジトリ `ci-time-report.yml` | 木曜 05:29 JST |
 | 古くなる情報の見張り Issue（台帳 `freshness.md`、e-Gov 法令API v2 の改正履歴） | このリポジトリ `freshness.yml` | 火曜 05:43 JST |
+| でたらめに遊んで未知の不具合を探す Issue（15本ずつ。直し方は [game-explore.md](game-explore.md)） | このリポジトリ `game-explore.yml`（道具は `scripts/game-explore.mjs`） | 水曜 03:21 JST |
 | 成績表 Issue | このリポジトリ `scorecard.yml` | 月曜 04:07 JST（週次まとめと2時間ずらす） |
 | 死活監視・Lighthouse・リンク切れ・ブランチ片付け・ラベル・CodeQL | 各リポジトリの `.github/workflows/`（中身はこのリポジトリの共通部品） | 毎日〜週1 |
 | CI 失敗 Issue・自動マージ・更新情報・公開後の確認 | 同上 | PR・push のたび |
