@@ -9,7 +9,7 @@
 //   - 「感想を送る」（a[data-feedback]）が共通の Googleフォームの事前入力リンクになる
 //   - はじめて開くと「遊び方」の窓（dialog）でなく、練習の1問と吹き出しが出る。押す所を隠さない（スマホ幅とパソコン幅）
 //   - 吹き出しのボタンは 44px 以上・名前がある・読み上げにも届く
-//   - 「案内をとじる」でも Esc でも消え、読み直しても二度と出ない（「見た」はその場で残る）
+//   - 「案内を閉じる」でも Esc でも消え、読み直しても二度と出ない（「見た」はその場で残る）
 //   - solve で最後まで進めると吹き出しが消える
 export async function checkCore({ browser, url, check, solve, first = true, widths = [360, 1280] }) {
   const open = async (w) => {
@@ -49,7 +49,7 @@ export async function checkCore({ browser, url, check, solve, first = true, widt
     }
     check("吹き出しが、押す所・読む所（印を付けた所）に重ならない", bad.length === 0, bad.join("・"));
     await p.click("#core-coach .core-coach-skip"); await p.waitForTimeout(100);
-    check("「案内をとじる」で消え、印も残らない", await p.locator("#core-coach").count() === 0 && await p.locator(".core-coach-on").count() === 0);
+    check("「案内を閉じる」で消え、印も残らない", await p.locator("#core-coach").count() === 0 && await p.locator(".core-coach-on").count() === 0);
     await p.reload(); await p.waitForTimeout(300);
     check("とじたあと読み直しても、吹き出しも遊び方の窓も出ない", await p.locator("#core-coach").count() === 0 && await p.locator("dialog[open]").count() === 0);
     check("はじめての案内でエラーが出ない", errs.length === 0, errs.join(" / "));

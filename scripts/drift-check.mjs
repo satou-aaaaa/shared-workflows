@@ -47,7 +47,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formProblems } from './check-issue-forms.mjs';
 import { readRepos, repoNames } from './repos.mjs';
-import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted, playerBugs, heightRaw, todayOnly } from './game-patterns.mjs';
+import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted, playerBugs, heightRaw, todayOnly, copyWordHits } from './game-patterns.mjs';
 import { bareUrls, linkFiles, checkedMd } from './link-text.mjs';
 
 const OWNER = process.env.OWNER || 'satou-aaaaa';
@@ -85,8 +85,10 @@ const FEEDBACK_NAME = formProblems(readFileSync(join(here, '..', 'template', '.g
 const A11Y_BLOCK = (t) => (t.match(/<!-- a11y:begin[\s\S]*?<!-- a11y:end -->/) || [''])[0];
 const A11Y_HTML = A11Y_BLOCK(readFileSync(join(here, '..', 'template', 'a11y', 'a11y.html'), 'utf8'));
 const A11Y_QA = readFileSync(join(here, '..', 'template', 'qa', 'a11y.mjs'), 'utf8');
-import { STORE, storeBlock } from './sync-template.mjs';
+import { STORE, storeBlock, migrateCore } from './sync-template.mjs';
 const STORE_HTML = storeBlock();
+// 共通部品の文（ゲームの QA の「写し元」検査がこれにかからないか見る。qa:copy-words）
+const CORE_TEXTS = { core: readFileSync(join(here, '..', 'template', 'core', 'core.js'), 'utf8'), store: readFileSync(join(here, '..', 'template', 'store', 'store.js'), 'utf8'), 足す行: migrateCore('<head></head><script>\nconst FEEDBACK = "x";\n</script>') };
 const SW_QA = readFileSync(join(here, '..', 'template', 'qa', 'sw-check.mjs'), 'utf8');
 
 const allowPath = join(here, 'drift-allow.json');
@@ -321,6 +323,8 @@ const results = await pool(REPOS, 4, async (r) => {
       if (wc.length) flag('qa:wait-count', `qa/run.mjs の ${wc.join('・')} 行目のくり返しが、待つだけの回（{ await p.waitForTimeout(…); continue; }）まで回数に数えている（遅い CI では回数が尽きて落ちる。待つ回は数えず、Date.now() で時間を区切る。incidents/2026-11-11-qa-loop-counts-waits.md）`);
       if (urlIncludes(qa)) flag('qa:url-includes', 'qa/run.mjs が URL を文字のまま includes・indexOf で探している（CodeQL が high の警告にして PR が赤のまま止まる。出典の定義を正規表現で見る。routines/game-dev.md の QA の行。incidents/2026-11-11-codeql-url-includes-in-qa.md）');
       if (heightRaw(qa)) flag('qa:height-raw', 'qa/run.mjs が押せる所の高さを丸めずに 44 とくらべている（出てくる動きの途中で 43.98… と測れ、ときどきだけ落ちる。Math.round(…height) < 44 にする。node scripts/sync-template.mjs が書きかえる。incidents/2026-11-17-qa-44px-subpixel.md）');
+      const cw = copyWordHits(qa, CORE_TEXTS);
+      if (cw.length) flag('qa:copy-words', `qa/run.mjs の「写し元の言葉が残っていない」検査が共通部品の文にかかる（${cw.map(([k, w]) => `${k}「${w}」`).join('・')}。共通部品を写す PR が QA で止まる。共通部品の言葉を変えるか、検査を「写し元」だけに絞る。incidents/2026-11-22-core-text-tripped-game-qa.md）`);
       if (todayOnly(qa)) flag('qa:today-only', 'qa/run.mjs が時計を今日に止めるのに、日付を変える口（QA_DATE か QA_SHIFT_DAYS）が無い（今日の問題でだけ落ちた QA を、翌日に手元で再現できない。routines/game-dev-detail.md の QA の行。incidents/2026-11-18-qa-passes-only-some-days.md）');
       if (lit) flag('qa:literal-id', `qa/run.mjs の例外を待つ検査に、問題 id を文字で書いている「${lit[0].slice(-24)}」（G.POOL などデータから選ぶ。routines/game-dev.md の QA の行）`);
     }
