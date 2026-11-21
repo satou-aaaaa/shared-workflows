@@ -160,6 +160,7 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 - はじめての案内：初回は「遊び方」の窓を開かず、点数に入らない練習の1問を出して `Core.coach.start(steps, { home })` で吹き出しを2〜4個。`s.tut` は始めたその場で true。くわしい遊び方はフッターに残す。吹き出しは押す所を隠さない（`pos`）。根拠：NN/g「Mobile Instructional Overlays」（前置きの説明は飛ばされ忘れられる・その場で短く）、Andersen ほか CHI 2012（簡単なゲームでは前置きのチュートリアルの効果は薄い）、Apple「Onboarding for Games」（遊びながら教える）。
 - 感想：リンクに `data-feedback="fun|bug|data|wish"` を付け、`Core.bindFeedback(() => ({ game, screen, q }))` を1回呼ぶ。全ゲームで1つの Googleフォームの事前入力リンクになる（GitHub のアカウントが無くても送れる。入力は「内容」だけ。名前・メール・記録は入れない）。問題の解説には「この問題のまちがいを知らせる」（data）を置く。
 - 検査：`template/qa/core-check.mjs` の `checkCore({ browser, url, check, solve })` を qa/run.mjs から呼ぶ。
+- 切り替え（2026-11-22）：`sync-template.mjs` の `migrateCore` が、見やすさの設定のあるゲームへ game-core を入れ、決まった古い形（num・esc・buzz・読み上げの無い toast）を `Core.*` に替え、「感想を送る」を Googleフォームにする（Template sync が全ゲームへ PR）。形のちがう関数（`core:*` が残るもの）とはじめての案内はゲームごとに手で。
 
 ## トークンを節約する（satou さん 2026-11-07「トークンを節約するための改善も」）
 

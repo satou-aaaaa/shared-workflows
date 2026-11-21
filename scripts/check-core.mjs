@@ -22,6 +22,28 @@ ok(`${SRC} に HTML のコメント（<!-- -->）が無い（写しの区切り�
   const again = page.replace(CORE, () => coreBlock());
   ok('写しを2回かけても同じ（区切りを取りちがえない）', again === page && (again.match(/core:end -->/g) || []).length === 1);
 }
+{
+  // 全ゲームを game-core に切り替える（migrateCore）。決まった古い形だけを替え、何度かけても同じ
+  const { migrateCore, CORE } = await import('./sync-template.mjs');
+  const game = [
+    '<head><!-- a11y:begin -->a<!-- a11y:end -->\n<!-- store:begin -->s<!-- store:end -->',
+    '<script src="transfer.js" data-game="g" data-keys="g-v1"></script>\n<script src="depth.js"></script>\n</head><body><script>',
+    'const FEEDBACK = "https://github.com/satou-aaaaa/g/issues/new?template=feedback.yml";',
+    'const num = (v) => (Number.isFinite(+v) && +v >= 0 ? Math.floor(+v) : 0);',
+    'const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");',
+    'const buzz = (n = 12) => { try { navigator.vibrate && navigator.vibrate(n); } catch (e) {} };',
+    'const f = () => `<a href="${FEEDBACK}" target="_blank" rel="noopener">感想を送る</a>`;',
+    '<a id="fb2" target="_blank" rel="noopener">感想</a>',
+    '</script></body>',
+  ].join('\n');
+  const m = migrateCore(game);
+  const own = m.replace(CORE, '');
+  ok('migrateCore：game-core を保存の共通部品のすぐあと（transfer.js・depth.js・</head> の並びの前）に入れる', /<!-- store:end -->\n<!-- core:begin/.test(m) && /<\/script>\n<script src="depth\.js"><\/script>\n<\/head>/.test(m));
+  ok('migrateCore：古い num・esc・buzz を Core.* にする', /const num = Core\.num;/.test(own) && /const esc = Core\.esc;/.test(own) && /const buzz = Core\.buzz;/.test(own) && !/Number\.isFinite\(\+v\)/.test(own));
+  ok('migrateCore：感想のリンクを Googleフォームへ（data-feedback と bindFeedback を1つ）', (own.match(/data-feedback="fun"/g) || []).length === 2 && (own.match(/Core\.bindFeedback\(/g) || []).length === 1);
+  ok('migrateCore：何度かけても同じ', migrateCore(m) === m);
+  ok('migrateCore：形のちがう関数・head の無いページは触らない', migrateCore('const num = (x) => +x;') === 'const num = (x) => +x;');
+}
 
 // 小さなにせものの画面（要るところだけ）
 function fakeDom({ calm = false, now = Date.parse('2026-11-21T14:00:00Z') } = {}) {

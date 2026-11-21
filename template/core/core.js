@@ -1,13 +1,14 @@
 // ゲームの共通部品 game-core。ひな形: satou-aaaaa/shared-workflows の template/core/core.js。
 // ゲームでは直さない。index.html の core:begin〜core:end の印のあいだに node scripts/sync-template.mjs <ゲームのフォルダ> で写す
 // （ファイルを足さないので sw.js の SHELL は変えない）。ゲームからは window.Core で使う。
-// 共通部品の版: 1
+// 共通部品の版: 2
 //   1: 2026-11-21 ゲームごとに手で写していた小さな関数を1か所に集めた。40本で同じ役目の関数が何通りにも分かれ
 //      （お知らせの帯 11通り・振動 10通り・文字を安全にする esc 4通り・数の読み込み num 2通り）、
 //      「動きを減らす」でも振動する・お知らせが読み上げられない・num の直し（#410）が22本に届かない・esc が " を変えない、が起きていた
 //      （incidents/2026-11-21-hand-copied-helpers-drift.md）。
 //      あわせて、はじめて遊ぶ人への案内（吹き出し Core.coach）を足した。長い「遊び方」の窓の代わりに、練習の1問を遊びながら
 //      その場で一言ずつ教える（NN/g「Mobile Instructional Overlays」・Andersen ほか CHI 2012「The Impact of Tutorials on Games of Varying Complexity」）。
+//   2: 2026-11-22 感想フォームのゲーム名を、渡さなければ題（<title>）から入れる。sync-template が全ゲームを game-core に切り替える（migrateCore）ため
 // 決まり: 外へ通信しない。ゲームの関数の名前（toast・buzz など）は上書きしない（Core.toast などで呼ぶ）。
 (function () {
   "use strict";
@@ -244,7 +245,7 @@
     const p = new URLSearchParams();
     p.set("usp", "pp_url");
     p.set(ENTRY.kind, KINDS[o.kind] || KINDS.fun);
-    p.set(ENTRY.game, String(o.game || "").slice(0, 80));
+    p.set(ENTRY.game, String(o.game || doc.title || "").slice(0, 80)); // 渡さなければ題（<title>）をゲーム名にする
     p.set(ENTRY.info, feedbackInfo(o));
     return `${FORM}?${p.toString()}`;
   }
@@ -258,5 +259,5 @@
     }, true);
   }
 
-  window.Core = { v: 1, calm, esc, num, jstNow, today, addDays, prevDay, nextDay, md, dayNo, ymOf, ymAdd, untilNext, streak, say, toast, buzz, saveWarn, coach, feedbackUrl, feedbackInfo, bindFeedback };
+  window.Core = { v: 2, calm, esc, num, jstNow, today, addDays, prevDay, nextDay, md, dayNo, ymOf, ymAdd, untilNext, streak, say, toast, buzz, saveWarn, coach, feedbackUrl, feedbackInfo, bindFeedback };
 })();
