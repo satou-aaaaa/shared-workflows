@@ -38,21 +38,22 @@
 2. shared-workflows を `git pull origin main` で新しくする。
 3. `node scripts/repos.mjs game` でゲームの一覧を出す。
 4. 台帳 `fun-review.md` に無いゲームを名前の順に、無ければ「見た日」がいちばん古いゲームから、2本選ぶ。
-5. 選んだゲームに開いている PR があれば飛ばし、次のゲームを選ぶ（`gh api repos/satou-aaaaa/<ゲーム>/pulls?state=open`）。
-6. 1本ずつ `git clone --depth 1 https://github.com/satou-aaaaa/<ゲーム>` する。
-7. `node scripts/game-fun.mjs ../<ゲーム>` を回し、△ を書き出す。
-8. `bash scripts/setup.sh` を回す（そのゲームのフォルダで）。
-9. Playwright でスマホ幅にし、次の3つを遊ぶ。1つにつき、かかった秒数・まちがえた数・「読まずに当たった問題」の数を書く。
+5. 選んだゲームがこの会話で読めない（`gh api` が「access to this repository is not enabled」）なら、`add_repo`（access: push）で足す。足せなければ飛ばし、次のゲームを選ぶ。
+6. 選んだゲームに開いている PR があれば飛ばし、次のゲームを選ぶ（`gh api repos/satou-aaaaa/<ゲーム>/pulls?state=open`）。
+7. 1本ずつ `git clone --depth 1 https://github.com/satou-aaaaa/<ゲーム>` する。
+8. `node scripts/game-fun.mjs ../<ゲーム>` を回し、△ を書き出す。
+9. `bash scripts/setup.sh` を回す（そのゲームのフォルダで）。
+10. Playwright でスマホ幅にし、次の3つを遊ぶ。1つにつき、かかった秒数・まちがえた数・「読まずに当たった問題」の数を書く。
    - 今日の問題を最後まで（初めての人として。ヒントは使わない）
    - 練習かとことんで、同じ種類を3回続けて（同じ問題が出たら数える）
    - 上級（あれば）
-10. 下の「直すもの」の表で、いちばん効くものを1つ決める。
-11. 直す。`qa/run.mjs` に、直したことの検査を1つ足す。
-12. `node qa/run.mjs` を通す（同時に回すのは2本まで）。
-13. PR を出す（[pr.md](pr.md)）。題は「おもしろさ：<何を直したか>」。本文に「遊んだ記録（秒数・まちがい・読まずに当たった数）」「game-fun の △」「なぜそれを直したか」「調べた要点と出典」を書く。
-14. 台帳 `fun-review.md` に、見た日・遊んだ記録の短いまとめ・PR を書き（名前の順の位置。もうある行は書きかえる）、shared-workflows に PR を出す。
-15. 遊んで見つけた偏りが `scripts/game-fun.mjs` で見つけられない形なら、測り方を足し、`--self-test` の見本にも足す（同じ PR に入れる）。
-16. 報告の届け先のスレッドに、2本の結果を3行以内で返す。
+11. 下の「直すもの」の表で、いちばん効くものを1つ決める。
+12. 直す。`qa/run.mjs` に、直したことの検査を1つ足す。
+13. `node qa/run.mjs` を通す（同時に回すのは2本まで）。
+14. PR を出す（[pr.md](pr.md)）。題は「おもしろさ：<何を直したか>」。本文に「遊んだ記録（秒数・まちがい・読まずに当たった数）」「game-fun の △」「なぜそれを直したか」「調べた要点と出典」を書く。
+15. 台帳 `fun-review.md` に、見た日・遊んだ記録の短いまとめ・PR を書き（名前の順の位置。もうある行は書きかえる）、shared-workflows に PR を出す。
+16. 遊んで見つけた偏りが `scripts/game-fun.mjs` で見つけられない形なら、測り方を足し、`--self-test` の見本にも足す（同じ PR に入れる）。
+17. 報告の届け先のスレッドに、2本の結果を3行以内で返す。
 
 ## 直すもの
 
