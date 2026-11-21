@@ -17,7 +17,7 @@
 | chikara-shurui |  |  |
 | chikei-ate |  |  |
 | chintai-kimari | 2026-11-21 | chintai-kimari#2（第2弾） |
-| chizu-kigo |  |  |
+| chizu-kigo |  | chizu-kigo#9（第3弾）（検査の指摘だけ直した。通しの読み合わせはまだ） |
 | chosakuken |  |  |
 | chusha-kyori |  |  |
 | dairi-kimari | 2026-11-21 | dairi-kimari#2（第1弾）・dairi-kimari#3（第2弾） |
@@ -38,14 +38,14 @@
 | ganseki-nakama |  |  |
 | gensen-ikura |  |  |
 | genso-kigo |  |  |
-| gogen-suiri |  |  |
+| gogen-suiri |  | gogen-suiri#11（第3弾）（検査の指摘だけ直した。通しの読み合わせはまだ） |
 | gurafu-minuki |  |  |
 | gyosei-kigen | 2026-11-21 | gyosei-kigen#3（第1弾） |
 | haigusha-ikura |  |  |
-| haku-uchi |  |  |
+| haku-uchi |  | haku-uchi#9（第3弾）（検査の指摘だけ直した。通しの読み合わせはまだ） |
 | hataraku-kigen | 2026-11-21 | hataraku-kigen#2（第1弾） |
 | hataraku-kimari | 2026-11-21 | hataraku-kimari#2（第2弾） |
-| hatsuden-kurabe |  |  |
+| hatsuden-kurabe |  | hatsuden-kurabe#7（第3弾）（検査の指摘だけ直した。通しの読み合わせはまだ） |
 | hikari-michi |  |  |
 | hikari-susumi |  |  |
 | hiraku-tojiru |  |  |
@@ -54,11 +54,11 @@
 | hosho-kimari | 2026-11-21 | hosho-kimari#2（第1弾） |
 | hotei-sokudo |  |  |
 | hozon-kikan | 2026-11-21 | hozon-kikan#2（第1弾） |
-| hyakunin-awase |  |  |
+| hyakunin-awase |  | hyakunin-awase#11（第3弾）（検査の指摘だけ直した。通しの読み合わせはまだ） |
 | hyoshiki-yomi |  |  |
 | ikukyu-shikumi | 2026-11-21 | ikukyu-shikumi#2（第1弾） |
 | inshi-ikura |  |  |
-| irai-kimari |  |  |
+| irai-kimari |  | irai-kimari#2（第3弾）（検査の指摘だけ直した。通しの読み合わせはまだ） |
 | iryohi-ikura |  |  |
 | jidosha-shurui |  |  |
 | jikken-kigu |  |  |
@@ -66,7 +66,7 @@
 | jintai-shikumi |  |  |
 | jishin-ikura |  |  |
 | jitensha-rule |  |  |
-| jobun-tobatsu |  |  |
+| jobun-tobatsu |  | jobun-tobatsu#26（第3弾）（検査の指摘だけ直した。通しの読み合わせはまだ） |
 | jotai-henka |  |  |
 | kabu-news |  |  |
 | kaden-anzen | 2026-11-21 | kaden-anzen#6（第2弾） |
@@ -81,7 +81,7 @@
 | kansen-yobo |  |  |
 | kasane-zome |  |  |
 | kaseki-ate |  |  |
-| kashikari-kimari |  |  |
+| kashikari-kimari |  | kashikari-kimari#2（第3弾）（検査の指摘だけ直した。通しの読み合わせはまだ） |
 | kazoku-kigen | 2026-11-21 | kazoku-kigen#2（第1弾） |
 | kazoku-kimari | 2026-11-21 | kazoku-kimari#2（第1弾）・kazoku-kimari#3（第2弾） |
 | keigen-zeiritsu |  |  |
@@ -111,13 +111,13 @@
 | kumo-namae |  |  |
 | kuruma-kigen | 2026-11-21 | kuruma-kigen#3（第1弾） |
 | kusuri-yomi | 2026-11-21 | kusuri-yomi#10（第2弾） |
-| kyukoku-mei |  |  |
+| kyukoku-mei |  | kyukoku-mei#10（第3弾）（検査の指摘だけ直した。通しの読み合わせはまだ） |
 | kyukyusha-yobu |  |  |
 | kyuyo-meisai |  |  |
 | login-mamori |  |  |
 | machi-michijun |  |  |
 | madori-puzzle |  |  |
-| mannaka-kanji |  |  |
+| mannaka-kanji |  | mannaka-kanji#30（第3弾）（検査の指摘だけ直した。通しの読み合わせはまだ） |
 | mansion-kimari | 2026-11-21 | mansion-kimari#2（第1弾） |
 | meirei-narabe |  |  |
 | menkyo-nenrei | 2026-11-21 | menkyo-nenrei#2（第1弾） |
@@ -130,13 +130,13 @@
 | nenkin-shikumi |  |  |
 | nijushi-sekki |  |  |
 | okane-kihon |  |  |
-| okurigana-dotchi |  |  |
-| onpu-yomi |  |  |
+| okurigana-dotchi |  | okurigana-dotchi#2（第3弾）（検査の指摘だけ直した。通しの読み合わせはまだ） |
+| onpu-yomi |  | onpu-yomi#10（第3弾）（検査の指摘だけ直した。通しの読み合わせはまだ） |
 | osatsu-himitsu |  |  |
 | otoku-dotchi |  |  |
 | otoshimono-kimari | 2026-11-21 | otoshimono-kimari#2（第1弾） |
 | otsukai-memo |  |  |
-| pikuto-yomi |  |  |
+| pikuto-yomi |  | pikuto-yomi#8（第3弾）（検査の指摘だけ直した。通しの読み合わせはまだ） |
 | recycle-mark |  |  |
 | rekishi-narabe |  |  |
 | risoku-jogen |  |  |
@@ -169,7 +169,7 @@
 | shokuchudoku-yobo |  |  |
 | shokuhin-hyoji |  |  |
 | shotokuzei-ikura |  |  |
-| shukujitsu-yurai |  |  |
+| shukujitsu-yurai |  | shukujitsu-yurai#9（第3弾）（検査の指摘だけ直した。通しの読み合わせはまだ） |
 | shukushaku-yomi |  |  |
 | souzoku-kihon |  |  |
 | suiyoeki-ate |  |  |
