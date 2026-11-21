@@ -22,6 +22,7 @@ node template/qa/depth-check.mjs template/depth.js
 node scripts/check-template-watch.mjs
 node scripts/check-sw-check.mjs
 node scripts/check-game-patterns.mjs
+node scripts/game-ja.mjs --self-test
 node scripts/check-link-text.mjs
 bash scripts/check-link-check-judge.sh
 bash scripts/check-post-deploy-judge.sh
