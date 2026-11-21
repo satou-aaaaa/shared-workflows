@@ -75,6 +75,7 @@ jobun-tobatsu game
 jotai-henka game
 kabu-news game
 kaden-anzen game
+kaden-sutekata game
 kagaku-henka game
 kaisha-kigen game
 kaji-mamoru game
