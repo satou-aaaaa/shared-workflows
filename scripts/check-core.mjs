@@ -24,7 +24,7 @@ ok(`${SRC} に HTML のコメント（<!-- -->）が無い（写しの区切り�
 }
 {
   // 全ゲームを game-core に切り替える（migrateCore）。決まった古い形だけを替え、何度かけても同じ
-  const { migrateCore, CORE } = await import('./sync-template.mjs');
+  const { migrateCore, CORE, coreBlock } = await import('./sync-template.mjs');
   const game = [
     '<head><!-- a11y:begin -->a<!-- a11y:end -->\n<!-- store:begin -->s<!-- store:end -->',
     '<script src="transfer.js" data-game="g" data-keys="g-v1"></script>\n<script src="depth.js"></script>\n</head><body><script>',
@@ -42,6 +42,7 @@ ok(`${SRC} に HTML のコメント（<!-- -->）が無い（写しの区切り�
   ok('migrateCore：古い num・esc・buzz を Core.* にする', /const num = Core\.num;/.test(own) && /const esc = Core\.esc;/.test(own) && /const buzz = Core\.buzz;/.test(own) && !/Number\.isFinite\(\+v\)/.test(own));
   ok('migrateCore：感想のリンクを Googleフォームへ（data-feedback と bindFeedback を1つ）', (own.match(/data-feedback="fun"/g) || []).length === 2 && (own.match(/Core\.bindFeedback\(/g) || []).length === 1);
   ok('migrateCore：何度かけても同じ', migrateCore(m) === m);
+  ok('migrateCore：共通部品のかたまりの中は替えない（同じ形の関数がある）', m.match(CORE)[0] === coreBlock());
   ok('migrateCore：形のちがう関数・head の無いページは触らない', migrateCore('const num = (x) => +x;') === 'const num = (x) => +x;');
 }
 

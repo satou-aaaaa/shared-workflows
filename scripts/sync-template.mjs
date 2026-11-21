@@ -47,6 +47,14 @@ export const CORE_SWAPS = [
   ['const buzz = (n = 12) => { try { navigator.vibrate && navigator.vibrate(n); } catch (e) {} };', 'const buzz = Core.buzz; // 共通部品 game-core（「動きを減らす」では震わせない）'],
   ['const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");', 'const esc = Core.esc; // 共通部品 game-core（" と \' も変える。属性の中でも切れない）'],
   ['function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1800); }', 'function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.setAttribute("aria-hidden", "true"); d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1800); Core.say(t); } // 読み上げにも届ける（共通部品 game-core）'],
+  // 日付の小さな関数（どのゲームでも同じ文字。ひとつにまとめて直す所を1か所にする。2026-11-22 satou さん「画面の共通部品」）
+  ['const ymOf = (k) => k.slice(0, 7);', 'const ymOf = Core.ymOf;'],
+  ['const ymAdd = (ym, n) => { const d = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + n, 1)); return d.toISOString().slice(0, 7); };', 'const ymAdd = Core.ymAdd;'],
+  ['const ymAdd = (ym, n) => new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + n, 1)).toISOString().slice(0, 7);', 'const ymAdd = Core.ymAdd;'],
+  ['const prevDay = (k) => new Date(Date.parse(k) - 864e5).toISOString().slice(0, 10);', 'const prevDay = Core.prevDay;'],
+  ['const md = (k) => `${+k.slice(5, 7)}/${+k.slice(8, 10)}`;', 'const md = Core.md;'],
+  ['const dayNo = (k) => Math.round((Date.parse(k) - Date.parse(EPOCH)) / 864e5) + 1;', 'const dayNo = (k) => Core.dayNo(k, EPOCH);'],
+  ['function streak(days) { let k = todayKey(), n = 0; if (!days[k]) k = prevDay(k); while (days[k]) { n++; k = prevDay(k); } return n; }', 'function streak(days) { return Core.streak(days); } // 続けて遊んだ日数（共通部品 game-core。壊れた記録・constructor などの名前を日に数えない）'],
 ];
 export function migrateCore(html) {
   if (!/<\/head>/i.test(html) || !/<script/i.test(html)) return html;
@@ -57,7 +65,9 @@ export function migrateCore(html) {
     if (ends.length) { const [m, i] = ends.sort((x, y) => y[1] - x[1])[0]; next = `${next.slice(0, i + m.length)}\n${coreBlock()}${next.slice(i + m.length)}`; }
     else next = next.replace(/<\/head>/i, () => `${coreBlock()}\n</head>`);
   }
-  for (const [a, b] of CORE_SWAPS) next = next.split(a).join(b);
+  // 替えるのはゲームの文字だけ（共通部品のかたまりの中には同じ形の関数があるので触らない）
+  const parts = next.split(/(<!-- (?:core|store|a11y):begin[\s\S]*?<!-- (?:core|store|a11y):end -->)/);
+  next = parts.map((x, i) => (i % 2 ? x : CORE_SWAPS.reduce((t, [a, b]) => t.split(a).join(b), x))).join('');
   next = next.split('href="${FEEDBACK}" target="_blank" rel="noopener"').join('href="${FEEDBACK}" data-feedback="fun" target="_blank" rel="noopener"');
   next = next.split('<a id="fb2" target="_blank" rel="noopener">').join('<a id="fb2" target="_blank" rel="noopener" data-feedback="fun">');
   if (!/Core\.bindFeedback\(/.test(next.replace(CORE, ''))) {
