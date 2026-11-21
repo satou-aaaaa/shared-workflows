@@ -162,6 +162,7 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 - 検査：`template/qa/core-check.mjs` の `checkCore({ browser, url, check, solve })` を qa/run.mjs から呼ぶ。
 - 切り替え（2026-11-22）：`sync-template.mjs` の `migrateCore` が、見やすさの設定のあるゲームへ game-core を入れ、決まった古い形（num・esc・buzz・読み上げの無い toast）を `Core.*` に替え、「感想を送る」を Googleフォームにする（Template sync が全ゲームへ PR）。形のちがう関数（`core:*` が残るもの）とはじめての案内はゲームごとに手で。
 - 保存の切り替え（同日）：`migrateStore` が、古い load()（保存の写しを手で合わせる形）のうち `scripts/store-legacy.mjs` の表にある形を `GameStore.load` に替える。表に足すのは `scripts/check-store-legacy.mjs` の3000組の読み比べで GameStore と同じ合わせ方だと分かった形だけ。
+- 全ゲームへ写す前：core.js・store.js を変えたら、手元のゲーム（なければ公開リポジトリを clone）で `node scripts/sync-template.mjs <ゲーム>` をかけて `node qa/run.mjs` を回す。ゲームごとの QA は言葉や形を禁じていることがある（例：数字の 188、行末が } のコメント）。見つけた決まりは `scripts/check-core.mjs` に足す。
 
 ## トークンを節約する（satou さん 2026-11-07「トークンを節約するための改善も」）
 

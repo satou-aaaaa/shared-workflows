@@ -112,5 +112,17 @@ ok('保存できたら帯を消す', !made.some((m) => m.id === 'savewarn' && m.
 }
 ok('Core.coach に start・stop・active がある', ['start', 'stop', 'leave', 'active'].every((k) => typeof Core.coach[k] === 'function'));
 
+{
+  // 写した中身（core・store・写すときに足す行）が、ゲームの QA の決まりにかからない（2026-11-22 incidents/2026-11-22-core-text-tripped-game-qa.md）
+  //  - jobun-tobatsu など：行の途中の // のあとが ; { } ) で終わるとコードの途中と見る
+  //  - funka-level など：写し元の言葉として、相談窓口の短い番号（188 など）を探す
+  const { migrateCore } = await import('./sync-template.mjs');
+  const added = migrateCore('<head></head><script>\nconst FEEDBACK = "x";\n</script>');
+  for (const [f, t] of [['template/core/core.js', src], ['template/store/store.js', readFileSync('template/store/store.js', 'utf8')], ['migrateCore で足す行', added]]) {
+    const bad = t.split('\n').map((l) => (l.match(/(?:^|\s)\/\/(?!\S*\.)(.*)$/) || [])[1]).filter((c) => c && /(;|\{|\}\)?|=>\s*\S+\))\s*$/.test(c.trim()));
+    ok(`${f}：コメント // のあとを ; { } ) で終えない（${bad.slice(0, 2).join(' | ')}）`, bad.length === 0);
+    ok(`${f}：相談窓口の番号を書かない（188・189 は長い数の一部でも。110・118・119・171 は単独で）`, !/188|189|(?<!\d)(110|118|119|171)(?!\d)/.test(t));
+  }
+}
 if (errors.length) { for (const e of errors) console.error(`✗ ${e}`); process.exit(1); }
 console.log('✓ game-core（template/core/core.js）');

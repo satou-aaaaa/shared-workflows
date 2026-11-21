@@ -6,7 +6,7 @@
 //   2: 終えた回の id を s.gone に持つゲーム（震度よみ型）で、新しい写しに残った終えた回が消えなかった（hataraku-kimari #1 で発見）。
 //      片方が null の回が、どちらかの写しの gone（既定は gone[r.id]）にあれば、どちらの写しにあっても null にする。
 // 使い方（ゲームの load()）:
-//   function load() { return GameStore.load(KEY, mem, { v: 1, fresh, tidy, bank, doneOf, bookOf, objs: ["days", "runs"] }); }
+//   function load() { return GameStore.load(KEY, mem, { v: 1, fresh, tidy, bank, doneOf, bookOf, objs: ["days", "runs"] }); } の形で使う
 // 決まり（どのゲームでも同じ。変えるときはここと scripts/check-store.mjs を直す）:
 //   - 2つの写し（localStorage と、保存に失敗したときの mem）を時刻 t で新しい n・古い o に分ける。
 //   - 数は多いほう・true は残す・入れ物は両方を合わせて数は多いほう（field で変えられる）。
