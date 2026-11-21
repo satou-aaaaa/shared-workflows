@@ -3,7 +3,7 @@
 // 共通部品の版: 2（上げたら写しの版も上がる。scripts/drift-check.mjs がずれを週次まとめに出す）
 //   1: とことんを終えた保存が失敗したあと、読み直しで古い回が戻る不具合が73本に広がっていた（incidents/2026-11-17-endless-revive-after-save-failure.md）。
 //      load() の合わせ方を1か所に集め、直すときはここだけ直す。
-//   2: 終えた回の id を s.gone に持つゲーム（震度よみ型）で、新しい写しに残った終えた回が消えなかった（hataraku-kimari #1 で発見）。
+//   2: 終えた回の id を s.gone に持つゲームで、新しい写しに残った終えた回が消えなかった（2026-11-18 に発見）。
 //      片方が null の回が、どちらかの写しの gone（既定は gone[r.id]）にあれば、どちらの写しにあっても null にする。
 // 使い方（ゲームの load()）:
 //   function load() { return GameStore.load(KEY, mem, { v: 1, fresh, tidy, bank, doneOf, bookOf, objs: ["days", "runs"] }); } の形で使う

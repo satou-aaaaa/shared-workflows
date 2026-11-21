@@ -204,7 +204,7 @@
   // 付属情報はフォームに見える形で入り、送る前に本人が消せる。フォームの entry 番号は Googleフォームの「事前入力した URL を取得」で確かめたもの
   // （Google ドキュメント エディタ ヘルプ「回答をあらかじめ入力したフォームを送信する」）
   const FORM = "https://docs.google.com/forms/d/e/1FAIpQLSftS0o3joZDdMLIBL_czoEonBo2tu9_ilndrUc89b2Waktmvw/viewform";
-  // 番号は数の足し算で書く（ゲームの QA が短い番号を写し元の言葉として探すことがある。2026-11-22 funka-level）
+  // 番号は数の足し算で書く（ゲームの QA が短い番号を写し元の言葉として探すことがある。incidents/2026-11-22-core-text-tripped-game-qa.md）
   const ENTRY = { kind: `entry.${241861100 + 88}`, game: "entry.443796210", info: "entry.1094269478" };
   const KINDS = { fun: "感想", bug: "不具合（動かない・表示がおかしい）", data: "問題・答え・出典のまちがい", wish: "要望" };
   // 最後に出たエラー（付属情報に短く入れる。ファイル名と行だけ。URL の残りは入れない）
@@ -214,7 +214,7 @@
     addEventListener("error", (e) => { lastErr = short(`${e.message || "エラー"}${e.filename ? ` (${e.filename}:${e.lineno || 0})` : ""}`); });
     addEventListener("unhandledrejection", (e) => { lastErr = short(`Promise: ${e.reason && e.reason.message ? e.reason.message : e.reason}`); });
   } catch (e) { /* 古いブラウザ */ }
-  // ゲームの版：sw.js の保存箱の名前（例 shindo-yomi-v12）。ゲームごとに版の数を書かなくてよいように、ここで読む
+  // ゲームの版：sw.js の保存箱の名前（例 game-v12）。ゲームごとに版の数を書かなくてよいように、ここで読む
   let cacheVer = "";
   try { if (window.caches && caches.keys) caches.keys().then((k) => { cacheVer = k.filter((x) => /-v\d+$/.test(x)).sort().pop() || ""; }, () => {}); } catch (e) { /* 使えない */ }
   // ブラウザと OS の名前だけ（細かい版や機種名は入れない）

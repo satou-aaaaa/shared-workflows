@@ -121,6 +121,10 @@ ok('Core.coach に start・stop・active がある', ['start', 'stop', 'leave', 
   for (const [f, t] of [['template/core/core.js', src], ['template/store/store.js', readFileSync('template/store/store.js', 'utf8')], ['migrateCore で足す行', added]]) {
     const bad = t.split('\n').map((l) => (l.match(/(?:^|\s)\/\/(?!\S*\.)(.*)$/) || [])[1]).filter((c) => c && /(;|\{|\}\)?|=>\s*\S+\))\s*$/.test(c.trim()));
     ok(`${f}：コメント // のあとを ; { } ) で終えない（${bad.slice(0, 2).join(' | ')}）`, bad.length === 0);
+    //  - 多くのゲーム：写し元のゲームの名前（shindo など）が残っていないかを見る。共通部品にはゲームの名前を書かない
+    const games = readFileSync('repos.txt', 'utf8').split('\n').filter((l) => /^[a-z]/.test(l)).map((l) => l.split(/\s+/)[0]).filter((n) => n.length > 3);
+    const named = games.filter((n) => t.includes(n));
+    ok(`${f}：ゲームの名前（repos.txt）を書かない（${named.join('・')}）`, named.length === 0);
     ok(`${f}：相談窓口の番号を書かない（188・189 は長い数の一部でも。110・118・119・171 は単独で）`, !/188|189|(?<!\d)(110|118|119|171)(?!\d)/.test(t));
   }
 }
