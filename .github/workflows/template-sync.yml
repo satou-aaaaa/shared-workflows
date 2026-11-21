@@ -4,7 +4,9 @@ run-name: "Template sync"
 # ひな形（template/）の共通部品を、全ゲームへ PR で配る（Claude は使わない）。
 # 2026-11-17 satou さん「共通化をし、そこを修正する、というかたちに」→「共通部品を自動で配る」（incidents/2026-11-17-endless-revive-after-save-failure.md）。
 # 各ゲームで node scripts/sync-template.mjs を回し、ちがいがあれば枝 template-sync に積んで PR を開く（あれば中身を入れ替える）。
-# PR はゲームの QA と Secret scan が ✅ になると、ゲームの automerge.yml が自動でマージする（sw.js を変える PR は手で。hold_paths）。
+# PR はゲームの QA と Secret scan が ✅ になると、ゲームの automerge.yml が自動でマージする。
+# sw.js を変える PR はゲームの automerge が止める（hold_paths）ので、下の merge が3時間ごとに、検査が全部 ✅ のものをマージする
+# （2026-11-22 satou さん「写す PR だけ自動マージ」。写す前に手元と公開の50本で QA を通して確かめ、QA は sw.js の SHELL も見る）。
 # .github/ は写さない（鍵に Workflows の権限を持たせない。呼び出しの写しは今までどおり手で）。
 # 鍵は環境「template-sync」の秘密 TEMPLATE_SYNC_TOKEN（fine-grained PAT。satou-aaaaa の全リポジトリ・Contents と Pull requests の書き込みだけ）。
 # GITHUB_TOKEN では他のリポジトリへ書けず、GITHUB_TOKEN で開いた PR では QA も動かないため（GitHub Docs「Triggering a workflow from a workflow」）。
@@ -18,6 +20,7 @@ on:
       - "scripts/sync-template.mjs"
   schedule:
     - cron: "40 22 * * 0" # 週1（日本時間の月曜 7:40）。配りそびれ・新作の拾い直し
+    - cron: "17 */3 * * *" # 3時間ごと。検査の通った写す PR をマージするだけ（merge）
   workflow_dispatch:
     inputs:
       only:
@@ -25,6 +28,11 @@ on:
         required: false
         type: string
         default: ""
+      merge_only:
+        description: "配らずに、検査の通った写す PR をマージするだけ"
+        required: false
+        type: boolean
+        default: false
 
 permissions: {}
 
@@ -34,6 +42,7 @@ concurrency:
 
 jobs:
   sync:
+    if: github.event_name == 'push' || (github.event_name == 'schedule' && github.event.schedule == '40 22 * * 0') || (github.event_name == 'workflow_dispatch' && !inputs.merge_only)
     runs-on: ubuntu-latest
     timeout-minutes: 60
     environment: template-sync
@@ -98,3 +107,66 @@ jobs:
           done
           echo "新しく開いた PR: $opened"
           exit $failed
+
+  # 写す PR（枝 template-sync・題「ひな形の共通部品を写す」・鍵の持ち主が開いたもの）のうち、次を全部満たすものを squash でマージする。
+  #   下書きでない・ぶつかりが無い（clean）・.github/ を変えない・head のコミットの検査が全部終わって失敗が無く、QA が ✅
+  #   ラベル「自動マージしない」は、ゲームの automerge が付けたもの（github-actions[bot]）だけなら外してマージする。人が付けたものは止める
+  # 鍵（PAT）でマージするので、main への push でゲームの QA・Pages の公開がふつうに動く。
+  merge:
+    needs: sync
+    if: always() && github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: template-sync
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: 検査の通った写す PR をマージする
+        env:
+          GH_TOKEN: ${{ secrets.TEMPLATE_SYNC_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          ONLY: ${{ inputs.only }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then echo "::warning::TEMPLATE_SYNC_TOKEN が無いのでマージしない"; exit 0; fi
+          me=$(gh api user --jq .login) || { echo "::warning::鍵の持ち主が読めない"; exit 0; }
+          games=${ONLY:-$(node scripts/repos.mjs game)}
+          merged=0; waiting=0; held=0
+          for r in $games; do
+            [[ "$r" =~ ^[a-z0-9-]+$ ]] || continue
+            pr=$(gh api "repos/$OWNER/$r/pulls?state=open&head=$OWNER:template-sync" --jq '.[0].number // empty' 2>/dev/null) || continue
+            [ -n "$pr" ] || continue
+            info=$(gh api "repos/$OWNER/$r/pulls/$pr") || continue
+            why=''
+            [ "$(jq -r .user.login <<<"$info")" = "$me" ] || why='開いた人が鍵の持ち主でない'
+            [ "$(jq -r .title <<<"$info")" = 'ひな形の共通部品を写す' ] || why="${why:-題がちがう}"
+            [ "$(jq -r .draft <<<"$info")" = false ] || why="${why:-下書き}"
+            st=$(jq -r .mergeable_state <<<"$info")
+            if [ -z "$why" ] && [ "$st" != clean ] && [ "$st" != unstable ]; then why="ぶつかり・待ち（$st）"; fi
+            sha=$(jq -r .head.sha <<<"$info")
+            if [ -z "$why" ] && gh api "repos/$OWNER/$r/pulls/$pr/files?per_page=100" --jq '.[].filename' | grep -q '^\.github/'; then why='.github/ を変える'; fi
+            if [ -z "$why" ]; then
+              runs=$(gh api "repos/$OWNER/$r/commits/$sha/check-runs?per_page=100" --jq '[.check_runs[] | select(.app.slug != "coderabbitai")]')
+              pending=$(jq '[.[] | select(.status != "completed")] | length' <<<"$runs")
+              bad=$(jq -r '[.[] | select(.status == "completed" and (.conclusion | IN("success", "skipped", "neutral") | not)) | .name] | join(",")' <<<"$runs")
+              qa=$(jq '[.[] | select((.name | test("(^|/ )qa$"; "i")) and .conclusion == "success")] | length' <<<"$runs")
+              if [ "$pending" -gt 0 ]; then why='検査の途中'; waiting=$((waiting+1))
+              elif [ -n "$bad" ]; then why="検査が落ちた（$bad）"
+              elif [ "$qa" -eq 0 ]; then why='QA の ✅ が無い'; fi
+            fi
+            if [ -z "$why" ] && jq -e '.labels[].name | select(. == "自動マージしない")' <<<"$info" >/dev/null; then
+              by=$(gh api "repos/$OWNER/$r/issues/$pr/events?per_page=100" --jq '[.[] | select(.event == "labeled" and .label.name == "自動マージしない") | .actor.login] | unique | join(",")')
+              if [ "$by" = 'github-actions[bot]' ]; then gh api -X DELETE "repos/$OWNER/$r/issues/$pr/labels/$(jq -rn '"自動マージしない" | @uri')" >/dev/null || why='ラベルを外せない'
+              else why="人がラベル「自動マージしない」を付けた（$by）"; fi
+            fi
+            if [ -n "$why" ]; then echo "… $r #$pr: $why"; held=$((held+1)); continue; fi
+            if gh api -X PUT "repos/$OWNER/$r/pulls/$pr/merge" -f merge_method=squash -f sha="$sha" >/dev/null; then echo "✓ $r #$pr をマージした"; merged=$((merged+1))
+            else echo "::warning::$r #$pr をマージできない"; fi
+            sleep 3
+          done
+          echo "マージ: $merged・止めた: $held（うち検査の途中 $waiting）" | tee -a "$GITHUB_STEP_SUMMARY"
