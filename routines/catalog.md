@@ -4,7 +4,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 新しいルーティン・定期の CI・決まった手順のスキルを作ったら、同じ PR でこの表に1行足す。止めたら消す。
 ルーティンとスキルの定期見直し（[routine-review.md](routine-review.md) の A）が、毎週 list_triggers とこの表を突き合わせる。
 
-最終確認: 2026-11-07（有効なルーティンを list_triggers で全件見た）
+最終確認: 2026-11-21（有効なルーティンを list_triggers で全件見た）
 
 ## Claude のルーティン（手順書がこのリポジトリにあるもの）
 
@@ -31,7 +31,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 
 | 作業 | 手順書 | 実行 |
 | --- | --- | --- |
-| sandbox 新規Issueの提案 | satou-aaaaa/sandbox `docs/routines/weekly-issue-proposal.md` | 水曜 8:47 JST |
+| sandbox 新規Issueの提案 | satou-aaaaa/sandbox `docs/routines/weekly-issue-proposal.md` | 水曜 13:47 JST（11/10・11/17 の 8:47 が利用上限で続けて落ちたため 11/21 に移した） |
 | 見回り（監督の巡回・面接の前後。カンバンへの集約は 2026-11-05 から休止） | このプロジェクトの共有フォルダ `board/patrol.md` | 毎日 8:07・20:07 JST |
 | 見回りの届き先を新しいスレッドに替える | このプロジェクトの共有フォルダ `board/patrol-weekly-reset.md` | 月曜 7:47 JST |
 | カンバンの頼みごとを片付ける | このプロジェクトの共有フォルダ `board/app-requests.md` | アプリでの答え・依頼のたび（ops-backup の app-inbox への push が合図）。GitHub の合図は Web の画面でしか付けられず、付くまでは見回り（8:07・20:07）が拾う（11/5 の1週間の振り返り：取りこぼし0） |
