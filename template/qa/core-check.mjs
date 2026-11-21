@@ -30,20 +30,6 @@ export async function checkCore({ browser, url, check, solve, first = true, widt
   {
     const { ctx, p, errs } = await open(widths[0]);
     check("game-core：window.Core があり版がある", await p.evaluate(() => !!(window.Core && window.Core.v >= 1)));
-    {
-      // 「感想を送る」（data-feedback）は、押したその時に全ゲーム共通の Googleフォームの事前入力リンクになる（GitHub のアカウントが無くても送れる）
-      await p.evaluate(() => { if (window.Core && Core.coach && Core.coach.active()) Core.coach.leave(); });
-      const fb = await p.evaluate(() => {
-        const a = document.querySelector("a[data-feedback]");
-        if (!a) return null;
-        const stop = (e) => e.preventDefault();
-        document.addEventListener("click", stop);
-        a.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
-        document.removeEventListener("click", stop);
-        return { href: a.href, target: a.target };
-      });
-      check("「感想を送る」が全ゲーム共通の Googleフォーム（ゲーム名と付属情報を事前入力）を新しいタブで開く", !!fb && /^https:\/\/docs\.google\.com\/forms\/d\/e\/[\w-]+\/viewform\?usp=pp_url&/.test(fb.href) && /entry\.443796210=[^&]+/.test(fb.href) && /entry\.1094269478=/.test(fb.href) && fb.target === "_blank", fb ? fb.href.slice(0, 120) : "data-feedback のリンクが無い");
-    }
     if (!first) { await ctx.close(); return; }
     check("はじめて開くと、遊び方の窓でなく練習の1問と吹き出しが出る", await p.locator("dialog[open]").count() === 0 && await p.locator("#core-coach:not([hidden])").count() === 1 && (await p.textContent("#core-coach-t")).length > 5);
     check("吹き出しに名前（aria-label）がある・ボタンは 44px 以上", await p.evaluate(() => { const c = document.getElementById("core-coach"); return !!c.getAttribute("aria-label") && [...c.querySelectorAll("button:not([hidden])")].every((b) => { const r = b.getBoundingClientRect(); return Math.round(r.height) >= 44 && Math.round(r.width) >= 44; }); }));
@@ -73,6 +59,22 @@ export async function checkCore({ browser, url, check, solve, first = true, widt
     const { ctx, p } = await open(widths[0]);
     await p.keyboard.press("Escape"); await p.waitForTimeout(100);
     check("Esc でも吹き出しが消える", await p.locator("#core-coach").count() === 0);
+    await ctx.close();
+  }
+  {
+    const { ctx, p } = await open(widths[0]);
+      // 「感想を送る」（data-feedback）は、押したその時に全ゲーム共通の Googleフォームの事前入力リンクになる（GitHub のアカウントが無くても送れる）
+      await p.evaluate(() => { if (window.Core && Core.coach && Core.coach.active()) Core.coach.leave(); });
+      const fb = await p.evaluate(() => {
+        const a = document.querySelector("a[data-feedback]");
+        if (!a) return null;
+        const stop = (e) => e.preventDefault();
+        document.addEventListener("click", stop);
+        a.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+        document.removeEventListener("click", stop);
+        return { href: a.href, target: a.target };
+      });
+      check("「感想を送る」が全ゲーム共通の Googleフォーム（ゲーム名と付属情報を事前入力）を新しいタブで開く", !!fb && /^https:\/\/docs\.google\.com\/forms\/d\/e\/[\w-]+\/viewform\?usp=pp_url&/.test(fb.href) && /entry\.443796210=[^&]+/.test(fb.href) && /entry\.1094269478=/.test(fb.href) && fb.target === "_blank", fb ? fb.href.slice(0, 120) : "data-feedback のリンクが無い");
     await ctx.close();
   }
   if (solve) {
