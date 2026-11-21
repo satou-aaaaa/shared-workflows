@@ -56,6 +56,18 @@ jobs:
             scripts/game-ja.mjs
             scripts/game-explore.mjs
             template
+      # sw.js の SHELL に書いたファイルが全部あるか。1つでも無いと、入れるとき（install）に失敗して電波の無いときに開けない
+      # （2026-11-22 Template sync の PR が transfer-qr.js を入れずに SHELL だけ足した。incidents/2026-11-22-template-sync-new-files-left-out.md）
+      - name: sw.js の SHELL のファイル
+        run: |
+          node -e '
+            const fs = require("fs");
+            if (!fs.existsSync("sw.js")) process.exit(0);
+            const m = fs.readFileSync("sw.js", "utf8").match(/SHELL\s*=\s*(\[[^\]]*\])/);
+            if (!m) process.exit(0);
+            const miss = JSON.parse(m[1].replace(/\x27/g, "\"")).filter((f) => f !== "./" && !fs.existsSync(f));
+            if (miss.length) { console.error("::error::sw.js の SHELL にあるのにファイルが無い: " + miss.join(" ")); process.exit(1); }
+            console.log("✓ sw.js の SHELL のファイルが全部ある");'
       # Link check（週1）が調べる .md に、すぐ後ろに全角の字が続く URL が無いか。lychee はそこまで URL と読んで 404 で落ちる。
       # 週1の検査で初めて落ちていた（2026-11-07 rosen-hitofude・seiza-tsunagi。incidents/2026-11-08-link-check-wide-char-after-url.md）
       - name: リンクの書き方

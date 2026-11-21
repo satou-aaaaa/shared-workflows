@@ -82,8 +82,10 @@ jobs:
             (cd "$dir" && node "$root/scripts/sync-template.mjs" . >/dev/null) || true
             git -C "$dir" checkout -q -- .github 2>/dev/null || true
             if [ -z "$(git -C "$dir" status --porcelain)" ]; then echo "✓ $r: ひな形どおり"; rm -rf "$dir"; continue; fi
+            # 新しく足したファイル（transfer-qr.js など）も入れる。-a だけだと入らず、sw.js の SHELL が無いファイルを指した（2026-11-22 incidents/2026-11-22-template-sync-new-files-left-out.md）
+            git -C "$dir" add -A
             git -C "$dir" -c user.name="template-sync" -c user.email="41898283+github-actions[bot]@users.noreply.github.com" \
-              commit -qam "ひな形の共通部品を写す（shared-workflows ${SHA:0:7}）"
+              commit -qm "ひな形の共通部品を写す（shared-workflows ${SHA:0:7}）"
             # 1本で書けなくても残りは配る（鍵にそのリポジトリへの書き込みが無いときなど。2026-11-17 kokki-shuto で全体が止まった）
             if ! git -C "$dir" push -q -f origin HEAD:refs/heads/template-sync; then echo "::warning::$r に書けない（鍵の Contents の書き込み・対象のリポジトリを見る）。鍵から見えるこのリポジトリの権限: $(gh api "repos/$OWNER/$r" --jq '.permissions // "なし"' 2>&1 | tr -d '\n')"; failed=1; rm -rf "$dir"; continue; fi
             if [ -z "$(gh pr list -R "$OWNER/$r" --head template-sync --state open --json number --jq '.[].number')" ]; then
