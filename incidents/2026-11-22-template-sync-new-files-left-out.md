@@ -19,4 +19,5 @@
 ## 対策
 - [x] 直す: template-sync.yml が `git add -A` してから積む（この PR）。#568 のマージで Template sync がもう一度全部の PR を作り直す
 - [x] 防ぐ: 共通部品 game-qa.yml に「sw.js の SHELL のファイル」を足した。SHELL に書いたのに無いファイルがあれば、どのゲームの PR も落ちる（この PR）
+- [x] 直す: 枠の無い古い sw.js（FONT_CACHE などがあり写せない。batsu-doko など）では sync-template が sw.js を丸ごと飛ばし、SHELL に transfer-qr.js が入っていなかった。`scripts/sync-template.mjs` が SHELL の1行だけは足すようにし、`scripts/check-core.mjs` で確かめる（#568）
 - [x] 見つける: drift-check の transfer:qr が、transfer-qr.js の無いゲームを週次まとめに出す（#567）

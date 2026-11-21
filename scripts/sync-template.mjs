@@ -167,7 +167,11 @@ export function plan(dir) {
   if (has('sw.js')) {
     let next = makeSw(read('sw.js'));
     if (next !== null && has('transfer.js')) next = withQrShell(next);
-    if (next === null) out.push({ path: 'sw.js', next: null, note: '枠が無く、CACHE・SHELL を拾えないか、ほかの定数・関数（FLAGS・FONT_CACHE など）がある。写すと消えるので写さない（手で game:begin〜game:end の枠を作り、その働きを枠に入れる）' });
+    const stuckNote = '枠が無く、CACHE・SHELL を拾えないか、ほかの定数・関数（FLAGS・FONT_CACHE など）がある。写すと消えるので写さない（手で game:begin〜game:end の枠を作り、その働きを枠に入れる）';
+    // 写せない sw.js でも、SHELL に transfer-qr.js だけは足す（足さないと電波の無いとき引き継ぎの QR が出ない。2026-11-22 batsu-doko）
+    const qr = next === null && has('transfer.js') ? withQrShell(read('sw.js')) : null;
+    if (qr !== null && qr !== read('sw.js')) want('sw.js', qr, `SHELL に transfer-qr.js だけ足した。ほかは${stuckNote}`);
+    else if (next === null) out.push({ path: 'sw.js', next: null, note: stuckNote });
     else want('sw.js', next);
   }
   if (has('scripts/setup.sh')) want('scripts/setup.sh', makeSetup(read('scripts/setup.sh')));

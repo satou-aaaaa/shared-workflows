@@ -124,5 +124,12 @@ ok('Core.coach に start・stop・active がある', ['start', 'stop', 'leave', 
     ok(`${f}：相談窓口の番号を書かない（188・189 は長い数の一部でも。110・118・119・171 は単独で）`, !/188|189|(?<!\d)(110|118|119|171)(?!\d)/.test(t));
   }
 }
+{
+  // 枠の無い古い sw.js（FONT_CACHE などがあって写せない）でも、SHELL に transfer-qr.js を足す。2回かけても同じ（2026-11-22 batsu-doko）
+  const { withQrShell } = await import('./sync-template.mjs');
+  const sw = 'const CACHE = "x-v1";\nconst FONT_CACHE = "x-fonts";\nconst SHELL = ["./", "./index.html", "./transfer.js"];\n';
+  const once = withQrShell(sw);
+  ok('写せない sw.js にも SHELL に transfer-qr.js を足す・2回かけても同じ', once.includes('"./transfer.js", "./transfer-qr.js"]') && withQrShell(once) === once && once.includes('FONT_CACHE'));
+}
 if (errors.length) { for (const e of errors) console.error(`✗ ${e}`); process.exit(1); }
 console.log('✓ game-core（template/core/core.js）');
