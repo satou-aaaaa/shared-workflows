@@ -22,4 +22,4 @@
 - [x] 直す: kasane-zome の Link check を main で手で動かし、緑に戻した（Actions の Run workflow）。#6 は成功で自動で閉じる
 - [x] 防ぐ: ひな形 `template/.github/workflows/link-check.yml` に、このファイルが main に入ったら動く `push`（paths 付き）を足した。直した設定のマージで main も緑に戻る（この PR）。kasane-zome にも写した（kasane-zome の PR）
 - [x] 見つける: `scripts/drift-check.mjs` が、link-check を呼ぶのに `push` が無いリポジトリを週次まとめに出す（この PR）
-- [ ] 直す: 残りのリポジトリの Link check にも `push` を写す（担当: 全リポジトリ巡回、期限: 2026-11-12）
+- [x] 直す: 残りのリポジトリの Link check にも `push` を写す（2026-11-14 土曜の見直しで、期限切れのため代わりに入れた。batsu-doko #33・kabu-news #44・local-kanban #105・usotsuki-roppo #29・wagamama-burger #24）
