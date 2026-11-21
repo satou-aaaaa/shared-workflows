@@ -54,6 +54,7 @@
 ### ゲーム
 
 [repos.txt](../repos.txt) の種類が `game` のリポジトリ。新作は**名前の ABC 順の位置**に1行入れる（末尾に足すと並行の PR がぶつかる。Lint の `scripts/check-repo-lists.mjs` が抜けと並びを見る。incidents/2026-11-07-repo-list-conflicts.md）。
+一覧ページ [games](https://satou-aaaaa.github.io/games/) がこの表の1列目「名前（日本語の名前）」と2列目「分野」を読んでジャンル別に出す。列の並びと書き方を変えるときは games の `list.js` の `parseTable` も直す。
 
 | プロジェクト | 分野 | 今の流れの置き場所 | 取り入れたこと | 次に試すこと |
 | --- | --- | --- | --- | --- |
