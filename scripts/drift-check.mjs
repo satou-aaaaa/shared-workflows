@@ -373,6 +373,9 @@ const results = await pool(REPOS, 4, async (r) => {
         const sw = (await src.read('sw.js')).replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
         const shell = (sw.match(/SHELL\s*=\s*\[([\s\S]*?)\]/) || [, ''])[1];
         if (!/["']\.\/transfer\.js["']/.test(shell)) flag('transfer:sw', 'sw.js の SHELL に ./transfer.js が無い（電波が無いと引き継ぎが開かない）');
+        // 版14から QR の部品は transfer-qr.js（箱を開いたときに読む）。無い・保存していないと QR が出ない
+        if (v >= 14 && !paths.has('transfer-qr.js')) flag('transfer:qr', 'transfer-qr.js が無い（引き継ぎの QR が出ない。node scripts/sync-template.mjs <ゲーム> で写す）');
+        else if (v >= 14 && !/["']\.\/transfer-qr\.js["']/.test(shell)) flag('transfer:qr-sw', 'sw.js の SHELL に ./transfer-qr.js が無い（電波が無いと引き継ぎの QR が出ない。sync-template が足す）');
         if (!paths.has('qa/transfer-check.mjs')) flag('transfer:qa', 'qa/transfer-check.mjs が無い（template/qa/transfer-check.mjs を写し、qa/run.mjs から checkTransfer を呼ぶ）');
         else if (!paths.has('qa/run.mjs') || !(await src.read('qa/run.mjs')).includes('checkTransfer')) flag('transfer:run', 'qa/run.mjs が checkTransfer を呼んでいない（引き継ぎの画面検査が走らない）');
       }

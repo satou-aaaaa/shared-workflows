@@ -103,7 +103,7 @@ jobs:
         run: |
           git fetch -q --depth=1 origin "$BASE"
           added=$(git diff --name-only --diff-filter=A "$BASE" HEAD)
-          edited=$(git diff --name-only --diff-filter=M "$BASE" HEAD | grep -xE 'transfer\.js|qa/(a11y|transfer-check|sw-check)\.mjs|scripts/setup\.sh' || true)
+          edited=$(git diff --name-only --diff-filter=M "$BASE" HEAD | grep -xE 'transfer(-qr)?\.js|qa/(a11y|transfer-check|sw-check|core-check)\.mjs|scripts/setup\.sh' || true)
           list=$(printf '%s\n%s\n' "$added" "$edited" | grep . | paste -sd, - || true)
           status=0
           if [ -n "$list" ]; then node .shared-workflows/scripts/sync-template.mjs --check --only="$list" . || status=$?; fi
