@@ -88,6 +88,7 @@ kansen-yobo game
 kasane-zome game
 kaseki-ate game
 kashikari-kimari game
+kawagoe-sanpo app
 kazoku-kigen game
 kazoku-kimari game
 keigen-zeiritsu game
