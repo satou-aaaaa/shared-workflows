@@ -23,6 +23,7 @@ import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { roundSizes } from './game-patterns.mjs';
+import { LEGACY_LOADS } from './store-legacy.mjs';
 
 const T = join(dirname(fileURLToPath(import.meta.url)), '..', 'template');
 const tpl = (p) => readFileSync(join(T, p), 'utf8');
@@ -74,6 +75,21 @@ export function migrateCore(html) {
     next = next.replace(/^(\s*)(const FEEDBACK\s*=\s*["'][^"'\n]*["'];)[^\n]*$/m, (m, sp) => `${m}\n${sp}if (window.Core) Core.bindFeedback({}); // 「感想を送る」は全ゲームで1つの Googleフォームへ（ゲーム名・版などを事前入力。GitHub のアカウントが無くても送れる）`);
   }
   return next;
+}
+
+// 古い load()（保存の写しを手で合わせる形）を共通部品 GameStore に切り替える（2026-11-22。表は scripts/store-legacy.mjs。文字が1つでもちがえば替えない）
+// 切り替えたら store:begin〜end の印を game-core のすぐあとに置く（中身は下で storeBlock を写す）
+export function migrateStore(html) {
+  if (STORE.test(html)) return html;
+  for (const L of LEGACY_LOADS) {
+    if (!html.includes(`\n${L.old}\n`)) continue;
+    const call = `function load() {\n  return GameStore.load(KEY, mem, { v: 1, fresh, tidy, bank, doneOf, bookOf${L.opts ? `, ${L.opts}` : ''} }); // 2つの写しの合わせ方は共通部品 GameStore（store:begin〜end）\n}`;
+    let next = html.split(`\n${L.old}\n`).join(`\n${call}\n`);
+    const at = next.indexOf('<!-- core:end -->');
+    next = at >= 0 ? `${next.slice(0, at + 17)}\n<!-- store:begin -->\n<!-- store:end -->${next.slice(at + 17)}` : next.replace(/<\/head>/i, () => '<!-- store:begin -->\n<!-- store:end -->\n</head>');
+    return next;
+  }
+  return html;
 }
 
 // sw.js のゲームの枠を取り出す（無ければ古い形から CACHE と SHELL の行を拾う）
@@ -143,9 +159,9 @@ export function plan(dir) {
     const html = read('index.html');
     const block = tpl('a11y/a11y.html').match(A11Y)[0];
     let next = A11Y.test(html) ? html.replace(A11Y, () => block) : html;
-    if (STORE.test(next)) next = next.replace(STORE, () => storeBlock());
     if (CORE.test(next)) next = next.replace(CORE, () => coreBlock());
-    if (A11Y.test(html)) next = migrateCore(next); // 見やすさの設定のあるゲーム（ひな形からできたゲーム）だけ game-core に切り替える
+    if (A11Y.test(html)) next = migrateStore(migrateCore(next)); // 見やすさの設定のあるゲーム（ひな形からできたゲーム）だけ game-core・GameStore に切り替える
+    if (STORE.test(next)) next = next.replace(STORE, () => storeBlock());
     if (A11Y.test(html) || STORE.test(html) || CORE.test(html)) want('index.html', next, '見やすさの設定・保存の共通部品・game-core');
   }
   if (has('sw.js')) {

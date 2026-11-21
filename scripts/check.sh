@@ -18,6 +18,7 @@ node scripts/check-repo-lists.mjs
 node scripts/check-issue-forms.mjs
 node scripts/check-transfer.mjs
 node scripts/check-store.mjs
+node scripts/check-store-legacy.mjs
 node scripts/check-core.mjs
 node template/qa/depth-check.mjs template/depth.js
 node scripts/check-template-watch.mjs
