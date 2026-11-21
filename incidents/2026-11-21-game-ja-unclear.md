@@ -1,0 +1,24 @@
+# ゲームの問題文・ヒント・選び肢に、読みにくい日本語と、正解が2つに読める選び肢が残っていた
+
+- 種類: 検査の見逃し
+- 場所: 期限・日数のゲーム14本（chiho-jichi・gyosei-kigen・hataraku-kigen・hozon-kikan・kaisha-kigen・kazoku-kigen・kuruma-kigen・mansion-kimari・menkyo-nenrei・saiban-kigen・shakuchi-shakuya・todokede-kigen・tokkyo-kikan・zeimu-kigen）、きまりのゲーム7本（keiyaku-torikeshi・dairi-kimari・hosho-kimari・ikukyu-shikumi・otoshimono-kimari・kazoku-kimari・shitsugyo-teate）、yohou-kotoba・shingo-yomi・tanpo-kimari
+- 気づいた人: satou さん（「選択肢や日本語がわかりづらいものがある」）
+- 影響: ヒント2に条文がそのまま出て「三月」（＝3か月）・「知つた」などを読みちがえやすかった（14本・約170種類）。「取り消せる」と「1年たてば取り消せる」のように正解と両立する選び肢があり、正解が2つに読めた（11本・32通り）。「「どしゃ降り」ような雨」「進めないわけではないが」など言い回しの誤りもあった。
+
+## 起きたこと
+- 2026-11-21、satou さんから、ゲームの選択肢や日本語が分かりにくいと依頼があった。
+- `scripts/game-ja.mjs` を作って公開中の162本の問題を約16万通り作って調べ、上のものが見つかった。
+- 期限・日数のゲームは、同じ見本から写していて、ヒント2（`key`）に条文の切れ端をそのまま入れる作りが広がっていた。始めが「その送付を受けた日）から」のように、かっこの途中で切れた条文もあった。
+
+## 原因
+- 作るときの決まり（`routines/game-dev-detail.md` A11「やさしい日本語」）は「説明・知らせ」だけを対象にしていて、問題のヒント・選び肢は対象として書いていなかった。
+- 選び肢の作り方（正解は1つ・選び肢どうしを重ねない）が手順書に無く、「〜すれば〜できる」の形の選び肢が正解と両立することに気づく所が無かった。
+
+## なぜ見つからなかったか
+- QA（`qa/run.mjs`・性質テスト `game-props.mjs`）は、選び肢の重なり（同じ字）・壊れた字・答えが1つかを字の一致で見るだけで、言い回し・意味の重なりは見ていなかった。
+- レビュー（CodeRabbit）は1本ずつで、写して広がった言い回しをまとめて見る所が無かった。
+
+## 対策
+- [x] 直す: 24本の問題・ヒントを言いかえた（各ゲームの PR「日本語：…」。条文のヒントは `lawPlain()` で数字とかなを今の書き方に）
+- [x] 防ぐ: `scripts/game-ja.mjs` を作り、各ゲームの PR の QA「問題の日本語」（`game-qa.yml`）で ✗ を落とす（条文のまま・「〜ような」の「の」抜け・二重否定・閉じないかっこ・正解と両立する選び肢 など）。決まりの見本は `--self-test`（`scripts/check.sh`・Lint）（この PR）
+- [x] 見つける: 機械で見られない分かりにくさは、週1の読み合わせ [routines/game-ja.md](../routines/game-ja.md) が台帳 `ja-review.md` の古い順に5本ずつ読む（この PR）

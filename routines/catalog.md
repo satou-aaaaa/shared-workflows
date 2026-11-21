@@ -24,6 +24,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | LAST TELL ソースの控え | [last-tell-backup.md](last-tell-backup.md) | 日曜 8:52 JST |
 | sandbox Issue/PR定期対応（kensetsu-kyoka-toolkit） | [sandbox-issue-pr.md](sandbox-issue-pr.md) | 月曜 4:35 JST |
 | 研究を毎日1件ずつ進める（carcassonne・gem-merchant・isle-routes の研究を日替わり） | [research-loop.md](research-loop.md) | 毎日 14:23 JST（重い計算は各リポジトリの research-run.yml） |
+| ゲームの日本語の読み合わせ（問題文・選び肢・ヒント。台帳 `ja-review.md` の古い順に5本） | [game-ja.md](game-ja.md) | 金曜 10:33 JST |
 | ゲームの古くなる情報の見直し（法律・税の金額・料金・制度・一覧。Freshness の Issue を読む） | [freshness.md](freshness.md) | 火曜 10:43 JST |
 | 新しいリポジトリ・プロジェクトの受け入れ | [onboarding.md](onboarding.md) | 増えたとき |
 
