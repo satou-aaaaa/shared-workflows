@@ -41,6 +41,7 @@
 | last-tell-godot（LAST TELL Godot 版） | ゲーム開発 | last-tell-godot `AGENTS.md`・`README.md` | qa.yml（Web 版との照合・画面・重さ、Linux と Windows） | Web 版と同じ結果になることを自動の照合で確かめてから入れる |
 | naitei-no-michi（内定への道） | ゲーム開発（ノベル） | naitei-no-michi `CLAUDE.md` | 全エンディングに届くかの自動プレイ（QA） | 体験目標（どんな気持ちで終わってほしいか）を書く。遊んだ人の感想の受け口を作るか決める |
 | dungeon-boardgame（ダンジョンボドゲ） | ゲーム開発（ボードゲーム） | [dungeon-issue.md](dungeon-issue.md) | satou さんの Issue に自動で対応 | 体験目標と、試遊のたびに見る点を書く |
+| tabeta-memo（たべたメモ：食事の記録と栄養） | 健康・生活ツール | tabeta-memo `AGENTS.md`・`README.md` | 公式データ（成分表・食事摂取基準）を変換スクリプトと検査で写し間違いなく使う・責めない言い方の検査・記録は端末の中だけ | satou さんが毎日使い、入力で詰まった所（探しにくい食品・量）を Issue にする |
 | local-kanban（カンバン） | 業務ツール | local-kanban `AGENTS.md`・`README.md` | 見本データでの自動検査（QA）・satou さん自身が毎日使う | 実際の使い方（スマホでの追加・済み・確認への答え）で詰まった所を Issue にする |
 | security-toolkit（防御の資料・道具。非公開） | セキュリティ（防御の資料・道具） | security-toolkit `AGENTS.md`・`README.md` | テスト付きの道具・手元の `sh run_tests.sh`（テストと gitleaks） | 資料の「調べた日」が古いものを見直す周期を決める |
 | articles（公開記事） | 業務ツール | articles `AGENTS.md`・`README.md` | サイトの検査（QA：リンク・画像・フィード）・Site watch | 記事はメモアプリで直す。サイトの作り（tools/）だけを Issue にする |

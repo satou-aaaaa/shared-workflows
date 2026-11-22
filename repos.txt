@@ -188,6 +188,7 @@ shukujitsu-yurai game
 shukushaku-yomi game
 souzoku-kihon game
 suiyoeki-ate game
+tabeta-memo app
 taifu-yomi game
 taikyo-hiyo game
 taishoku-ikura game
