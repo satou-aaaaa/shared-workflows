@@ -15,6 +15,6 @@
 - 残りを数える検査が無く、ゲームの QA は「はじめて開くと遊び方が出る」を正しい動きとして確かめ続けていた。
 
 ## 対策
-- [x] 直す: `scripts/sync-template.mjs` の migrateFirstPlay が、ひな形からできた形のゲーム（183本）に、はじめての練習の1問と吹き出し（first-play:begin〜end）を足す。QA の前提も migrateFirstQa が替える。形のちがうゲームは手で直す。
+- [x] 直す: `scripts/sync-template.mjs` の migrateFirstPlay が、ひな形からできた形のゲーム（183本）に、はじめての練習の1問と吹き出し（first-play:begin〜end）を足す。QA の前提も migrateFirstQa が替える。練習の入り口が無い・形のちがうゲーム（11本）は、遊び方の窓の代わりにホームのはじめのボタン（チュートリアル・今日の問題）へ吹き出しを1つ出す形（firstTipBlock）を同じ印で足す。
 - [x] 防ぐ: `scripts/drift-check.mjs` の `first:howto` が、はじめて開くと遊び方の窓を開くゲームを全部知らせる。
 - [x] 見つける: `scripts/game-explore.mjs` が、新しく開いて遊び方の窓（dialog[open]）が出たら不具合として Issue に書く。

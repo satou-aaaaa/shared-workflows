@@ -111,12 +111,38 @@ function firstPlay() {
 // first-play:end
 `;
 }
+// 練習の入り口が無い・形のちがうゲーム：遊び方の窓は出さず、ホームのはじめに押すボタンへ吹き出しを1つ付ける
+// （チュートリアルがあればそこ・今日の問題・ホームの大きいボタンの順）
+export function firstTipBlock(html) {
+  const id = ['go-tut', 'go-d'].find((x) => new RegExp(`id=\\\\?["']${x}\\\\?["']`).test(html));
+  const sel = id ? `#${id}` : '#app button.main';
+  return `// first-play:begin（shared-workflows の scripts/sync-template.mjs が足した。直すときはひな形を直す）
+// はじめての人：長い「遊び方」の窓を出さず、はじめに押す所へ吹き出しを1つだけ出す（game-core の Core.coach）。
+// 「見た」は出したその場で残す（くわしい遊び方はいつでもいちばん下の「遊び方」から）
+const FIRST_STEPS = [
+  { sel: "${sel}", text: "はじめての方へ：まずはここを押して、遊びながら覚えましょう。くわしい遊び方は、いちばん下の「遊び方」にあります。" },
+];
+function firstPlay() {
+  save((s) => { s.tut = true; });
+  if (!window.Core || !Core.coach || !document.querySelector(FIRST_STEPS[0].sel)) return openHow();
+  Core.coach.start(FIRST_STEPS, { home });
+}
+// first-play:end
+`;
+}
+const FIRST_OPEN = /if \(!s\.tut(?: && !\$\("howto"\)\.open)?\) openHow\(\);/;
+const playable = (html) => html.includes('\nfunction startRun(mode, opt) {') && firstPick(html) && /if \(!s\.tut\) openHow\(\);/.test(html) && /\nfunction play\(/.test(html) && /class=\\?"verdict/.test(html) && /id=\\?"next/.test(html);
 export function migrateFirstPlay(html) {
-  if (FIRST_PLAY.test(html)) return html.replace(FIRST_PLAY, () => firstPlayBlock(html.replace(FIRST_PLAY, '')));
+  if (FIRST_PLAY.test(html)) { const rest = html.replace(FIRST_PLAY, ''); return html.replace(FIRST_PLAY, () => (/const FIRST_STEPS = \[\n  \{ sel: "[^"]*", button:/.test(html.match(FIRST_PLAY)[0]) ? firstPlayBlock(rest) : firstTipBlock(rest))); }
   if (/function firstPlay\(/.test(html)) return html; // 手で作ったはじめての練習がある（震度よみ など）
-  const at = html.indexOf('\nfunction startRun(mode, opt) {');
-  if (at < 0 || !firstPick(html) || !/if \(!s\.tut\) openHow\(\);/.test(html) || !/\nfunction home\(\)/.test(html) || !/\nfunction play\(/.test(html) || !/class=\\?"verdict/.test(html) || !/id=\\?"next/.test(html)) return html;
-  return `${html.slice(0, at + 1)}${firstPlayBlock(html)}${html.slice(at + 1)}`.replace(/if \(!s\.tut\) openHow\(\);/, 'if (!s.tut) firstPlay();');
+  if (!FIRST_OPEN.test(html) || !/\nfunction home\(\)/.test(html)) return html;
+  if (playable(html)) {
+    const at = html.indexOf('\nfunction startRun(mode, opt) {');
+    return `${html.slice(0, at + 1)}${firstPlayBlock(html)}${html.slice(at + 1)}`.replace(FIRST_OPEN, 'if (!s.tut) firstPlay();');
+  }
+  // 吹き出しだけの形は home() の前に足す
+  const at = html.indexOf('\nfunction home()');
+  return `${html.slice(0, at + 1)}${firstTipBlock(html)}${html.slice(at + 1)}`.replace(FIRST_OPEN, 'if (!s.tut) firstPlay();');
 }
 
 // QA の「はじめて開くと遊び方が出る」前提の所を、はじめての練習の形に替える（migrateFirstPlay を足したゲームだけ）
@@ -139,7 +165,13 @@ export function migrateFirstQa(qa) {
     // ページの中で「わかった」を押していた所は、吹き出しが出ていればやめてホームへ戻る
     .replace(/(d\.querySelector\("#howto-ok"\)\.click\(\)|document\.getElementById\("howto-ok"\)\.click\(\)|if \(d\.open\) d\.close\(\));?/g, '$1; if (window.Core && Core.coach && Core.coach.active()) Core.coach.leave();')
     .replace(new RegExp(`check\\("「わかった」を押したその場で「見た」が残る", await ${P}\\.locator\\("#howto-ok"\\)\\.evaluate\\(\\(b\\) => \\{ b\\.click\\(\\); (return [^\\n]*?\\}\\); \\}\\)\\);)`, 'g'), (m, v, body) => `check("はじめての練習が始まったその場で「見た」が残る", await ${v}.evaluate(() => { ${body} await firstClose(${v});`)
-    .replace(new RegExp(`check\\("(?:はじめて|初めて)開くと遊び方が出る([^"]*)", await ${P}\\.locator\\("#howto\\[open\\]"\\)\\.count\\(\\) === 1`, 'g'), (m, tail, v) => `check("はじめて開くと、遊び方の窓でなく練習の1問と吹き出しが出る${tail}", await ${v}.locator("#howto[open]").count() === 0 && await ${v}.locator("#core-coach").count() === 1`);
+    .replace(new RegExp(`check\\("(?:はじめて|初めて)開くと遊び方が出る([^"]*)", await ${P}\\.locator\\("#howto\\[open\\]"\\)\\.count\\(\\) === 1`, 'g'), (m, tail, v) => `check("はじめて開くと、遊び方の窓でなく練習の1問と吹き出しが出る${tail}", await ${v}.locator("#howto[open]").count() === 0 && await ${v}.locator("#core-coach").count() === 1`)
+    .replace(new RegExp(`check\\("(?:はじめて|初めて)開くと遊び方が出る([^"]*)", await ${P}\\.evaluate\\(\\(\\) => document\\.getElementById\\("howto"\\)\\.open\\)`, 'g'), (m, tail, v) => `check("はじめて開くと、遊び方の窓でなく吹き出しが出る${tail}", await ${v}.evaluate(() => !document.getElementById("howto").open && !!document.getElementById("core-coach"))`)
+    .replace(new RegExp(`check\\("(?:はじめて|初めて)開くと遊び方が出る([^"]*)", await ${P}\\.isVisible\\("#howto"\\)`, 'g'), (m, tail, v) => `check("はじめて開くと、遊び方の窓でなく吹き出しが出る${tail}", !(await ${v}.isVisible("#howto")) && await ${v}.isVisible("#core-coach")`)
+    // 「遊び方ははじめてだけ出て…」の形：はじめに測る shown を、窓でなく吹き出しが出ているかに替える
+    .replace(new RegExp(`const shown = await ${P}\\.evaluate\\(\\(\\) => document\\.getElementById\\("howto"\\)\\.open\\);`, 'g'), (m, v) => `const shown = await ${v}.evaluate(() => !document.getElementById("howto").open && !!document.getElementById("core-coach"));`)
+    // 開いたときの遊び方の窓を測る所（「わかった」が見える など）は、先に吹き出しをやめて遊び方を開く
+    .replace(new RegExp(`^(\\s*)(check\\([^\\n]*inView\\("#howto-ok"\\)[^\\n]*await ${P}\\.evaluate\\(\\(\\) => document\\.activeElement)`, 'gm'), (m, sp, rest, v) => `${sp}await firstClose(${v}).then(() => ${v}.click("#f-how"));\n${sp}${rest}`);
   if (next === qa) return qa;
   const m = next.match(/^const check = .*$/m);
   return m ? next.replace(m[0], () => `${m[0]}\n${FIRST_CLOSE}`) : qa;
