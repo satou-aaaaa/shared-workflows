@@ -2,7 +2,7 @@
 import { mkdtempSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { collect, plan, repoOf, branchOf, threadOf, WIP_LIMIT } from './game-wip.mjs';
+import { collect, plan, repoOf, branchOf, threadOf, kindOf, isNonGame, WIP_LIMIT } from './game-wip.mjs';
 import { scaffold, templateFiles, TODO, SKIP } from './new-game.mjs';
 
 const errors = [];
@@ -22,6 +22,9 @@ ok(repoOf('+ repo: shingo-yomi\n') === 'shingo-yomi', '+ の箇条書きの repo
 ok(threadOf('repo: a\n- thread:\n- branch: claude/x-1\n') === null, '空の thread: で次の行を thread と読んだ（#521 の CodeRabbit）');
 ok(repoOf('- repo:\nshingo-yomi\n') === null, '空の repo: で次の行を repo と読んだ');
 
+// ゲームではない題材（kind: app）は候補に入れない（2026-11-22 akashi-lang などを「候補を始める」と出した。incidents/2026-11-22-game-wip-non-game-topics.md）
+ok(kindOf('説明\n- kind: app\n') === 'app' && isNonGame('kind: app') && !isNonGame('kind: game') && !isNonGame('ふつうのゲーム'), 'kind: の行を読めない');
+ok(isNonGame('リポジトリ akashi-lang（種類 app、ゲームではない）'), '「ゲームではない」と書いた題材をゲームと読んだ');
 const old = new Date(Date.now() - 3 * 864e5).toISOString();
 const day1 = new Date(Date.now() - 1.5 * 864e5).toISOString();
 const fake = {
@@ -37,6 +40,8 @@ const fake = {
     { number: 13, title: '題材: 壬（壬）', body: 'repo: game-i', html_url: 'u13' },
     { number: 14, title: '題材: 癸（癸）', body: 'repo: game-j', html_url: 'u14' },
     { number: 4, title: 'ほかの Issue', body: 'repo: x', html_url: 'u4' },
+    { number: 2, title: '題材: 言語（言語）', body: 'kind: app', html_url: 'u2' },
+    { number: 15, title: '題材: 防災アプリ（防災）', body: 'kind: app\nrepo: app-k', html_url: 'u15' },
     { number: 6, title: '題材: PR', body: '', html_url: 'u6', pull_request: {} },
   ],
   'repos/satou-aaaaa/game-a': { has_pages: false },
@@ -60,6 +65,7 @@ const api = async (p) => (p in fake ? fake[p] : (() => { throw new Error(`読ま
 const data = await collect(api);
 ok(data.wip.map((w) => w.number).join() === '5,8,9,10,12,13,14', `作りかけの見分けがちがう: ${data.wip.map((w) => w.number)}`);
 ok(data.others.map((w) => w.number).join() === '11', '別スレッドが作っているものを作りかけに数えた（3日動かないものは引き取る）');
+ok((data.apps || []).map((w) => w.number).join() === '2,15', `ゲームではない題材の見分けがちがう: ${(data.apps || []).map((w) => w.number)}`);
 ok(data.parked.map((w) => w.number).join() === '7', 'needs-decision の作りかけを数えている');
 ok(data.queue.map((q) => q.number).join() === '3', `候補の列がちがう: ${data.queue.map((q) => q.number)}`);
 const byNo = Object.fromEntries(data.wip.map((w) => [w.number, w.next]));
@@ -74,6 +80,7 @@ ok(WIP_LIMIT !== 2 || lines.some((l) => /空きなし/.test(l)), '上限に達�
 ok(lines.some((l) => /候補が 1 本/.test(l)), '候補が少ないのに足すよう出さない');
 ok(lines.some((l) => /別スレッドが担当 #11/.test(l) && /触らない/.test(l)), '別スレッドが作っているものを触らないと出さない');
 ok(lines.some((l) => /止めている #7/.test(l)), '止めている作りかけを出さない');
+ok(lines.some((l) => /ゲームではない #2/.test(l) && /触らない/.test(l)) && !lines.some((l) => /#2「/.test(l)), 'ゲームではない題材を触らないと出さない・候補として始めようとした');
 const free = plan({ wip: [data.wip[0]], queue: data.queue, parked: data.parked });
 ok(free.some((l) => /#3/.test(l) && /始める/.test(l)), '空きがあるのに候補を始めない');
 
@@ -82,6 +89,7 @@ writeFileSync(join(dir, 'AGENTS.md'), 'もとから');
 const r = scaffold(dir);
 ok(readFileSync(join(dir, 'AGENTS.md'), 'utf8') === 'もとから', 'もうあるファイルを上書きした');
 ok(r.copied.length === templateFiles().filter((f) => !SKIP.some((d) => f.startsWith(d))).length - 1, 'ひな形を全部写していない');
+ok(!existsSync(join(dir, 'core', 'core.js')), 'core/core.js をファイルで写した（index.html の印のあいだにだけ写す。incidents/2026-11-22-game-wip-non-game-topics.md）');
 ok(!existsSync(join(dir, 'store', 'store.js')), 'store/store.js をファイルで写した（index.html の印のあいだにだけ写す。incidents/2026-11-17-new-game-store-file.md）');
 ok(TODO.some((t) => /store:begin/.test(t) && /GameStore\.load/.test(t)), '新作の「このあと書くもの」に保存の共通部品（store の印・GameStore.load）が無い');
 for (const f of ['.github/workflows/qa.yml', 'transfer.js', 'depth.js', 'qa/depth-check.mjs', 'sw.js', 'qa/a11y.mjs', 'scripts/setup.sh']) ok(existsSync(join(dir, f)), `${f} を写していない`);
