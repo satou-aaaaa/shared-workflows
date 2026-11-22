@@ -64,6 +64,7 @@ main に直接置くはじめの commit（リポジトリを作るときの1つ�
    - `ci-failure-issue.yml` の見張る名前、`site-watch.yml` の `paths`、`changes.yml` の `app_name` と `ignore_paths`、`lighthouse.yml` の `baseline`（公開前は template の値。公開後に1回測って置き換える）。
 2. `template/.github/dependabot.yml`（npm の directory は `/qa`）、`template/.coderabbit.yaml`（`path_filters` と `path_instructions` をそのリポジトリに合わせる）、`.nojekyll`（Pages をブランチから公開するとき）、`template/AGENTS.md` の `<>` を埋め、`template/CLAUDE.md`（「作業の前に AGENTS.md を読む」の1行。`@` で取り込まない）と `template/.gemini/settings.json` もそのまま入れる。README の手順も新しい置き場所に合わせる。
    準備の1コマンドとして `template/scripts/setup.sh`（`<>` を埋め、要らない節を消す）・`template/.claude/settings.json`（クラウドセッションで自動で呼ぶ）・版のファイル（Node.js は `.nvmrc`、Python は `.python-version`。CI の setup-node・setup-python もこのファイルを読む）を入れ、README の準備の節は `bash scripts/setup.sh` の1行にする。
+   画面のあるアプリは [ui-rules.md](ui-rules.md) の決まり（ホームの並び・入口はフッターに1つ）に合わせ、`node <shared-workflows>/scripts/ui-check.mjs --default` を通す。共通部品の抜けは毎日の Common check が Issue「共通部品の抜け」に出す。
 3. 手元で QA を回して ✅ を確かめ、`actionlint` を通す。下書き PR → CI 緑 → ドラフトを外して squash マージ（`.github/` を変える PR はエージェントがマージしてよい。common.md）。
 
 ## 3. 共通の一覧に加える（shared-workflows に PR）
