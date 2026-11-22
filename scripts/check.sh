@@ -20,6 +20,8 @@ node scripts/check-transfer.mjs
 node scripts/check-store.mjs
 node scripts/check-store-legacy.mjs
 node scripts/check-core.mjs
+node scripts/check-upload-artifact.mjs --self-test
+node scripts/check-upload-artifact.mjs
 node template/qa/depth-check.mjs template/depth.js
 node scripts/check-template-watch.mjs
 node scripts/check-sw-check.mjs

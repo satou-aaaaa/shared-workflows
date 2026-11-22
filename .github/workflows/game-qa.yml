@@ -186,6 +186,8 @@ jobs:
         if: github.event_name == 'pull_request' && hashFiles('qa/repro/*.json') != ''
         run: node .shared-workflows/scripts/game-explore.mjs . --replay qa/repro
       - if: always()
+        # 中身は見返す用の控え。GitHub の置き場が時間切れ（ETIMEDOUT）でも、通った QA を赤にしない（2026-11-22 医療費いくら。incidents/2026-11-22-qa-flaky-coach-and-upload.md）
+        continue-on-error: true
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: qa-report
