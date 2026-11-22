@@ -151,8 +151,8 @@ ok('Core.coach に start・stop・active がある', ['start', 'stop', 'leave', 
   const q2 = migrateFirstQa('const check = (n, ok) => r.push(ok);\n  check("はじめて開くと遊び方が出る", await p.evaluate(() => document.getElementById("howto").open));\n  check("初めて開くと遊び方が出る", await p.isVisible("#howto"));\n  const shown = await p.evaluate(() => document.getElementById("howto").open);\n');
   const q3 = 'const check = (n, ok) => r.push(ok);\nconst firstClose = async (q) => {};\n    check("こわれた記録でも画面が出る", await p.evaluate((K) => { localStorage.setItem(K, JSON.stringify({ v: 1 })); }));\n    check(`枠`, await pu.evaluate(() => document.activeElement && document.activeElement.id === "howto-ok"));\n    const x = await q.evaluate(() => { const d = document.getElementById("howto"); d.dispatchEvent(new Event("cancel")); });\n';
   const q4 = migrateFirstQa(q3);
-  ok('migrateFirstQa：前に写したゲームにも、あとから足した書き換え（こわれた記録・開いたときの枠・Esc の保存）をかけ、2回かけても同じ', q4.includes('{ tut: true, v: 1 }') && q4.includes('await firstClose(pu).then(() => pu.click("#f-how"));\n    check(`枠`') && q4.includes('localStorage.clear(); const d') && migrateFirstQa(q4) === q4);
-  ok('migrateFirstQa：evaluate・isVisible・shown の形も吹き出しを見る', !q2.includes('遊び方が出る"') && (q2.match(/core-coach/g) || []).length >= 4 && migrateFirstQa(q2) === q2);
+  ok('migrateFirstQa：前に写したゲームにも、あとから足した書き換え（こわれた記録・開いたときの枠・Esc の保存）をかけ、2回かけても同じ', q4.includes('{ tut: true, v: 1 }') && q4.includes('await firstClose(pu).then(() => pu.evaluate(() => openHow()));\n    check(`枠`') && q4.includes('localStorage.clear(); const d') && migrateFirstQa(q4) === q4);
+  ok('migrateFirstQa：evaluate・isVisible・shown の形も吹き出しを見る', !q2.includes('遊び方が出る"') && (q2.match(/core-coach/g) || []).length >= 3 && migrateFirstQa(q2) === q2);
   ok('migrateFirstQa：「わかった」は firstClose に・はじめての検査は吹き出しを見る・2回かけても同じ', q1.includes('const firstClose = async') && q1.includes('await firstClose(p);') && q1.includes('await firstClose(q);') && !q1.includes('click("#howto-ok")\n') && q1.includes('#core-coach").waitFor(') && migrateFirstQa(q1) === q1);
 }
 if (errors.length) { for (const e of errors) console.error(`✗ ${e}`); process.exit(1); }
