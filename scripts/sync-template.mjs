@@ -111,8 +111,8 @@ function firstPlay() {
   play(${playArg});
   const seen = (q) => { const e = document.querySelector(q); return !!e && e.getBoundingClientRect().height > 0; };
   FIRST_STEPS[0].sel = ${JSON.stringify(sels)}.find(seen) || "#app";
-  // 案内を閉じた（Esc も）ら、1問の練習の途中経過を残さずにホームへ（ふだんの練習の「続きから」を出さない）
-  Core.coach.start(FIRST_STEPS, { home, onEnd: (done) => { if (done === false) { save((s) => { const r = s.runs && s.runs.p; if (r && !(r.res || []).length) delete s.runs.p; }); home(); } } });
+  // 案内を閉じた（Esc も）ら、1問の練習の途中経過を残さずにホームのいちばん上へ（ふだんの練習の「続きから」を出さない）
+  Core.coach.start(FIRST_STEPS, { home, onEnd: (done) => { if (done === false) { save((s) => { const r = s.runs && s.runs.p; if (r && !(r.res || []).length) delete s.runs.p; }); home(); scrollTo(0, 0); } } });
 }
 // first-play:end
 `;
@@ -153,7 +153,9 @@ export function migrateFirstPlay(html) {
 
 // QA の「はじめて開くと遊び方が出る」前提の所を、はじめての練習の形に替える（migrateFirstPlay を足したゲームだけ）
 // 「わかった」で閉じていた所は firstClose(p)：遊び方が開いていれば閉じ、吹き出しが出ていれば案内をやめてホームへ戻る（前と同じホームから測る）
-export const FIRST_CLOSE = 'const firstClose = async (q) => { if (await q.locator("#howto[open]").count()) await q.click("#howto-ok"); if (await q.locator("#core-coach").count()) { await q.evaluate(() => Core.coach.leave()); await q.waitForTimeout(100); } }; // はじめての練習の吹き出しをやめてホームへ（sync-template の migrateFirstQa が足した）';
+// 吹き出しは、描かれる前でも始まっていれば止める。止めたらページの上へ戻す（練習でスクロールした位置のままホームを描くと、下の「遊び方」が見やすさのボタンの下に来て押せなかった。2026-11-22 CI の切符10・詐欺みぬき）
+export const FIRST_CLOSE_OLD = 'const firstClose = async (q) => { if (await q.locator("#howto[open]").count()) await q.click("#howto-ok"); if (await q.locator("#core-coach").count()) { await q.evaluate(() => Core.coach.leave()); await q.waitForTimeout(100); } }; // はじめての練習の吹き出しをやめてホームへ（sync-template の migrateFirstQa が足した）';
+export const FIRST_CLOSE = 'const firstClose = async (q) => { if (await q.locator("#howto[open]").count()) await q.click("#howto-ok"); if (await q.evaluate(() => !!(window.Core && Core.coach && Core.coach.active()))) { await q.evaluate(() => { Core.coach.leave(); scrollTo(0, 0); }); await q.waitForTimeout(100); } }; // はじめての練習の吹き出しをやめてホームへ（sync-template の migrateFirstQa が足した）';
 // 吹き出しは「ある」でなく「見えている」で確かめる（吹き出しの所が無いと、隠れたまま残ってホームに戻る。2026-11-22 地図記号よみ・お札のひみつ）
 const COACH_SEEN = '.locator("#core-coach").waitFor({ timeout: 3000 }).then(() => true, () => false)';
 export const firstVisible = (qa) => qa
@@ -164,12 +166,19 @@ export const firstVisible = (qa) => qa
 function firstLate(qa) {
   const P = '([A-Za-z_$][\\w$]*)';
   return qa
+    .split(FIRST_CLOSE_OLD).join(FIRST_CLOSE)
+    // 遊び方を開き直す所は、下の「遊び方」を押さずに openHow() で開く（狭い画面でホームが短いと、見やすさのボタンの下に来て押せない。2026-11-22 CI の詐欺みぬき）
+    .replace(new RegExp(`await firstClose\\(${P}\\)\\.then\\(\\(\\) => \\1\\.click\\("#f-how"\\)\\);`, 'g'), 'await firstClose($1).then(() => $1.evaluate(() => openHow()));')
+    // はじめて開いた日のホームのボタンを数える所（上級ははじめての日から押せる など）：はじめての練習をやめてホームで数える
+    .replace(new RegExp(`^(?<!await firstClose\\(\\w+\\);\\n)(\\s*)(check\\([^\\n]*はじめて[^\\n]*?\\(?await ${P}\\.locator\\("#go-)`, 'gm'), (m, sp, rest, v) => `${sp}await firstClose(${v});\n${sp}${rest}`)
+    // はじめて開いて遊び方が出ていたかを was に取る所は、吹き出しが出ていたかに替える（Esc で案内をやめても「見た」は残る）
+    .replace(new RegExp(`const was = await ${P}\\.locator\\("#howto\\[open\\]"\\)\\.count\\(\\);`, 'g'), 'const was = await $1.locator("#core-coach").count();')
     .replace(new RegExp(`check\\("(?:はじめて|初めて)開くと遊び方が出る([^"]*)", await ${P}\\.evaluate\\(\\(\\) => document\\.getElementById\\("howto"\\)\\.open\\)`, 'g'), (m, tail, v) => `check("はじめて開くと、遊び方の窓でなく吹き出しが出る${tail}", await ${v}.evaluate(() => !document.getElementById("howto").open && !!document.getElementById("core-coach"))`)
     .replace(new RegExp(`check\\("(?:はじめて|初めて)開くと遊び方が出る([^"]*)", await ${P}\\.isVisible\\("#howto"\\)`, 'g'), (m, tail, v) => `check("はじめて開くと、遊び方の窓でなく吹き出しが出る${tail}", !(await ${v}.isVisible("#howto")) && await ${v}.isVisible("#core-coach")`)
     // 「遊び方ははじめてだけ出て…」の形：はじめに測る shown を、窓でなく吹き出しが出ているかに替える
     .replace(new RegExp(`const shown = await ${P}\\.evaluate\\(\\(\\) => document\\.getElementById\\("howto"\\)\\.open\\);`, 'g'), (m, v) => `const shown = await ${v}.evaluate(() => !document.getElementById("howto").open && !!document.getElementById("core-coach"));`)
     // 開いたときの遊び方の窓を測る所（「わかった」が見える など）は、先に吹き出しをやめて遊び方を開く
-    .replace(new RegExp(`^(?<!firstClose\\(\\w+\\)\\.then\\(\\(\\) => \\w+\\.click\\("#f-how"\\)\\);\n)(\\s*)(check\\([^\\n]*await ${P}\\.evaluate\\(\\(\\) => document\\.activeElement && document\\.activeElement\\.id === "howto-ok")`, 'gm'), (m, sp, rest, v) => `${sp}await firstClose(${v}).then(() => ${v}.click("#f-how"));\n${sp}${rest}`)
+    .replace(new RegExp(`^(?<!firstClose\\(\\w+\\)\\.then\\(\\(\\) => \\w+\\.evaluate\\(\\(\\) => openHow\\(\\)\\)\\);\n)(\\s*)(check\\([^\\n]*await ${P}\\.evaluate\\(\\(\\) => document\\.activeElement && document\\.activeElement\\.id === "howto-ok")`, 'gm'), (m, sp, rest, v) => `${sp}await firstClose(${v}).then(() => ${v}.evaluate(() => openHow()));\n${sp}${rest}`)
     // はじめて開いて遊び方の窓を待つ所は、吹き出しを待つ（Esc で閉じる・「見た」が残る、はそのまま確かめられる）
     .replace(new RegExp(`${P}\\.waitForSelector\\("#howto\\[open\\]"\\)`, 'g'), '$1.waitForSelector("#core-coach")')
     // 遊び方の窓の Esc（cancel）で「見た」を残す所を、ページの中で確かめる所：はじめての練習で「見た」はもう残っていて窓も閉じているので、先に消して窓を開いてから測る
@@ -185,7 +194,7 @@ export function migrateFirstQa(qa) {
     .replace(new RegExp(`${P}\\.click\\("#howto-ok"(?:, \\{[^}]*\\})?\\)`, 'g'), 'firstClose($1)')
     .replace(new RegExp(`${P}\\.click\\("#f-how"\\)`, 'g'), 'firstClose($1).then(() => $1.click("#f-how"))')
     // 開いた遊び方の窓を測る所は、先に吹き出しをやめて遊び方を開く
-    .replace(new RegExp(`const ([\\w$]+) = await ${P}\\.evaluate\\(\\(\\) => (?=[^;\\n]*?"#howto )`, 'g'), 'await firstClose($2).then(() => $2.click("#f-how")); const $1 = await $2.evaluate(() => ')
+    .replace(new RegExp(`const ([\\w$]+) = await ${P}\\.evaluate\\(\\(\\) => (?=[^;\\n]*?"#howto )`, 'g'), 'await firstClose($2).then(() => $2.evaluate(() => openHow())); const $1 = await $2.evaluate(() => ')
     // 遊び方が開くのを待っていた所（Esc で閉じる検査）は、吹き出しが出るのを待つ（Esc で案内をやめるとホームへ戻る）
     .split('waitForFunction(() => document.getElementById("howto").open)').join('waitForFunction(() => !!document.getElementById("core-coach"))')
     // ほかの「はじめは遊び方が開いている」前提は、吹き出しが出ている前提に替える
