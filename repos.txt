@@ -103,6 +103,7 @@ kenpo-shikumi game
 kifukin-ikura game
 kikenbutsu-rui game
 kikigaki-techo game
+kikikuru-yomi game
 kimari-sagashi game
 kippu-10 game
 kisetsu-tenki game
@@ -132,6 +133,7 @@ mannaka-kanji game
 mansion-kimari game
 meirei-narabe game
 menkyo-nenrei game
+menzei-ikura game
 mizu-mamoru game
 moraisugi-kimari game
 mukashi-narabe game
