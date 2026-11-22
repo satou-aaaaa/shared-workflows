@@ -87,12 +87,14 @@ export const firstPick = (html) => { const i = html.indexOf('\nfunction practice
 export function firstPlayBlock(html) {
   const pick = firstPick(html);
   const area = FIRST_AREAS.find((id) => new RegExp(`id=\\\\?["']${id}\\\\?["']`).test(html));
-  const sel = area ? `#${area}` : '#app h1, #app header'; // 題の無い問題の画面もある（お札のひみつ など）
+  // 付ける所は、はじめの問題の画面で「見えている」ものを、問題の所・題・画面の上の順に選ぶ（問題の所があとから描かれる・題の無い画面もある。2026-11-22 地図記号よみ・お札のひみつ・部首たし算）
+  const sels = [...(area ? [`#${area}`] : []), '#app h1', '#app header', '#app'];
+  const playArg = /\nfunction play\(key\)/.test(html) ? '"p"' : ''; // play(key) の形は、練習の回の名前を渡す（暑さ指数よみ など）
   return `// first-play:begin（shared-workflows の scripts/sync-template.mjs が足した。直すときはひな形を直す）
 // はじめての人：長い「遊び方」の窓を出さず、点数に入らない練習の1問を遊びながら、吹き出しで一言ずつ教える（game-core の Core.coach）。
 // 「見た」は始めたその場で残す（途中でやめても、次からはふつうに始まる。くわしい遊び方はいつでもいちばん下の「遊び方」から）
 const FIRST_STEPS = [
-  { sel: "${sel}", button: "やってみる", text: "はじめての方へ：まずは点数に入らない練習の1問です。くわしい遊び方は、いちばん下の「遊び方」にあります。" },
+  { sel: ${JSON.stringify(sels[0])}, button: "やってみる", text: "はじめての方へ：まずは点数に入らない練習の1問です。くわしい遊び方は、いちばん下の「遊び方」にあります。" },
   { sel: "#next", wait: ".verdict", text: "できました。わけを読んだら、ここを押して進みます。" },
 ];
 function firstPlay() {
@@ -106,7 +108,9 @@ function firstPlay() {
   const keep = JSON.stringify((load().runs || {}).p || null);
   save((s) => { const r = s.runs && s.runs.p; if (r && Array.isArray(r.list)) r.list = r.list.slice(0, 1); });
   if (keep !== "null" && !(load().runs || {}).p) save((s) => { s.runs.p = JSON.parse(keep); });
-  play();
+  play(${playArg});
+  const seen = (q) => { const e = document.querySelector(q); return !!e && e.getBoundingClientRect().height > 0; };
+  FIRST_STEPS[0].sel = ${JSON.stringify(sels)}.find(seen) || "#app";
   // 案内を閉じた（Esc も）ら、1問の練習の途中経過を残さずにホームへ（ふだんの練習の「続きから」を出さない）
   Core.coach.start(FIRST_STEPS, { home, onEnd: (done) => { if (done === false) { save((s) => { const r = s.runs && s.runs.p; if (r && !(r.res || []).length) delete s.runs.p; }); home(); } } });
 }
@@ -156,8 +160,25 @@ export const firstVisible = (qa) => qa
   .split('.locator("#core-coach").count() === 1').join(COACH_SEEN)
   .split('!!document.getElementById("core-coach")').join('!!document.querySelector("#core-coach:not([hidden])")')
   .replace(/([A-Za-z_$][\w$]*)\.isVisible\("#core-coach"\)/g, `$1${COACH_SEEN}`);
+// あとから足した書き換え（前に写したゲームの QA にも、次の写しでかける。どれも2回かけても同じ）
+function firstLate(qa) {
+  const P = '([A-Za-z_$][\\w$]*)';
+  return qa
+    .replace(new RegExp(`check\\("(?:はじめて|初めて)開くと遊び方が出る([^"]*)", await ${P}\\.evaluate\\(\\(\\) => document\\.getElementById\\("howto"\\)\\.open\\)`, 'g'), (m, tail, v) => `check("はじめて開くと、遊び方の窓でなく吹き出しが出る${tail}", await ${v}.evaluate(() => !document.getElementById("howto").open && !!document.getElementById("core-coach"))`)
+    .replace(new RegExp(`check\\("(?:はじめて|初めて)開くと遊び方が出る([^"]*)", await ${P}\\.isVisible\\("#howto"\\)`, 'g'), (m, tail, v) => `check("はじめて開くと、遊び方の窓でなく吹き出しが出る${tail}", !(await ${v}.isVisible("#howto")) && await ${v}.isVisible("#core-coach")`)
+    // 「遊び方ははじめてだけ出て…」の形：はじめに測る shown を、窓でなく吹き出しが出ているかに替える
+    .replace(new RegExp(`const shown = await ${P}\\.evaluate\\(\\(\\) => document\\.getElementById\\("howto"\\)\\.open\\);`, 'g'), (m, v) => `const shown = await ${v}.evaluate(() => !document.getElementById("howto").open && !!document.getElementById("core-coach"));`)
+    // 開いたときの遊び方の窓を測る所（「わかった」が見える など）は、先に吹き出しをやめて遊び方を開く
+    .replace(new RegExp(`^(?<!firstClose\\(\\w+\\)\\.then\\(\\(\\) => \\w+\\.click\\("#f-how"\\)\\);\n)(\\s*)(check\\([^\\n]*await ${P}\\.evaluate\\(\\(\\) => document\\.activeElement && document\\.activeElement\\.id === "howto-ok")`, 'gm'), (m, sp, rest, v) => `${sp}await firstClose(${v}).then(() => ${v}.click("#f-how"));\n${sp}${rest}`)
+    // はじめて開いて遊び方の窓を待つ所は、吹き出しを待つ（Esc で閉じる・「見た」が残る、はそのまま確かめられる）
+    .replace(new RegExp(`${P}\\.waitForSelector\\("#howto\\[open\\]"\\)`, 'g'), '$1.waitForSelector("#core-coach")')
+    // 遊び方の窓の Esc（cancel）で「見た」を残す所を、ページの中で確かめる所：はじめての練習で「見た」はもう残っていて窓も閉じているので、先に消して窓を開いてから測る
+    // こわれた記録でホームが出るかを見る所：「見た」が無いと、はじめての練習の画面になる。見た印だけ足して、ホームを測る
+    .replace(/^(\s*check\("こわれた記録[^\n]*?JSON\.stringify\(\{ )(?!tut: true)/gm, '$1tut: true, ')
+    .replace(/(?<!localStorage\.clear\(\); )const d = document\.getElementById\("howto"\); d\.dispatchEvent\(new Event\("cancel"\)\)/g, 'localStorage.clear(); const d = document.getElementById("howto"); if (!d.open) d.showModal(); d.dispatchEvent(new Event("cancel"))');
+}
 export function migrateFirstQa(qa) {
-  if (qa.includes('const firstClose = async')) return firstVisible(qa);
+  if (qa.includes('const firstClose = async')) return firstVisible(firstLate(qa));
   const P = '([A-Za-z_$][\\w$]*)';
   let next = qa
     .replace(new RegExp(`if \\(await ${P}\\.locator\\("#howto\\[open\\]"\\)\\.count\\(\\)\\) await \\1\\.click\\("#howto-ok"(?:, \\{[^}]*\\})?\\)`, 'g'), 'await firstClose($1)')
@@ -173,17 +194,8 @@ export function migrateFirstQa(qa) {
     // ページの中で「わかった」を押していた所は、吹き出しが出ていればやめてホームへ戻る
     .replace(/(d\.querySelector\("#howto-ok"\)\.click\(\)|document\.getElementById\("howto-ok"\)\.click\(\)|if \(d\.open\) d\.close\(\));?/g, '$1; if (window.Core && Core.coach && Core.coach.active()) Core.coach.leave();')
     .replace(new RegExp(`check\\("「わかった」を押したその場で「見た」が残る", await ${P}\\.locator\\("#howto-ok"\\)\\.evaluate\\(\\(b\\) => \\{ b\\.click\\(\\); (return [^\\n]*?\\}\\); \\}\\)\\);)`, 'g'), (m, v, body) => `check("はじめての練習が始まったその場で「見た」が残る", await ${v}.evaluate(() => { ${body} await firstClose(${v});`)
-    .replace(new RegExp(`check\\("(?:はじめて|初めて)開くと遊び方が出る([^"]*)", await ${P}\\.locator\\("#howto\\[open\\]"\\)\\.count\\(\\) === 1`, 'g'), (m, tail, v) => `check("はじめて開くと、遊び方の窓でなく練習の1問と吹き出しが出る${tail}", await ${v}.locator("#howto[open]").count() === 0 && await ${v}.locator("#core-coach").count() === 1`)
-    .replace(new RegExp(`check\\("(?:はじめて|初めて)開くと遊び方が出る([^"]*)", await ${P}\\.evaluate\\(\\(\\) => document\\.getElementById\\("howto"\\)\\.open\\)`, 'g'), (m, tail, v) => `check("はじめて開くと、遊び方の窓でなく吹き出しが出る${tail}", await ${v}.evaluate(() => !document.getElementById("howto").open && !!document.getElementById("core-coach"))`)
-    .replace(new RegExp(`check\\("(?:はじめて|初めて)開くと遊び方が出る([^"]*)", await ${P}\\.isVisible\\("#howto"\\)`, 'g'), (m, tail, v) => `check("はじめて開くと、遊び方の窓でなく吹き出しが出る${tail}", !(await ${v}.isVisible("#howto")) && await ${v}.isVisible("#core-coach")`)
-    // 「遊び方ははじめてだけ出て…」の形：はじめに測る shown を、窓でなく吹き出しが出ているかに替える
-    .replace(new RegExp(`const shown = await ${P}\\.evaluate\\(\\(\\) => document\\.getElementById\\("howto"\\)\\.open\\);`, 'g'), (m, v) => `const shown = await ${v}.evaluate(() => !document.getElementById("howto").open && !!document.getElementById("core-coach"));`)
-    // 開いたときの遊び方の窓を測る所（「わかった」が見える など）は、先に吹き出しをやめて遊び方を開く
-    .replace(new RegExp(`^(\\s*)(check\\([^\\n]*await ${P}\\.evaluate\\(\\(\\) => document\\.activeElement && document\\.activeElement\\.id === "howto-ok")`, 'gm'), (m, sp, rest, v) => `${sp}await firstClose(${v}).then(() => ${v}.click("#f-how"));\n${sp}${rest}`)
-    // はじめて開いて遊び方の窓を待つ所は、吹き出しを待つ（Esc で閉じる・「見た」が残る、はそのまま確かめられる）
-    .replace(new RegExp(`${P}\\.waitForSelector\\("#howto\\[open\\]"\\)`, 'g'), '$1.waitForSelector("#core-coach")')
-    // 遊び方の窓の Esc（cancel）で「見た」を残す所を、ページの中で確かめる所：はじめての練習で「見た」はもう残っていて窓も閉じているので、先に消して窓を開いてから測る
-    .replace(/const d = document\.getElementById\("howto"\); d\.dispatchEvent\(new Event\("cancel"\)\)/g, 'localStorage.clear(); const d = document.getElementById("howto"); if (!d.open) d.showModal(); d.dispatchEvent(new Event("cancel"))');
+    .replace(new RegExp(`check\\("(?:はじめて|初めて)開くと遊び方が出る([^"]*)", await ${P}\\.locator\\("#howto\\[open\\]"\\)\\.count\\(\\) === 1`, 'g'), (m, tail, v) => `check("はじめて開くと、遊び方の窓でなく練習の1問と吹き出しが出る${tail}", await ${v}.locator("#howto[open]").count() === 0 && await ${v}.locator("#core-coach").count() === 1`);
+  next = firstLate(next);
   if (next === qa) return qa;
   const m = next.match(/^const check = .*$/m);
   return m ? firstVisible(next.replace(m[0], () => `${m[0]}\n${FIRST_CLOSE}`)) : qa;
