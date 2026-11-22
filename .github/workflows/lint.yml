@@ -59,6 +59,11 @@ jobs:
       # Link check が読み違える URL の書き方（すぐ後ろに全角の字）を見分けるか（incidents/2026-11-08-link-check-wide-char-after-url.md）
       - name: リンクの書き方の見分け
         run: node scripts/check-link-text.mjs
+      # GitHub の releases/download を curl だけで取らず、断られたら gh release download で取り直すか（incidents/2026-11-23-secret-scan-gitleaks-download-403.md）
+      - name: 外の道具の取り直し
+        run: |
+          node scripts/check-release-download.mjs --self-test
+          node scripts/check-release-download.mjs
       # ゲームの古くなる情報の台帳（freshness.md）に repos.txt の game が全部あり、形が正しいか。見分け方そのものも（routines/freshness.md）
       - name: 古くなる情報の台帳
         run: |
