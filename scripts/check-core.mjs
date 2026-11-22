@@ -135,5 +135,22 @@ ok('Core.coach に start・stop・active がある', ['start', 'stop', 'leave', 
   const once = withQrShell(sw);
   ok('写せない sw.js にも SHELL に transfer-qr.js を足す・2回かけても同じ', once.includes('"./transfer.js", "./transfer-qr.js"]') && withQrShell(once) === once && once.includes('FONT_CACHE'));
 }
+// はじめての練習（migrateFirstPlay・migrateFirstQa）：ひな形の形のゲームにだけ足し、2回かけても同じ。QA の前提も替える
+{
+  const { migrateFirstPlay, migrateFirstQa } = await import('./sync-template.mjs');
+  const game = '\nfunction home() {\n  if (!s.tut) openHow();\n}\nfunction practiceMenu() {\n  document.querySelectorAll(".lv button").forEach((b) => (b.onclick = () => startRun("p", +b.dataset.t)));\n}\nfunction startRun(mode, opt) {}\nfunction play() { a = `<div id="choices"></div><div class="verdict"></div><button id="next">`; }\n';
+  const once = migrateFirstPlay(game);
+  ok('migrateFirstPlay：はじめては firstPlay・練習の入り口の .lv button を押す・吹き出しは #choices と #next', once.includes('if (!s.tut) firstPlay();') && once.includes('document.querySelector(".lv button")') && once.includes('sel: "#choices"') && once.includes('wait: ".verdict"'));
+  ok('migrateFirstPlay：2回かけても同じ', migrateFirstPlay(once) === once);
+  const other = game.replace('startRun("p"', 'go("p"').replace('if (!s.tut) openHow();', 'if (!s.tut && !$("howto").open) openHow();') + '<button class="main" id="go-d">';
+  const tip = migrateFirstPlay(other);
+  ok('migrateFirstPlay：練習の入り口が無い形は、ホームのはじめのボタン（#go-d）に吹き出しを1つ・2回かけても同じ', tip.includes('if (!s.tut) firstPlay();') && tip.includes('sel: "#go-d"') && !tip.includes('practiceMenu();\n  const b') && migrateFirstPlay(tip) === tip);
+  ok('migrateFirstPlay：はじめに遊び方を開かないゲームには足さない', migrateFirstPlay(other.replace('if (!s.tut && !$("howto").open) openHow();', '')) === other.replace('if (!s.tut && !$("howto").open) openHow();', ''));
+  const qa = 'const check = (n, ok) => r.push(ok);\n  check("はじめて開くと遊び方が出る", await p.locator("#howto[open]").count() === 1);\n  await p.click("#howto-ok");\n  if (await q.locator("#howto[open]").count()) await q.click("#howto-ok");\n';
+  const q1 = migrateFirstQa(qa);
+  const q2 = migrateFirstQa('const check = (n, ok) => r.push(ok);\n  check("はじめて開くと遊び方が出る", await p.evaluate(() => document.getElementById("howto").open));\n  check("初めて開くと遊び方が出る", await p.isVisible("#howto"));\n  const shown = await p.evaluate(() => document.getElementById("howto").open);\n');
+  ok('migrateFirstQa：evaluate・isVisible・shown の形も吹き出しを見る', !q2.includes('遊び方が出る"') && (q2.match(/core-coach/g) || []).length >= 4 && migrateFirstQa(q2) === q2);
+  ok('migrateFirstQa：「わかった」は firstClose に・はじめての検査は吹き出しを見る・2回かけても同じ', q1.includes('const firstClose = async') && q1.includes('await firstClose(p);') && q1.includes('await firstClose(q);') && !q1.includes('click("#howto-ok")\n') && q1.includes('#core-coach").count() === 1') && migrateFirstQa(q1) === q1);
+}
 if (errors.length) { for (const e of errors) console.error(`✗ ${e}`); process.exit(1); }
 console.log('✓ game-core（template/core/core.js）');

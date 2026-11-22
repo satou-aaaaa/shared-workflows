@@ -343,6 +343,8 @@ const results = await pool(REPOS, 4, async (r) => {
     if (paths.has('index.html')) {
       const page = pageCache ?? await src.read('index.html');
       for (const [id, msg] of playerBugs(page)) if (id === 'howto:close') flag(id, msg);
+      // はじめての人に長い「遊び方」の窓を開かない（練習の1問と吹き出し。2026-11-22 satou さん「すべて対応」）。sync-template の migrateFirstPlay が足す。形のちがうゲームは手で
+      if (/if \(!s\.tut(?: && !\$\("howto"\)\.open)?\) openHow\(\)/.test(page) && !/function firstPlay\(/.test(page)) flag('first:howto', 'はじめて開くと遊び方の窓が出る（練習の1問と吹き出しにする。node scripts/sync-template.mjs で写すか、形がちがえば firstPlay を手で。incidents/2026-11-22-first-howto-left.md）');
     }
 
     // ホームの題（h1.title）は、上の帯の h1{flex:1} を受け継ぐと、縦に並べた画面で余った高さを全部取って伸びる（820×1180 で 277〜450px のすき間。2026-11-07 incidents/2026-11-07-title-stretched.md）

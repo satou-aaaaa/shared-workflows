@@ -77,6 +77,106 @@ export function migrateCore(html) {
   return next;
 }
 
+// はじめての人に、長い「遊び方」の窓でなく、点数に入らない練習の1問と吹き出し（Core.coach）を出す（2026-11-22 satou さん「全ゲームで」）。
+// ひな形からできたゲームの形（home() の `if (!s.tut) openHow();`・startRun(mode, opt)・play()・.verdict・#next）にだけ足す。形がちがうゲームは手で。
+// 足すのは first-play:begin〜end の印のあいだだけ。2回かけても同じ（印があれば中身を今のひな形に替える）
+export const FIRST_PLAY = /\/\/ first-play:begin[\s\S]*?\/\/ first-play:end\n?/;
+const FIRST_AREAS = ['choices', 'chs', 'cards', 'board', 'tiles', 'tray', 'hand', 'pick', 'slots', 'map', 'chart', 'card', 'cands', 'inp', 'ans', 'q'];
+// 練習の入り口：practiceMenu() の中で startRun("p", …) を呼ぶボタンの選び方（いちばん上＝いちばんやさしい段を押す）
+export const firstPick = (html) => { const i = html.indexOf('\nfunction practiceMenu('); const b = i >= 0 && html.slice(i, i + 4000).match(/querySelectorAll\("([^"]+)"\)\.forEach\(\(b\) => \(b\.onclick = \(\) => startRun\("p"/); return b ? b[1] : null; };
+export function firstPlayBlock(html) {
+  const pick = firstPick(html);
+  const area = FIRST_AREAS.find((id) => new RegExp(`id=\\\\?["']${id}\\\\?["']`).test(html));
+  const sel = area ? `#${area}` : '#app h1';
+  return `// first-play:begin（shared-workflows の scripts/sync-template.mjs が足した。直すときはひな形を直す）
+// はじめての人：長い「遊び方」の窓を出さず、点数に入らない練習の1問を遊びながら、吹き出しで一言ずつ教える（game-core の Core.coach）。
+// 「見た」は始めたその場で残す（途中でやめても、次からはふつうに始まる。くわしい遊び方はいつでもいちばん下の「遊び方」から）
+const FIRST_STEPS = [
+  { sel: "${sel}", button: "やってみる", text: "はじめての方へ：まずは点数に入らない練習の1問です。くわしい遊び方は、いちばん下の「遊び方」にあります。" },
+  { sel: "#next", wait: ".verdict", text: "できました。わけを読んだら、ここを押して進みます。" },
+];
+function firstPlay() {
+  save((s) => { s.tut = true; });
+  // 練習の入り口を開いて、いちばん上（いちばんやさしい）を押す。無ければ前の形（遊び方の窓）にもどす
+  practiceMenu();
+  const b = document.querySelector(${JSON.stringify(pick)});
+  if (!window.Core || !Core.coach || !b) { home(); return openHow(); }
+  b.click();
+  // 練習は1問だけにする（数を減らしてから描き直す）
+  save((s) => { const r = s.runs && s.runs.p; if (r && Array.isArray(r.list)) r.list = r.list.slice(0, 1); });
+  play();
+  // 案内を閉じた（Esc も）ら、1問の練習の途中経過を残さずにホームへ（ふだんの練習の「続きから」を出さない）
+  Core.coach.start(FIRST_STEPS, { home, onEnd: (done) => { if (done === false) { save((s) => { const r = s.runs && s.runs.p; if (r && !(r.res || []).length) delete s.runs.p; }); home(); } } });
+}
+// first-play:end
+`;
+}
+// 練習の入り口が無い・形のちがうゲーム：遊び方の窓は出さず、ホームのはじめに押すボタンへ吹き出しを1つ付ける
+// （チュートリアルがあればそこ・今日の問題・ホームの大きいボタンの順）
+export function firstTipBlock(html) {
+  const id = ['go-tut', 'go-d'].find((x) => new RegExp(`id=\\\\?["']${x}\\\\?["']`).test(html));
+  const sel = id ? `#${id}` : '#app button.main';
+  return `// first-play:begin（shared-workflows の scripts/sync-template.mjs が足した。直すときはひな形を直す）
+// はじめての人：長い「遊び方」の窓を出さず、はじめに押す所へ吹き出しを1つだけ出す（game-core の Core.coach）。
+// 「見た」は出したその場で残す（くわしい遊び方はいつでもいちばん下の「遊び方」から）
+const FIRST_STEPS = [
+  { sel: "${sel}", text: "はじめての方へ：まずはここを押して、遊びながら覚えましょう。くわしい遊び方は、いちばん下の「遊び方」にあります。" },
+];
+function firstPlay() {
+  save((s) => { s.tut = true; });
+  if (!window.Core || !Core.coach || !document.querySelector(FIRST_STEPS[0].sel)) return openHow();
+  Core.coach.start(FIRST_STEPS, { home });
+}
+// first-play:end
+`;
+}
+const FIRST_OPEN = /if \(!s\.tut(?: && !\$\("howto"\)\.open)?\) openHow\(\);/;
+const playable = (html) => html.includes('\nfunction startRun(mode, opt) {') && firstPick(html) && /if \(!s\.tut\) openHow\(\);/.test(html) && /\nfunction play\(/.test(html) && /class=\\?"verdict/.test(html) && /id=\\?"next/.test(html);
+export function migrateFirstPlay(html) {
+  if (FIRST_PLAY.test(html)) { const rest = html.replace(FIRST_PLAY, ''); return html.replace(FIRST_PLAY, () => (/const FIRST_STEPS = \[\n  \{ sel: "[^"]*", button:/.test(html.match(FIRST_PLAY)[0]) ? firstPlayBlock(rest) : firstTipBlock(rest))); }
+  if (/function firstPlay\(/.test(html)) return html; // 手で作ったはじめての練習がある（震度よみ など）
+  if (!FIRST_OPEN.test(html) || !/\nfunction home\(\)/.test(html)) return html;
+  if (playable(html)) {
+    const at = html.indexOf('\nfunction startRun(mode, opt) {');
+    return `${html.slice(0, at + 1)}${firstPlayBlock(html)}${html.slice(at + 1)}`.replace(FIRST_OPEN, 'if (!s.tut) firstPlay();');
+  }
+  // 吹き出しだけの形は home() の前に足す
+  const at = html.indexOf('\nfunction home()');
+  return `${html.slice(0, at + 1)}${firstTipBlock(html)}${html.slice(at + 1)}`.replace(FIRST_OPEN, 'if (!s.tut) firstPlay();');
+}
+
+// QA の「はじめて開くと遊び方が出る」前提の所を、はじめての練習の形に替える（migrateFirstPlay を足したゲームだけ）
+// 「わかった」で閉じていた所は firstClose(p)：遊び方が開いていれば閉じ、吹き出しが出ていれば案内をやめてホームへ戻る（前と同じホームから測る）
+export const FIRST_CLOSE = 'const firstClose = async (q) => { if (await q.locator("#howto[open]").count()) await q.click("#howto-ok"); if (await q.locator("#core-coach").count()) { await q.evaluate(() => Core.coach.leave()); await q.waitForTimeout(100); } }; // はじめての練習の吹き出しをやめてホームへ（sync-template の migrateFirstQa が足した）';
+export function migrateFirstQa(qa) {
+  if (qa.includes('const firstClose = async')) return qa;
+  const P = '([A-Za-z_$][\\w$]*)';
+  let next = qa
+    .replace(new RegExp(`if \\(await ${P}\\.locator\\("#howto\\[open\\]"\\)\\.count\\(\\)\\) await \\1\\.click\\("#howto-ok"(?:, \\{[^}]*\\})?\\)`, 'g'), 'await firstClose($1)')
+    .replace(new RegExp(`${P}\\.click\\("#howto-ok"(?:, \\{[^}]*\\})?\\)`, 'g'), 'firstClose($1)')
+    .replace(new RegExp(`${P}\\.click\\("#f-how"\\)`, 'g'), 'firstClose($1).then(() => $1.click("#f-how"))')
+    // 開いた遊び方の窓を測る所は、先に吹き出しをやめて遊び方を開く
+    .replace(new RegExp(`const ([\\w$]+) = await ${P}\\.evaluate\\(\\(\\) => (?=[^;\\n]*?"#howto )`, 'g'), 'await firstClose($2).then(() => $2.click("#f-how")); const $1 = await $2.evaluate(() => ')
+    // 遊び方が開くのを待っていた所（Esc で閉じる検査）は、吹き出しが出るのを待つ（Esc で案内をやめるとホームへ戻る）
+    .split('waitForFunction(() => document.getElementById("howto").open)').join('waitForFunction(() => !!document.getElementById("core-coach"))')
+    // ほかの「はじめは遊び方が開いている」前提は、吹き出しが出ている前提に替える
+    .split('.locator("#howto[open]").count() === 1').join('.locator("#core-coach").count() === 1')
+    .split('document.getElementById("howto").open && /').join('!!document.getElementById("core-coach") && /')
+    // ページの中で「わかった」を押していた所は、吹き出しが出ていればやめてホームへ戻る
+    .replace(/(d\.querySelector\("#howto-ok"\)\.click\(\)|document\.getElementById\("howto-ok"\)\.click\(\)|if \(d\.open\) d\.close\(\));?/g, '$1; if (window.Core && Core.coach && Core.coach.active()) Core.coach.leave();')
+    .replace(new RegExp(`check\\("「わかった」を押したその場で「見た」が残る", await ${P}\\.locator\\("#howto-ok"\\)\\.evaluate\\(\\(b\\) => \\{ b\\.click\\(\\); (return [^\\n]*?\\}\\); \\}\\)\\);)`, 'g'), (m, v, body) => `check("はじめての練習が始まったその場で「見た」が残る", await ${v}.evaluate(() => { ${body} await firstClose(${v});`)
+    .replace(new RegExp(`check\\("(?:はじめて|初めて)開くと遊び方が出る([^"]*)", await ${P}\\.locator\\("#howto\\[open\\]"\\)\\.count\\(\\) === 1`, 'g'), (m, tail, v) => `check("はじめて開くと、遊び方の窓でなく練習の1問と吹き出しが出る${tail}", await ${v}.locator("#howto[open]").count() === 0 && await ${v}.locator("#core-coach").count() === 1`)
+    .replace(new RegExp(`check\\("(?:はじめて|初めて)開くと遊び方が出る([^"]*)", await ${P}\\.evaluate\\(\\(\\) => document\\.getElementById\\("howto"\\)\\.open\\)`, 'g'), (m, tail, v) => `check("はじめて開くと、遊び方の窓でなく吹き出しが出る${tail}", await ${v}.evaluate(() => !document.getElementById("howto").open && !!document.getElementById("core-coach"))`)
+    .replace(new RegExp(`check\\("(?:はじめて|初めて)開くと遊び方が出る([^"]*)", await ${P}\\.isVisible\\("#howto"\\)`, 'g'), (m, tail, v) => `check("はじめて開くと、遊び方の窓でなく吹き出しが出る${tail}", !(await ${v}.isVisible("#howto")) && await ${v}.isVisible("#core-coach")`)
+    // 「遊び方ははじめてだけ出て…」の形：はじめに測る shown を、窓でなく吹き出しが出ているかに替える
+    .replace(new RegExp(`const shown = await ${P}\\.evaluate\\(\\(\\) => document\\.getElementById\\("howto"\\)\\.open\\);`, 'g'), (m, v) => `const shown = await ${v}.evaluate(() => !document.getElementById("howto").open && !!document.getElementById("core-coach"));`)
+    // 開いたときの遊び方の窓を測る所（「わかった」が見える など）は、先に吹き出しをやめて遊び方を開く
+    .replace(new RegExp(`^(\\s*)(check\\([^\\n]*inView\\("#howto-ok"\\)[^\\n]*await ${P}\\.evaluate\\(\\(\\) => document\\.activeElement)`, 'gm'), (m, sp, rest, v) => `${sp}await firstClose(${v}).then(() => ${v}.click("#f-how"));\n${sp}${rest}`);
+  if (next === qa) return qa;
+  const m = next.match(/^const check = .*$/m);
+  return m ? next.replace(m[0], () => `${m[0]}\n${FIRST_CLOSE}`) : qa;
+}
+
 // 古い load()（保存の写しを手で合わせる形）を共通部品 GameStore に切り替える（2026-11-22。表は scripts/store-legacy.mjs。文字が1つでもちがえば替えない）
 // 切り替えたら store:begin〜end の印を game-core のすぐあとに置く（中身は下で storeBlock を写す）
 export function migrateStore(html) {
@@ -144,7 +244,9 @@ export function plan(dir) {
   const want = (p, next, note) => { if (next !== null && read(p) !== next) out.push({ path: p, next, note }); };
   const want2 = (p, next, note) => { if (!has(p) || read(p) !== next) out.push({ path: p, next, note }); }; // 無いファイルも足す
   if (has('qa/run.mjs') && has('sw.js') && !read('qa/run.mjs').includes('checkSwStall')) out.push({ path: 'qa/run.mjs', next: null, note: 'checkSwStall を呼んでいない（import { checkSwStall } from "./sw-check.mjs" と、sw.js の中身で check を1行足す）' });
-  if (has('qa/run.mjs')) want('qa/run.mjs', roundSizes(read('qa/run.mjs')), '押せる所の 44px を丸めてくらべる');
+  // はじめての練習（migrateFirstPlay）を足すゲームは、QA の「はじめて開くと遊び方が出る」前提の所も替える
+  const firstOn = has('index.html') && A11Y.test(read('index.html')) && FIRST_PLAY.test(migrateFirstPlay(migrateStore(migrateCore(read('index.html')))));
+  if (has('qa/run.mjs')) want('qa/run.mjs', (firstOn ? migrateFirstQa : (x) => x)(roundSizes(read('qa/run.mjs'))), firstOn ? '押せる所の 44px を丸めてくらべる・はじめての練習の形' : '押せる所の 44px を丸めてくらべる');
   // sw.js を写せない（独自の働きがある）ゲームには、ひな形の sw.js を前にした sw の検査も写さない。写すと QA が「FLAGS が無い」などで落ちる
   // （2026-11-17 kokki-shuto。incidents/2026-11-17-sw-migration-drops-extras.md）
   const swStuck = has('sw.js') && makeSw(read('sw.js')) === null;
@@ -160,7 +262,7 @@ export function plan(dir) {
     const block = tpl('a11y/a11y.html').match(A11Y)[0];
     let next = A11Y.test(html) ? html.replace(A11Y, () => block) : html;
     if (CORE.test(next)) next = next.replace(CORE, () => coreBlock());
-    if (A11Y.test(html)) next = migrateStore(migrateCore(next)); // 見やすさの設定のあるゲーム（ひな形からできたゲーム）だけ game-core・GameStore に切り替える
+    if (A11Y.test(html)) next = migrateFirstPlay(migrateStore(migrateCore(next))); // 見やすさの設定のあるゲーム（ひな形からできたゲーム）だけ game-core・GameStore に切り替える
     if (STORE.test(next)) next = next.replace(STORE, () => storeBlock());
     if (A11Y.test(html) || STORE.test(html) || CORE.test(html)) want('index.html', next, '見やすさの設定・保存の共通部品・game-core');
   }
