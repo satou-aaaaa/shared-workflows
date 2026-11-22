@@ -11,7 +11,13 @@
 //   - 吹き出しのボタンは 44px 以上・名前がある・読み上げにも届く
 //   - 「案内を閉じる」でも Esc でも消え、読み直しても二度と出ない（「見た」はその場で残る）
 //   - solve で最後まで進めると吹き出しが消える
-export async function checkCore({ browser, url, check, solve, first = true, widths = [360, 1280] }) {
+// 止まったときに、どの段で何を待っていたかが1行目に出るようにする（ゲームの QA は1行目だけを残す。2026-11-22）
+export async function checkCore(o) {
+  const st = { at: "はじめ" };
+  try { return await coreSteps(o, st); } catch (e) { throw new Error(`[${st.at}] ${String(e.message).split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 6).join(" / ")}`); }
+}
+async function coreSteps({ browser, url, check, solve, first = true, widths = [360, 1280] }, st) {
+  const mark = (t) => { st.at = t; };
   const open = async (w) => {
     const ctx = await browser.newContext({ viewport: { width: w, height: w < 600 ? 640 : 800 } });
     await ctx.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
@@ -28,6 +34,7 @@ export async function checkCore({ browser, url, check, solve, first = true, widt
     return Math.max(0, Math.min(a.bottom, r.bottom) - Math.max(a.top, r.top)) > 1 && !(a.right <= r.left || a.left >= r.right);
   });
   {
+    mark("はじめての案内");
     const { ctx, p, errs } = await open(widths[0]);
     check("game-core：window.Core があり版がある", await p.evaluate(() => !!(window.Core && window.Core.v >= 1)));
     if (!first) { await ctx.close(); return; }
@@ -56,12 +63,14 @@ export async function checkCore({ browser, url, check, solve, first = true, widt
     await ctx.close();
   }
   {
+    mark("Esc");
     const { ctx, p } = await open(widths[0]);
     await p.keyboard.press("Escape"); await p.waitForTimeout(100);
     check("Esc でも吹き出しが消える", await p.locator("#core-coach").count() === 0);
     await ctx.close();
   }
   {
+    mark("感想のリンク");
     const { ctx, p } = await open(widths[0]);
       // 「感想を送る」（data-feedback）は、押したその時に全ゲーム共通の Googleフォームの事前入力リンクになる（GitHub のアカウントが無くても送れる）
       await p.evaluate(() => { if (window.Core && Core.coach && Core.coach.active()) Core.coach.leave(); });
@@ -78,15 +87,24 @@ export async function checkCore({ browser, url, check, solve, first = true, widt
     await ctx.close();
   }
   if (solve) {
+    mark("練習の1問を最後まで");
     const { ctx, p, errs } = await open(widths[0]);
     const go = p.locator("#core-coach .core-coach-go:not([hidden])");
     for (let n = 0; n < 3 && await go.count(); n++) { await go.click(); await p.waitForTimeout(100); }
+    mark("練習の1問を解く（ゲームの solve）");
     await solve(p);
+    mark("練習の1問を最後まで");
+    const covered = [];
     for (let n = 0; n < 20 && await p.locator("#core-coach").count(); n++) {
+      // 吹き出しが押す所を隠したままにならない（ページが動いたあと、古い場所に残っていた。2026-11-22）
+      const clear = await p.waitForFunction(() => { const c = document.getElementById("core-coach"), t = document.querySelector(".core-coach-on"); if (!c || !t || c.hidden) return true; const a = c.getBoundingClientRect(), r = t.getBoundingClientRect(); return !(Math.min(a.bottom, r.bottom) - Math.max(a.top, r.top) > 1 && !(a.right <= r.left || a.left >= r.right)); }, null, { timeout: 2000 }).then(() => true, () => false);
+      if (!clear) covered.push(n + 1);
+      mark(`練習の1問を最後まで（${n + 1}つ目の吹き出し）`);
       const g = p.locator("#core-coach .core-coach-go:not([hidden])");
       if (await g.count()) { await g.click(); } else { const t = p.locator(".core-coach-on").first(); if (!await t.count()) break; await t.click(); }
       await p.waitForTimeout(250);
     }
+    check("練習の1問を進めるあいだ、吹き出しが押す所を2秒より長く隠さない", covered.length === 0, covered.join(","));
     check("練習の1問を最後まで進めると、吹き出しが消える", await p.locator("#core-coach").count() === 0 && await p.locator(".core-coach-on").count() === 0);
     check("練習の1問を最後まで進めてもエラーが出ない", errs.length === 0, errs.join(" / "));
     await ctx.close();
