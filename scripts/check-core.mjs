@@ -150,7 +150,7 @@ ok('Core.coach に start・stop・active がある', ['start', 'stop', 'leave', 
   const q1 = migrateFirstQa(qa);
   const q2 = migrateFirstQa('const check = (n, ok) => r.push(ok);\n  check("はじめて開くと遊び方が出る", await p.evaluate(() => document.getElementById("howto").open));\n  check("初めて開くと遊び方が出る", await p.isVisible("#howto"));\n  const shown = await p.evaluate(() => document.getElementById("howto").open);\n');
   ok('migrateFirstQa：evaluate・isVisible・shown の形も吹き出しを見る', !q2.includes('遊び方が出る"') && (q2.match(/core-coach/g) || []).length >= 4 && migrateFirstQa(q2) === q2);
-  ok('migrateFirstQa：「わかった」は firstClose に・はじめての検査は吹き出しを見る・2回かけても同じ', q1.includes('const firstClose = async') && q1.includes('await firstClose(p);') && q1.includes('await firstClose(q);') && !q1.includes('click("#howto-ok")\n') && q1.includes('#core-coach").count() === 1') && migrateFirstQa(q1) === q1);
+  ok('migrateFirstQa：「わかった」は firstClose に・はじめての検査は吹き出しを見る・2回かけても同じ', q1.includes('const firstClose = async') && q1.includes('await firstClose(p);') && q1.includes('await firstClose(q);') && !q1.includes('click("#howto-ok")\n') && q1.includes('#core-coach").waitFor(') && migrateFirstQa(q1) === q1);
 }
 if (errors.length) { for (const e of errors) console.error(`✗ ${e}`); process.exit(1); }
 console.log('✓ game-core（template/core/core.js）');

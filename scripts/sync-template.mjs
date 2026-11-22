@@ -87,7 +87,7 @@ export const firstPick = (html) => { const i = html.indexOf('\nfunction practice
 export function firstPlayBlock(html) {
   const pick = firstPick(html);
   const area = FIRST_AREAS.find((id) => new RegExp(`id=\\\\?["']${id}\\\\?["']`).test(html));
-  const sel = area ? `#${area}` : '#app h1';
+  const sel = area ? `#${area}` : '#app h1, #app header'; // 題の無い問題の画面もある（お札のひみつ など）
   return `// first-play:begin（shared-workflows の scripts/sync-template.mjs が足した。直すときはひな形を直す）
 // はじめての人：長い「遊び方」の窓を出さず、点数に入らない練習の1問を遊びながら、吹き出しで一言ずつ教える（game-core の Core.coach）。
 // 「見た」は始めたその場で残す（途中でやめても、次からはふつうに始まる。くわしい遊び方はいつでもいちばん下の「遊び方」から）
@@ -102,8 +102,10 @@ function firstPlay() {
   const b = document.querySelector(${JSON.stringify(pick)});
   if (!window.Core || !Core.coach || !b) { home(); return openHow(); }
   b.click();
-  // 練習は1問だけにする（数を減らしてから描き直す）
+  // 練習は1問だけにする（数を減らしてから描き直す）。問題の数を決めているゲーム（読み直しで数のちがう回を捨てる）は、元の数のまま
+  const keep = JSON.stringify((load().runs || {}).p || null);
   save((s) => { const r = s.runs && s.runs.p; if (r && Array.isArray(r.list)) r.list = r.list.slice(0, 1); });
+  if (keep !== "null" && !(load().runs || {}).p) save((s) => { s.runs.p = JSON.parse(keep); });
   play();
   // 案内を閉じた（Esc も）ら、1問の練習の途中経過を残さずにホームへ（ふだんの練習の「続きから」を出さない）
   Core.coach.start(FIRST_STEPS, { home, onEnd: (done) => { if (done === false) { save((s) => { const r = s.runs && s.runs.p; if (r && !(r.res || []).length) delete s.runs.p; }); home(); } } });
@@ -148,8 +150,14 @@ export function migrateFirstPlay(html) {
 // QA の「はじめて開くと遊び方が出る」前提の所を、はじめての練習の形に替える（migrateFirstPlay を足したゲームだけ）
 // 「わかった」で閉じていた所は firstClose(p)：遊び方が開いていれば閉じ、吹き出しが出ていれば案内をやめてホームへ戻る（前と同じホームから測る）
 export const FIRST_CLOSE = 'const firstClose = async (q) => { if (await q.locator("#howto[open]").count()) await q.click("#howto-ok"); if (await q.locator("#core-coach").count()) { await q.evaluate(() => Core.coach.leave()); await q.waitForTimeout(100); } }; // はじめての練習の吹き出しをやめてホームへ（sync-template の migrateFirstQa が足した）';
+// 吹き出しは「ある」でなく「見えている」で確かめる（吹き出しの所が無いと、隠れたまま残ってホームに戻る。2026-11-22 地図記号よみ・お札のひみつ）
+const COACH_SEEN = '.locator("#core-coach").waitFor({ timeout: 3000 }).then(() => true, () => false)';
+export const firstVisible = (qa) => qa
+  .split('.locator("#core-coach").count() === 1').join(COACH_SEEN)
+  .split('!!document.getElementById("core-coach")').join('!!document.querySelector("#core-coach:not([hidden])")')
+  .replace(/([A-Za-z_$][\w$]*)\.isVisible\("#core-coach"\)/g, `$1${COACH_SEEN}`);
 export function migrateFirstQa(qa) {
-  if (qa.includes('const firstClose = async')) return qa;
+  if (qa.includes('const firstClose = async')) return firstVisible(qa);
   const P = '([A-Za-z_$][\\w$]*)';
   let next = qa
     .replace(new RegExp(`if \\(await ${P}\\.locator\\("#howto\\[open\\]"\\)\\.count\\(\\)\\) await \\1\\.click\\("#howto-ok"(?:, \\{[^}]*\\})?\\)`, 'g'), 'await firstClose($1)')
@@ -171,10 +179,14 @@ export function migrateFirstQa(qa) {
     // 「遊び方ははじめてだけ出て…」の形：はじめに測る shown を、窓でなく吹き出しが出ているかに替える
     .replace(new RegExp(`const shown = await ${P}\\.evaluate\\(\\(\\) => document\\.getElementById\\("howto"\\)\\.open\\);`, 'g'), (m, v) => `const shown = await ${v}.evaluate(() => !document.getElementById("howto").open && !!document.getElementById("core-coach"));`)
     // 開いたときの遊び方の窓を測る所（「わかった」が見える など）は、先に吹き出しをやめて遊び方を開く
-    .replace(new RegExp(`^(\\s*)(check\\([^\\n]*inView\\("#howto-ok"\\)[^\\n]*await ${P}\\.evaluate\\(\\(\\) => document\\.activeElement)`, 'gm'), (m, sp, rest, v) => `${sp}await firstClose(${v}).then(() => ${v}.click("#f-how"));\n${sp}${rest}`);
+    .replace(new RegExp(`^(\\s*)(check\\([^\\n]*await ${P}\\.evaluate\\(\\(\\) => document\\.activeElement && document\\.activeElement\\.id === "howto-ok")`, 'gm'), (m, sp, rest, v) => `${sp}await firstClose(${v}).then(() => ${v}.click("#f-how"));\n${sp}${rest}`)
+    // はじめて開いて遊び方の窓を待つ所は、吹き出しを待つ（Esc で閉じる・「見た」が残る、はそのまま確かめられる）
+    .replace(new RegExp(`${P}\\.waitForSelector\\("#howto\\[open\\]"\\)`, 'g'), '$1.waitForSelector("#core-coach")')
+    // 遊び方の窓の Esc（cancel）で「見た」を残す所を、ページの中で確かめる所：はじめての練習で「見た」はもう残っていて窓も閉じているので、先に消して窓を開いてから測る
+    .replace(/const d = document\.getElementById\("howto"\); d\.dispatchEvent\(new Event\("cancel"\)\)/g, 'localStorage.clear(); const d = document.getElementById("howto"); if (!d.open) d.showModal(); d.dispatchEvent(new Event("cancel"))');
   if (next === qa) return qa;
   const m = next.match(/^const check = .*$/m);
-  return m ? next.replace(m[0], () => `${m[0]}\n${FIRST_CLOSE}`) : qa;
+  return m ? firstVisible(next.replace(m[0], () => `${m[0]}\n${FIRST_CLOSE}`)) : qa;
 }
 
 // 古い load()（保存の写しを手で合わせる形）を共通部品 GameStore に切り替える（2026-11-22。表は scripts/store-legacy.mjs。文字が1つでもちがえば替えない）
