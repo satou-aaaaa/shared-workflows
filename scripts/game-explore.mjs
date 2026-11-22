@@ -231,6 +231,17 @@ async function main() {
       const runs = +opt("--runs", 12), steps = +opt("--steps", 50), seed0 = +opt("--seed", 1);
       const out = path.resolve(opt("--out", path.join(root, "qa-report", "explore")));
       const seen = new Set();
+      // はじめて開いた人に、長い「遊び方」の窓を出していないか（練習の1問と吹き出しにする。2026-11-22 satou さん「すべて対応」。incidents/2026-11-22-first-howto-left.md）
+      {
+        const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block" });
+        const p = await ctx.newPage();
+        await p.route("**/*", (route) => (new URL(route.request().url()).host === new URL(url).host ? route.continue() : route.abort()));
+        await p.goto(url); await p.waitForTimeout(800);
+        const how = await p.evaluate(() => [...document.querySelectorAll("dialog[open]")].map((d) => d.id || "dialog").join(","));
+        await ctx.close();
+        if (how) { bad++; console.log(`✗ はじめて開くと遊び方の窓（${how}）が出る（練習の1問と吹き出しにする。node scripts/sync-template.mjs で写すか、形がちがえば firstPlay を手で）`); }
+        else console.log("✓ はじめて開いても、遊び方の窓は出ない");
+      }
       for (let k = 0; k < runs; k++) {
         const sc = scenario(seed0 + k);
         const { fail, log } = await runOnce(browser, url, sc, { steps });
