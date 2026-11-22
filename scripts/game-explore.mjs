@@ -238,7 +238,10 @@ async function main() {
         await p.route("**/*", (route) => (new URL(route.request().url()).host === new URL(url).host ? route.continue() : route.abort()));
         await p.goto(url); await p.waitForTimeout(800);
         const how = await p.evaluate(() => [...document.querySelectorAll("dialog[open]")].map((d) => d.id || "dialog").join(","));
+        const hid = await p.evaluate(() => !!document.querySelector("#core-coach[hidden]"));
         await ctx.close();
+        // 吹き出しを作ったのに、付ける所が無くて隠れたまま（練習が始まらずホームに戻った など。2026-11-22 地図記号よみ・お札のひみつ）
+        if (hid) { bad++; console.log("✗ はじめての吹き出しが隠れたまま（付ける所が画面に無い。first-play の sel・練習の始め方を見る）"); }
         if (how) { bad++; console.log(`✗ はじめて開くと遊び方の窓（${how}）が出る（練習の1問と吹き出しにする。node scripts/sync-template.mjs で写すか、形がちがえば firstPlay を手で）`); }
         else console.log("✓ はじめて開いても、遊び方の窓は出ない");
       }
