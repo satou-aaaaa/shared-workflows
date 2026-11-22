@@ -94,16 +94,21 @@ async function coreSteps({ browser, url, check, solve, first = true, widths = [3
     mark("練習の1問を解く（ゲームの solve）");
     await solve(p);
     mark("練習の1問を最後まで");
-    const covered = [];
+    const covered = [], stuck = [];
     for (let n = 0; n < 20 && await p.locator("#core-coach").count(); n++) {
       // 吹き出しが押す所を隠したままにならない（ページが動いたあと、古い場所に残っていた。2026-11-22）
       const clear = await p.waitForFunction(() => { const c = document.getElementById("core-coach"), t = document.querySelector(".core-coach-on"); if (!c || !t || c.hidden) return true; const a = c.getBoundingClientRect(), r = t.getBoundingClientRect(); return !(Math.min(a.bottom, r.bottom) - Math.max(a.top, r.top) > 1 && !(a.right <= r.left || a.left >= r.right)); }, null, { timeout: 2000 }).then(() => true, () => false);
       if (!clear) covered.push(n + 1);
       mark(`練習の1問を最後まで（${n + 1}つ目の吹き出し）`);
+      // 吹き出しは requestAnimationFrame で次の段へ移る。移る前の「押せなくなった所」（正解のあとで disabled になった選び肢）を押しにいくと、
+      // Playwright はその要素が押せるようになるのを30秒待って止まる（2026-11-22 震度よみが GitHub の上でだけ止まった）。押せる所を指すまで待つ
+      const ready = await p.waitForFunction(() => { const t = document.querySelector(".core-coach-on"); return !t || !(t.disabled || t.getAttribute("aria-disabled") === "true"); }, null, { timeout: 3000 }).then(() => true, () => false);
+      if (!ready) { stuck.push(`${n + 1}つ目：${await p.evaluate(() => { const t = document.querySelector(".core-coach-on"); return t ? (t.id ? "#" + t.id : t.tagName.toLowerCase()) + "「" + (t.getAttribute("aria-label") || t.textContent || "").trim().slice(0, 20) + "」" : ""; })}`); break; }
       const g = p.locator("#core-coach .core-coach-go:not([hidden])");
       if (await g.count()) { await g.click(); } else { const t = p.locator(".core-coach-on").first(); if (!await t.count()) break; await t.click(); }
       await p.waitForTimeout(250);
     }
+    check("練習の1問を進めるあいだ、吹き出しが押せない所（disabled）を3秒より長く指したままにしない", stuck.length === 0, stuck.join(","));
     check("練習の1問を進めるあいだ、吹き出しが押す所を2秒より長く隠さない", covered.length === 0, covered.join(","));
     check("練習の1問を最後まで進めると、吹き出しが消える", await p.locator("#core-coach").count() === 0 && await p.locator(".core-coach-on").count() === 0);
     check("練習の1問を最後まで進めてもエラーが出ない", errs.length === 0, errs.join(" / "));
