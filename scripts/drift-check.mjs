@@ -345,6 +345,9 @@ const results = await pool(REPOS, 4, async (r) => {
       for (const [id, msg] of playerBugs(page)) if (id === 'howto:close') flag(id, msg);
       // はじめての人に長い「遊び方」の窓を開かない（練習の1問と吹き出し。2026-11-22 satou さん「すべて対応」）。sync-template の migrateFirstPlay が足す。形のちがうゲームは手で
       if (/if \(!s\.tut(?: && !\$\("howto"\)\.open)?\) openHow\(\)/.test(page) && !/function firstPlay\(/.test(page)) flag('first:howto', 'はじめて開くと遊び方の窓が出る（練習の1問と吹き出しにする。node scripts/sync-template.mjs で写すか、形がちがえば firstPlay を手で。incidents/2026-11-22-first-howto-left.md）');
+      // スマホの「戻る」でゲームから出ない（Core.screens.mark・route。routines/ui-rules.md「ページの分け方」6。2026-11-23 satou さん「#で戻れるように全部直す」）。
+      // sync-template の migrateBack が app.innerHTML で描くゲームに足す。形のちがうゲームは手で
+      if (/<!-- core:begin/.test(page) && !/Core\.screens\.(route|go)\(|data-screen=/.test(page.replace(/<!-- core:begin[\s\S]*?<!-- core:end -->/, ''))) flag('back:route', '「戻る」でゲームから出てしまう（画面を描く関数に Core.screens.mark、起動時に Core.screens.route。node scripts/sync-template.mjs で写すか、形がちがえば手で。routines/ui-rules.md「ページの分け方」6）');
     }
 
     // ホームの題（h1.title）は、上の帯の h1{flex:1} を受け継ぐと、縦に並べた画面で余った高さを全部取って伸びる（820×1180 で 277〜450px のすき間。2026-11-07 incidents/2026-11-07-title-stretched.md）
