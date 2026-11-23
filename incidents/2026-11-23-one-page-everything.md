@@ -20,4 +20,5 @@
 - [x] 防ぐ: `routines/ui-rules.md` に U10〜U12（1画面に目的1つ・見出し5まで・長さはスマホ3画面分まで・行き先5まで・畳みは1段）と「ページの分け方」を足した。新しいゲームの形は `routines/game-dev-detail.md`「画面の分け方」。この PR
 - [x] 見つける: `scripts/ui-check.mjs` が見出しの数・長さ・畳みの入れ子・画面の数を数え、画面を分けたページと `"pages": "fail"` では落とし、前からあるペライチは ::warning:: で知らせる。この PR
 - [x] 防ぐ: ゲーム以外・ほかのプロジェクトでも同じ物を使えるよう、単体の部品 `template/screens/screens.js`（core と同じ中身かを check-core が見る）、ひな形 `template/AGENTS.md` の1行、スキル page-split（`bootstrap/skills/page-split/SKILL.md`）を足した。この PR
+- [x] 見つける: 「戻る」でゲームから出るゲーム（Core.screens.route の無いゲーム）を `scripts/drift-check.mjs` の `back:route` が出す（週次まとめ）。形がちがい migrateBack が写せないゲームを拾う。この PR
 - [ ] 直す: 見本として川越の防災アプリ・川越散歩・ゲーム紹介サイトを画面に分ける（担当: 見やすいページの作り方を調べる スレッド、期限: 2026-11-30）

@@ -104,6 +104,9 @@ try {
     await page.click('#go-cal'); await page.waitForTimeout(100);
     await page.click('#back'); await page.waitForTimeout(200);
     ok('画面の「もどる」ボタンでホームへ戻ると、履歴が増えない（次の「戻る」で画面が出直さない）', (await h1()) === 'ホーム' && !/#./.test(page.url()) && (await page.evaluate(() => history.length)) <= len0 + 1);
+    await page.click('#go-dex'); await page.waitForTimeout(100);
+    await page.evaluate(() => { location.hash = 'constructor'; }); await page.waitForTimeout(150);
+    ok('# が Object の名前（#constructor）でも、その関数を呼ばずにホームへ', (await h1()) === 'ホーム');
     ok('エラーが出ない', errs.length === 0);
     await ctx.close();
   }
