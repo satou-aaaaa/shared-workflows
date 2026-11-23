@@ -15,6 +15,10 @@ on:
         description: '見つかったら検査を失敗にする（PR を止める）。既定は false（Security タブに出すだけ）'
         type: boolean
         default: false
+      config:
+        description: 'CodeQL の設定（YAML の文字列）。例 "paths: [template]" で調べる場所を絞る。既定は空（全部）'
+        type: string
+        default: ''
 
 jobs:
   analyze:
@@ -32,6 +36,7 @@ jobs:
         with:
           languages: ${{ inputs.languages }}
           build-mode: none
+          config: ${{ inputs.config }}
       - uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           output: ${{ runner.temp }}/codeql-sarif

@@ -18,5 +18,5 @@
 
 ## 対策
 - [x] 直す: 画面の表を Map にした（`views.get`）。両方の部品で同じ中身。この PR
-- [x] 見つける: `.github/workflows/codeql-self.yml`。template/・scripts/ を変える PR で CodeQL を回し、見つかれば止める（配る前に分かる）。この PR
+- [x] 見つける: `.github/workflows/codeql-self.yml`。template/（と配る道具 sync-template.mjs）を変える PR で、template/ を CodeQL にかけ、見つかれば止める（配る前に分かる。scripts/ の検査道具はゲームに入らないので対象外）。この PR
 - [x] 防ぐ: `scripts/check-screens.mjs` に「#constructor でも Object の関数を呼ばずにホームへ」を足した。この PR

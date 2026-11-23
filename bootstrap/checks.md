@@ -28,7 +28,7 @@
 | 保存の読み直しの共通部品（ゲーム） | 2つの写しの合わせ方のまちがい（とことんを終えたあとに古い回が戻る・数が減る・別の回の取りちがえ）。共通部品を使わず自分で合わせている・写しがひな形とちがう | `template/store/store.js`・`scripts/check-store.mjs`（check.sh と Lint）・`scripts/drift-check.mjs`（store:load・store:block）・写しは `scripts/sync-template.mjs` | 新作は index.html に store:begin〜end を置き、load() を GameStore.load にする（[game-dev.md](../routines/game-dev.md)「保存の読み直し」） |
 | ゲームの共通部品 game-core（ゲーム） | 手で写した小さな関数のずれ（「動きを減らす」でも震える・お知らせが読み上げられない・esc が " を変えない・num の直しが届かない）・はじめての案内（練習1問の吹き出し）が押す所を隠す・消えない・二度出る・感想フォームのリンク | `template/core/core.js`・`scripts/check-core.mjs`（check.sh と Lint）・`template/qa/core-check.mjs`（ゲームの QA）・写しは `scripts/sync-template.mjs` | 新作は index.html に core:begin〜end を置き、toast・buzz・esc などは Core.* を使う（[game-dev.md](../routines/game-dev.md)「共通部品 game-core」） |
 | CodeQL | AI が書いたコードの脆弱性（無料、公開リポジトリ）。`fail-on-alert: true` なら見つかったときに検査を失敗にして PR を止める（必須チェック codeql / analyze と組む） | `codeql.yml` | 呼び出し側の `languages`・`fail-on-alert` |
-| CodeQL（ひな形） | ひな形・scripts の JavaScript の脆弱性を、全ゲームへ配る前に見つける（見つかれば PR を止める） | `codeql-self.yml`（`codeql.yml` を自分で呼ぶ） | なし |
+| CodeQL（ひな形） | ひな形（template/）の JavaScript の脆弱性を、全ゲームへ配る前に見つける（見つかれば PR を止める） | `codeql-self.yml`（`codeql.yml` を自分で呼ぶ） | なし |
 | Secret scan | PR と main への push に入った秘密（gitleaks） | `secret-scan.yml` | 呼び出し側を入れる、★ Push protection |
 | Game QA | ゲームをブラウザで自動で遊ぶ検査（PR と main。検査の名前 qa / qa を main の必須チェックに） | `game-qa.yml` | `template/.github/workflows/qa.yml`（呼び出し側）と、Actions「Add ruleset」で必須チェック |
 | Node test | ブラウザの要らない Node.js のリポジトリ（言語の処理系など）のテストが落ちる・Node の保守が終わった版を使っている・依存に既知の脆弱性がある（npm audit、lock があるとき）（PR と main。検査の名前 qa / qa を main の必須チェックに） | `node-test.yml` | 呼び出し側（`uses: …/node-test.yml@main` のジョブ名 qa）と、Actions「Add ruleset」で必須チェック |
