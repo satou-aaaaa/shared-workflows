@@ -28,7 +28,8 @@ ng()  { echo "✗ $1" >&2; echo "--- 出力 ---" >&2; cat "$tmp/out" >&2; bad=1;
 repo="$tmp/repo"; mkdir -p "$repo/scripts" "$repo/app/dep" "$repo/app/pw" "$tmp/bin"
 sed -e 's|^npm_dir=qa |npm_dir=app |' -e 's|^next="node qa/run.mjs"|next="node app/check.js"|' \
   "$root/template/scripts/setup.sh" > "$repo/scripts/setup.sh"
-if grep -n '<[^<>]*[ぁ-んァ-ヶ一-龠][^<>]*>' "$repo/scripts/setup.sh"; then echo "✗ 埋めていない <> がある（この検査の sed を直す）" >&2; exit 1; fi
+# LC_ALL=C で見る（CI の C.UTF-8 では [ぁ-ん] が「Invalid collation character」で止まり、この検査が黙って通っていた。2026-11-23 incidents/2026-11-23-ci-flakes-timing.md）
+if LC_ALL=C grep -n '<[^<>]*[ぁ-んァ-ヶ一-龠][^<>]*>' "$repo/scripts/setup.sh"; then echo "✗ 埋めていない <> がある（この検査の sed を直す）" >&2; exit 1; fi
 # 埋めたあとの形を shellcheck で見る（check.sh と Lint の actionlint の準備で入っている）
 if command -v shellcheck >/dev/null; then shellcheck -S warning "$repo/scripts/setup.sh" || { echo "✗ shellcheck が template/scripts/setup.sh を指摘した" >&2; exit 1; }; fi
 want=$(node -p 'process.versions.node.split(".")[0]')
@@ -160,6 +161,9 @@ elif grep -q '^✓' "$tmp/out"; then ng "16. import() で読めないのに ✓ 
 else ok "import() で読めない Playwright で止まる（QA と同じ読み方）"; fi
 
 # 17. 2つ同時に動いても npm ci を重ねず、両方通る（hyakunin-awase #1 の CodeRabbit）
+# 本物のゲームと同じく git のリポジトリにする（版14：flock の置き場は .git の中。mkdir のロックだけでは CI で3回、2つとも取れた。
+# incidents/2026-11-11-setup-lock-flake.md）。18〜20 は flock の無い所（macOS など）の mkdir の道を SETUP_NO_FLOCK=1 で見る
+git -C "$repo" init -q
 rm -rf "$repo/app/node_modules"
 # 落ちたときに順番を追えるよう、ロックと npm の行を時刻つきで別のファイルに残す（2026-11-11 main で1回だけ落ちた。incidents/2026-11-11-setup-lock-flake.md）
 # PS4 は root だと環境から読まれないので、BASH_ENV で渡す
@@ -171,6 +175,13 @@ r1=0; r2=0; wait $p1 || r1=$?; wait $p2 || r2=$?
 cat "$tmp/out1" "$tmp/out2" > "$tmp/out"
 if [ $r1 = 0 ] && [ $r2 = 0 ] && grep -q '^✓ 準備できた' "$tmp/out1" && grep -q '^✓ 準備できた' "$tmp/out2" && [ ! -d "$repo/app/.setup-lock" ]; then ok "2つ同時に動いても両方通り、ロックを残さない"
 else grep -h '^+* [0-9.]* [0-9]* .*\(setup-lock\|npm ci\|stale\|reclaim\|got=\)' "$tmp/trace1" "$tmp/trace2" 2>/dev/null | sort -n -k2 | cut -c1-200 >> "$tmp/out" || true; ng "17. 同時に動かすと落ちる・ロックが残る（--- のあとに2つの順番）"; fi
+
+# 17b. flock の置き場が作業ツリーに出ない（git status にロックのファイルが出ない）・flock を使ったと分かる
+if command -v flock >/dev/null 2>&1; then
+  if [ -z "$(git -C "$repo" status --porcelain --ignored -- . 2>/dev/null | grep -i 'flock')" ] && ls "$repo/.git"/setup-*.flock >/dev/null 2>&1; then ok "flock の置き場は .git の中で、git status に出ない"
+  else git -C "$repo" status --porcelain --ignored > "$tmp/out" 2>&1 || true; ng "17b. flock のファイルが .git に無い・作業ツリーに出た"; fi
+fi
+export SETUP_NO_FLOCK=1
 
 # 18. 強制終了で残ったロック（持ち主がもう動いていない）は外して進む。動いている持ち主のロックは外さない（#259 の CodeRabbit）
 mkdir -p "$repo/app/.setup-lock" && echo "$(hostname 2>/dev/null || echo local) 999999" > "$repo/app/.setup-lock/owner"
