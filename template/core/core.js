@@ -214,7 +214,9 @@
   //         入口は <a href="#kiroku">記録</a>。戻るボタン・ブラウザの「戻る」で前の画面へ戻る。最初の data-screen がホーム。
   // 画面が変わると、その画面の最初の見出しへフォーカスを移し（読み上げのため）、上までもどし、"core:screen" を知らせる（detail.id）。
   // ゲームから: Core.screens.go("kiroku")・Core.screens.now()・Core.screens.list()
-  const screens = (function () {
+  // screens.js（単体の部品）を先に読んだページでは、それを使う（2回つながない）
+  const screens = window.Screens || (function () {
+    // screens:begin（template/screens/screens.js と同じ中身。check-core が比べる。直すときは両方を同じに）
     const all = () => (doc.querySelectorAll ? [...doc.querySelectorAll("[data-screen]")] : []);
     const ids = () => all().map((e) => e.getAttribute("data-screen"));
     let cur = "";
@@ -259,7 +261,9 @@
     }
     if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", init); else init();
     return { go, now: () => cur, list: ids, show: (id) => show(id) };
+    // screens:end
   })();
+  window.Screens = screens;
 
   // ---- 感想・不具合のフォーム（全ゲームで1つの Googleフォーム。事前入力のリンクでゲーム名と付属情報を入れる）----
   // 送る人が入力するのは「内容」の1か所だけ（必須はそれだけ）。名前・メール・遊んだ記録の中身は入れない。

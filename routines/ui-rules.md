@@ -13,7 +13,7 @@ U10〜U12 は同じ日の「AI が作るページはペライチが多く、情�
 
 - 検査：`node <shared-workflows>/scripts/ui-check.mjs --default`（リポジトリの一番上で。ホームを 390×844 と 1366×768 で測る）。PR では共通部品 `ui-check.yml` が、毎日は `common-check.yml` が同じものを回す。
 - 見やすさ・色・文字の検査：ゲームの `qa/a11y.mjs`（`template/qa/a11y.mjs` の写し）。
-- 画面の切り替え：共通部品 game-core の `Core.screens`（`template/core/core.js`）。`<section data-screen="…">` を並べると、URL の `#` で1つだけ見せる。動きの検査は `scripts/check-screens.mjs`（Selftest）。
+- 画面の切り替え：単体の部品 `template/screens/screens.js`（どのリポジトリ・Artifact でも。`window.Screens`）。ゲームは game-core の `Core.screens`（`template/core/core.js`）に同じ中身がある（check-core が同じかを見る）。`<section data-screen="…">` を並べると、URL の `#` で1つだけ見せる。動きの検査は `scripts/check-screens.mjs`（Selftest）。
 - 許すときの書き方：リポジトリの `qa/ui-check.json` の `"allow": [{ "rule": "home-max", "screen": "home@390", "reason": "…" }]`（rule は covered・dup・home-max・overflow・unnamed・page-h2・page-tall・page-nest・page-dest。理由の無い許しは置かない）。
 
 ## 決まり
@@ -40,6 +40,7 @@ U10〜U12 は同じ日の「AI が作るページはペライチが多く、情�
 3. ホームの入口は `<a href="#kiroku">記録</a>`（大きめのカードの並び、3〜5個）。各画面に `<a href="#">ホームへ</a>` を置く。ブラウザの「戻る」でも戻れる。
 4. フッター（共通部品の入口）は section の外に置き、どの画面にも出す。
 5. 1つの画面の中で拾い読みされる所（出典・細かい説明・よくある質問）だけ `details` で畳む。手順・答え・遊びに要る説明は畳まない。
+6. ゲーム以外（アプリ・紹介ページ・ほかのプロジェクト・Artifact）は `template/screens/screens.js` を写して読む（1ファイルの Artifact は中身を script タグに貼る）。claude.ai のほかのプロジェクトでは、スキル page-split（`bootstrap/skills/page-split/SKILL.md`）が同じ手順を持つ。
 
 使い分け（NN/g Tabs vs. Accordions）：
 
