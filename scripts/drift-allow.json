@@ -35,6 +35,18 @@
     {
       "id": "sw:qa",
       "reason": "ボードの画面を出すアプリで、ゲームの sw.js（ひな形）とは仕組みがちがう（ボードの HTML を保存する。local-kanban の AGENTS.md）"
+    },
+    {
+      "id": "call:game-qa",
+      "reason": "ボードの画面は claude.ai のボードの HTML をそのまま出すアプリで、ここで画面を作り直さない（local-kanban の AGENTS.md）。QA は自前の qa/run.mjs（にせもののボードで全体を見る）"
+    },
+    {
+      "id": "a11y:block",
+      "reason": "ボードの画面は claude.ai のボードの HTML をそのまま出すアプリで、ここで画面を作り直さない（local-kanban の AGENTS.md）。QA は自前の qa/run.mjs（にせもののボードで全体を見る）"
+    },
+    {
+      "id": "a11y:qa",
+      "reason": "ボードの画面は claude.ai のボードの HTML をそのまま出すアプリで、ここで画面を作り直さない（local-kanban の AGENTS.md）。QA は自前の qa/run.mjs（にせもののボードで全体を見る）"
     }
   ],
   "kippu-10": [
