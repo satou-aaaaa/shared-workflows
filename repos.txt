@@ -206,6 +206,7 @@ todokede-kigen game
 tokkyo-kikan game
 tonari-kimari game
 toppu-yomi game
+toukyu-yomi game
 tsuki-imei game
 tsuki-katachi game
 tsunami-yomi game
