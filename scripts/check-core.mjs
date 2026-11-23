@@ -46,6 +46,19 @@ ok(`${SRC} に HTML のコメント（<!-- -->）が無い（写しの区切り�
   ok('migrateCore：形のちがう関数・head の無いページは触らない', migrateCore('const num = (x) => +x;') === 'const num = (x) => +x;');
 }
 
+{
+  // 「戻る」でホームへ（migrateBack）。画面を描く関数の最初に mark、home に route を足す。何度かけても同じ
+  const { migrateBack, coreBlock } = await import('./sync-template.mjs');
+  const game = [coreBlock(), '<script>', 'function home() {', '  app.innerHTML = `<h1>ホーム</h1>`;', '}', 'function book(x) {', '  if (x) return home();', '  app.innerHTML = `<h1>帳</h1>`;', '}', 'function helper() {', '  return 1;', '}', 'const one = () => { app.innerHTML = "x"; };', '</script>'].join('\n');
+  const m = migrateBack(game);
+  const own = m.replace(coreBlock(), '');
+  ok('migrateBack：home に route と mark("")、画面を描く関数に mark を足す', /function home\(\) \{\n  Core\.screens\.route\(\{\}, home\); Core\.screens\.mark\(""\);/.test(own) && /function book\(x\) \{\n  Core\.screens\.mark\("book"\);/.test(own));
+  ok('migrateBack：描かない関数・トップレベルの関数でないものには足さない', !/helper\(\) \{\n  Core/.test(own) && (own.match(/Core\.screens\.mark/g) || []).length === 2);
+  ok('migrateBack：何度かけても同じ', migrateBack(m) === m);
+  ok('migrateBack：home の無いゲーム・game-core の無いページは触らない', migrateBack(game.replace('function home()', 'function top()')) === game.replace('function home()', 'function top()') && migrateBack('function home() {\n  app.innerHTML = 1;\n}') === 'function home() {\n  app.innerHTML = 1;\n}');
+  ok('migrateBack：game-core の中（Core.screens の中身）は触らない', m.includes(coreBlock()));
+}
+
 // 小さなにせものの画面（要るところだけ）
 function fakeDom({ calm = false, now = Date.parse('2026-11-21T14:00:00Z') } = {}) {
   const made = [];
@@ -70,6 +83,15 @@ function fakeDom({ calm = false, now = Date.parse('2026-11-21T14:00:00Z') } = {}
 
 const { Core, made, vib } = fakeDom();
 ok('window.Core に版がある', Core && Core.v >= 1);
+{
+  // 画面の切り替えは、単体の部品 template/screens/screens.js と game-core の中身が同じ（ほかのプロジェクトでも同じ物を使う。2026-11-23）
+  const part = (t) => { const m = t.match(/\/\/ screens:begin[^\n]*\n([\s\S]*?)\n\s*\/\/ screens:end/); return m ? m[1] : null; };
+  const one = readFileSync('template/screens/screens.js', 'utf8');
+  ok('template/screens/screens.js と core.js の screens:begin〜end の中身が同じ（片方だけ直していない）', part(one) !== null && part(one) === part(src));
+  const oneCode = one.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
+  ok('template/screens/screens.js が外へ通信しない・</script> と HTML のコメントが無い', !/\bfetch\(|XMLHttpRequest|WebSocket|sendBeacon|\bimport\(|EventSource/.test(oneCode) && !/<\/script|<!--|-->/i.test(one));
+}
+ok('Core.screens（画面の切り替え）がある・data-screen の無いページでは画面が無い', Core && Core.screens && typeof Core.screens.go === 'function' && Core.screens.list().length === 0 && Core.screens.now() === '');
 ok('esc が & < > " \' を変える（属性の中でも切れない）', Core.esc(`a&b<c>"d'e`) === 'a&amp;b&lt;c&gt;&quot;d&#39;e');
 ok('esc が null・数も文字にする', Core.esc(null) === '' && Core.esc(5) === '5');
 ok('num が 0 以上の整数だけを返す', Core.num(3.7) === 3 && Core.num('4') === 4 && Core.num(-1) === 0 && Core.num('x') === 0 && Core.num(Infinity) === 0);

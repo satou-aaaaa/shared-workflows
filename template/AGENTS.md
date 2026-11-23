@@ -27,4 +27,5 @@ Claude Code のクラウドセッションでは `.claude/settings.json` のフ�
 - PR の作り方・マージの仕方は satou-aaaaa/shared-workflows の `routines/pr.md`、全体のきまりは `routines/common.md` に従う（このファイルにはこのリポジトリだけの決まりを書く）。
 - CI の部品（CI失敗Issue・死活監視・Lighthouse・ブランチ片付け・自動マージ）は shared-workflows の共通部品を呼ぶ。
   リポジトリ側の .github/workflows には呼び出しと設定値だけを書く。
+- 画面のあるページは、目的ごとに `screens.js`（shared-workflows の `template/screens/screens.js`）で # の画面に分け、1ページに全部を積まない（`routines/ui-rules.md` U10〜U12）。
 - Claude 以外の AI・人が作業するときは、shared-workflows の `routines/tool-map.md`（道具の置き換え）と `routines/without-claude.md` を読む。

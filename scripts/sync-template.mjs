@@ -7,6 +7,7 @@
 //   index.html の <!-- a11y:begin -->〜<!-- a11y:end --> …… その間だけ写す
 //   index.html の <!-- store:begin -->〜<!-- store:end --> …… template/store/store.js を <script> に包んで写す（保存の読み直しの共通部品。2026-11-17 から）
 //   index.html の <!-- core:begin -->〜<!-- core:end --> …… template/core/core.js を <script> に包んで写す（小さな関数と、はじめての案内の吹き出し。2026-11-21 から）
+//   index.html の画面を描く関数 …… 「戻る」でホームへ戻る Core.screens.mark を足す（migrateBack。2026-11-23 から）
 //   sw.js …… ひな形を写し、// game:begin〜// game:end の間（CACHE・SHELL）はゲームのものを残す。
 //            まだ枠の無い古い sw.js からは const CACHE と const SHELL の行を拾って枠に入れる
 //   scripts/setup.sh …… ひな形を写し、npm_dir= と next= の行はゲームのものを残す
@@ -295,7 +296,7 @@ export function plan(dir) {
     const block = tpl('a11y/a11y.html').match(A11Y)[0];
     let next = A11Y.test(html) ? html.replace(A11Y, () => block) : html;
     if (CORE.test(next)) next = next.replace(CORE, () => coreBlock());
-    if (A11Y.test(html)) next = migrateFirstPlay(migrateStore(migrateCore(next))); // 見やすさの設定のあるゲーム（ひな形からできたゲーム）だけ game-core・GameStore に切り替える
+    if (A11Y.test(html)) next = migrateBack(migrateFirstPlay(migrateStore(migrateCore(next)))); // 見やすさの設定のあるゲーム（ひな形からできたゲーム）だけ game-core・GameStore に切り替える
     if (STORE.test(next)) next = next.replace(STORE, () => storeBlock());
     if (A11Y.test(html) || STORE.test(html) || CORE.test(html)) want('index.html', next, '見やすさの設定・保存の共通部品・game-core');
   }
@@ -359,4 +360,33 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   }
   if (check && diff) process.exit(1);
   if (!check && diff) console.log('写したあとは、ゲームで node qa/run.mjs を回す。sw.js の動きを大きく変えたときは CACHE の版を上げる');
+}
+
+// 「戻る」でゲームから出ないように（Core.screens.mark・route。routines/ui-rules.md「ページの分け方」6。2026-11-23 satou さん「#で戻れるように全部直す」）。
+// app.innerHTML で画面を描き替えるゲームの、トップレベルの関数（行頭の function 名前(…) { で終わる行）のうち、
+//   home      → 最初に Core.screens.route({}, home); Core.screens.mark("");
+//   ほかで app.innerHTML = を書く関数 → 最初に Core.screens.mark("<関数の名前>");
+// を足す。履歴は [ホーム] か [ホーム, #画面] の2つまでなので、「戻る」はいつもホームへ。何度かけても同じ。形のちがうゲームは触らない。
+export function migrateBack(html) {
+  const BACK_MARK = '// 「戻る」でホームへ（sync-template の migrateBack）'; // 関数の中に置く（上のほうで呼ばれても使える）
+  if (!CORE.test(html) || /Core\.screens\.route\(/.test(html.replace(CORE, ''))) return html;
+  const lines = html.split('\n');
+  const head = /^(async )?function (\w+)\([^)]*\)\s*\{\s*$/;
+  let name = null, start = -1;
+  const draws = new Map(); // 関数名 → 宣言の行
+  const coreAt = lines.findIndex((l) => /<!-- core:begin/.test(l)), coreEnd = lines.findIndex((l) => /<!-- core:end/.test(l));
+  for (let i = 0; i < lines.length; i++) {
+    if (i >= coreAt && i <= coreEnd) continue;
+    const m = lines[i].match(head);
+    if (m) { name = m[2]; start = i; continue; }
+    if (/^\S/.test(lines[i])) { name = null; continue; } // 行頭に何かあればトップレベルの関数の外
+    if (name && /\bapp\.innerHTML\s*=/.test(lines[i]) && !draws.has(name)) draws.set(name, start);
+  }
+  if (!draws.has('home') || draws.size < 2) return html;
+  const order = [...draws.entries()].sort((a, b) => b[1] - a[1]); // 下から足す（行の番号がずれない）
+  for (const [fn, at] of order) {
+    const add = fn === 'home' ? '  Core.screens.route({}, home); Core.screens.mark("");' : `  Core.screens.mark("${fn}");`;
+    lines.splice(at + 1, 0, `${add} ${BACK_MARK}`);
+  }
+  return lines.join('\n');
 }
