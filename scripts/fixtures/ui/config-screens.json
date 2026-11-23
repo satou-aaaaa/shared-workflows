@@ -1,0 +1,5 @@
+{
+  "root": ".",
+  "widths": [390],
+  "screens": [{ "name": "home", "path": "scripts/fixtures/ui/screens.html" }]
+}

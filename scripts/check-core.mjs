@@ -70,6 +70,7 @@ function fakeDom({ calm = false, now = Date.parse('2026-11-21T14:00:00Z') } = {}
 
 const { Core, made, vib } = fakeDom();
 ok('window.Core に版がある', Core && Core.v >= 1);
+ok('Core.screens（画面の切り替え）がある・data-screen の無いページでは画面が無い', Core && Core.screens && typeof Core.screens.go === 'function' && Core.screens.list().length === 0 && Core.screens.now() === '');
 ok('esc が & < > " \' を変える（属性の中でも切れない）', Core.esc(`a&b<c>"d'e`) === 'a&amp;b&lt;c&gt;&quot;d&#39;e');
 ok('esc が null・数も文字にする', Core.esc(null) === '' && Core.esc(5) === '5');
 ok('num が 0 以上の整数だけを返す', Core.num(3.7) === 3 && Core.num('4') === 4 && Core.num(-1) === 0 && Core.num('x') === 0 && Core.num(Infinity) === 0);
