@@ -1,0 +1,30 @@
+name: CodeQL (template)
+
+# ひな形（template/）と scripts/ の JavaScript を、全ゲームへ配る前にここで CodeQL にかける（Claude は使わない）。
+# 2026-11-23 Core.screens の「# の名前で関数を呼ぶ」を、配ったあとのゲームの CodeQL が初めて見つけた
+# （incidents/2026-11-23-template-codeql-after-sync.md）。配る前の PR で止める。
+on:
+  pull_request:
+    paths:
+      - "template/**"
+      - "scripts/**"
+      - ".github/workflows/codeql-self.yml"
+  push:
+    branches: [main]
+    paths:
+      - "template/**"
+      - "scripts/**"
+
+permissions:
+  contents: read
+
+jobs:
+  codeql:
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    uses: ./.github/workflows/codeql.yml
+    with:
+      languages: javascript-typescript
+      fail-on-alert: true
