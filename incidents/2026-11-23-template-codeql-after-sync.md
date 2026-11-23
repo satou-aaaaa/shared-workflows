@@ -20,4 +20,4 @@
 - [x] 直す: 画面の表を Map にした（`views.get`）。両方の部品で同じ中身。この PR
 - [x] 見つける: `.github/workflows/codeql-self.yml`。template/（と配る道具 sync-template.mjs）を変える PR で、template/ を CodeQL にかけ、見つかれば止める（配る前に分かる。scripts/ の検査道具はゲームに入らないので対象外）。この PR
 - [x] 防ぐ: `scripts/check-screens.mjs` に「#constructor でも Object の関数を呼ばずにホームへ」を足した。この PR
-- [x] 見つける: （2回目）Map にしても、ゲームの index.html の中では CodeQL がまだ「# の名前で関数を呼ぶ」を出した（template/core/core.js だけを調べた codeql-self は出さなかった。単体の .js とゲームに写した形で見え方がちがう）。直し: onPop で has と typeof を確かめてから呼ぶ。再発防止: ゲームと同じ形の見本 `scripts/fixtures/codeql/game.html`（check-core が今の core の写しか見る。`node scripts/check-core.mjs --write-sample`）も codeql-self で調べる。
+- [x] 防ぐ: （2回目）Map にしても CodeQL は「# から来た名前で選んだものを呼ぶ」を出す（Map の get も関数とは限らない）。onPop で has と typeof を確かめてから呼ぶ形にした。codeql-self は template/core/core.js で2件とも見つけていた（1回目は scripts/ の指摘と合わせて12件で、注釈が10件までしか出ず見落とした）ため、codeql-self は template/ だけを見る形にして、ゲームに関係する指摘が埋もれないようにした。`template/core/core.js` の onPop・`.github/workflows/codeql-self.yml`。この PR
