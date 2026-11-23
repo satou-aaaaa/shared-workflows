@@ -108,6 +108,13 @@ try {
     await ctx.close();
   }
   {
+    const { ctx, page } = await open('/game.html#hk=ABC');
+    ok('ほかの部品の # （引き継ぎの #hk=…）は消さない', page.url().endsWith('#hk=ABC'));
+    await page.click('#go-dex'); await page.waitForTimeout(100);
+    ok('ほかの部品の # のあいだは履歴を触らない', page.url().endsWith('#hk=ABC'));
+    await ctx.close();
+  }
+  {
     const { ctx, page } = await open('/game.html#dex');
     ok('# 付きで開き直すとホームから（# を消す）', (await page.evaluate(() => document.querySelector('h1').textContent)) === 'ホーム' && !/#./.test(page.url()));
     await ctx.close();

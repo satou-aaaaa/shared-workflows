@@ -69,9 +69,12 @@
     let homeFn = null, pushed = false, skipPop = 0, quiet = false;
     const hashName = () => { try { return decodeURIComponent((location.hash || "").slice(1)); } catch (e) { return ""; } };
     const bare = () => location.pathname + location.search;
+    // # が画面の名前でないとき（引き継ぎの #hk=… など、ほかの部品の印）は触らない
+    const foreign = () => { const h = hashName(); return !!h && !/^[A-Za-z][\w-]*$/.test(h); };
     function mark(name) {
       if (quiet || all().length || !homeFn) return; // data-screen のページ・route の前・戻るで描いている最中は何もしない
       name = name || "";
+      if (foreign()) return;
       const now = hashName();
       if (now === name) return;
       try {
@@ -84,6 +87,7 @@
     }
     function onPop() {
       if (skipPop) { skipPop--; return; }
+      if (foreign()) return;
       const h = hashName();
       const fn = (h && views[h]) || homeFn;
       if (!h || !views[h]) pushed = false;
@@ -93,9 +97,9 @@
     function route(map, home) {
       if (all().length) return;
       Object.assign(views, map || {});
-      if (!homeFn) addEventListener("popstate", onPop);
+      // 何度呼んでもよい（ゲームの home() の最初で呼ぶ）。# を消すのは最初の1回だけ（開き直したらホームから。途中の回は続きから出る）
+      if (!homeFn) { addEventListener("popstate", onPop); if (hashName() && !foreign()) try { history.replaceState(null, "", bare()); } catch (e) { /* 使えない */ } }
       homeFn = home;
-      if (hashName()) try { history.replaceState(null, "", bare()); } catch (e) { /* 使えない */ } // 開き直したらホームから（途中の回は続きから出る）
     }
     return { go, now: () => cur, list: ids, show: (id) => show(id), mark, route };
     // screens:end

@@ -46,6 +46,19 @@ ok(`${SRC} に HTML のコメント（<!-- -->）が無い（写しの区切り�
   ok('migrateCore：形のちがう関数・head の無いページは触らない', migrateCore('const num = (x) => +x;') === 'const num = (x) => +x;');
 }
 
+{
+  // 「戻る」でホームへ（migrateBack）。画面を描く関数の最初に mark、home に route を足す。何度かけても同じ
+  const { migrateBack, coreBlock } = await import('./sync-template.mjs');
+  const game = [coreBlock(), '<script>', 'function home() {', '  app.innerHTML = `<h1>ホーム</h1>`;', '}', 'function book(x) {', '  if (x) return home();', '  app.innerHTML = `<h1>帳</h1>`;', '}', 'function helper() {', '  return 1;', '}', 'const one = () => { app.innerHTML = "x"; };', '</script>'].join('\n');
+  const m = migrateBack(game);
+  const own = m.replace(coreBlock(), '');
+  ok('migrateBack：home に route と mark("")、画面を描く関数に mark を足す', /function home\(\) \{\n  Core\.screens\.route\(\{\}, home\); Core\.screens\.mark\(""\);/.test(own) && /function book\(x\) \{\n  Core\.screens\.mark\("book"\);/.test(own));
+  ok('migrateBack：描かない関数・トップレベルの関数でないものには足さない', !/helper\(\) \{\n  Core/.test(own) && (own.match(/Core\.screens\.mark/g) || []).length === 2);
+  ok('migrateBack：何度かけても同じ', migrateBack(m) === m);
+  ok('migrateBack：home の無いゲーム・game-core の無いページは触らない', migrateBack(game.replace('function home()', 'function top()')) === game.replace('function home()', 'function top()') && migrateBack('function home() {\n  app.innerHTML = 1;\n}') === 'function home() {\n  app.innerHTML = 1;\n}');
+  ok('migrateBack：game-core の中（Core.screens の中身）は触らない', m.includes(coreBlock()));
+}
+
 // 小さなにせものの画面（要るところだけ）
 function fakeDom({ calm = false, now = Date.parse('2026-11-21T14:00:00Z') } = {}) {
   const made = [];
