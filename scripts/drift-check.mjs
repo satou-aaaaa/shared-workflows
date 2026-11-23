@@ -491,9 +491,14 @@ if (!LOCAL_ROOT) {
   } catch (e) { skipped.push(`repos.txt との突き合わせ（${e.message}）`); }
 }
 
+// DRIFT_ONLY: 出す行をしぼる正規表現（毎日の Common check が「共通部品の抜け」だけを Issue にするため）
+const only = process.env.DRIFT_ONLY ? new RegExp(process.env.DRIFT_ONLY) : null;
+if (only) lines.splice(0, lines.length, ...lines.filter((l) => only.test(l)));
 if (lines.length) console.log(lines.join('\n'));
+// 1本も見られなかったのに「無い」と言わない（2026-11-23 鍵が効かず全部 401 なのに「見つかりませんでした」と出ていた）
+else if (skipped.length) console.log('ずれは見つかりませんでした（ただし下の確かめられなかったものは見ていない）');
 else console.log('ずれは見つかりませんでした');
-if (skipped.length) console.log(`\n確かめられなかった: ${skipped.join('、')}`);
+if (skipped.length) { console.log(`\n確かめられなかった: ${skipped.join('、')}`); if (process.env.DRIFT_STRICT) process.exitCode = 3; }
 if (!LOCAL_ROOT) {
   const u = reportUsage('ひな形からのずれ');
   if (u.warn) console.log(`\n⏱ ${u.text}。時間切れが近い（予算の ${u.rate}%）`);

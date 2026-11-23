@@ -52,6 +52,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | 作業 | 置き場所 | 実行 |
 | --- | --- | --- |
 | 週次まとめ Issue（開いた PR・CI 失敗・次にやること・再発防止の残った対策と繰り返し・ひな形からのずれ） | このリポジトリ `weekly-summary.yml`（ずれは `scripts/drift-check.mjs`） | 月曜の朝 |
+| 共通の点検 Issue（共通部品の抜け・画面の決まりの違反。全リポジトリのホームを測る） | このリポジトリ `common-check.yml`（`scripts/drift-check.mjs`・`scripts/ui-check.mjs`。決まりは [ui-rules.md](ui-rules.md)） | 毎日 7:43 JST |
 | 控えの見張り（毎朝の書き出しが止まったら Issue。Claude が止まった合図） | satou-aaaaa/ops-backup（非公開）`watch.yml` | 毎日 12:23 JST |
 | CI時間 Issue | このリポジトリ `ci-time-report.yml` | 木曜 05:29 JST |
 | 古くなる情報の見張り Issue（台帳 `freshness.md`、e-Gov 法令API v2 の改正履歴） | このリポジトリ `freshness.yml` | 火曜 05:43 JST |

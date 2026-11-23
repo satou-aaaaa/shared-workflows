@@ -41,6 +41,7 @@
 | 10 | ゲームの日本語の読み合わせ（週1・金曜朝） | [game-ja.md](../routines/game-ja.md) | `CRON_TZ=Asia/Tokyo 33 10 * * 5`（毎回新しいセッション） | ゲームのわかりにくい日本語を直す（報告の届け先） | 既定 |
 | 11 | ゲームのおもしろさの見直し（週1・月曜午後） | [game-fun.md](../routines/game-fun.md) | `CRON_TZ=Asia/Tokyo 47 15 * * 1`（毎回新しいセッション） | ゲームのおもしろさを週1で見直す（報告の届け先） | 既定 |
 | 12 | 探索で見つけた不具合を直す（Game explore の Issue を読む） | [game-explore.md](../routines/game-explore.md) | 単独の定期実行は作らない。6「ゲームを1本磨く」の回（水曜）が、Issue「探索で見つけた不具合」が開いていれば先に行う（[game-dev.md](../routines/game-dev.md) B 手順3） | — | 既定 |
+| 13 | 共通の点検の Issue を直す（共通部品の抜け・画面の決まりの違反） | [ui-rules.md](../routines/ui-rules.md)・[onboarding.md](../routines/onboarding.md) 手順2 | 単独の定期実行は作らない。毎日の Common check（CI）が Issue を作り、1の監督の巡回が1日以上開いていれば直すスレッドを頼む | — | 既定 |
 
 ## ほかのプロジェクトのルーティン（手順書がこのリポジトリにあるもの）
 
