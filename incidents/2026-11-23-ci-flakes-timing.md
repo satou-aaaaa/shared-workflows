@@ -24,7 +24,7 @@
 
 ## 対策
 - [x] 直す: 開いたままの7件の Issue は、ci-failure-issue を回して今の main の成功で閉じた（この PR の作業）。
-- [x] 防ぐ: QA の「二重に出ていない」は、2秒まで描画ごとに見直してから判定する（`template/qa/a11y.mjs`、この PR。Template sync が全ゲームへ写す）。
+- [x] 防ぐ: QA の「二重に出ていない」は、数える前に2回分の描画を待つ（#596 で別の担当が同じ原因を先に直した。`template/qa/a11y.mjs`、記録は incidents/2026-11-23-a11y-double-check-flaky.md）。
 - [x] 防ぐ: setup.sh は flock が使える所（Linux・クラウドセッション・CI）では、.git の中のファイルを flock で取って並んでから mkdir のロックに進む（`template/scripts/setup.sh` 版14、この PR）。検査17は本物と同じ git のリポジトリで回し、18〜20 は flock の無い所の道を `SETUP_NO_FLOCK=1` で見る。
 - [x] 防ぐ: Auto merge の読むだけの gh api は、間をあけて3回までやり直す（`.github/workflows/automerge.yml`、この PR）。
 - [x] 防ぐ: Lighthouse は3回測って中央値で判定し、3回の点も表に出す（`.github/workflows/lighthouse.yml`、この PR）。
