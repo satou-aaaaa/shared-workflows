@@ -89,6 +89,7 @@ kansen-yobo game
 kasane-zome game
 kaseki-ate game
 kashikari-kimari game
+kawagoe-bousai app
 kawagoe-sanpo app
 kazoku-kigen game
 kazoku-kimari game
@@ -206,6 +207,7 @@ todokede-kigen game
 tokkyo-kikan game
 tonari-kimari game
 toppu-yomi game
+toukyu-yomi game
 tsuki-imei game
 tsuki-katachi game
 tsunami-yomi game

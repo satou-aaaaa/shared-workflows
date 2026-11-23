@@ -20,7 +20,7 @@ on:
       - "scripts/sync-template.mjs"
   schedule:
     - cron: "40 22 * * 0" # 週1（日本時間の月曜 7:40）。配りそびれ・新作の拾い直し
-    - cron: "17 */3 * * *" # 3時間ごと。検査の通った写す PR をマージするだけ（merge）
+    - cron: "17 */3 * * *" # 3時間ごと。検査の通った写す PR と「点検済み」の PR をマージするだけ（merge）
   workflow_dispatch:
     inputs:
       only:
@@ -108,7 +108,9 @@ jobs:
           echo "新しく開いた PR: $opened"
           exit $failed
 
-  # 写す PR（枝 template-sync・題「ひな形の共通部品を写す」・鍵の持ち主が開いたもの）のうち、次を全部満たすものを squash でマージする。
+  # 写す PR（枝 template-sync・題「ひな形の共通部品を写す」・鍵の持ち主が開いたもの）と、
+  # AI が開いて点検を終えた PR（枝 claude/…・ラベル「点検済み」・鍵の持ち主が開いたもの。2026-11-23 satou さん「自動マージの仕組みを入れても良い」）のうち、
+  # 次を全部満たすものを squash でマージする。sw.js・data.js などでゲームの automerge が止める PR も、ここで拾う。
   #   下書きでない・ぶつかりが無い（clean）・.github/ を変えない・head のコミットの検査が全部終わって失敗が無く、QA が ✅
   #   ラベル「自動マージしない」は、ゲームの automerge が付けたもの（github-actions[bot]）だけなら外してマージする。人が付けたものは止める
   # 鍵（PAT）でマージするので、main への push でゲームの QA・Pages の公開がふつうに動く。
@@ -127,7 +129,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
-      - name: 検査の通った写す PR をマージする
+      - name: 検査の通った写す PR と点検済みの PR をマージする
         env:
           GH_TOKEN: ${{ secrets.TEMPLATE_SYNC_TOKEN }}
           OWNER: ${{ github.repository_owner }}
@@ -139,12 +141,15 @@ jobs:
           merged=0; waiting=0; held=0
           for r in $games; do
             [[ "$r" =~ ^[a-z0-9-]+$ ]] || continue
-            pr=$(gh api "repos/$OWNER/$r/pulls?state=open&head=$OWNER:template-sync" --jq '.[0].number // empty' 2>/dev/null) || continue
-            [ -n "$pr" ] || continue
+            # 写す PR と、AI が「点検済み」を付けた PR（枝 claude/…）
+            prs=$(gh api "repos/$OWNER/$r/pulls?state=open&per_page=100" --jq '.[] | select(.head.repo.full_name == .base.repo.full_name) | select(.head.ref == "template-sync" or ((.head.ref | startswith("claude/")) and any(.labels[]; .name == "点検済み"))) | .number' 2>/dev/null) || continue
+            for pr in $prs; do
             info=$(gh api "repos/$OWNER/$r/pulls/$pr") || continue
             why=''
             [ "$(jq -r .user.login <<<"$info")" = "$me" ] || why='開いた人が鍵の持ち主でない'
-            [ "$(jq -r .title <<<"$info")" = 'ひな形の共通部品を写す' ] || why="${why:-題がちがう}"
+            if [ "$(jq -r .head.ref <<<"$info")" = template-sync ]; then
+              [ "$(jq -r .title <<<"$info")" = 'ひな形の共通部品を写す' ] || why="${why:-題がちがう}"
+            fi
             [ "$(jq -r .draft <<<"$info")" = false ] || why="${why:-下書き}"
             st=$(jq -r .mergeable_state <<<"$info")
             if [ -z "$why" ] && [ "$st" != clean ] && [ "$st" != unstable ]; then why="ぶつかり・待ち（$st）"; fi
@@ -168,5 +173,6 @@ jobs:
             if gh api -X PUT "repos/$OWNER/$r/pulls/$pr/merge" -f merge_method=squash -f sha="$sha" >/dev/null; then echo "✓ $r #$pr をマージした"; merged=$((merged+1))
             else echo "::warning::$r #$pr をマージできない"; fi
             sleep 3
+            done
           done
           echo "マージ: $merged・止めた: $held（うち検査の途中 $waiting）" | tee -a "$GITHUB_STEP_SUMMARY"

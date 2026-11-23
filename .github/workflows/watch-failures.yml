@@ -5,7 +5,7 @@ name: Watch failures
 # 2026-10-22: CI time report が一時的なエラーで落ちても、どこにも知らせが出なかったので足した（incidents/2026-10-22-ci-time-report-failed-silently.md）。
 on:
   workflow_run:
-    workflows: ["Weekly summary", "CI time report", "Scorecard", "Lint", "Freshness"]
+    workflows: ["Weekly summary", "CI time report", "Scorecard", "Lint", "Freshness", "Common check"]
     types: [completed]
   # 見回り: 成功の知らせではジョブを起こさない（共通部品の説明）ので、閉じるのはこの見回り（2026-11-19）
   schedule:

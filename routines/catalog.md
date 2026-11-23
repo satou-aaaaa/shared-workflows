@@ -4,7 +4,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 新しいルーティン・定期の CI・決まった手順のスキルを作ったら、同じ PR でこの表に1行足す。止めたら消す。
 ルーティンとスキルの定期見直し（[routine-review.md](routine-review.md) の A）が、毎週 list_triggers とこの表を突き合わせる。
 
-最終確認: 2026-11-07（有効なルーティンを list_triggers で全件見た）
+最終確認: 2026-11-21（有効なルーティンを list_triggers で全件見た）
 
 ## Claude のルーティン（手順書がこのリポジトリにあるもの）
 
@@ -33,7 +33,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 
 | 作業 | 手順書 | 実行 |
 | --- | --- | --- |
-| sandbox 新規Issueの提案 | satou-aaaaa/sandbox `docs/routines/weekly-issue-proposal.md` | 水曜 8:47 JST |
+| sandbox 新規Issueの提案 | satou-aaaaa/sandbox `docs/routines/weekly-issue-proposal.md` | 水曜 13:47 JST（11/10・11/17 の 8:47 が利用上限で続けて落ちたため 11/21 に移した） |
 | 見回り（監督の巡回・面接の前後。カンバンへの集約は 2026-11-05 から休止） | このプロジェクトの共有フォルダ `board/patrol.md` | 毎日 8:07・20:07 JST |
 | 見回りの届き先を新しいスレッドに替える | このプロジェクトの共有フォルダ `board/patrol-weekly-reset.md` | 月曜 7:47 JST |
 | カンバンの頼みごとを片付ける | このプロジェクトの共有フォルダ `board/app-requests.md` | アプリでの答え・依頼のたび（ops-backup の app-inbox への push が合図）。GitHub の合図は Web の画面でしか付けられず、付くまでは見回り（8:07・20:07）が拾う（11/5 の1週間の振り返り：取りこぼし0） |
@@ -52,6 +52,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | 作業 | 置き場所 | 実行 |
 | --- | --- | --- |
 | 週次まとめ Issue（開いた PR・CI 失敗・次にやること・再発防止の残った対策と繰り返し・ひな形からのずれ） | このリポジトリ `weekly-summary.yml`（ずれは `scripts/drift-check.mjs`） | 月曜の朝 |
+| 共通の点検 Issue（共通部品の抜け・画面の決まりの違反。全リポジトリのホームを測る） | このリポジトリ `common-check.yml`（`scripts/drift-check.mjs`・`scripts/ui-check.mjs`。決まりは [ui-rules.md](ui-rules.md)） | 毎日 7:43 JST |
 | 控えの見張り（毎朝の書き出しが止まったら Issue。Claude が止まった合図） | satou-aaaaa/ops-backup（非公開）`watch.yml` | 毎日 12:23 JST |
 | CI時間 Issue | このリポジトリ `ci-time-report.yml` | 木曜 05:29 JST |
 | 古くなる情報の見張り Issue（台帳 `freshness.md`、e-Gov 法令API v2 の改正履歴） | このリポジトリ `freshness.yml` | 火曜 05:43 JST |
@@ -75,6 +76,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | tenbin の作り直し・論文問題の追加 | tenbin `CLAUDE.md`、スキル add-ronbun-questions |
 | カンバン（local-kanban）を直す | local-kanban `AGENTS.md`（データ側の `local-board/kanban.html` もそろえる） |
 | 単体HTMLアプリの画面点検 | スキル law-app-ui-check。数で見る部分は共通部品 `ui-check.yml`（PR のたび） |
+| ページを目的ごとに画面に分ける（ペライチにしない） | スキル page-split。部品 `template/screens/screens.js`（ゲームは `Core.screens`）、数で見る部分は `ui-check.yml`（U10〜U12） |
 | LAST TELL の演出の提案 | スキル last-tell-proposal-demo |
 | 聞くか聞かないかの判断 | [autonomy.md](autonomy.md) |
 | できないと分かっている操作の回り道（クラウドから開けないページは `fetch-page.yml`） | [known-limits.md](known-limits.md) |

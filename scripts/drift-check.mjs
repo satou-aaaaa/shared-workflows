@@ -345,6 +345,9 @@ const results = await pool(REPOS, 4, async (r) => {
       for (const [id, msg] of playerBugs(page)) if (id === 'howto:close') flag(id, msg);
       // はじめての人に長い「遊び方」の窓を開かない（練習の1問と吹き出し。2026-11-22 satou さん「すべて対応」）。sync-template の migrateFirstPlay が足す。形のちがうゲームは手で
       if (/if \(!s\.tut(?: && !\$\("howto"\)\.open)?\) openHow\(\)/.test(page) && !/function firstPlay\(/.test(page)) flag('first:howto', 'はじめて開くと遊び方の窓が出る（練習の1問と吹き出しにする。node scripts/sync-template.mjs で写すか、形がちがえば firstPlay を手で。incidents/2026-11-22-first-howto-left.md）');
+      // スマホの「戻る」でゲームから出ない（Core.screens.mark・route。routines/ui-rules.md「ページの分け方」6。2026-11-23 satou さん「#で戻れるように全部直す」）。
+      // sync-template の migrateBack が app.innerHTML で描くゲームに足す。形のちがうゲームは手で
+      if (/<!-- core:begin/.test(page) && !/Core\.screens\.(route|go)\(|data-screen=/.test(page.replace(/<!-- core:begin[\s\S]*?<!-- core:end -->/, ''))) flag('back:route', '「戻る」でゲームから出てしまう（画面を描く関数に Core.screens.mark、起動時に Core.screens.route。node scripts/sync-template.mjs で写すか、形がちがえば手で。routines/ui-rules.md「ページの分け方」6）');
     }
 
     // ホームの題（h1.title）は、上の帯の h1{flex:1} を受け継ぐと、縦に並べた画面で余った高さを全部取って伸びる（820×1180 で 277〜450px のすき間。2026-11-07 incidents/2026-11-07-title-stretched.md）
@@ -491,9 +494,14 @@ if (!LOCAL_ROOT) {
   } catch (e) { skipped.push(`repos.txt との突き合わせ（${e.message}）`); }
 }
 
+// DRIFT_ONLY: 出す行をしぼる正規表現（毎日の Common check が「共通部品の抜け」だけを Issue にするため）
+const only = process.env.DRIFT_ONLY ? new RegExp(process.env.DRIFT_ONLY) : null;
+if (only) lines.splice(0, lines.length, ...lines.filter((l) => only.test(l)));
 if (lines.length) console.log(lines.join('\n'));
+// 1本も見られなかったのに「無い」と言わない（2026-11-23 鍵が効かず全部 401 なのに「見つかりませんでした」と出ていた）
+else if (skipped.length) console.log('ずれは見つかりませんでした（ただし下の確かめられなかったものは見ていない）');
 else console.log('ずれは見つかりませんでした');
-if (skipped.length) console.log(`\n確かめられなかった: ${skipped.join('、')}`);
+if (skipped.length) { console.log(`\n確かめられなかった: ${skipped.join('、')}`); if (process.env.DRIFT_STRICT) process.exitCode = 3; }
 if (!LOCAL_ROOT) {
   const u = reportUsage('ひな形からのずれ');
   if (u.warn) console.log(`\n⏱ ${u.text}。時間切れが近い（予算の ${u.rate}%）`);

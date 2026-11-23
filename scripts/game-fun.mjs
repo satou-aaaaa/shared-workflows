@@ -124,9 +124,29 @@ export function measure(G) {
 }
 const pct = (x) => `${Math.round(x * 100)}%`;
 
+// make() が無く、game.js が dailyList(日付)・mainOf(問題) を持つゲーム（暑さ指数よみの形）：今日の問題の主役が前の7日と重なる割合だけ数える
+// （2026-11-23 atsusa-shisu は make() が無く「遊んで見る」になり、主役の重なり 36% を見逃していた）
+export function measureList(G, from = Date.now()) {
+  const m = { problems: 0, notes: [] };
+  const dayAt = (i) => new Date(from + (i + 2) * 864e5).toISOString().slice(0, 10); // あさってから28日（直した決まりが入るのは先の日から。過去の日は変えないため）
+  const seen = []; let rep = 0;
+  for (let i = 0; i < DAYS; i++) {
+    let mains = []; try { mains = (G.dailyList(dayAt(i)) || []).map((q) => JSON.stringify(G.mainOf(q))); } catch {}
+    for (const x of mains) { m.problems++; if (seen.slice(-7).some((s) => s.has(x))) rep++; }
+    seen.push(new Set(mains));
+  }
+  m.repeat7 = m.problems ? rep / m.problems : 0;
+  if (m.repeat7 > LIMITS.repeat7) m.notes.push(`単調：今日の問題の主役の ${pct(m.repeat7)} が前の7日の主役と同じ（目安 ${pct(LIMITS.repeat7)} 以下）`);
+  return m;
+}
+
 function load(dir) {
   const src = ["data.js", "gen.js"].map((x) => path.resolve(dir, x)).find(existsSync);
   try { return src ? require(src) : null; } catch { return null; }
+}
+function loadList(dir) {
+  const src = path.resolve(dir, "game.js");
+  try { const G = existsSync(src) ? require(src) : null; return G && typeof G.dailyList === "function" && typeof G.mainOf === "function" ? G : null; } catch { return null; }
 }
 
 function selfTest() {
@@ -166,6 +186,12 @@ function selfTest() {
     },
   };
   ok(measure(mixed).notes.join("").includes("問いの種類"), "1つの種類だけ長さで当たるのを見つけられない");
+  // make() が無く dailyList・mainOf で作るゲーム：主役を回すなら ✓、前の日の主役をすぐ出すなら △
+  const n0 = (d) => Math.round((Date.parse(d) - Date.parse("2026-01-01")) / 864e5);
+  const rot = { dailyList: (d) => [0, 1, 2, 3, 4].map((j) => ({ t: (n0(d) * 5 + j) % 45 })), mainOf: (q) => q.t };
+  const stay = { dailyList: (d) => [0, 1, 2, 3, 4].map((j) => ({ t: (n0(d) * 2 + j) % 45 })), mainOf: (q) => q.t };
+  ok(measureList(rot).notes.length === 0 && measureList(rot).problems > 0, "主役を回すゲームに △ が出た");
+  ok(measureList(stay).notes.join("").includes("前の7日の主役"), "前の日の主役をすぐ出すゲームを見つけられない");
   console.log(fails ? `✗ game-fun の self-test が ${fails} 件落ちた` : "✓ game-fun の self-test が通った");
   process.exit(fails ? 1 : 0);
 }
@@ -180,6 +206,13 @@ else {
   for (const d of dirs) {
     const name = path.basename(path.resolve(d));
     const G = load(d);
+    const L = (!G || typeof G.make !== "function") && loadList(d);
+    if (L) {
+      const m = measureList(L);
+      out.push({ name, make: false, list: true, ...m });
+      if (!json) { console.log(`${m.notes.length ? "△" : "✓"} ${name}: make() は無いので今日の問題の主役 ${m.problems} 個だけ見た（ほかは遊んで見る）`); for (const n of m.notes) console.log(`  △ ${n}`); }
+      continue;
+    }
     if (!G || typeof G.make !== "function") { out.push({ name, make: false }); if (!json) console.log(`- ${name}: make() が無いので数えられない（遊んで見る）`); continue; }
     const m = measure(G);
     // make() はあっても、札（tag）で問題を作らないゲーム（パズルなど make(seed, 大きさ)）は1問も作れない。✓ と出さない

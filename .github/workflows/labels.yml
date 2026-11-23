@@ -24,6 +24,7 @@ jobs:
           common='ci-failure|B60205|main の CI 失敗（自動）
           自動マージしない|BFD4F2|Auto merge の対象から外す
           手でマージ|D4C5F9|検査は緑。.github/ を変えるので手でマージする（Auto merge が付ける）
+          点検済み|0E8A16|AI がレビューを読み終えた。検査が全部緑なら Template sync の merge が3時間ごとにマージする
           needs-decision|FBCA04|satou さんの判断待ち
           感想|0E8A16|遊んだ人の感想（Issue フォーム。routines/game-feedback.md が読む）
           feedback|1D76DB|ゲーム内の改善提案（routines/dungeon-issue.md が毎朝読む）

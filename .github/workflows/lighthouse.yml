@@ -19,7 +19,7 @@ on:
 jobs:
   measure:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -35,17 +35,22 @@ jobs:
           url=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .html_url 2>/dev/null) || url=""
           case "$url" in https://*) ;; *) url="" ;; esac
           if [ -z "$url" ]; then echo "Pages が有効になっていないので、何もせずに終わります" | tee -a "$GITHUB_STEP_SUMMARY"; exit 0; fi
-          npx -y lighthouse@12.8.2 "$url" --quiet --output=json --output-path=lh.json \
-            --only-categories=performance,accessibility,best-practices,seo \
-            --chrome-flags="--headless=new --no-sandbox"
+          # 3回測って中央値で見る。速さは1回ごとに揺れ、1回だけだと下限を1点割って落ちることがあった
+          # （2026-11-23 toan-kumitate #16：49点・下限50点。Lighthouse の docs/variability.md は何回か測って中央値を使うよう勧めている）
+          for i in 1 2 3; do
+            npx -y lighthouse@12.8.2 "$url" --quiet --output=json --output-path="lh$i.json" \
+              --only-categories=performance,accessibility,best-practices,seo \
+              --chrome-flags="--headless=new --no-sandbox"
+          done
           # node -e の中身は JavaScript なので、わざと一重引用符で囲んでいる
           # shellcheck disable=SC2016
           node -e '
-            const r = require("./lh.json"), base = JSON.parse(process.env.BASELINE), margin = JSON.parse(process.env.MARGIN);
-            let bad = 0, out = ["| 項目 | 今回 | 基準 | 下限 |", "|---|---|---|---|"];
+            const rs = [1, 2, 3].map((i) => require(`./lh${i}.json`)), r = rs[0], base = JSON.parse(process.env.BASELINE), margin = JSON.parse(process.env.MARGIN);
+            const median = (a) => a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)];
+            let bad = 0, out = ["| 項目 | 今回（3回の中央値） | 3回 | 基準 | 下限 |", "|---|---|---|---|---|"];
             for (const [k, b] of Object.entries(base)) {
-              const s = Math.round((r.categories[k]?.score ?? 0) * 100), min = b - (margin[k] ?? 10);
-              out.push(`| ${k} | ${s} | ${b} | ${min} |${s < min ? " ❌" : ""}`);
+              const all = rs.map((x) => Math.round((x.categories[k]?.score ?? 0) * 100)), s = median(all), min = b - (margin[k] ?? 10);
+              out.push(`| ${k} | ${s} | ${all.join("・")} | ${b} | ${min} |${s < min ? " ❌" : ""}`);
               if (s < min) { bad = 1; console.log(`::error title=Lighthouse の点数が下がりました::${k} が ${s} 点（下限 ${min} 点）`); }
             }
             require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY, `測ったURL: ${r.finalDisplayedUrl}\n\n` + out.join("\n") + "\n");

@@ -84,6 +84,17 @@ jobs:
           PRESENT_CHECKS: ${{ inputs.present_checks }}
           WF_NAME: ${{ github.event.workflow_run.name }}
         run: |
+          # 読むだけの gh api（-X の無いもの）は、GitHub の一時的な失敗（502・空の返事で「unexpected end of JSON input」）なら
+          # 間をあけて3回までやり直す。書く操作（-X POST・PUT）はやり直さない（2026-11-23 kenko-minuki #26。incidents/2026-11-23-ci-flakes-timing.md）
+          gh() {
+            if [ "${1:-}" != api ] || printf '%s\n' "$@" | grep -qx -- '-X'; then command gh "$@"; return; fi
+            local i out
+            for i in 1 2 3; do
+              if out=$(command gh "$@"); then printf '%s' "$out"; [ -z "$out" ] || echo; return 0; fi
+              [ "$i" = 3 ] || { echo "::notice::gh api が失敗したので $((i * 5)) 秒後にやり直します（$i 回目）" >&2; sleep $((i * 5)); }
+            done
+            return 1
+          }
           pr=$(gh api "repos/$REPO/pulls?state=open&head=${REPO%%/*}:$BRANCH" --jq '.[0].number // empty')
           if [ -z "$pr" ]; then echo "開いているプルリクエストがありません"; exit 0; fi
           info=$(gh api "repos/$REPO/pulls/$pr")
