@@ -14,7 +14,16 @@ const qa = readFileSync('template/qa/transfer-check.mjs', 'utf8');
 ok('template/transfer.js に「引き継ぎの版: N」の行がある', /引き継ぎの版:\s*\d+/.test(src));
 const code = src.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
 ok('template/transfer.js が外へ通信しない（fetch・XMLHttpRequest・WebSocket・sendBeacon・import() を使わない）', !/\bfetch\(|XMLHttpRequest|WebSocket|sendBeacon|\bimport\(/.test(code));
-ok('template/transfer.js に QR を作る部品（qrcode-generator）が入っている', /var qrcode = function\(\)/.test(src) && /qrcode-generator 2\.\d+\.\d+/.test(src));
+{
+  // 版14：QR の部品は transfer-qr.js に分け、箱を開いたときにだけ読む（毎回の表示を止める量を減らす）
+  const qr = readFileSync('template/transfer-qr.js', 'utf8');
+  ok('template/transfer-qr.js に QR を作る部品（qrcode-generator）が入り、window.HKQR に置く', /var qrcode = function\(\)/.test(qr) && /qrcode-generator 2\.\d+\.\d+/.test(qr) && /window\.HKQR = \(function/.test(qr));
+  ok('template/transfer-qr.js が外へ通信しない', !/\bfetch\(|XMLHttpRequest|WebSocket|sendBeacon|\bimport\(/.test(qr.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n')));
+  ok('template/transfer.js に QR の部品そのものは入れない（transfer-qr.js を箱を開いたときに読む）', !/var qrcode = function\(\)/.test(src) && /transfer-qr\.js/.test(src) && /function loadQr\(\)/.test(src));
+  const ctx = { window: {} }; ctx.window.window = ctx.window; vm.createContext(ctx.window); vm.runInContext(qr, ctx.window);
+  const q = ctx.window.HKQR(0, 'L'); q.addData('https://example.test/#hk=HK1.abc.1', 'Byte'); q.make();
+  ok('transfer-qr.js の HKQR で QR を作れる', q.getModuleCount() >= 21);
+}
 ok('template/qa/transfer-check.mjs が checkTransfer を出している', /export async function checkTransfer\(/.test(qa));
 
 // ブラウザの代わり（このファイルが使うものだけ）

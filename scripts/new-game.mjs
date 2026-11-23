@@ -2,6 +2,7 @@
 // 使い方: node scripts/new-game.mjs <新しいゲームのフォルダ>   例: node scripts/new-game.mjs ../kotoba-game
 // すること: template/ の中身（.github/workflows・.coderabbit.yaml・.claude・.gemini・AGENTS.md・CLAUDE.md・qa/*.mjs・
 //           scripts/setup.sh・transfer.js・depth.js・sw.js）を写す。フォルダにもうあるファイルは上書きしない（あとから写すのは sync-template.mjs）。
+// store/・core/ は写さない（index.html の印のあいだに sync-template.mjs が写す）
 // 写したあとに書くもの（ゲームごとの中身）は最後に出す一覧のとおり。
 // きっかけ: 2026-11-07 新作を古いゲームから写して始め、ひな形の直しが届かないまま PR #1 を出した（incidents/2026-11-07-new-game-old-template.md）。
 import { readdirSync, statSync, mkdirSync, copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -19,7 +20,8 @@ export function templateFiles(dir = T) {
 
 // ファイルとしては写さないもの。store/store.js は index.html の <!-- store:begin -->〜end に sync-template.mjs で写す部品で、
 // ファイルを置くと使われない写しが残る（2026-11-17 kitte-ikura #1 で store/store.js が入った。incidents/2026-11-17-new-game-store-file.md）
-export const SKIP = ['store/'];
+// core/core.js も同じ（index.html の <!-- core:begin -->〜end に写す部品）。2026-11-22 kikikuru-yomi #1 で core/core.js が入りかけた（incidents/2026-11-22-game-wip-non-game-topics.md）
+export const SKIP = ['store/', 'core/'];
 
 export function scaffold(to) {
   const copied = [];

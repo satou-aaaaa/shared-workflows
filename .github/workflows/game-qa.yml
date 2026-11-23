@@ -53,7 +53,21 @@ jobs:
             scripts/check-game-new.mjs
             scripts/game-props.mjs
             scripts/game-lint.mjs
+            scripts/game-ja.mjs
+            scripts/game-explore.mjs
             template
+      # sw.js の SHELL に書いたファイルが全部あるか。1つでも無いと、入れるとき（install）に失敗して電波の無いときに開けない
+      # （2026-11-22 Template sync の PR が transfer-qr.js を入れずに SHELL だけ足した。incidents/2026-11-22-template-sync-new-files-left-out.md）
+      - name: sw.js の SHELL のファイル
+        run: |
+          node -e '
+            const fs = require("fs");
+            if (!fs.existsSync("sw.js")) process.exit(0);
+            const m = fs.readFileSync("sw.js", "utf8").match(/SHELL\s*=\s*(\[[^\]]*\])/);
+            if (!m) process.exit(0);
+            const miss = JSON.parse(m[1].replace(/\x27/g, "\"")).filter((f) => f !== "./" && !fs.existsSync(f));
+            if (miss.length) { console.error("::error::sw.js の SHELL にあるのにファイルが無い: " + miss.join(" ")); process.exit(1); }
+            console.log("✓ sw.js の SHELL のファイルが全部ある");'
       # Link check（週1）が調べる .md に、すぐ後ろに全角の字が続く URL が無いか。lychee はそこまで URL と読んで 404 で落ちる。
       # 週1の検査で初めて落ちていた（2026-11-07 rosen-hitofude・seiza-tsunagi。incidents/2026-11-08-link-check-wide-char-after-url.md）
       - name: リンクの書き方
@@ -80,6 +94,12 @@ jobs:
         run: |
           npm i --no-save --no-audit --no-fund --prefix "$FC_DIR" fast-check@4.10.2 >/dev/null
           node .shared-workflows/scripts/game-props.mjs .
+      # 問題文・選び肢・説明の日本語：条文のまま（「三月」＝3か月）・「〜ような」の「の」抜け・二重否定・閉じないかっこ・
+      # 正解と両立する選び肢（「取り消せる」と「1年たてば取り消せる」）を探す。✗ は落とし、△（長い文など）は読んで判断（ログに出るだけ）。
+      # わざとの例外は qa/ja-allow.txt に理由つき。incidents/2026-11-21-game-ja-unclear.md・routines/game-ja.md
+      - name: 問題の日本語
+        if: github.event_name == 'pull_request' && (hashFiles('data.js') != '' || hashFiles('gen.js') != '')
+        run: node .shared-workflows/scripts/game-ja.mjs --strict .
       # ESLint：書き間違えた変数（no-undef）・届かない行など、遊ぶ前に止まる書き間違いを探す（sandbox の npm run lint と同じ考え方）。
       # 入れはじめなので警告だけ（--warn。PR の画面に注釈が出る）。2026-11-18 に公開中の 190 本で回して指摘は 1 件だった
       - name: ESLint（警告だけ）
@@ -96,7 +116,7 @@ jobs:
         run: |
           git fetch -q --depth=1 origin "$BASE"
           added=$(git diff --name-only --diff-filter=A "$BASE" HEAD)
-          edited=$(git diff --name-only --diff-filter=M "$BASE" HEAD | grep -xE 'transfer\.js|qa/(a11y|transfer-check|sw-check)\.mjs|scripts/setup\.sh' || true)
+          edited=$(git diff --name-only --diff-filter=M "$BASE" HEAD | grep -xE 'transfer(-qr)?\.js|qa/(a11y|transfer-check|sw-check|core-check)\.mjs|scripts/setup\.sh' || true)
           list=$(printf '%s\n%s\n' "$added" "$edited" | grep . | paste -sd, - || true)
           status=0
           if [ -n "$list" ]; then node .shared-workflows/scripts/sync-template.mjs --check --only="$list" . || status=$?; fi
@@ -161,7 +181,13 @@ jobs:
         run: |
           read -r -a cmd <<<"$QA_COMMAND"
           "${cmd[@]}"
+      - name: 直した不具合の再現（qa/repro）
+        # game-explore.mjs が見つけて直した不具合の手順をもう一度動かす。まだ壊れていれば落ちる（無ければ飛ばす）
+        if: github.event_name == 'pull_request' && hashFiles('qa/repro/*.json') != ''
+        run: node .shared-workflows/scripts/game-explore.mjs . --replay qa/repro
       - if: always()
+        # 中身は見返す用の控え。GitHub の置き場が時間切れ（ETIMEDOUT）でも、通った QA を赤にしない（2026-11-22 医療費いくら。incidents/2026-11-22-qa-flaky-coach-and-upload.md）
+        continue-on-error: true
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: qa-report

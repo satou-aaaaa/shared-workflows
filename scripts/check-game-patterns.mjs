@@ -1,6 +1,6 @@
 // ゲームの作りの見分け（scripts/game-patterns.mjs）が、事故の形を見つけ、直した形・コメントに残った古い形では出さないかを確かめる（Lint）
 // depth:*（depth.js を写したのにつないでいない）・hint:cut-moves（ヒント2で消した選び肢が戻る）・hint:left-fixed（のこりの数が決まった数）・stars:role（星の表示が読まれない・色だけで分ける）・qa:url-includes（URL を includes で探して CodeQL が赤）
-import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted, playerBugs, heightRaw, roundSizes, todayOnly } from './game-patterns.mjs';
+import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted, playerBugs, heightRaw, roundSizes, todayOnly, copyWordHits } from './game-patterns.mjs';
 
 const cases = [
   ['事故の形（1行・left.length - 1）', true, 'const cutOf = () => { if (cur.hints < 2) return []; const left = P.opts.map((_, i) => i).filter((i) => i !== P.ans && !cur.wrong.includes(i)); return left.slice(0, Math.max(0, left.length - 1)); };'],
@@ -153,6 +153,13 @@ const bugCases = [
   ['困る作り：空白がちがっても終えたとことんが戻る形を見分ける', 'endless:revive', 'if (!r || bank( s, r ) || doneOf( r )) continue;'],
   ['困る作り：終えたとことんは戻さない', '', 'if (!x || !y) { const r = x || y; if (!r || bank(s, r) || doneOf(r) || (r.mode === "e" && n.runs[m] === null)) continue; }'],
   ['困る作り：cancel が無い', 'howto:close', HOWTO_OK.split('\n').slice(0, 2).join('\n')],
+  ['手写しの古い形：buzz が動きを減らすでも震える', 'core:buzz', 'const buzz = (n = 12) => { try { navigator.vibrate && navigator.vibrate(n); } catch (e) {} };'],
+  ['手写しの古い形：calm を見る buzz は出さない', '', 'const buzz = (n = 12) => { if (calm()) return; try { navigator.vibrate(n); } catch (e) {} };'],
+  ['手写しの古い形：esc が " を変えない', 'core:esc', 'const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");'],
+  ['手写しの古い形：num が配列を数にする', 'core:num', 'const num = (v) => (Number.isFinite(+v) && +v >= 0 ? Math.floor(+v) : 0);'],
+  ['手写しの古い形：#410 の num は出さない', '', 'const num = (v) => ((typeof v === "number" || typeof v === "string") && Number.isFinite(+v) && +v >= 0 ? Math.floor(+v) : 0);'],
+  ['手写しの古い形：toast が読み上げに届かない', 'core:toast', 'function toast(t) { const d = document.createElement("div"); d.textContent = t; document.body.appendChild(d); }'],
+  ['手写しの古い形：共通部品の中は見ない', '', '<!-- core:begin -->\nconst esc = (t) => String(t).replace(/&/g, "&amp;");\n<!-- core:end -->'],
 ];
 for (const [name, want, src] of bugCases) {
   const got = playerBugs(src).map((x) => x[0]).join();
@@ -187,3 +194,18 @@ for (const [name, want, src] of bugCases) {
 }
 if (bad) { console.error(`✗ ゲームの作りの見分けが ${bad} 件ちがう`); process.exit(1); }
 console.log('✓ hint:cut-moves・hint:left-fixed・stars:role・qa:url-includes・depth:*・遊ぶ人が困る作り（playerBugs・check-game-new）の見分けが通った');
+
+// copyWordHits：写し元の言葉の検査が共通部品の文にかかるか（qa:copy-words）。いまの core・store にかかる言葉が無いことも見る
+{
+  const { readFileSync } = await import('node:fs');
+  const t = { core: '<button>案内をとじる</button>' };
+  const bad = 'check("写し元（ひらく？とじる？）の言葉が残っていない", !/公用文|ひらく|とじる|bunka\\.go\\.jp/.test(html));';
+  const good = 'check("写し元の言葉が残っていない", !/公用文|ひらく|bunka\\.go\\.jp/.test(html));';
+  const other = 'check("とじる が出る", !/とじる/.test(html));';
+  const ok1 = JSON.stringify(copyWordHits(bad, t)) === JSON.stringify([['core', 'とじる']]);
+  const ok2 = copyWordHits(good, t).length === 0 && copyWordHits(other, t).length === 0;
+  const real = { core: readFileSync(new URL('../template/core/core.js', import.meta.url), 'utf8'), store: readFileSync(new URL('../template/store/store.js', import.meta.url), 'utf8') };
+  const ok3 = copyWordHits(bad, real).length === 0;
+  console.log(`${ok1 && ok2 && ok3 ? '✓' : '✗'} copyWordHits：とじるを見つけ・写し元でない検査は見ず・いまの core は「とじる」を使わない`);
+  if (!(ok1 && ok2 && ok3)) process.exitCode = 1;
+}

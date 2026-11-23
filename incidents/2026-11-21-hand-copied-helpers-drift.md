@@ -1,0 +1,23 @@
+# ゲームごとに手で写した小さな関数が何通りにも分かれ、直しが届かず不具合が残っていた
+
+- 種類: 検査の見逃し
+- 場所: 手元で調べた40本のゲーム（kippu-10・otsukai-memo・jobun-tobatsu・bousai-handan・kimari-sagashi ほか、num の古い形は22本）
+- 気づいた人: Claude（satou さんの「遊び方以外にも、共通部品について改善できる所を調べて」で調べた）
+- 影響: kippu-10・otsukai-memo は「動きを減らす」を選んでも振動した。jobun-tobatsu・kippu-10 はお知らせ（toast）が読み上げに届かなかった。数を読む num の直し（#410：配列や true を数にしない）が22本に届いていなかった。bousai-handan・kimari-sagashi は esc が " を変えないまま属性の中で使っていた。
+
+## 起きたこと
+- 2026-11-21、40本の index.html の関数を名前と中身で数えたところ、同じ役目の関数が何通りにも分かれていた（お知らせ 11通り・振動 10通り・カレンダー 16通り・実績の画面 10通り・記録の読み込み 29通り・esc 4通り）。
+- ずれた所に、上の4つの不具合があった。
+
+## 原因
+- 新しいゲームは近いゲームを写して作るため、写した時点の関数が残り、あとで見本の側を直しても写しには届かなかった。
+- ひな形（template/）で配っていたのは transfer.js・depth.js・見やすさ・保存（store）だけで、お知らせ・振動・日付などの小さな関数は各ゲームの手書きだった。
+
+## なぜ見つからなかったか
+- drift-check と check-game-patterns は、見つかった不具合の形を1つずつ探す作りで（cutOf・leftFixed など）、まだ知らない形のずれは見ていなかった。
+- ゲームの QA は1本ずつ自分の画面を確かめるだけで、ほかのゲームとの違いは見ない。
+
+## 対策
+- [x] 直す: 小さな関数とはじめての案内・感想のリンクを共通部品 game-core（`template/core/core.js`）にまとめ、`scripts/sync-template.mjs` で配る（この PR。各ゲームへは移す PR で入れる）
+- [x] 防ぐ: `scripts/check-core.mjs`（check.sh・Lint）が、esc・num・日付・連続・「動きを減らす」の振動・お知らせの読み上げ・感想のリンクを確かめる。画面の動きは `template/qa/core-check.mjs` を各ゲームの QA から呼ぶ（この PR）
+- [x] 見つける: `scripts/game-patterns.mjs` の playerBugs が、手で写した古い形（core:buzz・core:esc・core:num・core:toast）を見分ける。週次まとめ（drift-check）が全ゲームの残りを出し、ゲームの PR（check-game-new）は新しく持ち込むと落ちる。見分けの検査は `scripts/check-game-patterns.mjs`。初回は 40本中28本で見つかった（この PR）

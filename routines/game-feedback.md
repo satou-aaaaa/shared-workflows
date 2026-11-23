@@ -32,6 +32,7 @@
 1. 節約モード（common.md）なら、手順2だけして、件数をメモリに1行書いて終える。
 2. 開いている感想を集める：`gh api -X GET search/issues -f q='user:satou-aaaaa is:issue is:open label:感想' --paginate` と、ラベルが付く前のもの `gh api -X GET search/issues -f q='user:satou-aaaaa is:issue is:open in:title "[感想]"' --paginate`。
 3. 2つの結果を合わせ、リポジトリごとに分ける。メモリ `game-feedback` に「読んだ」とある番号は飛ばす。
+   本文に「楽しさ」の答えが無い Issue（作業の Issue が題の「感想」で引っかかったもの。GitHub の検索は `[ ]` を無視する）は感想に数えない（2026-11-22 shared-workflows #519 が引っかかった）。
 4. リポジトリごとに、楽しさの平均と件数、「直してほしい所」に何度も出る困りごとを書き出す。
 5. 下の表で、直すものを決める。1つのリポジトリにつき PR は1つまで、1回の実行で合わせて3つまで。
 

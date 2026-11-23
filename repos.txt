@@ -38,6 +38,7 @@ funka-level game
 fuyo-ikura game
 gairai-miwake game
 gamen-no-wana game
+games app # 全ゲームをジャンル別に紹介する一覧ページ（repos.txt と project-practices.md のゲームの表を読む）
 ganseki-nakama game
 gem-merchant-research app
 gensen-ikura game
@@ -75,6 +76,7 @@ jobun-tobatsu game
 jotai-henka game
 kabu-news game
 kaden-anzen game
+kaden-sutekata game
 kagaku-henka game
 kaisha-kigen game
 kaji-mamoru game
@@ -87,6 +89,7 @@ kansen-yobo game
 kasane-zome game
 kaseki-ate game
 kashikari-kimari game
+kawagoe-sanpo app
 kazoku-kigen game
 kazoku-kimari game
 keigen-zeiritsu game
@@ -100,6 +103,7 @@ kenpo-shikumi game
 kifukin-ikura game
 kikenbutsu-rui game
 kikigaki-techo game
+kikikuru-yomi game
 kimari-sagashi game
 kippu-10 game
 kisetsu-tenki game
@@ -129,6 +133,7 @@ mannaka-kanji game
 mansion-kimari game
 meirei-narabe game
 menkyo-nenrei game
+menzei-ikura game
 mizu-mamoru game
 moraisugi-kimari game
 mukashi-narabe game
@@ -174,6 +179,7 @@ shitsugyo-teate game
 shogai-ikura game
 shohisha-keiyaku game
 shoka-koso game
+shokaki-yomi game
 shokubutsu-nakama game
 shokuchudoku-yobo game
 shokuhin-hyoji game
@@ -182,6 +188,7 @@ shukujitsu-yurai game
 shukushaku-yomi game
 souzoku-kihon game
 suiyoeki-ate game
+tabeta-memo app
 taifu-yomi game
 taikyo-hiyo game
 taishoku-ikura game
@@ -199,6 +206,7 @@ todokede-kigen game
 tokkyo-kikan game
 tonari-kimari game
 toppu-yomi game
+tsuki-imei game
 tsuki-katachi game
 tsunami-yomi game
 usotsuki-roppo game

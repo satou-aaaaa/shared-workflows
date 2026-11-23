@@ -4,6 +4,7 @@
 // 見るもの: shared-workflows の開いている「題材:」Issue。ラベル needs-decision の付いたものは止めているので作りかけに数えない。
 //   本文に `repo: <名前>` の行がある → 作りかけ（そのリポジトリの開いている PR と、最後に動いた日を見る）
 //   本文に `repo:` の行が無い       → 候補の列（番号の小さい順に作る）
+//   本文に `kind: app` などの行がある（ゲームではない）→ 触らない。候補にも作りかけにも数えない
 // 同時に作る本数の上限は WIP_LIMIT（作りかけを絞るほど1本が早く仕上がる。QA を4本以上同時に回すと落ちやすい。template-distribution）。
 // きっかけ: 2026-11-07〜11 新作が並行で十数本動き、ひな形に取り残される・公開後に止まる・題材がかぶるが続いた
 //           （incidents/2026-11-07-new-game-old-template.md・2026-11-07-new-game-stopped-after-publish.md・2026-11-11-codeql-url-includes-in-qa.md）。
@@ -27,6 +28,12 @@ export const branchOf = (body) => (body || '').match(new RegExp(PRE + String.raw
 // ただし Issue が PARK_DAYS 日動いていなければ、スレッドが止まったものとして毎日の回が引き取る（取り残し防止）。
 // きっかけ: 2026-11-17 satou さんの頼みで別スレッドが新作2本を並行で作るとき、毎日の回と同じゲームを2つの PR で直すおそれがあった。
 export const threadOf = (body) => (body || '').match(new RegExp(PRE + String.raw`thread:[ \t]*(\S.*?)[ \t]*$`, 'm'))?.[1] || null;
+// ゲームではない題材（`kind: app` の行。アプリ・サイト・言語など）。Create repo の担当決めのために「題材:」Issue を立てるが、毎日の新作の回は作らない。
+// 本文に「ゲームではない」と書いたものも同じに見る（行を書き忘れたときの受け皿）。
+// きっかけ: 2026-11-21・22 の回で、akashi-lang（AI向け言語）・kawagoe-bousai（防災アプリ）・games（一覧サイト）の Issue が候補の先頭に来て
+// 「候補 #535 を始める」と出た。incidents/2026-11-22-game-wip-non-game-topics.md
+export const kindOf = (body) => (body || '').match(new RegExp(PRE + String.raw`kind:[ \t]*` + '`?' + String.raw`([\w-]+)` + '`?' + String.raw`[ \t]*$`, 'm'))?.[1] || null;
+export const isNonGame = (body) => { const k = kindOf(body); return (k !== null && k !== 'game') || /ゲームではない/.test(body || ''); };
 const parked = (i) => (i.labels || []).some((l) => (l.name || l) === 'needs-decision');
 export const isTopic = (i) => !i.pull_request && /^題材:/.test(i.title);
 
@@ -53,7 +60,9 @@ export async function collect(api) {
   const queue = [];
   const parkedList = [];
   const others = [];
+  const apps = [];
   for (const i of topics) {
+    if (isNonGame(i.body)) { apps.push({ number: i.number, title: i.title, url: i.html_url, repo: repoOf(i.body) }); continue; }
     const repo = repoOf(i.body);
     if (!repo) { queue.push({ number: i.number, title: i.title, url: i.html_url }); continue; }
     if (parked(i)) { parkedList.push({ number: i.number, title: i.title, url: i.html_url, repo }); continue; }
@@ -69,12 +78,13 @@ export async function collect(api) {
     w.next = nextStep(w);
     wip.push(w);
   }
-  return { wip, queue, parked: parkedList, others };
+  return { wip, queue, parked: parkedList, others, apps };
 }
 
 // 今日することを、する順に並べる
-export function plan({ wip, queue, parked: p = [], others = [] }) {
+export function plan({ wip, queue, parked: p = [], others = [], apps = [] }) {
   const out = [];
+  for (const x of apps) out.push(`ゲームではない #${x.number}${x.repo ? ` ${x.repo}` : ''}: 毎日の回は触らない。候補にも作りかけにも数えない`);
   for (const x of others) out.push(`別スレッドが担当 #${x.number} ${x.repo}（${x.thread}）: 触らない。作りかけに数えない`);
   for (const x of p) out.push(`止めている #${x.number} ${x.repo}: needs-decision の答え待ち。作りかけに数えない`);
   for (const w of wip) out.push(`作りかけ #${w.number} ${w.repo}: ${w.next}`);
