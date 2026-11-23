@@ -89,10 +89,12 @@
       if (skipPop) { skipPop--; return; }
       if (foreign()) return;
       const h = hashName();
-      const fn = (h && views.get(h)) || homeFn;
-      if (!h || !views.has(h)) pushed = false;
+      const own = !!h && views.has(h);
+      if (!own) pushed = false;
+      // CodeQL js/unvalidated-dynamic-method-call：# から選んだものは has で確かめ、関数かどうかも見てから呼ぶ
+      const fn = own ? views.get(h) : homeFn;
       quiet = true;
-      try { if (fn) fn(); } finally { quiet = false; }
+      try { if (typeof fn === "function") fn(); } finally { quiet = false; }
     }
     function route(map, home) {
       if (all().length) return;

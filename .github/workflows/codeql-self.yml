@@ -1,7 +1,8 @@
 name: CodeQL (template)
 
 # ひな形（template/）の JavaScript を、全ゲームへ配る前にここで CodeQL にかける（Claude は使わない）。
-# 調べるのはゲームに配る template/ だけ。scripts/ は手元と CI で自分のファイルを読む道具で、ゲームには入らない。
+# 調べるのはゲームに配る template/ と、core をゲームと同じ形で写した見本 scripts/fixtures/codeql/game.html（check-core が今の core と同じか見る）。
+# core.js だけでは、ゲームの中で見つかる「# の名前で関数を呼ぶ」を見落とした。scripts/ のほかの道具はゲームに入らないので調べない。
 # 2026-11-23 Core.screens の「# の名前で関数を呼ぶ」を、配ったあとのゲームの CodeQL が初めて見つけた
 # （incidents/2026-11-23-template-codeql-after-sync.md）。配る前の PR で止める。
 on:
@@ -9,6 +10,7 @@ on:
     paths:
       - "template/**"
       - "scripts/sync-template.mjs"
+      - "scripts/fixtures/codeql/**"
       - ".github/workflows/codeql-self.yml"
       - ".github/workflows/codeql.yml"
   push:
@@ -16,6 +18,7 @@ on:
     paths:
       - "template/**"
       - "scripts/sync-template.mjs"
+      - "scripts/fixtures/codeql/**"
 
 permissions:
   contents: read
@@ -33,3 +36,4 @@ jobs:
       config: |
         paths:
           - template
+          - scripts/fixtures/codeql

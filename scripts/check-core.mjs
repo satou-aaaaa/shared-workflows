@@ -23,6 +23,31 @@ ok(`${SRC} に HTML のコメント（<!-- -->）が無い（写しの区切り�
   ok('写しを2回かけても同じ（区切りを取りちがえない）', again === page && (again.match(/core:end -->/g) || []).length === 1);
 }
 {
+  // CodeQL（ひな形）が見る見本のゲーム。core はゲームの index.html に写した形でないと CodeQL の見え方が変わり、
+  // template/core/core.js だけを調べても「# の名前で関数を呼ぶ」を見落とした（2026-11-23 incidents/2026-11-23-template-codeql-after-sync.md）。
+  // core.js を直したら node scripts/check-core.mjs --write-sample で作り直す。
+  const { coreBlock } = await import('./sync-template.mjs');
+  const SAMPLE = 'scripts/fixtures/codeql/game.html';
+  const sample = [
+    '<!doctype html>',
+    '<html lang="ja"><head><meta charset="utf-8"><title>見本</title>',
+    '<!-- このファイルは node scripts/check-core.mjs --write-sample で作る。手で直さない。CodeQL（ひな形）がゲームと同じ形で core を調べるための見本 -->',
+    coreBlock(),
+    '</head><body><main id="app"></main>',
+    '<script>',
+    'const app = document.getElementById("app");',
+    'function home() { Core.screens.route({ dex: dex, cal: () => cal() }, home); Core.screens.mark(""); app.innerHTML = "<h1>ホーム</h1>"; }',
+    'function dex() { Core.screens.mark("dex"); app.innerHTML = "<h1>図鑑</h1>"; }',
+    'function cal() { Core.screens.mark("cal"); app.innerHTML = "<h1>カレンダー</h1>"; }',
+    'home();',
+    '</script></body></html>',
+    '',
+  ].join('\n');
+  if (process.argv.includes('--write-sample')) { (await import('node:fs')).writeFileSync(SAMPLE, sample); console.log(`✓ ${SAMPLE} を作り直した`); }
+  let now = ''; try { now = readFileSync(SAMPLE, 'utf8'); } catch (e) { /* 無い */ }
+  ok(`${SAMPLE} が今の core.js の写し（node scripts/check-core.mjs --write-sample で作り直す）`, now === sample);
+}
+{
   // 全ゲームを game-core に切り替える（migrateCore）。決まった古い形だけを替え、何度かけても同じ
   const { migrateCore, CORE, coreBlock } = await import('./sync-template.mjs');
   const game = [

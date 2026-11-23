@@ -20,3 +20,4 @@
 - [x] 直す: 画面の表を Map にした（`views.get`）。両方の部品で同じ中身。この PR
 - [x] 見つける: `.github/workflows/codeql-self.yml`。template/（と配る道具 sync-template.mjs）を変える PR で、template/ を CodeQL にかけ、見つかれば止める（配る前に分かる。scripts/ の検査道具はゲームに入らないので対象外）。この PR
 - [x] 防ぐ: `scripts/check-screens.mjs` に「#constructor でも Object の関数を呼ばずにホームへ」を足した。この PR
+- [x] 見つける: （2回目）Map にしても、ゲームの index.html の中では CodeQL がまだ「# の名前で関数を呼ぶ」を出した（template/core/core.js だけを調べた codeql-self は出さなかった。単体の .js とゲームに写した形で見え方がちがう）。直し: onPop で has と typeof を確かめてから呼ぶ。再発防止: ゲームと同じ形の見本 `scripts/fixtures/codeql/game.html`（check-core が今の core の写しか見る。`node scripts/check-core.mjs --write-sample`）も codeql-self で調べる。
