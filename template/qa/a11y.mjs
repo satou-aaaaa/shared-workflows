@@ -241,6 +241,14 @@ for (const sc of screens) {
 {
   const { ctx, page } = await openPage();
   await dismiss(page);
+  // 「Aa」を出すか隠すかは、描き直しのあと次の描画（requestAnimationFrame）で決まる。決まる前に1回だけ見ると、
+  // 隠れる直前の「Aa」とフッターの入口を両方数えて落ちることがあった（2026-11-23 4本の QA が同じ時間帯に落ち、次の実行は通った。
+  // incidents/2026-11-23-ci-flakes-timing.md）。2秒まで待って、それでも二重なら下の検査で落とす（Playwright の自動待ちと同じ考え方）
+  await page.waitForFunction(() => {
+    const fl = document.querySelector(".a11y-float");
+    const vis = (el) => { const b = el.getBoundingClientRect(); return b.width > 0 && b.height > 0 && getComputedStyle(el).visibility !== "hidden"; };
+    return !(fl && vis(fl) && [...document.querySelectorAll("[data-a11y-open]")].some((e) => e !== fl && vis(e)));
+  }, null, { timeout: 2000, polling: "raf" }).catch(() => { /* 二重のまま。下の検査で落とす */ });
   const r = await page.evaluate(() => {
     const vis = (el) => { const b = el.getBoundingClientRect(); return b.width > 0 && b.height > 0 && getComputedStyle(el).visibility !== "hidden"; };
     const noname = [...document.querySelectorAll("button,a[href],[role=button]")].filter(vis).filter((el) => !(el.getAttribute("aria-label") || el.getAttribute("title") || el.textContent.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}‍️\s]/gu, "")) && !el.querySelector("img[alt]:not([alt=''])")).map((el) => el.outerHTML.slice(0, 60));
