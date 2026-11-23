@@ -14,6 +14,15 @@ const core = readFileSync('template/core/core.js', 'utf8');
 const one = readFileSync('template/screens/screens.js', 'utf8');
 const screens = readFileSync('scripts/fixtures/ui/screens.html', 'utf8');
 const plain = '<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>ふつう</title><script src="/template/core/core.js"></script></head><body><h1>ふつう</h1><section id="a"><h2>a</h2></section><section id="b"><h2>b</h2></section></body></html>';
+// JS で描き替えるゲームの形（Core.screens.mark・route）
+const game = `<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>げーむ</title><script src="/template/core/core.js"></script></head><body><main id="app"></main><script>
+const app = document.getElementById('app');
+function home() { Core.screens.mark(''); app.innerHTML = '<h1>ホーム</h1><button id="go-dex">帳</button><button id="go-cal">カレンダー</button>'; document.getElementById('go-dex').onclick = book; document.getElementById('go-cal').onclick = () => cal(); }
+function book() { Core.screens.mark('dex'); app.innerHTML = '<h1>帳</h1><button id="back">もどる</button><button id="to-cal">カレンダーへ</button>'; document.getElementById('back').onclick = home; document.getElementById('to-cal').onclick = () => cal(); }
+function cal() { Core.screens.mark('cal'); app.innerHTML = '<h1>カレンダー</h1><button id="back">もどる</button>'; document.getElementById('back').onclick = home; }
+Core.screens.route({ dex: book, cal: () => cal() }, home);
+home();
+</script></body></html>`;
 const ORIGIN = 'https://screens.test';
 const browser = await pw.chromium.launch({ executablePath: process.env.CHROME_PATH || process.env.CHROMIUM_PATH || undefined });
 const errors = [];
@@ -24,7 +33,7 @@ async function open(path) {
     const u = new URL(r.request().url());
     // ?one のときは game-core の代わりに単体の部品 screens.js を読ませる（ほかのプロジェクトの形）
     const html = u.searchParams.has('one') ? screens.replace('/template/core/core.js', '/template/screens/screens.js') : screens;
-    const body = u.pathname === '/template/core/core.js' ? core : u.pathname === '/template/screens/screens.js' ? one : u.pathname === '/plain.html' ? plain : html;
+    const body = u.pathname === '/template/core/core.js' ? core : u.pathname === '/template/screens/screens.js' ? one : u.pathname === '/plain.html' ? plain : u.pathname === '/game.html' ? game : html;
     return r.fulfill({ contentType: u.pathname.endsWith('.js') ? 'text/javascript' : 'text/html; charset=utf-8', body });
   });
   const page = await ctx.newPage();
@@ -76,6 +85,31 @@ try {
     // 両方を読んだページでも、つなぐのは1回（"core:screen" が2回出ない）
     await page.addScriptTag({ url: `${ORIGIN}/template/screens/screens.js` });
     ok('game-core と screens.js の両方を読んでも同じ物を使う', await page.evaluate(() => window.Screens === Core.screens));
+    await ctx.close();
+  }
+  {
+    console.log('— JS で描き替えるゲーム（mark・route）');
+    const { ctx, page, errs } = await open('/game.html');
+    const h1 = () => page.evaluate(() => document.querySelector('h1').textContent);
+    const len0 = await page.evaluate(() => history.length);
+    await page.click('#go-dex'); await page.waitForTimeout(100);
+    ok('帳を開くと #dex が付く', (await h1()) === '帳' && page.url().endsWith('#dex'));
+    await page.goBack(); await page.waitForTimeout(150);
+    ok('「戻る」でゲームから出ずにホームへ戻る', (await h1()) === 'ホーム' && !/#./.test(page.url()));
+    await page.click('#go-dex'); await page.waitForTimeout(100);
+    await page.click('#to-cal'); await page.waitForTimeout(100);
+    ok('画面から画面へは置き換え（#cal）', (await h1()) === 'カレンダー' && page.url().endsWith('#cal'));
+    await page.goBack(); await page.waitForTimeout(150);
+    ok('帳→カレンダーのあとの「戻る」もホームへ', (await h1()) === 'ホーム');
+    await page.click('#go-cal'); await page.waitForTimeout(100);
+    await page.click('#back'); await page.waitForTimeout(200);
+    ok('画面の「もどる」ボタンでホームへ戻ると、履歴が増えない（次の「戻る」で画面が出直さない）', (await h1()) === 'ホーム' && !/#./.test(page.url()) && (await page.evaluate(() => history.length)) <= len0 + 1);
+    ok('エラーが出ない', errs.length === 0);
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await open('/game.html#dex');
+    ok('# 付きで開き直すとホームから（# を消す）', (await page.evaluate(() => document.querySelector('h1').textContent)) === 'ホーム' && !/#./.test(page.url()));
     await ctx.close();
   }
 } finally {

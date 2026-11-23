@@ -8,6 +8,8 @@
 //   3. 入口は <a href="#kiroku">記録</a>、各画面に <a href="#">ホームへ</a>。ブラウザの「戻る」でも戻る。
 //   4. 画面が替わったときの描き直しは document.addEventListener("core:screen", (e) => … e.detail.id …)。
 //   5. JS から: Screens.go("kiroku")・Screens.now()・Screens.list()
+//   6. 画面を JS で描き替えるアプリ（app.innerHTML など）は、描く関数の最初で Screens.mark("dex")（ホームは mark("")）、起動時に Screens.route({ dex: book }, home)。
+//      「戻る」でアプリから出ずにホームへ戻る。
 // 動きの検査: scripts/check-screens.mjs（Selftest）。ページの分け方の検査: scripts/ui-check.mjs（U10〜U12）。
 (function () {
   "use strict";
@@ -58,7 +60,44 @@
       show(want(), true);
     }
     if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", init); else init();
-    return { go, now: () => cur, list: ids, show: (id) => show(id) };
+    // ---- JS で描き替える画面（ゲームの帳・カレンダー・実績など）を # と「戻る」につなぐ ----
+    // ゲームは画面を app.innerHTML で描き替えるので、そのままでは「戻る」でゲームから出てしまう。
+    // 使い方: 画面を描く関数の最初で Core.screens.mark("dex")（ホームは mark("")）。起動時に一度
+    //         Core.screens.route({ dex: book, cal: () => cal(), ach: achView }, home)。
+    // 履歴はいつも [ホーム] か [ホーム, #画面] の2つまで（画面から画面へは置き換え、ホームへは戻す）。開き直すとホームから。
+    const views = {};
+    let homeFn = null, pushed = false, skipPop = 0, quiet = false;
+    const hashName = () => { try { return decodeURIComponent((location.hash || "").slice(1)); } catch (e) { return ""; } };
+    const bare = () => location.pathname + location.search;
+    function mark(name) {
+      if (quiet || all().length || !homeFn) return; // data-screen のページ・route の前・戻るで描いている最中は何もしない
+      name = name || "";
+      const now = hashName();
+      if (now === name) return;
+      try {
+        if (!name) {
+          if (pushed) { pushed = false; skipPop++; history.back(); } else history.replaceState(null, "", bare());
+        } else if (!now) { history.pushState(null, "", "#" + encodeURIComponent(name)); pushed = true; }
+        else history.replaceState(null, "", "#" + encodeURIComponent(name));
+      } catch (e) { /* 使えない */ }
+      fire(name || "home");
+    }
+    function onPop() {
+      if (skipPop) { skipPop--; return; }
+      const h = hashName();
+      const fn = (h && views[h]) || homeFn;
+      if (!h || !views[h]) pushed = false;
+      quiet = true;
+      try { if (fn) fn(); } finally { quiet = false; }
+    }
+    function route(map, home) {
+      if (all().length) return;
+      Object.assign(views, map || {});
+      if (!homeFn) addEventListener("popstate", onPop);
+      homeFn = home;
+      if (hashName()) try { history.replaceState(null, "", bare()); } catch (e) { /* 使えない */ } // 開き直したらホームから（途中の回は続きから出る）
+    }
+    return { go, now: () => cur, list: ids, show: (id) => show(id), mark, route };
     // screens:end
   })();
 })();

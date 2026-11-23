@@ -40,7 +40,8 @@ U10〜U12 は同じ日の「AI が作るページはペライチが多く、情�
 3. ホームの入口は `<a href="#kiroku">記録</a>`（大きめのカードの並び、3〜5個）。各画面に `<a href="#">ホームへ</a>` を置く。ブラウザの「戻る」でも戻れる。
 4. フッター（共通部品の入口）は section の外に置き、どの画面にも出す。
 5. 1つの画面の中で拾い読みされる所（出典・細かい説明・よくある質問）だけ `details` で畳む。手順・答え・遊びに要る説明は畳まない。
-6. ゲーム以外（アプリ・紹介ページ・ほかのプロジェクト・Artifact）は `template/screens/screens.js` を写して読む（1ファイルの Artifact は中身を script タグに貼る）。claude.ai のほかのプロジェクトでは、スキル page-split（`bootstrap/skills/page-split/SKILL.md`）が同じ手順を持つ。
+6. 画面を JS で描き替える前からのゲーム（`app.innerHTML = …`）は、data-screen に作り直さず、画面を描く関数の最初で `Core.screens.mark("dex")`（ホームは `mark("")`）、起動時に一度 `Core.screens.route({ dex: book, cal: () => cal(), ach: achView }, home)` を足す。スマホの「戻る」でゲームから出ずにホームへ戻る。
+7. ゲーム以外（アプリ・紹介ページ・ほかのプロジェクト・Artifact）は `template/screens/screens.js` を写して読む（1ファイルの Artifact は中身を script タグに貼る）。claude.ai のほかのプロジェクトでは、スキル page-split（`bootstrap/skills/page-split/SKILL.md`）が同じ手順を持つ。
 
 使い分け（NN/g Tabs vs. Accordions）：
 
