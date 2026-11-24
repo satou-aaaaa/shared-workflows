@@ -60,24 +60,23 @@ jobs:
             git clone -q --depth 1 "https://github.com/satou-aaaaa/$g.git" "$RUNNER_TEMP/g/$g" || { echo "- $g：取ってこれなかった" >> "$body"; continue; }
             [ -f "$RUNNER_TEMP/g/$g/index.html" ] || continue
             log="$out/$g.txt"
-            timeout 600 node scripts/game-explore.mjs "$RUNNER_TEMP/g/$g" --runs 4 --steps 30 --out "$out/$g" > "$log" 2>&1
-            code=$?
+            # run: は bash -e。落ちた番号は || で拾う（incidents/2026-11-24-common-check-exit-code-under-bash-e.md）
+            code=0; timeout 600 node scripts/game-explore.mjs "$RUNNER_TEMP/g/$g" --runs 4 --steps 30 --out "$out/$g" > "$log" 2>&1 || code=$?
             if [ "$code" -eq 1 ]; then found=$((found + 1)); { echo "## $g"; grep '^✗' "$log" | sed 's/^/- /'; echo; } >> "$body"
             elif [ "$code" -ne 0 ]; then { echo "- $g：探す道具が止まった（終了 $code）"; tail -3 "$log" | sed 's/^/  /'; } >> "$body"; fi
             # main の QA ももう一度回す。日がたつと落ちる検査（月の変わり目・読み直しで消える「検査用の今日」）は PR が来るまで見えないため
             # （incidents/2026-11-22-qa-rots-with-date.md）
             if [ -f "$RUNNER_TEMP/g/$g/qa/run.mjs" ] && [ -f "$RUNNER_TEMP/g/$g/qa/package-lock.json" ]; then
               qlog="$out/$g-qa.txt"
-              ( cd "$RUNNER_TEMP/g/$g/qa" && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --no-audit --no-fund >/dev/null 2>&1 ) \
-                && ( cd "$RUNNER_TEMP/g/$g" && CHROMIUM_PATH="$CHROME" timeout 900 node qa/run.mjs > "$qlog" 2>&1 )
-              qcode=$?
+              qcode=0
+              { ( cd "$RUNNER_TEMP/g/$g/qa" && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --no-audit --no-fund >/dev/null 2>&1 ) \
+                && ( cd "$RUNNER_TEMP/g/$g" && CHROMIUM_PATH="$CHROME" timeout 900 node qa/run.mjs > "$qlog" 2>&1 ); } || qcode=$?
               if [ "$qcode" -ne 0 ]; then found=$((found + 1)); { echo "## $g（main の QA が落ちた。日付で変わる検査を疑う）"; grep -E '^- ❌|^✗' "$qlog" | head -5 | sed -E 's/^(- |✗ ?)//; s/^/- /'; [ -s "$qlog" ] || echo "- npm ci か QA が動かなかった（終了 $qcode）"; echo; } >> "$body"; fi
               # 日付を変える口（QA_DATE）があれば、先の日（1〜30日後のどれか）でももう一度回す。今日の問題と検査で選んだ問題が
               # 重なる日だけ落ちる検査を、その日が来る前に見つける（incidents/2026-11-22-qa-rots-with-date.md の追記。amida-haitatsu・mukashi-narabe）
               if [ "$qcode" -eq 0 ] && grep -q 'QA_DATE' "$RUNNER_TEMP/g/$g/qa/run.mjs"; then
                 qd=$(TZ=Asia/Tokyo date -d "+$(( RANDOM % 30 + 1 )) days" +%F)
-                ( cd "$RUNNER_TEMP/g/$g" && QA_DATE="$qd" CHROMIUM_PATH="$CHROME" timeout 900 node qa/run.mjs > "$qlog" 2>&1 )
-                qcode=$?
+                qcode=0; ( cd "$RUNNER_TEMP/g/$g" && QA_DATE="$qd" CHROMIUM_PATH="$CHROME" timeout 900 node qa/run.mjs > "$qlog" 2>&1 ) || qcode=$?
                 if [ "$qcode" -ne 0 ]; then found=$((found + 1)); { echo "## $g（QA_DATE=$qd の日の問題で QA が落ちた。その日にだけ落ちる検査を疑う）"; grep -E '^- ❌|^✗' "$qlog" | head -5 | sed -E 's/^(- |✗ ?)//; s/^/- /'; echo; } >> "$body"; fi
               fi
             fi

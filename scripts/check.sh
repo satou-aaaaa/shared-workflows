@@ -24,6 +24,8 @@ node scripts/check-upload-artifact.mjs --self-test
 node scripts/check-upload-artifact.mjs
 node scripts/check-release-download.mjs --self-test
 node scripts/check-release-download.mjs
+node scripts/check-exit-codes.mjs --self-test
+node scripts/check-exit-codes.mjs
 node template/qa/depth-check.mjs template/depth.js
 node scripts/check-template-watch.mjs
 node scripts/check-sw-check.mjs

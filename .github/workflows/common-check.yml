@@ -62,7 +62,8 @@ jobs:
             [ -d "$d" ] || git clone -q --depth 1 "https://github.com/satou-aaaaa/$r.git" "$d" 2>/dev/null || continue
             [ -f "$d/index.html" ] || continue
             cfg=--default; [ -f "$d/qa/ui-check.json" ] && cfg=qa/ui-check.json
-            log=$( cd "$d" && timeout 180 node "$GITHUB_WORKSPACE/scripts/ui-check.mjs" "$cfg" 2>&1 ); code=$?
+            # run: は bash -e。code=$? を後に書くと、外れたゲームを見つけた所で段ごと止まる（incidents/2026-11-24-common-check-exit-code-under-bash-e.md）
+            code=0; log=$( cd "$d" && timeout 180 node "$GITHUB_WORKSPACE/scripts/ui-check.mjs" "$cfg" 2>&1 ) || code=$?
             if [ "$code" -ne 0 ]; then
               found=$((found + 1))
               { echo "## $r"; printf '%s\n' "$log" | grep -E '::error::' | sed 's/^::error::/- /' | head -6; [ "$code" -eq 1 ] || echo "- 検査が動かなかった（終了 $code）"; echo; } >> "$out"

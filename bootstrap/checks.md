@@ -20,7 +20,7 @@
 | 仕組み | 見つけるもの | どこ | 立ち上げで要るもの |
 | --- | --- | --- | --- |
 | 各リポジトリの QA・テスト | 動かない・止まる・見た目の崩れ | 各リポジトリの CI（`qa/` など） | onboarding.md の 2 |
-| Lint（このリポジトリ） | ワークフローの書き間違い（actionlint）・危ない書き方（zizmor）・立ち上げ手順の抜け（bootstrap）・問題の記録の形（incidents） | `.github/workflows/lint.yml`・`zizmor.yml`・`scripts/check-bootstrap.mjs`・`scripts/check-incidents.mjs` | ★ main の Ruleset で actionlint を必須に |
+| Lint（このリポジトリ） | ワークフローの書き間違い（actionlint）・危ない書き方（zizmor）・立ち上げ手順の抜け（bootstrap）・問題の記録の形（incidents）・run: で落ちた番号を `code=$?` で後から拾う書き方（bash -e で段ごと止まる） | `.github/workflows/lint.yml`・`zizmor.yml`・`scripts/check-bootstrap.mjs`・`scripts/check-incidents.mjs`・`scripts/check-exit-codes.mjs` | ★ main の Ruleset で actionlint を必須に |
 | Selftest（このリポジトリ） | 共通部品を PR の段階で実際に動かす（秘密の検査・公開後の確認のスクリプトが「正常」と「壊れている」を見分けられるか） | `selftest.yml` | なし |
 | Permission guard（このリポジトリ） | `routines/autonomy.md`・`common.md` を変える PR にラベル「satou承認」が無い | `permission-guard.yml` | ラベル「satou承認」 |
 | UI check | 画面の使いやすさの悪化（開いてすぐ押せる部品の数が基準 +1 を超える・24px 未満の押す所や 12px 未満の字が増える）。詳細などは click で開いてから数える。基準が無くても、決まり（[ui-rules.md](../routines/ui-rules.md) U1〜U4：固定の部品で隠す・同じ入口が二重・ホームで押せる物がスマホで18を超える・はみ出し・名前の無いボタン）は落とす。ページの分け方（U10〜U12：1画面の見出し5まで・長さはスマホ3画面分まで・畳みは1段・行き先5まで）は、画面を分けた（data-screen）ページと `"pages": "fail"` で落とし、前からあるペライチは ⚠ で知らせる。data-screen があれば # を順に開いて画面ごとに測る。設定ファイルが無いリポジトリはホーム（はじめての案内を閉じたあと）を見る（`--default`） | `ui-check.yml`・`scripts/ui-check.mjs`・画面の切り替え（`template/screens/screens.js`・`Core.screens`）の動きは `scripts/check-screens.mjs`（Selftest） | 呼ぶ側の `qa/ui-check.json`（無くても動く）と基準（`--update-baseline`） |
