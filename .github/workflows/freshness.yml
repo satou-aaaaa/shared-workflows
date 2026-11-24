@@ -9,6 +9,9 @@ on:
   schedule:
     # 毎週火曜 05:43 JST（= 月曜 20:43 UTC）。月曜の Scorecard（04:07）・Weekly summary（06:17）と重ねない
     - cron: "43 20 * * 1"
+    # 控え：火曜 08:17 JST（= 月曜 23:17 UTC）。GitHub は混むと schedule の回を落とすため、見直しの回（10:43）の前にもう一度回す。
+    # 同じ Issue の本文を替えるだけなので2回回っても害はない（incidents/2026-11-24-freshness-schedule-dropped.md）
+    - cron: "17 23 * * 1"
   workflow_dispatch:
 
 permissions:

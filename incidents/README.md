@@ -80,6 +80,8 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-11-24 | 公開・CI | [火曜の Freshness が schedule で動かず、見直しの回が古い Issue を読みかけた](2026-11-24-freshness-schedule-dropped.md) | 対策済み |
+| 2026-11-23 | 公開・CI | [Secret scan が、gitleaks の取得を GitHub に 403 で断られて赤になった（昔話ならべ）](2026-11-23-secret-scan-gitleaks-download-403.md) | 対策済み |
 | 2026-11-23 | 検査の見逃し | [公開した長尺動画の字幕が、聞き間違いとゲームの読み上げだらけだった（LAST TELL 第2部）](2026-11-23-video-subtitles-mishears.md) | 対策中 |
 | 2026-11-23 | 公開・CI | [main の CI が7件赤：1回だけ測る・1回だけ見る検査が揺れで落ちた](2026-11-23-ci-flakes-timing.md) | 対策中 |
 | 2026-11-23 | 検査の見逃し | [画面の切り替え（Core.screens）の「# の名前で関数を呼ぶ」所を、配ったあとのゲームの CodeQL が見つけた](2026-11-23-template-codeql-after-sync.md) | 対策済み |

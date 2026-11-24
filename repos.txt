@@ -34,7 +34,9 @@ dungeon-boardgame app
 ekisei-yomi game
 endaka-enyasu game
 energy-shurui game
+enshoku-ate game
 funka-level game
+futan-wariai game
 fuyo-ikura game
 gairai-miwake game
 gamen-no-wana game
