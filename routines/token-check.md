@@ -28,6 +28,9 @@
    wc -c /tmp/claude/memory/team/silo/MEMORY.md
    for d in /home/user/*/; do [ -f "$d/CLAUDE.md" ] && printf '%s %s\n' "$(wc -c < "$d/CLAUDE.md")" "$d"; done | sort -n | tail -3
    grep -l '^@' /home/user/*/CLAUDE.md
+   # 会話に入っているリポジトリの数と、毎回取り込まれる CLAUDE.md（@AGENTS.md を含む）の合計
+   ls -d /home/user/*/ | wc -l
+   t=0; for d in /home/user/*/; do f="$d/CLAUDE.md"; [ -f "$f" ] || continue; t=$((t+$(wc -c < "$f"))); grep -q '^@AGENTS.md' "$f" && t=$((t+$(wc -c < "$d/AGENTS.md"))); done; echo "$t"
    ```
 5. 手順書の大きさを測る。
    ```bash
@@ -36,14 +39,15 @@
 6. 並行で動いているスレッドの数を list_threads（state=working）で数える。
 7. 毎月最初の土曜の回だけ、長寿命のスレッド（見回り・巡回・取り込みなど、同じ会話に何度も届くもの）を get_session で見て、使用量の多い順に3つ書き留める。
 8. 下の「迷ったとき」の表で、見つけたものごとにすることを決めて行う。1回に入れる PR は1本まで（大きな手順書の分割は1本ずつ）。
-9. チームメモリ token-check に1行足す。形は `YYYY-MM-DD: 定期実行 N回/日（上位 A・B・C）・MEMORY.md xKB・最大の手順書 名前 xKB・working N本・入れた: …・案: …`。
+9. チームメモリ token-check に1行足す。形は `YYYY-MM-DD: 定期実行 N回/日（上位 A・B・C）・MEMORY.md xKB・リポジトリ N本（取り込み xKB）・最大の手順書 名前 xKB・working N本・入れた: …・案: …`。
 10. 入れたもの・案があるときだけ、見直しの報告（routine-review.md 手順17）に1行ずつ足す。
 
 ## 迷ったとき
 
 | もし | すること |
 | --- | --- |
-| MEMORY.md が 8KB を超えた | 長い行の本文をトピックのファイル（`[[名前]]`）へ移し、索引は1行40字ほどにする。本文は消さずに移すだけ。移す前に読み直し、10秒おいて読み直す（ほかのスレッドも書く） |
+| MEMORY.md が 8KB を超えた（週の途中は見回りの朝の回が毎日測って縮める。2026-11-25） | 長い行の本文をトピックのファイル（`[[名前]]`）へ移し、索引は1行40字ほどにする。本文は消さずに移すだけ。移す前に読み直し、10秒おいて読み直す（ほかのスレッドも書く） |
+| 会話に入っているリポジトリが5本を超えた（10/28 に3本へ絞った。作業のたびに足されて戻る） | 本数と取り込みの合計を報告に書き、satou さんに「プロジェクトの設定でリポジトリを要るものだけに戻す」をカードで一度だけお願いする（設定は satou さんの操作。ほかのリポジトリは要るスレッドが add_repo で足す）。同じ本数で2回言わない |
 | CLAUDE.md が `@` で 4KB を超えるファイルを取り込んでいる | template/CLAUDE.md の1行の形にする PR（drift-check の `claude:big-import` も見る） |
 | 手順書が 15KB を超えた | 要点だけの本体と `<名前>-detail.md` に分ける PR を1本（common.md と common-detail.md、game-dev.md と game-dev-detail.md の形）。分けた本体は Lint（check-routines）が 15KB 以下か見る。common.md は権限の表があるので触らない |
 | 定期実行が1時間おき以下 | イベント（push・Issue・API 起動）で起こせないか、間隔を2倍にできないかを考え、取り消せるなら update_trigger で変える。変えられない型（毎回新しい会話）は案として報告に書く |
