@@ -80,6 +80,8 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-11-24 | 公開・CI | [毎日の共通の点検が、最初に決まりに外れたゲームを見つけた所で落ちた（bash -e で code=$? まで来ない）](2026-11-24-common-check-exit-code-under-bash-e.md) | 対策済み |
+| 2026-11-24 | 公開・CI | [Template sync が45分で切り上げた残り22本に直したひな形が届かず、tenji-yomi の QA が赤のままだった](2026-11-24-template-sync-leftovers-and-false-ok.md) | 対策済み |
 | 2026-11-24 | 公開・CI | [火曜の Freshness が schedule で動かず、見直しの回が古い Issue を読みかけた](2026-11-24-freshness-schedule-dropped.md) | 対策済み |
 | 2026-11-23 | 公開・CI | [Secret scan が、gitleaks の取得を GitHub に 403 で断られて赤になった（昔話ならべ）](2026-11-23-secret-scan-gitleaks-download-403.md) | 対策済み |
 | 2026-11-23 | 検査の見逃し | [公開した長尺動画の字幕が、聞き間違いとゲームの読み上げだらけだった（LAST TELL 第2部）](2026-11-23-video-subtitles-mishears.md) | 対策中 |

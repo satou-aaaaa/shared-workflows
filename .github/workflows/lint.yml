@@ -64,6 +64,8 @@ jobs:
         run: |
           node scripts/check-release-download.mjs --self-test
           node scripts/check-release-download.mjs
+          node scripts/check-exit-codes.mjs --self-test
+          node scripts/check-exit-codes.mjs
       # ゲームの古くなる情報の台帳（freshness.md）に repos.txt の game が全部あり、形が正しいか。見分け方そのものも（routines/freshness.md）
       - name: 古くなる情報の台帳
         run: |

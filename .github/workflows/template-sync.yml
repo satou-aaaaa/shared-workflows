@@ -48,6 +48,7 @@ jobs:
     environment: template-sync
     permissions:
       contents: read
+      actions: write # 45分で切り上げたとき、残りのゲームだけでこのワークフローを起こし直す
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -61,6 +62,7 @@ jobs:
           OWNER: ${{ github.repository_owner }}
           ONLY: ${{ inputs.only }}
           SHA: ${{ github.sha }}
+          DISPATCH_TOKEN: ${{ github.token }}
           # 鍵が読めないときに、どこにずれがあるかを出す（値は出さず、あるか無いかだけ。2026-11-17 鍵が空で読まれた件）
           HAS_VAR: ${{ vars.TEMPLATE_SYNC_TOKEN != '' }}
           HAS_OTHER: >-
@@ -79,16 +81,39 @@ jobs:
             exit 0
           fi
           root=$PWD
-          games=${ONLY:-$(node scripts/repos.mjs game)}
+          read -r -a games <<< "${ONLY:-$(node scripts/repos.mjs game)}"
           opened=0; failed=0; start=$SECONDS
-          for r in $games; do
-            # 時間切れでジョブごと止まらないよう、45分で切り上げる（残りは次の回が拾う。週1と次の push）
-            if [ $((SECONDS - start)) -gt 2700 ]; then echo "::warning::45分たったので $r から先は次の回に回す"; break; fi
+          for i in "${!games[@]}"; do
+            r=${games[$i]}
+            # 時間切れでジョブごと止まらないよう、45分で切り上げ、残りのゲームだけでこのワークフローをすぐ起こし直す。
+            # 前は「次の回が拾う」としていたが、3時間ごとの回はマージだけで配らず、残りは週1まで古いひな形のまま QA が落ちていた
+            # （2026-11-23 teko-tsuriai から先の22本。tenji-yomi #17。incidents/2026-11-24-template-sync-leftovers-and-false-ok.md）
+            if [ $((SECONDS - start)) -gt 2700 ]; then
+              rest="${games[*]:$i}"
+              echo "::warning::45分たったので $r から先（${#games[@]} 本中 $(( ${#games[@]} - i )) 本）は、起こし直した次の回で配る"
+              # 待っている push の回（全部を配る）があれば、それが残りも配る。起こすと待っている回が取り消される（concurrency）ので起こさない
+              if [ "$(GH_TOKEN="$DISPATCH_TOKEN" gh api "repos/$GITHUB_REPOSITORY/actions/workflows/template-sync.yml/runs?status=queued&event=push" --jq '.total_count')" != 0 ]; then
+                echo "::notice::待っている push の回が残りも配る"
+              else
+                GH_TOKEN="$DISPATCH_TOKEN" gh workflow run template-sync.yml -R "$GITHUB_REPOSITORY" --ref main -f only="$rest" || { echo "::error::残りを起こし直せなかった: $rest"; failed=1; }
+              fi
+              break
+            fi
             if ! [[ "$r" =~ ^[a-z0-9-]+$ ]]; then echo "::error::名前の形でない: $r"; failed=1; continue; fi
             dir="$RUNNER_TEMP/$r"
             if ! git clone -q --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/$OWNER/$r.git" "$dir"; then echo "::warning::$r を取れない"; failed=1; continue; fi
             # 新作を作っている途中（PR が開いたまま）のゲームの main にも配ってよい（写すのはひな形の範囲だけ）
-            (cd "$dir" && node "$root/scripts/sync-template.mjs" . >/dev/null) || true
+            # 写す道具が止まったのを「ひな形どおり」と言わない（前は || true で隠れ、古いひな形の回が全部「ひな形どおり」と出ていた）
+            scode=0; (cd "$dir" && node "$root/scripts/sync-template.mjs" . >/dev/null) || scode=$?
+            if [ "$scode" = 3 ]; then
+              # 3 = 手元のひな形が origin/main より古い（この回のあいだに main が進んだ）。最新のひな形に替えて、このゲームから続ける
+              git -C "$root" fetch -q --depth=50 origin main && git -C "$root" checkout -q FETCH_HEAD -- template scripts && SHA=$(git -C "$root" rev-parse FETCH_HEAD)
+              # HEAD は元のコミットのままなので、替えたあとは古さの見張りを外す（中身は FETCH_HEAD のひな形）
+              export SYNC_ALLOW_STALE=1
+              echo "::notice::ひな形が新しくなったので ${SHA:0:7} に替えて $r から続ける"
+              scode=0; (cd "$dir" && node "$root/scripts/sync-template.mjs" . >/dev/null) || scode=$?
+            fi
+            if [ "$scode" != 0 ]; then echo "::warning::$r: 写す道具が止まった（終了 $scode）"; failed=1; rm -rf "$dir"; continue; fi
             git -C "$dir" checkout -q -- .github 2>/dev/null || true
             if [ -z "$(git -C "$dir" status --porcelain)" ]; then echo "✓ $r: ひな形どおり"; rm -rf "$dir"; continue; fi
             # 新しく足したファイル（transfer-qr.js など）も入れる。-a だけだと入らず、sw.js の SHELL が無いファイルを指した（2026-11-22 incidents/2026-11-22-template-sync-new-files-left-out.md）
