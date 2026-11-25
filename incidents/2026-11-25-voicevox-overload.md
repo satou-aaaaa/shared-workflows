@@ -24,4 +24,4 @@
 - [x] 防ぐ: 共通フォルダの `README.md` に「同時に2本まで」を書いた
 - [x] 防ぐ: PC の共通フォルダ `_common` へ新しい `make_voice.py` と `README.md` を写した（md5 がクラウドと一致）
 - [x] 防ぐ: 各作業フォルダに残っていた古い make_voice.py（38ファイル）を、実行すると「共通版を使って」と出て止まるだけの `make_voice.py`（stub）に置きかえた。元は `.old` で残した（satou さんがカードで決定）
-- [ ] 防ぐ: 書き出し中で飛ばした4フォルダ（news_n4・own_a・own_h1・own_l）の古い make_voice.py も同じく置きかえる（担当: 転送のスレッド、期限: 2026-11-26）
+- [x] 防ぐ: 書き出し中で飛ばした4フォルダ（news_n4・own_a・own_h1・own_l）の古い make_voice.py も、書き出しが終わってから同じ `make_voice.py`（stub）に置きかえた。これで `_common` 以外は全部 stub
