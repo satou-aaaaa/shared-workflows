@@ -53,6 +53,7 @@
 | LAST TELL ソースの控え（週1） | [last-tell-backup.md](../routines/last-tell-backup.md) | `CRON_TZ=Asia/Tokyo 52 8 * * 0` | LAST TELL |
 | 研究を毎日1件ずつ進める（毎日 14:23） | [research-loop.md](../routines/research-loop.md) | `CRON_TZ=Asia/Tokyo 23 14 * * *`（毎回新しいセッション） | カルカソンヌ（報告の届け先はスレッド「研究を継続して進める仕組みを整える」） |
 | Issue/PR定期対応 (kensetsu-kyoka-toolkit)（月曜 4:35、Sonnet・low） | [sandbox-issue-pr.md](../routines/sandbox-issue-pr.md) | `35 19 * * 0` | ドラえもん（手順の1で sandbox を自分で足す） |
+| 合成音声の掛け合い解説動画を作る（新しい回を作るたび） | [explainer-video.md](../routines/explainer-video.md) | 定期実行は作らない。解説の制作スレッドが新しい回ごとに読む | 小江戸ゲーム部 |
 
 ## sandbox のルーティン（手順書が satou-aaaaa/sandbox にあるもの）
 

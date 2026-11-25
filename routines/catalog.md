@@ -78,6 +78,7 @@ satou さんのところで繰り返し行われる作業を1か所に並べた�
 | 単体HTMLアプリの画面点検 | スキル law-app-ui-check。数で見る部分は共通部品 `ui-check.yml`（PR のたび） |
 | ページを目的ごとに画面に分ける（ペライチにしない） | スキル page-split。部品 `template/screens/screens.js`（ゲームは `Core.screens`）、数で見る部分は `ui-check.yml`（U10〜U12） |
 | LAST TELL の演出の提案 | スキル last-tell-proposal-demo |
+| 合成音声の掛け合い解説動画を作る（量産判定の対策・冒頭30秒・終了画面） | [explainer-video.md](explainer-video.md)。台本テンプレ・使い回し検査・組み立て・判定の道具はプロジェクトの共有フォルダ `youtube/tools/` |
 | 聞くか聞かないかの判断 | [autonomy.md](autonomy.md) |
 | できないと分かっている操作の回り道（クラウドから開けないページは `fetch-page.yml`） | [known-limits.md](known-limits.md) |
 | 定期の見回りを作る前に、イベントで受けられないか見る | [events.md](events.md) |
