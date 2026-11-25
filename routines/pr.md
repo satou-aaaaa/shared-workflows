@@ -51,6 +51,7 @@ satou-aaaaa の各リポジトリで、PR を作る・CI を通す・コンフ�
 3. 判定ロジックや安全装置など、同じ所を両側が別の中身に変えているときは、意図を読んで直す。決められなければマージを保留し、PR にその旨を書く。
 4. lockfile・生成物は手で直さず、リポジトリの道具で作り直す（Dependabot の PR は `@dependabot rebase` とコメントする）。
 5. 1 の確認コマンドを回してから push し、CI を待つ。別の PR が先に入ってまたぶつかったら同じことをする。
+6. `refusing to merge unrelated histories` と出たら、main の歴史が作り直されている。PR の中身が今の main にまだ無いかを確かめ、無ければ今の main から枝を切って同じ変更を入れ直し、新しい PR にする。古い PR は「#新 に載せ直した」と書いて閉じる（2026-11-25 tenbin #72 が3週止まった。`incidents/2026-11-25-conflicted-pr-left-weeks.md`）。
 
 ## 5. マージ
 

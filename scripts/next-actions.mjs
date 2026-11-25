@@ -2,7 +2,7 @@
 // 使い方: node scripts/next-actions.mjs            （トークンなしでも動くが、GitHub の回数制限が厳しい）
 //         GH_TOKEN=$(gh auth token) node scripts/next-actions.mjs
 // 出た行の対応のしかたは routines/without-claude.md の B の分岐表。
-// 見るもの: 自動マージ停止の Issue・main の CI 失敗 Issue・CI が赤の PR・3日以上動きの無い PR・needs-decision の Issue、
+// 見るもの: 自動マージ停止の Issue・main の CI 失敗 Issue・main とぶつかった PR・CI が赤の PR・3日以上動きの無い PR・needs-decision の Issue、
 //           起きた問題の記録（incidents/）の残っている対策と、30日に2件以上あった種類（再発防止。incidents/README.md）。
 import { repoNames } from './repos.mjs';
 import { makeApi, pool, searchIssues, reportUsage } from './gh-api.mjs';
@@ -59,7 +59,9 @@ await pool(open, 4, async (p) => {
     const red = runs.check_runs.filter((c) => ['failure', 'timed_out', 'cancelled'].includes(c.conclusion)).map((c) => c.name);
     const days = Math.floor((now - Date.parse(pr.updated_at)) / 86400000);
     const draft = pr.draft ? '（下書き）' : '';
-    if (red.length) add(3, `PR の CI が赤 [${r}] #${pr.number} ${pr.title}${draft}（${[...new Set(red)].join('・')}）→ 直すか下書きに戻す ${pr.html_url}`);
+    // main とぶつかった PR は、緑でもだれもマージできない。「緑ならマージ」に混ぜると後回しになり、3週止まった（2026-11-25 tenbin #72。incidents/2026-11-25-conflicted-pr-left-weeks.md）
+    if (pr.mergeable_state === 'dirty') add(3, `main とぶつかって止まった PR [${r}] #${pr.number} ${pr.title}${draft}（${days}日）→ main を取り込んで解く（routines/pr.md の 4「コンフリクトを直す」）。要らなければ理由を書いて閉じる ${pr.html_url}`);
+    else if (red.length) add(3, `PR の CI が赤 [${r}] #${pr.number} ${pr.title}${draft}（${[...new Set(red)].join('・')}）→ 直すか下書きに戻す ${pr.html_url}`);
     else if (days >= STALE_DAYS) add(4, `${days}日動きの無い PR [${r}] #${pr.number} ${pr.title}${draft} → CI が緑ならマージ、要らなければ閉じる ${pr.html_url}`);
   } catch (e) { skipped.push(`${r} #${p.number}（${e.message}）`); }
 });
