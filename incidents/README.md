@@ -80,6 +80,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-11-25 | 検査の見逃し | [ずんだもん解説の音声が「手札」を「しゅさつ」と読み、ふりがなを二回読んでいた](2026-11-25-explainer-voice-misreading.md) | 対策中 |
 | 2026-11-25 | 見回りの見落とし | [トークン節約で縮めたもの（メモリの索引・リポジトリの数）が元に戻っていたのを、週1の点検が拾えなかった](2026-11-25-token-savings-regressed.md) | 対策中 |
 | 2026-11-24 | 公開・CI | [carcassonne-research の AI content が、新しいAIで実戦の例が見つからず止まった](2026-11-24-tips-example-missing-after-ai-change.md) | 対策済み |
 | 2026-11-24 | 公開・CI | [毎日の共通の点検が、最初に決まりに外れたゲームを見つけた所で落ちた（bash -e で code=$? まで来ない）](2026-11-24-common-check-exit-code-under-bash-e.md) | 対策済み |
