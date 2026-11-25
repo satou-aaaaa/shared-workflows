@@ -22,4 +22,4 @@
 - [x] 防ぐ: `yomi.py` の to_read で、読ませる文に残った「（かな）」は形によらず消す（同じ語を1回だけ読む）
 - [x] 見つける: `yomi.py` に dup_problems・pron_dup を足した。読ませる文に「（かな）」が残っている、またはふりがな・辞書の語の読みが続けて2回出たら NG。selftest に「ききゃく（ききゃく）」「棄却ききゃく」の例を足し、直す前 NG・直した後 OK を確かめた
 - [x] 見つける: `gate_explainer.py` の H でも、実際に読ませた文を dup_problems で見る（pyopenjtalk の無い PC でも動く）。古い作り方の音声で NG、作り直しで OK を確かめた
-- [ ] 防ぐ: PC の共通フォルダ `_common` に新しい yomi.py と gate_explainer.py を写す（担当: 転送のスレッド、期限: 2026-11-26）
+- [x] 防ぐ: PC の共通フォルダ `_common` に新しい `yomi.py` と `gate_explainer.py` を写した（md5 がクラウドと一致）
