@@ -140,6 +140,7 @@ A. **新しい対象の自動検出**（毎回。軽い比較だけ）: チー�
      - shukushaku-yomi: data.js に触れる PR は、国土地理院の地形図の縮尺・等高線の間隔（主曲線・計曲線）と照らす。
      - souzoku-kihon: data.js（問題・出典）に触れる PR は、e-Gov の民法 第五編 相続と照らす。法改正（施行日）が変わっていないかも見る。
      - suiyoeki-ate: data.js（水溶液）に触れる PR は、岡山県・仙台市の学習指導案ほか（SRC）と、QA の水溶液の表（CL・TB）と照らす。
+     - taisen-hyo: data.js（式・出典）に触れる PR は、FIDE Handbook（C.04.1・C.05 Annex 1）の今の版と照らし、qa/run.mjs の数え直しが別のやり方のままか見る。
      - taishoku-ikura: data.js（勤続年数・退職所得控除・2分の1・短期・特定役員）に触れる PR は、国税庁タックスアンサーと QA の計算（qcalc・SAYS・HAND）と照らす。毎年4月の税制改正で変わっていないか見る。
      - tanpo-kimari: data.js（問題・出典）に触れる PR は、e-Gov の民法（第295〜302条・第342〜362条・第369〜398条）と照らす。法改正（施行日）が変わっていないかも見る。
      - tenji-yomi: gen.js（点の形・ことば）に触れる直しは、文部科学省『点字学習指導の手引』第4章などの表で確かめ、qa/run.mjs の別の表（T1・DG）も同じに直す。
