@@ -163,6 +163,7 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 - 検査：`template/qa/core-check.mjs` の `checkCore({ browser, url, check, solve })` を qa/run.mjs から呼ぶ。
 - 切り替え（2026-11-22）：`sync-template.mjs` の `migrateCore` が、見やすさの設定のあるゲームへ game-core を入れ、決まった古い形（num・esc・buzz・読み上げの無い toast）を `Core.*` に替え、「感想を送る」を Googleフォームにする（Template sync が全ゲームへ PR）。形のちがう関数（`core:*` が残るもの）とはじめての案内はゲームごとに手で。
 - 保存の切り替え（同日）：`migrateStore` が、古い load()（保存の写しを手で合わせる形）のうち `scripts/store-legacy.mjs` の表にある形を `GameStore.load` に替える。表に足すのは `scripts/check-store-legacy.mjs` の3000組の読み比べで GameStore と同じ合わせ方だと分かった形だけ。
+- 版5（2026-11-27）：ページの上の右に「？ 遊び方」（`#core-help`）を置き、押すとゲームの `openHow()`（無ければ `dialog#howto`・`#f-how`）を開く。ゲームでは置かない・動かさない（U13）。このページの script のエラーで、ページの上に不具合の帯（`#core-err`）を出し、本人が「不具合を知らせる」を押したときだけ感想フォームが開く。エラーの文は保存も自動送信もしない。外へ自動で送る通知・遊んだ数の集計は作らない（外のサーバーへ送ると IP が必ず届くため。satou さん 2026-11-27「個人データ・個人情報をとらない」）。
 - 全ゲームへ写す前：core.js・store.js を変えたら、手元のゲーム（なければ公開リポジトリを clone）で `node scripts/sync-template.mjs <ゲーム>` をかけて `node qa/run.mjs` を回す。ゲームごとの QA は言葉や形を禁じていることがある（例：数字の 188、行末が } のコメント）。見つけた決まりは `scripts/check-core.mjs` に足す。
 
 ## トークンを節約する（satou さん 2026-11-07「トークンを節約するための改善も」）
