@@ -98,6 +98,10 @@ export const CORE_LINES = [
   ...TOAST_OLD.map((c) => [c, 'function toast(t) { Core.toast(t); } // 知らせの帯（共通部品 game-core。読み上げにも届け、重ねて出さない）']),
   ...UNTIL_OLD.map((c) => [c, 'function untilNext() { return Core.untilNext(); } // 次の回までの時間（共通部品 game-core）']),
 ];
+// 2026-11-27 Ko-fi 応援の一文を Core.kofi に、フッターの応援先を Core.KOFI にする（201本が手で写し、文言が分かれていた。incidents/2026-11-27-kofi-line-hand-copied.md）
+const KOFI_LINE = /\$\{showKofi \? `<p class="note(?: kofi)?">([^、<`]{1,12})、<a href="https:\/\/ko-fi\.com\/satouaaaaa" target="_blank" rel="noopener">Ko-fi でコーヒー1杯の応援<\/a>をもらえると、([^<`"]{1,30}?)の励みになります（任意・遊ぶのはずっと無料）。<\/p>` : ""\}/g;
+const KOFI_FOOT = '<a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi で応援</a></footer>`';
+const swapKofi = (t) => t.replace(KOFI_LINE, (m, lead, what) => `\${showKofi ? Core.kofi(${JSON.stringify(lead)}, ${JSON.stringify(what)}) : ""}`).split(KOFI_FOOT).join('<a href="${Core.KOFI}" target="_blank" rel="noopener">Ko-fi で応援</a></footer>`');
 const swapLines = (t) => CORE_LINES.reduce((x, [a, b]) => x.replace(lineOf(a), (m, sp) => sp + b), t);
 export function migrateCore(html) {
   if (!/<\/head>/i.test(html) || !/<script/i.test(html)) return html;
@@ -110,7 +114,7 @@ export function migrateCore(html) {
   }
   // 替えるのはゲームの文字だけ（共通部品のかたまりの中には同じ形の関数があるので触らない）
   const parts = next.split(/(<!-- (?:core|store|a11y):begin[\s\S]*?<!-- (?:core|store|a11y):end -->)/);
-  next = parts.map((x, i) => (i % 2 ? x : swapLines(CORE_SWAPS.reduce((t, [a, b]) => t.split(a).join(b), x)))).join('');
+  next = parts.map((x, i) => (i % 2 ? x : swapKofi(swapLines(CORE_SWAPS.reduce((t, [a, b]) => t.split(a).join(b), x))))).join('');
   next = next.split('href="${FEEDBACK}" target="_blank" rel="noopener"').join('href="${FEEDBACK}" data-feedback="fun" target="_blank" rel="noopener"');
   next = next.split('<a id="fb2" target="_blank" rel="noopener">').join('<a id="fb2" target="_blank" rel="noopener" data-feedback="fun">');
   if (!/Core\.bindFeedback\(/.test(next.replace(CORE, ''))) {
