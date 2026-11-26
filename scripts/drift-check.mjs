@@ -348,6 +348,15 @@ const results = await pool(REPOS, 4, async (r) => {
       if (/if \(!s\.tut(?: && !\$\("howto"\)\.open)?\) openHow\(\)/.test(page) && !/function firstPlay\(/.test(page)) flag('first:howto', 'はじめて開くと遊び方の窓が出る（練習の1問と吹き出しにする。node scripts/sync-template.mjs で写すか、形がちがえば firstPlay を手で。incidents/2026-11-22-first-howto-left.md）');
       // スマホの「戻る」でゲームから出ない（Core.screens.mark・route。routines/ui-rules.md「ページの分け方」6。2026-11-23 satou さん「#で戻れるように全部直す」）。
       // sync-template の migrateBack が app.innerHTML で描くゲームに足す。形のちがうゲームは手で
+      // SNS への共有・感想フォーム・OGP（2026-11-27 satou さん「全ゲームに SNS 共有」「共通化も」「質問・意見の問い合わせも全ゲームに」）。
+      // sync-template の migrateShare・migrateOgp が足す。毎日の Common check にも出る（「が無い（template/ から写す）」の言い回し）
+      {
+        const own = page.replace(/<!-- core:begin[\s\S]*?<!-- core:end -->/, '');
+        if (/<!-- core:begin/.test(page) && !/\bdata-share\b/.test(own)) flag('share:entry', 'SNS への共有の入口（data-share）が無い（template/ から写す。node scripts/sync-template.mjs の migrateShare。形がちがえば「引き継ぎ」の隣に <a href="#" data-share>共有</a> を手で）');
+        if (!/\bdata-feedback\b|docs\.google\.com\/forms/.test(own)) flag('feedback:entry', '感想・質問のフォームの入口（data-feedback）が無い（template/ から写す。migrateShare が「引き継ぎ」の隣に足す）');
+        if (!/<meta[^>]*property=["']og:image["']/.test(own) || !/<meta[^>]*name=["']twitter:card["']/.test(own)) flag('ogp:none', 'SNS で貼ったときの絵と題（OGP の og:image・twitter:card）が無い（template/ から写す。migrateOgp）');
+        if (/\$\("toX"\)\.href\s*=/.test(own)) flag('share:hand', '結果のシェアを手で書いている（Core.share.wire(文) の1行にする。migrateShare は決まった形だけ替える）');
+      }
       if (/<!-- core:begin/.test(page) && !/Core\.screens\.(route|go)\(|data-screen=/.test(page.replace(/<!-- core:begin[\s\S]*?<!-- core:end -->/, ''))) flag('back:route', '「戻る」でゲームから出てしまう（画面を描く関数に Core.screens.mark、起動時に Core.screens.route。node scripts/sync-template.mjs で写すか、形がちがえば手で。routines/ui-rules.md「ページの分け方」6）');
     }
 
