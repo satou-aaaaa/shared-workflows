@@ -58,6 +58,47 @@ export const CORE_SWAPS = [
   ['const dayNo = (k) => Math.round((Date.parse(k) - Date.parse(EPOCH)) / 864e5) + 1;', 'const dayNo = (k) => Core.dayNo(k, EPOCH);'],
   ['function streak(days) { let k = todayKey(), n = 0; if (!days[k]) k = prevDay(k); while (days[k]) { n++; k = prevDay(k); } return n; }', 'function streak(days) { return Core.streak(days); } // 続けて遊んだ日数（共通部品 game-core。壊れた記録・constructor などの名前を日に数えない）'],
 ];
+// 2026-11-27 Core にあるのに、ゲームが手で写したまま持っていた小部品を Core.* にする（satou さん「共通化されていないパーツ」。
+//   210本を数えると、Core.toast・Core.untilNext を使うゲームは0本、buzz は13通り・esc は7通り・num は16通りに分かれていた）。
+//   決まった形（行のあとの // の説明は形が多いので、あってもなくてもよい）の行だけを1行ごと替える。形のちがう行（長さ・読み上げのちがう toast など）は触らない
+const tailNote = '(?: *//[^\\n]*)?';
+const lineOf = (code) => new RegExp(`^([ \\t]*)${code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}${tailNote}$`, 'gm');
+const NUM_OLD = [
+  'const num = (v) => { if (typeof v !== "number" && typeof v !== "string") return 0; const n = +v; return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0; };',
+  'const num = (v) => ((typeof v === "number" || typeof v === "string") && Number.isFinite(+v) && +v >= 0 ? Math.floor(+v) : 0);',
+  'const num = (v) => { const x = typeof v === "number" || typeof v === "string" ? +v : NaN; return Number.isFinite(x) && x >= 0 ? Math.floor(x) : 0; };',
+  'const num = (v) => (typeof v === "number" || typeof v === "string") && Number.isFinite(+v) && +v >= 0 ? Math.floor(+v) : 0;',
+];
+const ESC_OLD = [
+  'const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");',
+  'const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");',
+  'const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");',
+];
+const BUZZ_OLD = [
+  'const buzz = (n = 12) => { try { if (!(window.A11y && A11y.on("calm"))) navigator.vibrate && navigator.vibrate(n); } catch (e) {} };',
+  'const buzz = (n = 12) => { try { if (!document.documentElement.classList.contains("a11y-calm")) navigator.vibrate && navigator.vibrate(n); } catch (e) {} };',
+  'const buzz = (n = 12) => { try { if (!(window.A11y && A11y.on && A11y.on("calm")) && navigator.vibrate) navigator.vibrate(n); } catch (e) {} };',
+  'const buzz = (n = 12) => { if (calm()) return; try { navigator.vibrate && navigator.vibrate(n); } catch (e) {} };',
+  'const buzz = (n = 12) => { try { navigator.vibrate && !document.documentElement.classList.contains("a11y-calm") && navigator.vibrate(n); } catch (e) {} };',
+  'const buzz = () => { if (calm()) return; try { navigator.vibrate && navigator.vibrate(12); } catch (e) {} };',
+];
+const TOAST_OLD = [
+  'function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.setAttribute("role", "status"); d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2000); }',
+  'function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.setAttribute("role", "status"); d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1800); }',
+  'function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.setAttribute("aria-hidden", "true"); d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1800); Core.say(t); }',
+];
+const UNTIL_OLD = [
+  'function untilNext() { const n = jstNow(), ms = 864e5 - (n.getTime() % 864e5); return `${Math.floor(ms / 36e5)}時間${Math.floor((ms % 36e5) / 6e4)}分`; }',
+  'function untilNext() { const n = jstNow(), ms = 864e5 - (n.getTime() % 864e5); const h = Math.floor(ms / 36e5), m = Math.floor((ms % 36e5) / 6e4); return `${h}時間${m}分`; }',
+];
+export const CORE_LINES = [
+  ...NUM_OLD.map((c) => [c, 'const num = Core.num; // 共通部品 game-core（配列・true を数にしない #410）']),
+  ...ESC_OLD.map((c) => [c, 'const esc = Core.esc; // 共通部品 game-core（" と \' も変える。属性の中でも切れない）']),
+  ...BUZZ_OLD.map((c) => [c, 'const buzz = Core.buzz; // 共通部品 game-core（「動きを減らす」では震わせない）']),
+  ...TOAST_OLD.map((c) => [c, 'function toast(t) { Core.toast(t); } // 知らせの帯（共通部品 game-core。読み上げにも届け、重ねて出さない）']),
+  ...UNTIL_OLD.map((c) => [c, 'function untilNext() { return Core.untilNext(); } // 次の回までの時間（共通部品 game-core）']),
+];
+const swapLines = (t) => CORE_LINES.reduce((x, [a, b]) => x.replace(lineOf(a), (m, sp) => sp + b), t);
 export function migrateCore(html) {
   if (!/<\/head>/i.test(html) || !/<script/i.test(html)) return html;
   let next = html;
@@ -69,7 +110,7 @@ export function migrateCore(html) {
   }
   // 替えるのはゲームの文字だけ（共通部品のかたまりの中には同じ形の関数があるので触らない）
   const parts = next.split(/(<!-- (?:core|store|a11y):begin[\s\S]*?<!-- (?:core|store|a11y):end -->)/);
-  next = parts.map((x, i) => (i % 2 ? x : CORE_SWAPS.reduce((t, [a, b]) => t.split(a).join(b), x))).join('');
+  next = parts.map((x, i) => (i % 2 ? x : swapLines(CORE_SWAPS.reduce((t, [a, b]) => t.split(a).join(b), x)))).join('');
   next = next.split('href="${FEEDBACK}" target="_blank" rel="noopener"').join('href="${FEEDBACK}" data-feedback="fun" target="_blank" rel="noopener"');
   next = next.split('<a id="fb2" target="_blank" rel="noopener">').join('<a id="fb2" target="_blank" rel="noopener" data-feedback="fun">');
   if (!/Core\.bindFeedback\(/.test(next.replace(CORE, ''))) {

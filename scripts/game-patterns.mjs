@@ -190,3 +190,14 @@ export function copyWordHits(qa, texts) {
   }
   return hits;
 }
+
+// Core にある小部品（toast・untilNext・buzz・esc・num）を、ゲームが手で写して持っているか（drift の core:copy。ゲームの QA には使わない）。
+// 写しを持つと、直しが一部のゲームにしか届かず形が分かれる（2026-11-27 数えると toast 17通り・buzz 13通り・num 16通り。sync-template の CORE_LINES が決まった形を替える）。
+// ここに出るのは、形がちがって自動で替えられなかったゲーム。そのゲームの PR で Core.* に替える
+export function coreCopies(page) {
+  const own = page.replace(/<!-- core:begin[\s\S]*?<!-- core:end -->/, '');
+  return ['toast', 'untilNext', 'buzz', 'esc', 'num'].filter((name) => {
+    const m = own.match(new RegExp(`(?:function\\s+${name}\\s*\\(|(?:const|let)\\s+${name}\\s*=)[^\\n]*`));
+    return m && !/Core\./.test(m[0]);
+  });
+}
