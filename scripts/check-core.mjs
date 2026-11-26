@@ -44,6 +44,21 @@ ok(`${SRC} に HTML のコメント（<!-- -->）が無い（写しの区切り�
   ok('migrateCore：何度かけても同じ', migrateCore(m) === m);
   ok('migrateCore：共通部品のかたまりの中は替えない（同じ形の関数がある）', m.match(CORE)[0] === coreBlock());
   ok('migrateCore：形のちがう関数・head の無いページは触らない', migrateCore('const num = (x) => +x;') === 'const num = (x) => +x;');
+  // 2026-11-27 手で写したままの toast・untilNext・buzz・esc・num（説明の // があってもよい）を1行ごと Core.* にする
+  const hand = [
+    '<head><!-- a11y:begin -->a<!-- a11y:end -->\n</head><body><script>',
+    '  function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.setAttribute("role", "status"); d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2000); }',
+    'function untilNext() { const n = jstNow(), ms = 864e5 - (n.getTime() % 864e5); return `${Math.floor(ms / 36e5)}時間${Math.floor((ms % 36e5) / 6e4)}分`; }',
+    'const buzz = (n = 12) => { try { if (!(window.A11y && A11y.on("calm"))) navigator.vibrate && navigator.vibrate(n); } catch (e) {} };',
+    'const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");',
+    'const num = (v) => ((typeof v === "number" || typeof v === "string") && Number.isFinite(+v) && +v >= 0 ? Math.floor(+v) : 0); // 数と文字だけ（CodeRabbit）',
+    'function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.setAttribute("role", "status"); d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1600); }',
+    '</script></body>',
+  ].join('\n');
+  const h = migrateCore(hand), hown = h.replace(CORE, '');
+  ok('migrateCore：手で写した toast・untilNext・buzz・esc・num を Core.* にする（字下げは残す）', /\n  function toast\(t\) \{ Core\.toast\(t\); \}/.test(hown) && /return Core\.untilNext\(\)/.test(hown) && /const buzz = Core\.buzz;/.test(hown) && /const esc = Core\.esc;/.test(hown) && /^const num = Core\.num; \/\/ 共通部品 game-core（配列・true を数にしない #410）$/m.test(hown));
+  ok('migrateCore：形のちがう toast（長さのちがうもの）は触らない', hown.includes('setTimeout(() => d.remove(), 1600); }'));
+  ok('migrateCore：手で写した小部品の切り替えも、何度かけても同じ', migrateCore(h) === h);
 }
 
 {
