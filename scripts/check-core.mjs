@@ -197,7 +197,7 @@ ok('Core.coach に start・stop・active がある', ['start', 'stop', 'leave', 
   const l = Core.share.links('震度よみ 第3回\n🟢🟢\nhttps://satou-aaaaa.github.io/shindo-yomi/');
   ok('共有：X は公式の Web Intent（https://x.com/intent/tweet?text=）、LINE は URL スキーム（https://line.me/R/share?text=）で、文を UTF-8 で符号化する',
     l.x.startsWith('https://x.com/intent/tweet?text=' + encodeURIComponent('震度よみ 第3回\n🟢🟢\nhttps://satou-aaaaa.github.io/shindo-yomi/\n#')) && l.line.startsWith('https://line.me/R/share?text=%E9%9C%87'));
-  const ctx = { document: { title: 'テスト｜ゲーム', querySelector: () => null, addEventListener: () => {} }, location: { origin: 'https://satou-aaaaa.github.io', pathname: '/g/index.html', search: '?x=1', hash: '#hk=ABC' }, navigator: {}, addEventListener: () => {}, setTimeout: (f) => { f(); return 1; }, clearTimeout: () => {}, URLSearchParams };
+  const ctx = { document: { title: 'テスト｜ゲーム', readyState: 'complete', body: null, querySelector: () => null, getElementById: () => null, addEventListener: () => {} }, location: { origin: 'https://satou-aaaaa.github.io', pathname: '/g/index.html', search: '?x=1', hash: '#hk=ABC' }, navigator: {}, addEventListener: () => {}, setTimeout: (f) => { f(); return 1; }, clearTimeout: () => {}, URLSearchParams };
   ctx.window = ctx; vm.createContext(ctx); vm.runInContext(src, ctx);
   ok('共有：ハッシュタグはゲームの名前（タグに使えない字を外す）と「小江戸ゲーム部」の2つまで', ctx.Core.share.tags() === '#テスト #小江戸ゲーム部');
   ok('共有：ハッシュタグを2回足さない', ctx.Core.share.tagged(ctx.Core.share.tagged('a')) === 'a\n#テスト #小江戸ゲーム部');

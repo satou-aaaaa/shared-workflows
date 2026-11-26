@@ -26,6 +26,7 @@
 //   - 同じ働きの入口が1つの画面に2つ以上見えている（見やすさ・引き継ぎ・感想・応援）… 落とす（WCAG 3.2.4）
 //   - ホームで開いてすぐ見える押せる部品が、スマホの幅で HOME_MAX（18）を超える ………… 落とす（Hick の法則・段階的に見せる。超えるなら details に畳むか別の画面へ）
 //   - 横にはみ出す・名前の無いボタン ………………………………………………… 落とす
+//   - 遊び方があるのに、共通の「？ 遊び方」（#core-help）が無い …………………… 落とす（U13。2026-11-27）
 // ページの分け方（routines/ui-rules.md U10〜U12。2026-11-23 satou さん「ペライチに全部入れて見づらい」）:
 //   - 1つの画面の見出し（h2）が PAGE_H2（5）を超える …………………………… U10
 //   - 1つの画面の長さがスマホの幅で画面 PAGE_TALL（3）つ分を超える ………… U11（ホームは最初の案内を閉じたあと）
@@ -109,7 +110,8 @@ function measure(scopeSel) {
   }
   const overflow = document.documentElement.scrollWidth > innerWidth + 1;
   // U1 固定の部品の下に隠れた押せる所（真ん中の点の上にいちばん上で来ているのが、固定・sticky の別の部品）
-  const pinned = (e) => { for (let x = e; x && x !== document.body; x = x.parentElement) { const p = getComputedStyle(x).position; if (p === 'fixed' || p === 'sticky') return x; } return null; };
+  // 共通の「？ 遊び方」（#core-help。ページの上に置く absolute の部品）も浮いた部品と同じに見る（U13）
+  const pinned = (e) => { for (let x = e; x && x !== document.body; x = x.parentElement) { const p = getComputedStyle(x).position; if (p === 'fixed' || p === 'sticky' || x.id === 'core-help') return x; } return null; };
   const passing = (x) => x.closest('dialog,[role=dialog],[role=alertdialog],[role=status],[aria-live],#core-coach,.toast');
   const covered = [];
   for (const c of ctrls) {
@@ -133,7 +135,10 @@ function measure(scopeSel) {
   const tall = scopeSel ? 0 : Math.round((document.documentElement.scrollHeight / innerHeight) * 10) / 10;
   const nest = [...scope.querySelectorAll('details details')].filter((e) => e.getClientRects().length).length;
   const dest = Math.max(0, document.querySelectorAll('[data-screen]').length - 1);
-  return { first, tiny, unnamed, small, overflow, covered, dup, h2, tall, nest, dest, split: dest > 0 };
+  // U13 遊び方のあるゲームは、ページの上の右に共通の「？ 遊び方」（game-core 版5から）
+  const howto = typeof window.openHow === 'function' || !!document.getElementById('howto');
+  const helpMiss = !!(window.Core && window.Core.v >= 5 && howto && !document.getElementById('core-help'));
+  return { helpMiss, first, tiny, unnamed, small, overflow, covered, dup, h2, tall, nest, dest, split: dest > 0 };
 }
 
 const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || undefined });
@@ -197,6 +202,7 @@ for (const [key, r] of Object.entries(results)) {
   const bad = [];
   // 決まり（基準が無くても見る）
   if (r.covered.length && !allowed('covered', key)) bad.push(`固定の部品の下に隠れた押せる所 ${r.covered.length}（${r.covered.join(' / ')}。U1）`);
+  if (r.helpMiss && !allowed('help', key)) bad.push('遊び方があるのに、ページの上の右の「？ 遊び方」が無い（game-core を node scripts/sync-template.mjs で写す。U13）');
   if (r.dup.length && !allowed('dup', key)) bad.push(`同じ働きの入口が二重（${r.dup.join('・')}。U2）`);
   if (s0(key).home && Number(key.split('@')[1]) <= 500 && r.first > HOME_MAX && !allowed('home-max', key)) bad.push(`ホームで開いてすぐ見える押せる部品 ${r.first}（${HOME_MAX} まで。畳むか別の画面へ。U3）`);
   if (r.unnamed.length && !allowed('unnamed', key)) bad.push(`名前の無いボタン ${r.unnamed.length}（${r.unnamed.join(' / ')}）`);
