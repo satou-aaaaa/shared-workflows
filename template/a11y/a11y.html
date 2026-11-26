@@ -1,4 +1,4 @@
-<!-- a11y:begin 見やすさの設定 v8（shared-workflows template/a11y/a11y.html の写し。ここでは直さず、ひな形を直して全部のゲームへ写す。drift-check と qa/a11y.mjs が同じ中身か見る） -->
+<!-- a11y:begin 見やすさの設定 v9（shared-workflows template/a11y/a11y.html の写し。ここでは直さず、ひな形を直して全部のゲームへ写す。drift-check と qa/a11y.mjs が同じ中身か見る） -->
 <style id="a11y-css">
 /* だれでも：キーボードで選んだ所に太い枠（WCAG 2.4.7・2.4.13） */
 :is(button,a,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid #1a5fd0!important;outline-offset:2px!important;box-shadow:0 0 0 5px #fff!important}
@@ -34,6 +34,15 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
 .a11y-saybtn{position:fixed;right:max(8px,env(safe-area-inset-right,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));z-index:2147483000;box-shadow:0 2px 8px #0003}
 .a11y-saybtn[hidden],.a11y-dlg [hidden]{display:none!important}
 .a11y-note{font-size:13px!important}
+/* 選ぶ行（文字の大きさ・音など。v9）：横に並ぶ大きなボタン。選んだものは濃く */
+.a11y-dlg fieldset{border:0;border-top:1px solid #1d232022;margin:0;padding:8px 4px 10px;min-width:0}
+.a11y-dlg legend{padding:6px 0 4px;float:left;width:100%;line-height:1.4}
+.a11y-dlg legend small{display:block;font-size:13px;color:#3d4440}
+.a11y-dlg .a11y-opts{clear:both;display:flex;gap:6px}
+.a11y-dlg .a11y-opts label{flex:1;border:2px solid #1d2320;border-radius:10px;min-height:44px;padding:0 6px;justify-content:center;gap:6px;font-weight:700}
+.a11y-dlg .a11y-opts label:has(input:checked){background:#1d2320;color:#fff}
+.a11y-dlg .a11y-opts label:focus-within{outline:3px solid #1a5fd0;outline-offset:2px}
+.a11y-dlg .a11y-opts input{width:18px;height:18px;margin:0;accent-color:#1a5fd0;flex:none}
 </style>
 <script id="a11y-script">
 /* 見やすさの設定（色覚・ディスレクシア・弱視・動きに弱い人のため）。外へは何も送らない。
@@ -44,7 +53,14 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
    - 色の見分けを助ける形・模様は html.a11y-cvd の下に CSS で書く。JS では A11y.on('cvd')
    - 揺れ・すべる動きを JS で動かすときは、A11y.on('calm') なら止める
    - 設定が変わると document に a11ychange が届く
-   - 設定の印は html の class「a11y-<設定の名前>」（a11y-read など）。部品の class はこれと重ならない名前にする（2026-11-05 a11y-say がボタンとぶつかった） */
+   - 設定の印は html の class「a11y-<設定の名前>」（a11y-read など）。部品の class はこれと重ならない名前にする（2026-11-05 a11y-say がボタンとぶつかった）
+   v9（2026-11-26）：選ぶ行（CHOICES）を足した。いまは「文字の大きさ」（小・中・大。全ゲーム共通）と「音」（なし・小・ふつう。音のあるゲームだけ出る）と「長く遊んだら知らせる」（kiroku のあるゲームだけ出る）。
+   - 文字の大きさは html の class a11y-fs1〜3。ゲームが自分で html.a11y-fs1〜3 の大きさを CSS に書いていればそれを使い、
+     書いていなければ html の文字の大きさを 0.9 倍・1.2 倍にする（rem で書いた所が大きくなる。WCAG 1.4.4・Game Accessibility Guidelines「文字の大きさを変えられる」）。
+     前のゲームごとの設定（〇〇-fs）は A11y.fsFrom("〇〇-fs", 既定の値) で引き継ぐ（共通の設定をまだ選んでいなければ、その値を使う）
+   - 音は Web Audio の出口（AudioContext の destination）に音量のつまみを1つはさむので、ゲームの側は何もしなくてよい
+     （WCAG 1.4.2 Audio Control・Xbox Accessibility Guideline 105）。音量は A11y.get("vol")（0 なし・1 小・2 ふつう）
+   - 選ぶ行を足すときは CHOICES に1行足す（名前・見出し・説明・選択肢・既定の値・出す条件） */
 (() => {
   const KEY = "a11y-v1";
   const root = document.documentElement;
@@ -55,6 +71,14 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
     ["say", "読み上げのボタンを出す", "問題や知らせを声で読む（端末の中の声だけ）"],
     ["ruby", "ふりがなを出す", "むずかしい漢字に読みを付ける"],
   ];
+  // 選ぶ行：[名前, 見出し, 説明, [[値, 字], …], 既定の値, 出す条件（無ければいつも）]
+  const CHOICES = [
+    ["fs", "文字の大きさ", "画面の文字を小さく・大きく", [[1, "小"], [2, "中"], [3, "大"]], 2],
+    ["vol", "音", "効果音の大きさ", [[0, "なし"], [1, "小"], [2, "ふつう"]], 2, () => hasSound()],
+    // 長く遊んだら知らせる（分。0 は知らせない）。数えて知らせるのは共通部品 kiroku（template/kiroku/kiroku.js）。60 分は厚生労働省「情報機器作業における労働衛生管理のためのガイドライン」
+    ["rest", "長く遊んだら知らせる", "続けて遊んだ時間で、ひと休みをすすめる", [[0, "知らせない"], [30, "30分"], [60, "60分"], [90, "90分"]], 60, () => !!window.Kiroku],
+  ];
+  const CH = Object.fromEntries(CHOICES.map((c) => [c[0], c]));
   const media = (q) => { try { return matchMedia(q).matches; } catch { return false; } };
   // 保存した値がオブジェクトでなければ（別のページが書いた・手で直した）無かったことにする（2026-11-05 CodeRabbit：true が入ると設定が開けなくなる）
   const load = () => { try { const v = JSON.parse(localStorage.getItem(KEY) || "{}"); return v && typeof v === "object" && !Array.isArray(v) ? v : {}; } catch { return {}; } };
@@ -63,6 +87,57 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
   let unsaved = {};
   // 決めていないものは端末の設定に合わせる（視差効果を減らす → 動きを減らす）
   const on = (k) => (k in S ? !!S[k] : k === "calm" ? media("(prefers-reduced-motion: reduce)") : false);
+  // 選ぶ行の今の値（選択肢にない値・壊れた値は既定の値）
+  const get = (k) => { const c = CH[k]; if (!c) return on(k); const v = S[k]; return c[3].some(([x]) => x === v) ? v : k === "fs" ? oldFs() : c[4]; };
+  // 前のゲームごとの文字の大きさ（1〜3）を引き継ぐ。共通の設定をまだ選んでいなければ、その値（無ければゲームの既定の値）を使う
+  let fsKey = null, fsDef = 2;
+  const oldFs = () => { if (fsKey) { try { const v = +localStorage.getItem(fsKey); if (v >= 1 && v <= 3) return v; } catch { /* 読めない */ } } return fsDef; };
+  const fs = () => get("fs");
+  // ゲームから一度だけ：A11y.fsFrom("〇〇-fs", 既定の値)。前のキーを覚えて、今の大きさを効かせ、その値を返す
+  const fsFrom = (k, d) => { fsKey = k || null; fsDef = d === 1 || d === 3 ? d : 2; applyFs(); return fs(); };
+
+  // ---- 文字の大きさ ----
+  const FS_RATE = { 1: 0.9, 2: 1, 3: 1.2 };
+  // ゲームが自分で html.a11y-fs1〜3 の大きさを書いているか（書いていればこちらは倍にしない）
+  const ownFs = () => [...document.querySelectorAll("style:not(#a11y-css)")].some((t) => t.textContent.includes(".a11y-fs"));
+  const applyFs = () => {
+    const v = fs();
+    for (const n of [1, 2, 3]) root.classList.toggle("a11y-fs" + n, n === v);
+    if (root.dataset.a11yFs) { root.style.removeProperty("font-size"); delete root.dataset.a11yFs; }
+    if (v === 2 || ownFs()) return;
+    const base = parseFloat(getComputedStyle(root).fontSize) || 16;
+    root.style.setProperty("font-size", Math.round(base * FS_RATE[v] * 100) / 100 + "px");
+    root.dataset.a11yFs = String(v);
+  };
+
+  // ---- 音 ----
+  // Web Audio の出口に音量のつまみ（GainNode）を1つはさむ。ゲームが ctx.destination へつなぐと、つまみを通って鳴る
+  const VOL = [0, 0.35, 1];
+  const ctxs = [];
+  const level = () => VOL[get("vol")];
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    const proto = AC && (window.BaseAudioContext ? BaseAudioContext.prototype : AC.prototype);
+    const d = proto && Object.getOwnPropertyDescriptor(proto, "destination");
+    if (d && d.get && d.configurable) {
+      Object.defineProperty(proto, "destination", { configurable: true, enumerable: d.enumerable, get() {
+        const real = d.get.call(this);
+        if (!(this instanceof AC)) return real; // 音を書き出すだけの OfflineAudioContext は変えない
+        let e = ctxs.find((x) => x.c === this);
+        if (!e) { const g = this.createGain(); g.gain.value = level(); g.connect(real); e = { c: this, g }; ctxs.push(e); }
+        return e.g;
+      } });
+    }
+  } catch { /* Web Audio の無い端末 */ }
+  // <audio>・<video> は「なし」のとき消音にする
+  const applyVol = () => {
+    const v = level();
+    for (const e of ctxs) { try { e.g.gain.cancelScheduledValues(0); } catch { /* 古い端末 */ } e.g.gain.value = v; } // 止まっている AudioContext でもすぐ効くよう値を直に入れる
+    for (const m of document.querySelectorAll("audio,video")) m.muted = v === 0;
+  };
+  // 音を使うページか（Web Audio・<audio>・<video> を使っている）。音の無いゲームでは「音」の行を出さない
+  const hasSound = () => ctxs.length > 0 || !!document.querySelector("audio,video") ||
+    [...document.scripts].some((t) => t.id !== "a11y-script" && /AudioContext|new Audio\(/.test(t.textContent));
   let fontLoaded = false;
   const loadFont = () => {
     if (fontLoaded) return; fontLoaded = true;
@@ -75,16 +150,17 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
   };
   const apply = () => {
     for (const [k] of OPTS) root.classList.toggle("a11y-" + k, on(k));
+    applyFs(); applyVol();
     if (on("read")) loadFont();
     if (sayBtn) sayBtn.hidden = !on("say");
     if (!on("say")) stop();
   };
   const set = (k, v) => {
-    unsaved[k] = !!v;
+    unsaved[k] = CH[k] ? v : !!v;
     S = { ...S, ...load(), ...unsaved }; // 別のタブで変えた設定を消さないよう、書く前に読み直す（保存できていない変更はこちらを残す）
     try { localStorage.setItem(KEY, JSON.stringify(S)); unsaved = {}; } catch { /* 保存できなくても今の画面には効かせる */ }
     apply();
-    document.dispatchEvent(new CustomEvent("a11ychange", { detail: { key: k, on: !!v } }));
+    document.dispatchEvent(new CustomEvent("a11ychange", { detail: CH[k] ? { key: k, on: !!v, value: get(k) } : { key: k, on: !!v } }));
   };
 
   // 読み上げ：端末の中の日本語の声だけを使う（外へ文字を送る声は使わない）
@@ -110,11 +186,15 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
     dlg.className = "a11y-dlg";
     dlg.setAttribute("aria-labelledby", "a11y-h");
     const hasRuby = !!document.querySelector("ruby.a11y-rb");
-    dlg.innerHTML = `<h2 id="a11y-h">見やすさ・読みやすさ</h2><p>ほかのゲームにも同じ設定が使われます。文字は2本の指で広げると大きくなります。</p>` +
+    dlg.innerHTML = `<h2 id="a11y-h">見やすさ・読みやすさ</h2><p>ほかのゲームにも同じ設定が使われます。</p>` +
+      CHOICES.map(([k, n, d, opts]) => `<fieldset data-c="${k}"><legend>${n}<small>${d}</small></legend><div class="a11y-opts">` +
+        opts.map(([v, t]) => `<label><input type="radio" name="a11y-${k}" data-c="${k}" value="${v}">${t}</label>`).join("") + `</div></fieldset>`).join("") +
       OPTS.filter(([k]) => k !== "ruby" || hasRuby).map(([k, n, d]) => `<label><input type="checkbox" data-k="${k}"><span>${n}<small>${d}</small></span></label>`).join("") +
       `<p class="a11y-note" id="a11y-novoice" hidden>この端末には、外へ送らずに読める日本語の声がありません。</p><div class="a11y-row"><button type="button" class="a11y-ok" data-a11y-close>閉じる</button></div>`;
     document.body.appendChild(dlg);
     dlg.addEventListener("change", (e) => {
+      const c = e.target.dataset && e.target.dataset.c;
+      if (c) return set(c, +e.target.value);
       const k = e.target.dataset && e.target.dataset.k;
       if (!k) return;
       set(k, e.target.checked);
@@ -155,6 +235,8 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
     if (!dlg) build();
     lastFocus = document.activeElement;
     for (const c of dlg.querySelectorAll("input[data-k]")) c.checked = on(c.dataset.k);
+    for (const c of dlg.querySelectorAll("input[data-c]")) c.checked = +c.value === get(c.dataset.c);
+    for (const [k, , , , , show] of CHOICES) dlg.querySelector(`fieldset[data-c="${k}"]`).hidden = !!show && !show();
     dlg.querySelector("#a11y-novoice").hidden = !(on("say") && !voice());
     if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
   };
@@ -169,7 +251,9 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
     if (mq.addEventListener) mq.addEventListener("change", follow); else if (mq.addListener) mq.addListener(follow);
   } catch { /* matchMedia の無い端末 */ }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", build); else build();
-  window.A11y = { on, set, open, say, stop };
+  // 別のタブ・別のゲームで設定を変えたら、こちらにも効かせる
+  addEventListener("storage", (e) => { if (e.key === KEY) { S = { ...load(), ...unsaved }; apply(); } });
+  window.A11y = { on, get, set, fs, fsFrom, open, say, stop };
 })();
 </script>
 <!-- a11y:end -->

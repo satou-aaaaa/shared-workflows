@@ -59,6 +59,11 @@ jobs:
       # Link check が読み違える URL の書き方（すぐ後ろに全角の字）を見分けるか（incidents/2026-11-08-link-check-wide-char-after-url.md）
       - name: リンクの書き方の見分け
         run: node scripts/check-link-text.mjs
+      # 成績・お知らせ・長く遊んだら知らせる（template/kiroku/kiroku.js）と文字の大きさの切り替え（migrateFs）。index.html に写す部品に </script> が無いか（2026-11-26 kiroku.js のコメントで写しが切れた）
+      - name: 成績・お知らせの部品と、写す部品の切れ目
+        run: |
+          node scripts/check-kiroku.mjs
+          node scripts/check-inline-blocks.mjs
       # GitHub の releases/download を curl だけで取らず、断られたら gh release download で取り直すか（incidents/2026-11-23-secret-scan-gitleaks-download-403.md）
       - name: 外の道具の取り直し
         run: |
