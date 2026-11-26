@@ -37,6 +37,7 @@ energy-shurui game
 enshoku-ate game
 funka-level game
 futan-wariai game
+fuuryoku-yomi game
 fuyo-ikura game
 gairai-miwake game
 gamen-no-wana game
