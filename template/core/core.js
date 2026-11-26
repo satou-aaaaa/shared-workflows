@@ -336,10 +336,11 @@
     // ゲームの名前：og:title、無ければ開いたときの題（画面の切り替えで「記録｜…」になる前のもの）
     const name = () => { const m = doc.querySelector ? doc.querySelector('meta[property="og:title"]') : null; return String((m && m.content) || TITLE0 || doc.title || "").trim(); };
     const gameText = () => `「${name()}」無料・登録なしで遊べます\n${url()}`;
-    // ハッシュタグ：ゲームの名前＋全ゲーム共通の「小江戸ゲーム部」（X の公式アカウントの名前）の2つ。
+    // ハッシュタグ：ゲームの名前＋全ゲーム共通の「学べる無料ゲーム」の2つ。
     // X のヘルプ「How to use hashtags」は1つの投稿に2つまでをすすめる。タグに使えない字（空白・？・・ など）は外す（× は「バツ」）。
     // satou さん 2026-11-27「ハッシュタグもつけて、検索しやすいように」
-    const TAG_ALL = "小江戸ゲーム部";
+    // ゲーム一覧ページの題「学べる無料ゲーム一覧」から。ゲームにはサークル名を出さない（satou さん 2026-11-24。check-core が見る）
+    const TAG_ALL = "学べる無料ゲーム";
     const tagOf = (s) => String(s || "").split(/[：:｜|]/)[0].replace(/×/g, "バツ").replace(/[^\p{L}\p{N}\p{M}_ー]/gu, "").slice(0, 30);
     function tags() {
       const g = tagOf(name());
