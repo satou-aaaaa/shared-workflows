@@ -37,6 +37,7 @@ const S = await import('./sync-template.mjs');
   ok('migrateFs：既定が「ふつう」(1) のゲームは A11y.fsFrom(FSKEY, 1) で引き継ぐ', m.includes('A11y.fsFrom(FSKEY, 1);'));
   ok('migrateFs：fsGet・fsSet は共通の設定を使う', m.includes('function fsGet() { return A11y.fs(); }') && m.includes('function fsSet(v) { A11y.set("fs", v); }') && !m.includes('localStorage.setItem(FSKEY'));
   ok('migrateFs：2回かけても同じ', S.migrateFs(m) === m);
+  ok('migrateFsQa：QA が見る html の class を a11y-fs1〜3 にする', S.migrateFsQa('x.classList.contains("fs3") && (await pf.reload(), await pf.evaluate(() => document.documentElement.className)) === "fs3"') === 'x.classList.contains("a11y-fs3") && (await pf.reload(), await pf.evaluate(() => document.documentElement.classList.contains("a11y-fs3")))');
   ok('migrateFs：文字の大きさを持たないゲームは変えない', S.migrateFs('<script>x</script>') === '<script>x</script>');
 }
 {

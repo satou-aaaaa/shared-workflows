@@ -280,7 +280,7 @@ export function plan(dir) {
   if (has('qa/run.mjs') && has('sw.js') && !read('qa/run.mjs').includes('checkSwStall')) out.push({ path: 'qa/run.mjs', next: null, note: 'checkSwStall を呼んでいない（import { checkSwStall } from "./sw-check.mjs" と、sw.js の中身で check を1行足す）' });
   // はじめての練習（migrateFirstPlay）を足すゲームは、QA の「はじめて開くと遊び方が出る」前提の所も替える
   const firstOn = has('index.html') && A11Y.test(read('index.html')) && FIRST_PLAY.test(migrateFirstPlay(migrateStore(migrateCore(read('index.html')))));
-  if (has('qa/run.mjs')) want('qa/run.mjs', (firstOn ? migrateFirstQa : (x) => x)(roundSizes(read('qa/run.mjs'))), firstOn ? '押せる所の 44px を丸めてくらべる・はじめての練習の形' : '押せる所の 44px を丸めてくらべる');
+  if (has('qa/run.mjs')) want('qa/run.mjs', migrateFsQa((firstOn ? migrateFirstQa : (x) => x)(roundSizes(read('qa/run.mjs')))), firstOn ? '押せる所の 44px を丸めてくらべる・はじめての練習の形' : '押せる所の 44px を丸めてくらべる');
   // sw.js を写せない（独自の働きがある）ゲームには、ひな形の sw.js を前にした sw の検査も写さない。写すと QA が「FLAGS が無い」などで落ちる
   // （2026-11-17 kokki-shuto。incidents/2026-11-17-sw-migration-drops-extras.md）
   const swStuck = has('sw.js') && makeSw(read('sw.js')) === null;
@@ -335,6 +335,10 @@ export function staleCount(root = join(T, '..')) {
 // 文字の大きさを見やすさの設定（共通。a11y v9）へ移す（2026-11-26）。154本が自分で「文字 あ・あ・あ」と localStorage の 〇〇-fs を持ち、
 // ゲームごとに大きさを選び直す必要があった。ホームの3つのボタンは残し、押すと共通の設定（a11y-v1 の fs）を変える。
 // 前に選んだ大きさは A11y.fsFrom(FSKEY, 既定) で引き継ぐ。CSS の html.fs1〜3 は html.a11y-fs1〜3 にする。2回かけても同じ
+// QA が html の class「fs1〜3」を見ている所を「a11y-fs1〜3」にする（migrateFs と組。otsukai-memo・shokaki-yomi）
+export function migrateFsQa(qa) {
+  return qa.replace(/classList\.contains\("fs([123])"\)/g, 'classList.contains("a11y-fs$1")').replace(/\(await (\w+)\.reload\(\), await \1\.evaluate\(\(\) => document\.documentElement\.className\)\) === "fs([123])"/g, '(await $1.reload(), await $1.evaluate(() => document.documentElement.classList.contains("a11y-fs$2")))');
+}
 export function migrateFs(html) {
   if (!/\nfunction fsGet\(\) \{ try \{ const v = \+localStorage\.getItem\(FSKEY\);/.test(html) && !/\nfunction fsGet\(\) \{ if \(FSNOW\)/.test(html)) return html;
   const def = /\nfunction fsGet\(\) \{[^\n]*\? v : 1; \}/.test(html) ? 1 : 2;
