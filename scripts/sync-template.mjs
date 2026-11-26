@@ -8,6 +8,7 @@
 //   index.html の <!-- store:begin -->〜<!-- store:end --> …… template/store/store.js を <script> に包んで写す（保存の読み直しの共通部品。2026-11-17 から）
 //   index.html の <!-- core:begin -->〜<!-- core:end --> …… template/core/core.js を <script> に包んで写す（小さな関数と、はじめての案内の吹き出し。2026-11-21 から）
 //   index.html の画面を描く関数 …… 「戻る」でホームへ戻る Core.screens.mark を足す（migrateBack。2026-11-23 から）
+//   index.html・data.js の part:<名前>:begin〜end …… template/parts/ の関数を写す（1字も同じ関数には印を付ける。migrateParts。2026-11-27 から）
 //   index.html の SNS への共有 …… 結果の共有を Core.share.wire に・「引き継ぎ」の隣に「共有」の入口を足す（migrateShare。2026-11-27 から）
 //            感想フォームの入口が無ければ「感想・質問を送る」も足す。OGP が無ければ icon-512.png で足す（migrateOgp）
 //   sw.js …… ひな形を写し、// game:begin〜// game:end の間（CACHE・SHELL）はゲームのものを残す。
@@ -375,6 +376,30 @@ export function migrateOgp(html, has = () => true) {
 }
 
 // 1つのゲームについて、写したあとの中身を返す（ちがう所だけ）
+// 部品（template/parts/<種類>/<名前>.js）：多数のゲームが1字も同じに持っている画面・道具の関数を、ひな形の1か所から写す（2026-11-27。
+//   カレンダー 192本・実績 190本・決まった乱数 135本が手で写したまま。incidents/2026-11-27-parts-hand-copied.md）。
+//   - まだ印の無いゲーム：ひな形と1字も同じ関数が1つだけあれば、その前後に part:<名前>:begin〜end の印を付ける（中身は変わらない）
+//   - 印のあるゲーム：印のあいだをひな形に替える（直すときはひな形を直せば全部に届く）
+//   - 形のちがうゲーム（ゲームごとに変えたもの）は触らない
+//   index は index.html、data は data.js（決まった乱数。日替わりの問題が全員同じになるよう、ひな形を変えるときは同じ数が出るかを check-parts で確かめる）
+export const PARTS = { index: ['cal', 'lateDays', 'playedDays', 'achView', 'nextAch', 'achGot'], data: ['rng', 'seedOf', 'shuffle', 'pickN', 'ri'] };
+const partRe = (name) => new RegExp(`([ \\t]*)// part:${name}:begin[^\\n]*\\n[\\s\\S]*?// part:${name}:end`);
+export const partBody = (kind, name) => tpl(`parts/${kind}/${name}.js`).replace(/\n+$/, '');
+const partBlock = (kind, name, ind) => `${ind}// part:${name}:begin（shared-workflows の template/parts/${kind}/${name}.js の写し。ここでは直さない。node scripts/sync-template.mjs で写す）\n${ind}${partBody(kind, name)}\n${ind}// part:${name}:end`;
+export function migrateParts(text, kind) {
+  let next = text;
+  for (const name of PARTS[kind] || []) {
+    const re = partRe(name);
+    if (re.test(next)) { next = next.replace(re, (m, ind) => partBlock(kind, name, ind)); continue; }
+    const body = partBody(kind, name), i = next.indexOf(body);
+    if (i < 0 || next.indexOf(body, i + 1) >= 0) continue; // 無い・2つある
+    const ls = next.lastIndexOf('\n', i - 1) + 1, ind = next.slice(ls, i), end = i + body.length;
+    if (!/^[ \t]*$/.test(ind) || !(end === next.length || next[end] === '\n')) continue; // 行の途中（ほかの式の中）は触らない
+    next = next.slice(0, ls) + partBlock(kind, name, ind) + next.slice(end);
+  }
+  return next;
+}
+
 export function plan(dir) {
   const has = (p) => existsSync(join(dir, p));
   const read = (p) => readFileSync(join(dir, p), 'utf8');
@@ -404,6 +429,7 @@ export function plan(dir) {
     if (A11Y.test(html)) next = migrateFs(next); // 文字の大きさを見やすさの設定（共通）へ（a11y v9）
     if (A11Y.test(html)) next = migrateKiroku(next); // 成績・お知らせ・長く遊んだら知らせる（kiroku）
     if (KIROKU.test(next)) next = next.replace(KIROKU, () => kirokuBlock());
+    if (A11Y.test(html)) next = migrateParts(next, 'index'); // カレンダー・実績の画面（template/parts/index。1字も同じものだけ）
     if (STORE.test(next)) next = next.replace(STORE, () => storeBlock());
     if (A11Y.test(html) || STORE.test(html) || CORE.test(html)) want('index.html', next, '見やすさの設定・保存の共通部品・game-core');
   }
@@ -417,6 +443,7 @@ export function plan(dir) {
     else if (next === null) out.push({ path: 'sw.js', next: null, note: stuckNote });
     else want('sw.js', next);
   }
+  if (has('data.js')) want('data.js', migrateParts(read('data.js'), 'data'), '決まった乱数（template/parts/data。1字も同じものだけ）');
   if (has('scripts/setup.sh')) want('scripts/setup.sh', makeSetup(read('scripts/setup.sh')));
   for (const p of CALLERS) {
     if (!has(p)) continue;
