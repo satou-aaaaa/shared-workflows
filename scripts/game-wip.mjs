@@ -3,7 +3,7 @@
 //         node scripts/game-wip.mjs --json      （機械で読む形）
 // 見るもの: shared-workflows の開いている「題材:」Issue。ラベル needs-decision の付いたものは止めているので作りかけに数えない。
 //   本文に `repo: <名前>` の行がある → 作りかけ（そのリポジトリの開いている PR と、最後に動いた日を見る）
-//   本文に `repo:` の行が無い       → 候補の列（番号の小さい順に作る）
+//   本文に `repo:` の行が無い       → 候補の列（番号の小さい順に作る）。ただし needs-decision の付いた候補は「止めている候補」で列に入れない
 //   本文に `kind: app` などの行がある（ゲームではない）→ 触らない。候補にも作りかけにも数えない
 // 同時に作る本数の上限は WIP_LIMIT（作りかけを絞るほど1本が早く仕上がる。QA を4本以上同時に回すと落ちやすい。template-distribution）。
 // きっかけ: 2026-11-07〜11 新作が並行で十数本動き、ひな形に取り残される・公開後に止まる・題材がかぶるが続いた
@@ -64,6 +64,9 @@ export async function collect(api) {
   for (const i of topics) {
     if (isNonGame(i.body)) { apps.push({ number: i.number, title: i.title, url: i.html_url, repo: repoOf(i.body) }); continue; }
     const repo = repoOf(i.body);
+    // needs-decision の付いた候補（出典が読めないなど）は列から外す。2026-11-25・26 の回で、cloud から読めない出典の #588 を2回続けて「始める」と出し、
+    // 毎回調べ直して止まった（incidents/2026-11-26-game-wip-blocked-candidate.md）
+    if (!repo && parked(i)) { parkedList.push({ number: i.number, title: i.title, url: i.html_url, repo: null }); continue; }
     if (!repo) { queue.push({ number: i.number, title: i.title, url: i.html_url }); continue; }
     if (parked(i)) { parkedList.push({ number: i.number, title: i.title, url: i.html_url, repo }); continue; }
     const thread = threadOf(i.body);
@@ -86,7 +89,7 @@ export function plan({ wip, queue, parked: p = [], others = [], apps = [] }) {
   const out = [];
   for (const x of apps) out.push(`ゲームではない #${x.number}${x.repo ? ` ${x.repo}` : ''}: 毎日の回は触らない。候補にも作りかけにも数えない`);
   for (const x of others) out.push(`別スレッドが担当 #${x.number} ${x.repo}（${x.thread}）: 触らない。作りかけに数えない`);
-  for (const x of p) out.push(`止めている #${x.number} ${x.repo}: needs-decision の答え待ち。作りかけに数えない`);
+  for (const x of p) out.push(x.repo ? `止めている #${x.number} ${x.repo}: needs-decision の答え待ち。作りかけに数えない` : `止めている候補 #${x.number}「${x.title}」: needs-decision の答え待ち。候補の列に入れない`);
   for (const w of wip) out.push(`作りかけ #${w.number} ${w.repo}: ${w.next}`);
   if (wip.length < WIP_LIMIT && queue.length) out.push(`空きあり（${wip.length}/${WIP_LIMIT}）: 候補 #${queue[0].number}「${queue[0].title}」を始める（Issue の本文に repo: <名前> を足す）`);
   if (wip.length >= WIP_LIMIT) out.push(`空きなし（${wip.length}/${WIP_LIMIT}）: 新しい候補は始めない`);
