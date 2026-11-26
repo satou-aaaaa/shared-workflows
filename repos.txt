@@ -216,6 +216,7 @@ toukyu-yomi game
 tsuki-imei game
 tsuki-katachi game
 tsunami-yomi game
+tsuyosa-suji game
 usotsuki-roppo game
 wagamama-burger game
 wareki-yomi game
