@@ -80,6 +80,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-11-26 | 公開・CI | [last-tell の main の QA が、Ubuntu の置き場が遅く Playwright を入れる段階だけで時間切れ](2026-11-26-last-tell-qa-apt-slow.md) | 対策済み |
 | 2026-11-26 | 手順の抜け | [毎日の新作の回が、出典を読めない候補（デシベルよみ）を2日続けて「始める」と出した](2026-11-26-game-wip-blocked-candidate.md) | 対策済み |
 | 2026-11-25 | 見回りの見落とし | [main とぶつかった PR が、CI は緑のまま3週間（tenbin #72）止まっていた](2026-11-25-conflicted-pr-left-weeks.md) | 対策済み |
 | 2026-11-25 | 手順の抜け | [解説動画の音声づくりが同時に15本走り、VOICEVOX が1回90秒待ちになった](2026-11-25-voicevox-overload.md) | 対策済み |
