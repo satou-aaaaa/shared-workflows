@@ -31,6 +31,7 @@ U10〜U12 は同じ日の「AI が作るページはペライチが多く、情�
 | U10 | 1つの画面に目的は1つ。目的が2つ以上（遊ぶ・記録・帳・調べる・備える など）なら画面を分け、ホームは入口と「今日の〇〇」だけにする。1つの画面の見出し（h2）は5つまで | 5 | NN/g Progressive Disclosure（最初は大事な数個だけ）・デジタル庁ウェブサイトの改善事例（件数に上限） | ui-check（分けたページは落とす・ペライチは ⚠） |
 | U11 | 1つの画面の長さは、スマホの幅で画面3つ分まで。超えたら画面を分けるか、拾い読みの所（出典・細かい説明）だけ畳む | 3画面分 | NN/g Accordions for Complex Content・Content Dispersion | ui-check（同上） |
 | U12 | 主な行き先（ホームのほかの画面）は5まで。畳む（details）のは1段まで。全部読む手順・答えは畳まない | 5・1段 | Android Layouts and navigation patterns（ナビは3〜5）・Apple HIG Tab bars・NN/g（2段を超えると迷う） | ui-check（同上） |
+| U13 | 遊び方の入口は、全ゲームで同じ所（ページのいちばん上の右の「？ 遊び方」。共通部品 game-core が置く）。浮かせず、ページの上に場所を空けて置く | 1つ | NN/g「Help and Documentation」（いつでも同じ所から開ける）・WCAG SC 3.2.3 Consistent Navigation | ui-check（落とす）・template/qa/core-check.mjs |
 | U9 | はじめての人に長い説明の窓を先に出さない。練習の1問とその場の吹き出しで教える | — | NN/g・Andersen ら CHI 2012（[game-dev-detail.md](game-dev-detail.md)「遊び方」） | drift-check `first:howto`・game-explore |
 
 ### ページの分け方（U10〜U12。ゲームもアプリも紹介ページも）
