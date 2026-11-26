@@ -3,6 +3,8 @@
 // 見ること（2026-11-17 hatsuden-kurabe #1・nenkin-shikumi #1 の CodeRabbit。incidents/2026-11-17-template-review-gaps-again.md）:
 //   1. 開いたあとに端末の「視差効果を減らす」を変えても効く（自分で決めていないときだけ）
 //   2. 保存できないあいだに変えた設定を、次の変更で読み直した古い値で消さない・保存できたらまとめて書く
+//   3. v9 選ぶ行（2026-11-26）：文字の大きさ（小・中・大）で html の文字が 0.9・1.2 倍になる・ゲームが html.a11y-fs1〜3 を書いていればそれを使う・
+//      前のゲームごとの大きさを引き継ぐ・音のないページに「音」の行を出さない・音の「なし」で Web Audio の音量が 0 になる
 // 各ゲームの qa/a11y.mjs も同じことをゲームの画面で見る。ここはひな形そのものを、ゲーム無しで見る。
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -62,6 +64,51 @@ try {
     });
     ok('2. 保存できないあいだに続けて変えた設定（読みやすい文字・色の見分け）が両方残る', r.both);
     ok('2. 保存できるようになったら、残っていた変更もまとめて書く', r.saved);
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await open();
+    const fsz = () => page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
+    const base = await fsz();
+    await page.click('[data-a11y-open]');
+    ok('3. 音のないページには「音」の行を出さない', await page.evaluate(() => document.querySelector('fieldset[data-c="vol"]').hidden));
+    ok('3. 文字の大きさは「中」が選ばれている', await page.isChecked('fieldset[data-c="fs"] input[value="2"]'));
+    await page.click('fieldset[data-c="fs"] label:has-text("大")');
+    const big = await fsz();
+    await page.click('fieldset[data-c="fs"] label:has-text("小")');
+    const small = await fsz();
+    ok('3. 文字の大きさ「大」「小」で html の文字が 1.2 倍・0.9 倍になる', Math.abs(big - base * 1.2) < 0.2 && Math.abs(small - base * 0.9) < 0.2);
+    await page.reload();
+    ok('3. 選んだ文字の大きさは開き直しても残る', Math.abs((await fsz()) - base * 0.9) < 0.2);
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await open();
+    const r = await page.evaluate(() => {
+      const st = document.createElement('style'); st.textContent = 'html.a11y-fs1{font-size:17px}html.a11y-fs2{font-size:19px}html.a11y-fs3{font-size:23px}'; document.head.prepend(st);
+      localStorage.setItem('g-fs', '3');
+      const v = A11y.fsFrom('g-fs', 1);
+      const a = getComputedStyle(document.documentElement).fontSize;
+      localStorage.removeItem('g-fs');
+      const d = A11y.fsFrom('g-fs', 1);
+      return { v, a, d, b: getComputedStyle(document.documentElement).fontSize };
+    });
+    ok('3. 前のゲームごとの大きさ（3）を引き継ぎ、ゲームの html.a11y-fs3 の大きさを使う', r.v === 3 && r.a === '23px');
+    ok('3. 前の大きさが無ければゲームの既定の値を使う', r.d === 1 && r.b === '17px');
+    await ctx.close();
+  }
+  {
+    const { ctx, page } = await open();
+    const r = await page.evaluate(() => {
+      const c = new AudioContext(); const d = c.destination; const g = [d.gain.value];
+      A11y.set('vol', 0); g.push(d.gain.value); A11y.set('vol', 1); g.push(d.gain.value); A11y.set('vol', 2); g.push(d.gain.value);
+      const off = new OfflineAudioContext(1, 1, 8000);
+      return { g, same: c.destination === d, off: off.destination.constructor.name };
+    });
+    ok('3. 音の「なし・小・ふつう」で Web Audio の音量が 0・0.35・1 になる（ゲームは何もしなくてよい）', r.g.join(',') === '1,0,0.3499999940395355,1' || r.g.join(',') === '1,0,0.35,1');
+    ok('3. 同じ AudioContext の出口はいつも同じ・書き出し用の OfflineAudioContext は変えない', r.same && r.off === 'AudioDestinationNode');
+    await page.click('[data-a11y-open]');
+    ok('3. Web Audio を使ったページには「音」の行を出す', await page.evaluate(() => !document.querySelector('fieldset[data-c="vol"]').hidden));
     await ctx.close();
   }
 } finally { await browser.close(); }

@@ -43,7 +43,7 @@ import { readFileSync, existsSync, readdirSync, mkdirSync } from 'node:fs';
 import { execFileSync, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { makeApi, pool, nextLink, reportUsage, OverBudget } from './gh-api.mjs';
-import { makeSw } from './sync-template.mjs';
+import { makeSw, KIROKU, kirokuBlock } from './sync-template.mjs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formProblems } from './check-issue-forms.mjs';
@@ -312,6 +312,11 @@ const results = await pool(REPOS, 4, async (r) => {
       const store = (page.match(STORE) || [''])[0];
       if (store && store !== STORE_HTML) flag('store:block', 'index.html の保存の共通部品がひな形とちがう（node scripts/sync-template.mjs で写す。写しを直さない）');
       else if (!store && /JSON\.parse\(mem\)/.test(page)) flag('store:load', 'load() が保存の写しを自分で合わせている（共通部品 template/store/store.js に切り替える。routines/game-dev.md「保存の読み直し」）');
+      // 成績・お知らせ・長く遊んだら知らせる（共通部品 kiroku。2026-11-26 satou さん）
+      const kiroku = (page.match(KIROKU) || [''])[0];
+      if (!kiroku && /<!-- core:begin/.test(page)) flag('kiroku:block', 'index.html に成績・お知らせの共通部品が無い（node scripts/sync-template.mjs で写す。routines/game-dev.md「成績・お知らせ・長く遊んだら知らせる」）');
+      else if (kiroku && kiroku !== kirokuBlock()) flag('kiroku:block', 'index.html の成績・お知らせの共通部品がひな形とちがう（node scripts/sync-template.mjs で写す。写しを直さない）');
+      if (/\nfunction fsSet\(v\) \{ try \{ localStorage\.setItem\(FSKEY/.test(page)) flag('a11y:fs', '文字の大きさをゲームだけで持っている（見やすさの設定の共通の文字の大きさへ。node scripts/sync-template.mjs の migrateFs）');
       if (paths.has('store/store.js')) flag('store:file', 'store/store.js をファイルで置いている（部品は index.html の store:begin〜end にだけ写す。ファイルは消す。incidents/2026-11-17-new-game-store-file.md）');
     }
 
