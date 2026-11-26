@@ -164,6 +164,7 @@ rosen-hitofude game
 sagi-minuki game
 saiban-kigen game
 saibanin-shikumi game
+saibansho-doko game
 saibo-tsukuri game
 sandbox app
 sdgs-mokuhyo game
