@@ -121,7 +121,7 @@ async function coreSteps({ browser, url, check, solve, first = true, widths = [3
     await p.waitForTimeout(300);
     const bar = await p.evaluate(() => { const d = document.getElementById("core-err"); if (!d) return null; const a = d.querySelector("a[data-feedback]"); return { role: d.getAttribute("role"), href: a ? a.href : "", btn: [...d.querySelectorAll("a,button")].every((b) => { const x = b.getBoundingClientRect(); return Math.round(x.height) >= 44 && Math.round(x.width) >= 44; }) }; });
     check("このページのエラーで不具合の帯が出る（role=alert・ボタンは 44px 以上）", !!bar && bar.role === "alert" && bar.btn, JSON.stringify(bar));
-    check("「不具合を知らせる」は感想フォーム（不具合・最後のエラー入り）のリンク", !!bar && /^https:\/\/docs\.google\.com\/forms\//.test(bar.href) && decodeURIComponent(bar.href).includes("core-check のわざと"), bar ? bar.href.slice(0, 80) : "");
+    check("「不具合を知らせる」は感想フォーム（不具合・最後のエラー入り）のリンク", !!bar && /^https:\/\/docs\.google\.com\/forms\//.test(bar.href) && [...new URL(bar.href).searchParams.values()].join("\n").includes("core-check のわざと"), bar ? bar.href.slice(0, 80) : "");
     check("不具合の帯を出しても、外へは何も送らない（押した人だけがフォームを開く）", sent.length === 0, sent.join(" / "));
     await p.click("#core-err button"); await p.waitForTimeout(100);
     check("「閉じる」で不具合の帯が消える", await p.locator("#core-err").count() === 0);
