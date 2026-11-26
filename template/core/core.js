@@ -1,7 +1,7 @@
 // ゲームの共通部品 game-core。ひな形: satou-aaaaa/shared-workflows の template/core/core.js。
 // ゲームでは直さない。index.html の core:begin〜core:end の印のあいだに node scripts/sync-template.mjs <ゲームのフォルダ> で写す
 // （ファイルを足さないので sw.js の SHELL は変えない）。ゲームからは window.Core で使う。
-// 共通部品の版: 7
+// 共通部品の版: 8
 //   1: 2026-11-21 ゲームごとに手で写していた小さな関数を1か所に集めた。40本で同じ役目の関数が何通りにも分かれ
 //      （お知らせの帯 11通り・振動 10通り・文字を安全にする esc 4通り・数の読み込み num 2通り）、
 //      「動きを減らす」でも振動する・お知らせが読み上げられない・num の直し（#410）が22本に届かない・esc が " を変えない、が起きていた
@@ -21,6 +21,12 @@
 //      MDN「Window: error event」「unhandledrejection event」・NN/g「Error-Message Guidelines」（何が起きたか・どうすればよいかを書く）
 //   7: 2026-11-27 Ko-fi 応援の一文（Core.kofi）と応援先（Core.KOFI）を足した。201本が同じ一文を手で写し、文言が4通り以上に分かれていた
 //      （incidents/2026-11-27-kofi-line-hand-copied.md）。出す条件（初めて・まちがい0・練習でない日だけ）はゲームの記録しだいなので、ゲームに残す
+//   8: 2026-11-27 SNS への共有（Core.share）を足した。結果のシェア（X・LINE・端末の共有・コピー）は約200本に同じ5行を手で写していたのを1か所に集め、
+//      フッターの「共有」（data-share）からゲームそのものも共有できるようにした（satou さん「全ゲームに SNS 共有」「共通化も」）。
+//      X は公式の Web Intent（docs.x.com「Web Intent」: https://x.com/intent/tweet?text=）、LINE は LINE URL スキーム
+//      （developers.line.biz「LINE URLスキームでLINEの機能を使う」: https://line.me/R/share?text=）、端末の共有は Web Share API
+//      （MDN「Navigator: share()」: 押したその場でだけ呼ぶ・やめたら AbortError）。共有する文は公開の URL（? と # を外す）とゲームの名前・結果だけ
+//      （遊ぶ人の名前・引き継ぎの #hk=・記録の中身は入れない）。どれも押した人が自分で開くリンクで、外へ勝手に送らない
 // 決まり: 外へ通信しない。ゲームの関数の名前（toast・buzz など）は上書きしない（Core.toast などで呼ぶ）。
 (function () {
   "use strict";
@@ -322,6 +328,101 @@
   })();
   window.Screens = screens;
 
+  // ---- SNS への共有（X・LINE・端末の共有・コピー）----
+  // 結果の画面: <div class="shares"><a id="toX" …>Xで投稿</a><a id="toLine" …>LINEで送る</a><button id="copy">コピー</button></div> と
+  //            <button id="share">結果をシェア</button> を描いたあとで Core.share.wire(文)。文には SITE（公開の URL）を含める（ハッシュタグは Core が足す）
+  // ゲームそのもの: フッターなどに <a href="#" data-share>共有</a>。押すと共有の窓（端末の共有・X・LINE・リンクをコピー）が開く
+  // ゲームから: Core.share.links(文) → { x, line }・Core.share.copy(文)・Core.share.send(文)・Core.share.open(文)・Core.share.url()
+  const TITLE0 = doc.title || "";
+  const share = (() => {
+    const X = "https://x.com/intent/tweet?text=", LINE = "https://line.me/R/share?text=";
+    // 公開の URL だけ（? と # は外す。引き継ぎの #hk=・画面の名前・記録を外へ出さない）
+    const url = () => {
+      const m = doc.querySelector ? doc.querySelector('meta[property="og:url"]') : null;
+      if (m && /^https:\/\//.test(m.content || "")) return m.content; // 公開の URL（OGP に書いたもの）
+      try { return location.origin + location.pathname.replace(/index\.html$/, ""); } catch (e) { return ""; }
+    };
+    // ゲームの名前：og:title、無ければ開いたときの題（画面の切り替えで「記録｜…」になる前のもの）
+    const name = () => { const m = doc.querySelector ? doc.querySelector('meta[property="og:title"]') : null; return String((m && m.content) || TITLE0 || doc.title || "").trim(); };
+    const gameText = () => `「${name()}」無料・登録なしで遊べます\n${url()}`;
+    // ハッシュタグ：ゲームの名前＋全ゲーム共通の「学べる無料ゲーム」の2つ。
+    // X のヘルプ「How to use hashtags」は1つの投稿に2つまでをすすめる。タグに使えない字（空白・？・・ など）は外す（× は「バツ」）。
+    // satou さん 2026-11-27「ハッシュタグもつけて、検索しやすいように」
+    // ゲーム一覧ページの題「学べる無料ゲーム一覧」から。ゲームにはサークル名を出さない（satou さん 2026-11-24。check-core が見る）
+    const TAG_ALL = "学べる無料ゲーム";
+    const tagOf = (s) => String(s || "").split(/[：:｜|]/)[0].replace(/×/g, "バツ").replace(/[^\p{L}\p{N}\p{M}_ー]/gu, "").slice(0, 30);
+    function tags() {
+      const g = tagOf(name());
+      return [g && !/^\d+$/.test(g) && g !== TAG_ALL ? g : "", TAG_ALL].filter(Boolean).map((x) => "#" + x).join(" ");
+    }
+    // 文の最後にタグを1行足す（もう付いていれば足さない）
+    const tagged = (t) => { t = String(t); return t.includes("#" + TAG_ALL) ? t : `${t.replace(/\s+$/, "")}\n${tags()}`; };
+    const links = (t) => { t = tagged(t); return { x: X + encodeURIComponent(t), line: LINE + encodeURIComponent(t) }; };
+    function copy(t) {
+      t = tagged(t);
+      const done = () => toast("コピーしました"), fail = () => toast("コピーできませんでした");
+      try { if (navigator.clipboard && navigator.clipboard.writeText) return void navigator.clipboard.writeText(String(t)).then(done, fail); } catch (e) { /* 使えない */ }
+      fail();
+    }
+    // 端末の共有メニュー（スマホ）。無い・使えないときはコピー。やめた（AbortError）ときは何もしない
+    function send(t) {
+      t = tagged(t);
+      if (!navigator.share) return copy(t);
+      try { navigator.share({ text: String(t) }).catch((e) => { if (!e || e.name !== "AbortError") copy(t); }); } catch (e) { copy(t); }
+    }
+    // 結果の画面のボタン（#toX・#toLine・#copy・#share）をつなぐ。無いボタンは飛ばす
+    function wire(t, root) {
+      const r = root || doc, q = (id) => (r.querySelector ? r.querySelector("#" + id) : null), l = links(t);
+      const x = q("toX"), ln = q("toLine"), c = q("copy"), s = q("share");
+      if (x) { x.href = l.x; x.target = "_blank"; x.rel = "noopener"; }
+      if (ln) { ln.href = l.line; ln.target = "_blank"; ln.rel = "noopener"; }
+      if (c) c.onclick = () => copy(t);
+      if (s) s.onclick = () => send(t);
+    }
+    function css() {
+      if (doc.getElementById("core-share-css")) return;
+      const s = doc.createElement("style");
+      s.id = "core-share-css";
+      s.textContent = "#core-share{box-sizing:border-box;width:min(360px,calc(100vw - 32px));padding:16px;border:0;border-radius:16px;background:#1d2320;color:#fff;font:600 16px/1.55 system-ui,sans-serif;box-shadow:0 8px 24px #0006}"
+        + "#core-share::backdrop{background:#0008}#core-share h2{margin:0 0 4px;font-size:18px}#core-share p{margin:0 0 12px;font-size:14px;font-weight:400;white-space:pre-wrap;word-break:break-all;opacity:.9}"
+        + "#core-share .core-share-row{display:grid;gap:8px}"
+        + "#core-share a,#core-share button{box-sizing:border-box;display:flex;align-items:center;justify-content:center;min-height:44px;padding:0 14px;border-radius:10px;border:2px solid #fff;background:#fff;color:#1d2320;font:700 15px/1.2 system-ui,sans-serif;text-decoration:none;cursor:pointer}"
+        + "#core-share .core-share-close{background:transparent;color:#fff}";
+      (doc.head || doc.documentElement).appendChild(s);
+    }
+    // 共有の窓。t を渡さなければ、ゲームそのもの（名前と URL）を共有する
+    function open(t) {
+      t = tagged(t == null ? gameText() : String(t));
+      css();
+      let d = doc.getElementById("core-share");
+      if (d) d.remove();
+      d = doc.createElement("dialog");
+      d.id = "core-share"; d.setAttribute("aria-labelledby", "core-share-h");
+      const l = links(t);
+      d.innerHTML = `<h2 id="core-share-h">共有する</h2><p>${esc(t)}</p><div class="core-share-row">`
+        + (navigator.share ? '<button type="button" class="core-share-send">スマホの共有メニュー</button>' : "")
+        + `<a class="core-share-x" href="${esc(l.x)}" target="_blank" rel="noopener">Xで投稿</a>`
+        + `<a class="core-share-line" href="${esc(l.line)}" target="_blank" rel="noopener">LINEで送る</a>`
+        + '<button type="button" class="core-share-copy">文とリンクをコピー</button>'
+        + '<button type="button" class="core-share-close">閉じる</button></div>';
+      (doc.body || doc.documentElement).appendChild(d);
+      const b = (c) => d.querySelector("." + c);
+      if (b("core-share-send")) b("core-share-send").onclick = () => send(t);
+      b("core-share-copy").onclick = () => copy(t);
+      b("core-share-close").onclick = () => d.close();
+      d.addEventListener("close", () => d.remove());
+      try { d.showModal(); } catch (e) { d.setAttribute("open", ""); }
+    }
+    // data-share を付けた所を押したら共有の窓を開く（data-share に文があればその文、無ければゲームそのもの）
+    if (doc.addEventListener) doc.addEventListener("click", (e) => {
+      const a = e.target && e.target.closest ? e.target.closest("[data-share]") : null;
+      if (!a) return;
+      e.preventDefault();
+      open(a.getAttribute("data-share") || null);
+    });
+    return { url, name, tags, tagged, links, copy, send, wire, open };
+  })();
+
   // ---- 感想・不具合のフォーム（全ゲームで1つの Googleフォーム。事前入力のリンクでゲーム名と付属情報を入れる）----
   // 送る人が入力するのは「内容」の1か所だけ（必須はそれだけ）。名前・メール・遊んだ記録の中身は入れない。
   // 付属情報はフォームに見える形で入り、送る前に本人が消せる。フォームの entry 番号は Googleフォームの「事前入力した URL を取得」で確かめたもの
@@ -374,7 +475,9 @@
     return `${FORM}?${p.toString()}`;
   }
   // href を押したその時の情報で作り直す（data-feedback="fun|bug|data|wish" を付けた a）。開く前に作るので、画面の大きさ・最後のエラーが新しい
+  let fbBound = false;
   function bindFeedback(o) {
+    fbBound = true;
     doc.addEventListener("click", (e) => {
       const a = e.target && e.target.closest ? e.target.closest("a[data-feedback]") : null;
       if (!a) return;
@@ -451,5 +554,16 @@
   // ゲームが遊び方の窓を後から作ることがあるので、読み終えてから置く
   if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", () => setTimeout(help, 0)); else setTimeout(help, 0);
 
-  window.Core = { v: 7, calm, esc, num, jstNow, today, addDays, prevDay, nextDay, md, dayNo, ymOf, ymAdd, untilNext, streak, say, toast, buzz, saveWarn, coach, feedbackUrl, feedbackInfo, bindFeedback, screens, help: helpOpen, errBar, kofi, KOFI };
+  // bindFeedback を呼ばないゲーム（形のちがうゲームに sync-template が「感想・質問を送る」を足した所）でも、data-feedback を押せばフォームへ。
+  // a でないもの（button）は新しいタブで開く
+  if (doc.addEventListener) doc.addEventListener("click", (e) => {
+    const a = e.target && e.target.closest ? e.target.closest("[data-feedback]") : null;
+    if (!a || (fbBound && a.tagName === "A")) return; // a は bindFeedback が作る（ゲームの付属情報が入る）
+    const u = feedbackUrl({ kind: a.getAttribute("data-feedback") || "fun" });
+    if (a.tagName === "A") { a.href = u; a.target = "_blank"; a.rel = "noopener"; return; }
+    e.preventDefault();
+    try { window.open(u, "_blank", "noopener"); } catch (err) { /* 開けない */ }
+  }, true);
+
+  window.Core = { v: 8, calm, esc, num, jstNow, today, addDays, prevDay, nextDay, md, dayNo, ymOf, ymAdd, untilNext, streak, say, toast, buzz, saveWarn, coach, feedbackUrl, feedbackInfo, bindFeedback, screens, help: helpOpen, errBar, kofi, KOFI, share };
 })();

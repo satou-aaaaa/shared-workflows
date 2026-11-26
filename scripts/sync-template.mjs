@@ -8,6 +8,8 @@
 //   index.html の <!-- store:begin -->〜<!-- store:end --> …… template/store/store.js を <script> に包んで写す（保存の読み直しの共通部品。2026-11-17 から）
 //   index.html の <!-- core:begin -->〜<!-- core:end --> …… template/core/core.js を <script> に包んで写す（小さな関数と、はじめての案内の吹き出し。2026-11-21 から）
 //   index.html の画面を描く関数 …… 「戻る」でホームへ戻る Core.screens.mark を足す（migrateBack。2026-11-23 から）
+//   index.html の SNS への共有 …… 結果の共有を Core.share.wire に・「引き継ぎ」の隣に「共有」の入口を足す（migrateShare。2026-11-27 から）
+//            感想フォームの入口が無ければ「感想・質問を送る」も足す。OGP が無ければ icon-512.png で足す（migrateOgp）
 //   sw.js …… ひな形を写し、// game:begin〜// game:end の間（CACHE・SHELL）はゲームのものを残す。
 //            まだ枠の無い古い sw.js からは const CACHE と const SHELL の行を拾って枠に入れる
 //   scripts/setup.sh …… ひな形を写し、npm_dir= と next= の行はゲームのものを残す
@@ -315,6 +317,63 @@ export function makeSetup(old) {
 const jobsPart = (t) => (t.split(/^jobs:\s*$/m)[1] || '').split('\n').filter((l) => !/^\s*#/.test(l) && l.trim()).join('\n');
 export const CALLERS = ['qa', 'setup-check', 'link-check', 'ci-failure-issue'].map((n) => `.github/workflows/${n}.yml`);
 
+// SNS への共有を game-core（Core.share）にそろえる（2026-11-27 satou さん「全ゲームに SNS 共有」「共通化も」。何度かけても同じ）:
+//   - 結果の画面の、約200本に手で写した5行（X・LINE のリンク・コピー・端末の共有）を Core.share.wire(withUrl) の1行にする
+//   - 「引き継ぎ」（data-hk）の入口のすぐあとに、同じ形で「共有」（data-share。ゲームそのものを共有する窓を開く）を足す
+//     （routines/ui-rules.md U2：共通部品の入口はフッターに1つ。押した人が自分で開くリンクだけで、外へ勝手に送らない）
+export const SHARE_HAND = /^([ \t]*)\$\("toX"\)\.href = "https:\/\/twitter\.com\/intent\/tweet\?text=" \+ encodeURIComponent\(withUrl\);\n[ \t]*\$\("toLine"\)\.href = "https:\/\/line\.me\/R\/share\?text=" \+ encodeURIComponent\(withUrl\);\n[ \t]*const copy = \(t\) => \{ \(navigator\.clipboard \? navigator\.clipboard\.writeText\(t\) : Promise\.reject\(\)\)\.then\(\(\) => toast\("コピーしました"\), \(\) => toast\("コピーできませんでした"\)\); \};\n[ \t]*\$\("copy"\)\.onclick = \(\) => copy\(withUrl\);\n[ \t]*\$\("share"\)\.onclick = \(\) => \{ if \(navigator\.share\) navigator\.share\(\{ text: withUrl \}\)\.catch\(\(\) => \{\}\); else copy\(withUrl\); \};$/m;
+export function migrateShare(html) {
+  if (!CORE.test(html)) return html;
+  const parts = html.split(/(<!-- (?:core|store|a11y):begin[\s\S]*?<!-- (?:core|store|a11y):end -->)/);
+  const own = () => parts.filter((x, i) => i % 2 === 0).join('');
+  for (let i = 0; i < parts.length; i += 2) parts[i] = parts[i].replace(SHARE_HAND, (m, sp) => `${sp}Core.share.wire(withUrl); // X・LINE・コピー・端末の共有（共通部品 game-core。sync-template の migrateShare）`);
+  //   - 感想フォームの入口（data-feedback）が無いゲームには、同じ所に「感想・質問を送る」も足す（2026-11-27 satou さん「質問・意見の問い合わせを全ゲームに」「感想フォームでよい」）
+  const needShare = !/\bdata-share\b/.test(own()), needFb = !/\bdata-feedback\b|docs\.google\.com\/forms/.test(own());
+  if (needShare || needFb) {
+    for (let i = 0; i < parts.length; i += 2) {
+      const m = parts[i].match(/(<p>)?(<br>)?<(a|button)\b([^>]*)\bdata-hk\b([^>]*)>([^<]*)<\/\3>(<\/p>)?/);
+      if (!m) continue;
+      const [all, p0, br, tag, a1, a2, text, p1] = m;
+      const short = text === '引き継ぎ', emoji = /^🔁/.test(text);
+      const els = [];
+      if (needShare) els.push(`<${tag}${a1}data-share${a2}>${short ? '共有' : `${emoji ? '📣 ' : ''}このゲームを共有`}</${tag}>`);
+      if (needFb) els.push(`<${tag}${a1}data-feedback="fun"${a2}>${emoji ? '✉️ ' : ''}感想・質問を送る</${tag}>`);
+      const add = els.map((el) => (p0 && p1 ? `<p>${el}</p>` : br ? `<br>${el}` : el)).join('');
+      parts[i] = parts[i].replace(all, () => all + add);
+      break;
+    }
+  }
+  return parts.join('');
+}
+// ゲームの QA が X のリンクを twitter.com の形だけで見ている所を、公式の x.com も通すようにする（Core.share は x.com/intent/tweet。docs.x.com「Web Intent」）
+export const shareQa = (qa) => qa.replace(/(?<!x\|)twitter\\\.com\\\/intent\\\/tweet/g, () => '(?:x|twitter)\\.com\\/intent\\/tweet');
+
+// SNS で URL を貼ったときの絵と題（OGP）が無いゲームに足す（2026-11-27。209本は og.png つきで入っていて、1本だけ無かった）。
+// ogp.me の必須の4つ（og:title・og:type・og:image・og:url）と、X の Cards（docs.x.com「Cards」：twitter:card が無いと og: を使い、summary は正方形の絵）。
+// 絵はゲームにある icon-512.png（正方形）を使うので summary。ゲームの名前は transfer.js の data-game から（無ければ足さない）。何度かけても同じ
+export function migrateOgp(html, has = () => true) {
+  if (/<meta[^>]*property=["']og:title["']/.test(html.replace(CORE, '')) || !/<\/head>/i.test(html)) return html;
+  const game = (html.match(/data-game="([a-z0-9-]+)"/) || [])[1];
+  const title = (html.match(/<title>([^<]+)<\/title>/) || [])[1];
+  if (!game || !title || !has('icon-512.png')) return html;
+  const desc = (html.match(/<meta name="description" content="([^"]*)"/) || [])[1] || '';
+  const url = `https://satou-aaaaa.github.io/${game}/`;
+  const tags = [
+    '<!-- ogp（sync-template の migrateOgp が足した。og.png を作ったら og:image と twitter:card を summary_large_image に替える） -->',
+    '<meta property="og:type" content="website">',
+    `<meta property="og:title" content="${title}">`,
+    desc ? `<meta property="og:description" content="${desc}">` : '',
+    `<meta property="og:url" content="${url}">`,
+    `<meta property="og:image" content="${url}icon-512.png">`,
+    `<meta property="og:image:alt" content="${title}">`,
+    '<meta property="og:locale" content="ja_JP">',
+    '<meta name="twitter:card" content="summary">',
+  ].filter(Boolean).join('\n');
+  const at = html.search(/<meta name="description"[^>]*>/);
+  if (at >= 0) { const end = html.indexOf('>', at) + 1; return `${html.slice(0, end)}\n${tags}${html.slice(end)}`; }
+  return html.replace(/<\/head>/i, () => `${tags}\n</head>`);
+}
+
 // 1つのゲームについて、写したあとの中身を返す（ちがう所だけ）
 export function plan(dir) {
   const has = (p) => existsSync(join(dir, p));
@@ -325,7 +384,7 @@ export function plan(dir) {
   if (has('qa/run.mjs') && has('sw.js') && !read('qa/run.mjs').includes('checkSwStall')) out.push({ path: 'qa/run.mjs', next: null, note: 'checkSwStall を呼んでいない（import { checkSwStall } from "./sw-check.mjs" と、sw.js の中身で check を1行足す）' });
   // はじめての練習（migrateFirstPlay）を足すゲームは、QA の「はじめて開くと遊び方が出る」前提の所も替える
   const firstOn = has('index.html') && A11Y.test(read('index.html')) && FIRST_PLAY.test(migrateFirstPlay(migrateStore(migrateCore(read('index.html')))));
-  if (has('qa/run.mjs')) want('qa/run.mjs', migrateFsQa((firstOn ? migrateFirstQa : (x) => x)(roundSizes(read('qa/run.mjs')))), firstOn ? '押せる所の 44px を丸めてくらべる・はじめての練習の形' : '押せる所の 44px を丸めてくらべる');
+  if (has('qa/run.mjs')) want('qa/run.mjs', shareQa(migrateFsQa((firstOn ? migrateFirstQa : (x) => x)(roundSizes(read('qa/run.mjs'))))), firstOn ? '押せる所の 44px を丸めてくらべる・はじめての練習の形・X の公式のリンク' : '押せる所の 44px を丸めてくらべる・X の公式のリンク');
   // sw.js を写せない（独自の働きがある）ゲームには、ひな形の sw.js を前にした sw の検査も写さない。写すと QA が「FLAGS が無い」などで落ちる
   // （2026-11-17 kokki-shuto。incidents/2026-11-17-sw-migration-drops-extras.md）
   const swStuck = has('sw.js') && makeSw(read('sw.js')) === null;
@@ -341,7 +400,7 @@ export function plan(dir) {
     const block = tpl('a11y/a11y.html').match(A11Y)[0];
     let next = A11Y.test(html) ? html.replace(A11Y, () => block) : html;
     if (CORE.test(next)) next = next.replace(CORE, () => coreBlock());
-    if (A11Y.test(html)) next = migrateBack(migrateFirstPlay(migrateStore(migrateCore(next)))); // 見やすさの設定のあるゲーム（ひな形からできたゲーム）だけ game-core・GameStore に切り替える
+    if (A11Y.test(html)) next = migrateOgp(migrateShare(migrateBack(migrateFirstPlay(migrateStore(migrateCore(next))))), has); // 見やすさの設定のあるゲーム（ひな形からできたゲーム）だけ game-core・GameStore に切り替える
     if (A11Y.test(html)) next = migrateFs(next); // 文字の大きさを見やすさの設定（共通）へ（a11y v9）
     if (A11Y.test(html)) next = migrateKiroku(next); // 成績・お知らせ・長く遊んだら知らせる（kiroku）
     if (KIROKU.test(next)) next = next.replace(KIROKU, () => kirokuBlock());
