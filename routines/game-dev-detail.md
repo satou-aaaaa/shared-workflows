@@ -200,3 +200,16 @@ game-dev.md の手順 A の各番号の元の全文。本体には動作だけ�
    - 中身に事実・出典があり、巡回で特に照らすことがあれば [repo-patrol.md](repo-patrol.md) の「ゲームで特に照らすこと」に1行（無ければ足さない）
    Lint（`node scripts/check-repo-lists.mjs`）が、並び・ゲームの表の抜け・ほかのファイルに書いた一覧を見る。
 9. 公開を知らせたら、同じターンで次の候補（「題材:」Issue の候補の列の番号順。作りかけが2本あれば始めない：game-factory.md）の手順1に入る。satou さんの返事を待たない（2026-11-07「止めずに、進め続けてください」）。レビュー待ちなどで止まるときは、再開の予約（send_later など。ほかの AI は [tool-map.md](tool-map.md)）を入れてからターンを終える。予約なしで終えない（incidents/2026-11-07-new-game-stopped-after-publish.md）。
+
+## 文字の大きさ・音・成績・お知らせ・長く遊んだら知らせる（satou さん 2026-11-26）
+
+ゲームでは作らず、共通部品を使う（`node scripts/sync-template.mjs` が写す。写しは直さない）。
+
+- 文字の大きさ（小・中・大）と音（なし・小・ふつう）と長く遊んだら知らせる時間（知らせない・30・60・90分）は、見やすさの設定（`template/a11y/a11y.html` v9）の窓にある。全ゲームで同じ設定を使う。
+  - 文字：ゲームは rem で書く。大きさを自分で決めたいときは CSS に `html.a11y-fs1〜3{font-size:…px}` を書く（書かなければ 0.9・1.2 倍）。ホームの「文字 あ・あ・あ」は `fsGet()`・`fsSet()` が共通の設定を使う（migrateFs）。
+  - 音：Web Audio は `ctx.destination` につなぐだけでよい（部品が音量のつまみをはさむ）。自分で音量の設定を作らない。
+- 成績・お知らせ・長く遊んだら知らせるは `template/kiroku/kiroku.js`（index.html の kiroku:begin〜end）。
+  - home() で `Kiroku.note(() => ({ s, tally, ach }))` を呼ぶ（sync-template の migrateKiroku が足す）。フッターに「成績」が出て、同じ端末で遊んだ全ゲームの成績が同じ形で見られる。
+  - 遊び方が変わる更新をしたら、index.html に `<script type="application/json" id="game-news">[{"d":"YYYY-MM-DD","t":"変わったこと1文"}]</script>` を足す（新しいものを上に）。戻ってきた人に一度だけ出る。全ゲーム共通の知らせは kiroku.js の COMMON_NEWS。
+  - 外へは何も送らない。保存は端末の `a11y-v1`（設定）・`kiroku-v1`（成績のまとめ）・`news-v1`（どこまで見たか）だけ。
+- 出典：WCAG 1.4.2 Audio Control・1.4.4 Resize Text・4.1.3 Status Messages、Game Accessibility Guidelines、Xbox Accessibility Guideline 105、Chrome の Web Audio の自動再生の決まり、厚生労働省「情報機器作業における労働衛生管理のためのガイドライン」（一連続作業 1 時間まで）。

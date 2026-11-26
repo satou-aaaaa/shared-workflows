@@ -41,7 +41,7 @@ jobs:
             echo
             echo '```'
             GITHUB_TOKEN="$GH_TOKEN" REPOS="$REPOS" CLONE_ROOT="$RUNNER_TEMP/clones" BUDGET_SEC=900 API_MAX=800 \
-              DRIFT_ONLY='共通部品 \S+ を呼んでいない|が無い（template/ から写す）|repos\.txt に無い|見やすさの設定が無い|qa/a11y\.mjs が無い|引き継ぎコード（transfer\.js）が無い|game-qa を呼んでいない' \
+              DRIFT_ONLY='共通部品 \S+ を呼んでいない|が無い（template/ から写す）|repos\.txt に無い|見やすさの設定が無い|qa/a11y\.mjs が無い|引き継ぎコード（transfer\.js）が無い|game-qa を呼んでいない|成績・お知らせの共通部品が無い' \
               node scripts/drift-check.mjs || echo "（確かめられなかった）"
             echo '```'
           } > "$RUNNER_TEMP/parts.md"

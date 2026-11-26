@@ -297,6 +297,9 @@ export function plan(dir) {
     let next = A11Y.test(html) ? html.replace(A11Y, () => block) : html;
     if (CORE.test(next)) next = next.replace(CORE, () => coreBlock());
     if (A11Y.test(html)) next = migrateBack(migrateFirstPlay(migrateStore(migrateCore(next)))); // 見やすさの設定のあるゲーム（ひな形からできたゲーム）だけ game-core・GameStore に切り替える
+    if (A11Y.test(html)) next = migrateFs(next); // 文字の大きさを見やすさの設定（共通）へ（a11y v9）
+    if (A11Y.test(html)) next = migrateKiroku(next); // 成績・お知らせ・長く遊んだら知らせる（kiroku）
+    if (KIROKU.test(next)) next = next.replace(KIROKU, () => kirokuBlock());
     if (STORE.test(next)) next = next.replace(STORE, () => storeBlock());
     if (A11Y.test(html) || STORE.test(html) || CORE.test(html)) want('index.html', next, '見やすさの設定・保存の共通部品・game-core');
   }
@@ -327,6 +330,44 @@ export function staleCount(root = join(T, '..')) {
     git('fetch', '-q', '--depth=50', 'origin', 'main');
     return Number(git('rev-list', '--count', 'HEAD..FETCH_HEAD', '--', 'template', 'scripts/sync-template.mjs'));
   } catch { return null; }
+}
+
+// 文字の大きさを見やすさの設定（共通。a11y v9）へ移す（2026-11-26）。154本が自分で「文字 あ・あ・あ」と localStorage の 〇〇-fs を持ち、
+// ゲームごとに大きさを選び直す必要があった。ホームの3つのボタンは残し、押すと共通の設定（a11y-v1 の fs）を変える。
+// 前に選んだ大きさは A11y.fsFrom(FSKEY, 既定) で引き継ぐ。CSS の html.fs1〜3 は html.a11y-fs1〜3 にする。2回かけても同じ
+export function migrateFs(html) {
+  if (!/\nfunction fsGet\(\) \{ try \{ const v = \+localStorage\.getItem\(FSKEY\);/.test(html) && !/\nfunction fsGet\(\) \{ if \(FSNOW\)/.test(html)) return html;
+  const def = /\nfunction fsGet\(\) \{[^\n]*\? v : 1; \}/.test(html) ? 1 : 2;
+  return html
+    .replace(/html\.fs([123])\{/g, 'html.a11y-fs$1{')
+    .replace(/\nfunction fsGet\(\) \{[^\n]*\n/, () => `\nfunction fsGet() { return A11y.fs(); } // 文字の大きさは見やすさの設定（全ゲーム共通。sync-template の migrateFs）\n`)
+    .replace(/\nfunction fsSet\(v\) \{[^\n]*\n/, () => '\nfunction fsSet(v) { A11y.set("fs", v); } // 共通の設定を変える（html の a11y-fs1〜3 も替わる）\n')
+    .replace(/\n(?:document\.documentElement\.classList\.remove\("fs1", "fs2", "fs3"\); document\.documentElement\.classList\.add\("fs" \+ fsGet\(\)\);|fsApply\(fsGet\(\)\);)\n/, () => `\nA11y.fsFrom(FSKEY, ${def}); // 前にこのゲームで選んだ大きさを引き継ぐ\ndocument.addEventListener("a11ychange", (e) => { if (e.detail && e.detail.key === "fs") document.querySelectorAll(".fsrow button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.fs === e.detail.value))); }); // 見やすさの窓で変えても、ホームの「文字」の印をそろえる\n`);
+}
+
+// 成績のまとめ・更新のお知らせ・長く遊んだら知らせる（共通部品 kiroku。2026-11-26）。
+// kiroku:begin〜end の印を core:end のすぐ後ろに置き（中身は plan() が kirokuBlock を写す）、
+// home() の bindFooter(); の前（無ければ home() の終わり）に Kiroku.note を1行足す。const s = load() の無い home() には足さない。2回かけても同じ
+export const KIROKU = /<!-- kiroku:begin[\s\S]*?<!-- kiroku:end -->/;
+export const kirokuBlock = () => `<!-- kiroku:begin（template/kiroku/kiroku.js の写し。ここでは直さない。node scripts/sync-template.mjs で写す） -->\n<script id="game-kiroku">\n${tpl('kiroku/kiroku.js')}</script>\n<!-- kiroku:end -->`;
+export const KIROKU_NOTE = '  if (window.Kiroku) Kiroku.note(() => ({ s, tally: typeof tally === "function" ? tally(s) : null, ach: typeof achGot === "function" && typeof ACH !== "undefined" ? [achGot(s).length, ACH.length] : null })); // 成績のまとめ（共通部品 kiroku）\n';
+export function migrateKiroku(html) {
+  let next = html;
+  if (!KIROKU.test(next)) {
+    const at = next.indexOf('<!-- core:end -->');
+    if (at < 0) return html;
+    next = `${next.slice(0, at + 17)}\n<!-- kiroku:begin -->\n<!-- kiroku:end -->${next.slice(at + 17)}`;
+  }
+  if (!next.includes('// 成績のまとめ（共通部品 kiroku）')) {
+    const i = next.indexOf('\nfunction home() {');
+    const e = i < 0 ? -1 : next.indexOf('\n}\n', i);
+    if (e > 0 && /\n {2}const s = load\(\)/.test(next.slice(i, e))) {
+      const b = next.slice(i, e).lastIndexOf('\n  bindFooter();');
+      const at = b >= 0 ? i + b + 1 : e + 1;
+      next = next.slice(0, at) + KIROKU_NOTE + next.slice(at);
+    }
+  }
+  return next;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
@@ -390,3 +431,4 @@ export function migrateBack(html) {
   }
   return lines.join('\n');
 }
+

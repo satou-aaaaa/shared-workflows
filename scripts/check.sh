@@ -20,6 +20,8 @@ node scripts/check-transfer.mjs
 node scripts/check-store.mjs
 node scripts/check-store-legacy.mjs
 node scripts/check-core.mjs
+node scripts/check-kiroku.mjs
+node scripts/check-inline-blocks.mjs
 node scripts/check-upload-artifact.mjs --self-test
 node scripts/check-upload-artifact.mjs
 node scripts/check-release-download.mjs --self-test
