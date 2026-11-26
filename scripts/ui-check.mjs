@@ -128,7 +128,7 @@ function measure(scopeSel) {
     covered.push(`${(c.getAttribute('aria-label') || c.textContent || c.tagName).trim().replace(/\s+/g, ' ').slice(0, 14)}←${(pin.getAttribute('aria-label') || pin.textContent || pin.className || pin.tagName).trim().replace(/\s+/g, ' ').slice(0, 12)}`);
   }
   // U2 同じ働きの入口が二重（見えているものだけ）
-  const GROUPS = [['見やすさ', '[data-a11y-open]'], ['引き継ぎ', '[data-hk]'], ['感想', 'a[data-feedback],a[href*="docs.google.com/forms"]'], ['応援', 'a[href*="ko-fi.com"]']];
+  const GROUPS = [['見やすさ', '[data-a11y-open]'], ['引き継ぎ', '[data-hk]'], ['共有', '[data-share]'], ['感想', 'a[data-feedback],a[href*="docs.google.com/forms"]'], ['応援', 'a[href*="ko-fi.com"]']];
   const dup = GROUPS.map(([n, sel]) => [n, [...scope.querySelectorAll(sel)].filter(vis).length]).filter(([, k]) => k > 1).map(([n, k]) => `${n}×${k}`);
   // U10〜U12 ページの分け方（見えている見出し・長さ・畳みの入れ子・画面の数）
   const h2 = [...scope.querySelectorAll('h2')].filter(vis).length;

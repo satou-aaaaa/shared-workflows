@@ -13,6 +13,7 @@ const src = readFileSync(SRC, 'utf8');
 ok(`${SRC} に「共通部品の版: N」の行がある`, /共通部品の版:\s*\d+/.test(src));
 const code = src.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
 ok(`${SRC} が外へ通信しない`, !/\bfetch\(|XMLHttpRequest|WebSocket|sendBeacon|\bimport\(|EventSource/.test(code));
+ok(`${SRC} に「小江戸ゲーム部」が無い（ゲームにサークル名を出さない。satou さん 2026-11-24。共有のハッシュタグにも入れない）`, !src.includes('小江戸ゲーム部'));
 ok(`${SRC} に Math.random が無い（ゲームの QA が「乱数は練習・とことんだけ」を index.html の中の数で見ている）`, !/Math\.random/.test(code));
 ok(`${SRC} に </script> が無い（index.html に写すと途中で切れる）`, !/<\/script/i.test(src));
 ok(`${SRC} に HTML のコメント（<!-- -->）が無い（写しの区切りを取りちがえる）`, !/<!--|-->/.test(src));
@@ -200,5 +201,28 @@ ok('Core.coach に start・stop・active がある', ['start', 'stop', 'leave', 
   ok('migrateFirstQa：evaluate・isVisible・shown の形も吹き出しを見る', !q2.includes('遊び方が出る"') && (q2.match(/core-coach/g) || []).length >= 3 && migrateFirstQa(q2) === q2);
   ok('migrateFirstQa：「わかった」は firstClose に・はじめての検査は吹き出しを見る・2回かけても同じ', q1.includes('const firstClose = async') && q1.includes('await firstClose(p);') && q1.includes('await firstClose(q);') && !q1.includes('click("#howto-ok")\n') && q1.includes('#core-coach").waitFor(') && migrateFirstQa(q1) === q1);
 }
+{
+  // SNS への共有（Core.share。版5）：公式のリンクの形・公開の URL だけ・結果のボタンをつなぐ
+  const l = Core.share.links('震度よみ 第3回\n🟢🟢\nhttps://satou-aaaaa.github.io/shindo-yomi/');
+  ok('共有：X は公式の Web Intent（https://x.com/intent/tweet?text=）、LINE は URL スキーム（https://line.me/R/share?text=）で、文を UTF-8 で符号化する',
+    l.x.startsWith('https://x.com/intent/tweet?text=' + encodeURIComponent('震度よみ 第3回\n🟢🟢\nhttps://satou-aaaaa.github.io/shindo-yomi/\n#')) && l.line.startsWith('https://line.me/R/share?text=%E9%9C%87'));
+  const ctx = { document: { title: 'テスト｜ゲーム', readyState: 'complete', body: null, querySelector: () => null, getElementById: () => null, addEventListener: () => {} }, location: { origin: 'https://satou-aaaaa.github.io', pathname: '/g/index.html', search: '?x=1', hash: '#hk=ABC' }, navigator: {}, addEventListener: () => {}, setTimeout: (f) => { f(); return 1; }, clearTimeout: () => {}, URLSearchParams };
+  ctx.window = ctx; vm.createContext(ctx); vm.runInContext(src, ctx);
+  ok('共有：ハッシュタグはゲームの名前（タグに使えない字を外す）と「学べる無料ゲーム」の2つまで', ctx.Core.share.tags() === '#テスト #学べる無料ゲーム');
+  ok('共有：ハッシュタグを2回足さない', ctx.Core.share.tagged(ctx.Core.share.tagged('a')) === 'a\n#テスト #学べる無料ゲーム');
+  ctx.document.querySelector = (q) => (q === 'meta[property="og:title"]' ? { content: '駐車禁止は何m？：ここは何mまで' } : null);
+  ok('共有：og:title の「：」より前をタグにし、？ を外す', ctx.Core.share.tags() === '#駐車禁止は何m #学べる無料ゲーム');
+  ctx.document.querySelector = (q) => (q === 'meta[property="og:title"]' ? { content: '×はどこだ｜本物の×だけを押せ' } : null);
+  ok('共有：× はタグで「バツ」にする', ctx.Core.share.tags() === '#バツはどこだ #学べる無料ゲーム');
+  ctx.document.querySelector = () => null;
+  ok('共有：URL は公開の所だけ（? と #hk= などを外へ出さない）', ctx.Core.share.url() === 'https://satou-aaaaa.github.io/g/');
+  const btn = (id) => ({ id, href: '', target: '', rel: '', onclick: null });
+  const b = { toX: btn('toX'), toLine: btn('toLine'), copy: btn('copy'), share: btn('share') };
+  ctx.Core.share.wire('結果\nhttps://e/', { querySelector: (q) => b[q.slice(1)] || null });
+  ok('共有：wire が #toX・#toLine のリンクと #copy・#share の押したときをつなぐ（自分で押して開くリンク）', b.toX.href.startsWith('https://x.com/intent/tweet?text=') && b.toX.rel === 'noopener' && b.toLine.href.startsWith('https://line.me/R/share?text=') && typeof b.copy.onclick === 'function' && typeof b.share.onclick === 'function');
+  ctx.Core.share.wire('x', { querySelector: () => null });
+  ok('共有：ボタンの無い画面で wire しても止まらない', true);
+}
+
 if (errors.length) { for (const e of errors) console.error(`✗ ${e}`); process.exit(1); }
 console.log('✓ game-core（template/core/core.js）');
