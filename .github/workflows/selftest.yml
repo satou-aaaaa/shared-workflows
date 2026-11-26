@@ -144,6 +144,13 @@ jobs:
           export CHROME_PATH
           CHROME_PATH=$(command -v google-chrome || command -v chromium)
           node scripts/check-screens.mjs
+      # ひな形の画面の検査（core-check）が、正しい画面で通り、壊した画面で落ちるか（incidents/2026-11-27-core-check-never-ran.md）
+      - name: game-core の画面の検査（template/qa/core-check.mjs）の動き
+        run: |
+          set -euo pipefail
+          export CHROME_PATH
+          CHROME_PATH=$(command -v google-chrome || command -v chromium)
+          node scripts/check-core-qa.mjs
       - name: 見やすさの検査（template/qa/a11y.mjs）がコントラストを甘く測らないか
         run: |
           set -euo pipefail
