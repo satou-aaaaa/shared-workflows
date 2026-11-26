@@ -42,6 +42,7 @@ const fake = {
     { number: 4, title: 'ほかの Issue', body: 'repo: x', html_url: 'u4' },
     { number: 2, title: '題材: 言語（言語）', body: 'kind: app', html_url: 'u2' },
     { number: 15, title: '題材: 防災アプリ（防災）', body: 'kind: app\nrepo: app-k', html_url: 'u15' },
+    { number: 1, title: '題材: 止めた候補（候補）', body: '', html_url: 'u1', labels: [{ name: 'needs-decision' }] },
     { number: 6, title: '題材: PR', body: '', html_url: 'u6', pull_request: {} },
   ],
   'repos/satou-aaaaa/game-a': { has_pages: false },
@@ -66,7 +67,7 @@ const data = await collect(api);
 ok(data.wip.map((w) => w.number).join() === '5,8,9,10,12,13,14', `作りかけの見分けがちがう: ${data.wip.map((w) => w.number)}`);
 ok(data.others.map((w) => w.number).join() === '11', '別スレッドが作っているものを作りかけに数えた（3日動かないものは引き取る）');
 ok((data.apps || []).map((w) => w.number).join() === '2,15', `ゲームではない題材の見分けがちがう: ${(data.apps || []).map((w) => w.number)}`);
-ok(data.parked.map((w) => w.number).join() === '7', 'needs-decision の作りかけを数えている');
+ok(data.parked.map((w) => w.number).join() === '1,7', 'needs-decision の作りかけ・候補を数えている');
 ok(data.queue.map((q) => q.number).join() === '3', `候補の列がちがう: ${data.queue.map((q) => q.number)}`);
 const byNo = Object.fromEntries(data.wip.map((w) => [w.number, w.next]));
 ok(/needs-decision を付ける/.test(byNo[5]), `3日動かない PR を止めるよう出さない: ${byNo[5]}`);
@@ -76,6 +77,7 @@ ok(/リポジトリを作る/.test(byNo[9]), 'リポジトリが無いのに作�
 ok(/PR #1 を作る/.test(byNo[13]) && !/公開済み/.test(byNo[13]), `Pages だけ入って index.html の無いリポジトリを公開済みと出した: ${byNo[13]}`);
 ok(/公開済み/.test(byNo[14]), `index.html がある Pages のリポジトリを公開済みと出さない: ${byNo[14]}`);
 const lines = plan(data);
+ok(lines.some((l) => /止めている候補 #1/.test(l)) && !lines.some((l) => /候補 #1「/.test(l) && /始める/.test(l)), 'needs-decision の候補を始めるよう出した（2026-11-26 #588）');
 ok(WIP_LIMIT !== 2 || lines.some((l) => /空きなし/.test(l)), '上限に達しても新しい候補を始めようとする');
 ok(lines.some((l) => /候補が 1 本/.test(l)), '候補が少ないのに足すよう出さない');
 ok(lines.some((l) => /別スレッドが担当 #11/.test(l) && /触らない/.test(l)), '別スレッドが作っているものを触らないと出さない');
