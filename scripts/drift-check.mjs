@@ -15,6 +15,7 @@
 //   - link-check が調べる .md に、すぐ後ろに全角の字が続く URL がある（incidents/2026-11-08-link-check-wide-char-after-url.md）
 //   - Playwright を入れるジョブの timeout-minutes が 20 より短い（ファイル名によらず全部のワークフローを見る。入れる段階だけで9分かかる日がある。incidents/2026-11-05-qa-timeout-slow-install.md・2026-11-07-tenbin-check-timeout.md）
 //   - Playwright の部品を --with-deps で入れるジョブが、apt の .deb を取り置いていない（incidents/2026-11-26-last-tell-qa-apt-slow.md）
+//   - apt の取り置きを dpkg -i で入れるのに --auto-deconfigure が無い（incidents/2026-11-27-qa-apt-keep-breaks-order.md）
 //   - scripts/setup.sh にひな形の <> が残っている（埋め忘れ）
 //   - scripts/setup.sh の「ひな形の版」が template/scripts/setup.sh より古い（ひな形を直しても写しに届かない。incidents/2026-11-03-setup-false-ready.md）
 //   - scripts/setup.sh が渡す CHROMIUM_PATH を、検査のスクリプト（qa/・tools/ など）が読んでいない
@@ -483,6 +484,8 @@ const results = await pool(REPOS, 4, async (r) => {
         if (t < QA_MIN) flag('qa:timeout', `${p} の ${job.name} の timeout-minutes が ${t} 分（Playwright を入れるジョブは ${QA_MIN} 分以上。template/.github/workflows/qa.yml を写す）`);
         // 自前で apt の部品（--with-deps）を入れるジョブは、落とした .deb を取り置く（game-qa.yml の「apt の取り置き」と同じ形）。
         // 2026-11-11 に共通部品だけ直し、自前の QA を持つ last-tell は毎回落とし直したままで、11/26 置き場が遅く25分の時間切れになった（incidents/2026-11-26-last-tell-qa-apt-slow.md）
+        // 取り置きを dpkg -i で入れるのに --auto-deconfigure が無いと、新しい -data が古い本体を Breaks で断り、半端な状態で apt まで止まる（incidents/2026-11-27-qa-apt-keep-breaks-order.md）
+        if (/sudo\s+dpkg\s+-i\s/.test(job.text) && !/sudo\s+dpkg\s+-i\s[^\n]*--auto-deconfigure/.test(job.text)) flag('qa:apt-keep-order', `${p} の ${job.name} が取り置きの .deb を dpkg -i で入れるのに --auto-deconfigure が無い（部品の版が上がった日に QA が Playwright を入れる段で落ちる。game-qa.yml の形に）`);
         if (/playwright install[^\n]*--with-deps/.test(job.text) && !/actions\/cache\/(restore|save)@[\s\S]*qa-apt/.test(job.text)) flag('qa:apt-cache', `${p} の ${job.name} が Playwright の部品を毎回 apt で落とし直す（置き場が遅い日に時間切れになる。game-qa.yml の「apt の取り置き」3段を写す）`);
       }
     }

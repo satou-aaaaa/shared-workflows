@@ -147,7 +147,12 @@ jobs:
           # 取り置きがあれば、apt を通さず先に dpkg で入れる（apt の索引が古くても版がずれない）
           kept=0
           if compgen -G "$APT_KEEP/*.deb" >/dev/null; then
-            if sudo dpkg -i --skip-same-version "$APT_KEEP"/*.deb; then kept=1; else echo "::warning::apt の取り置きを入れられなかった。ふだんどおり apt で入れる"; fi
+            # --auto-deconfigure：dpkg は名前の順に入れるので、新しい libasound2-data が入れ済みの古い libasound2t64 を
+            # Breaks で断り、半端に入った状態で apt まで止まった（incidents/2026-11-27-qa-apt-keep-breaks-order.md）
+            if sudo dpkg -i --skip-same-version --auto-deconfigure "$APT_KEEP"/*.deb; then kept=1; else
+              echo "::warning::apt の取り置きを入れられなかった。半端に入った部品を apt で直してから、ふだんどおり入れる"
+              timeout 5m sudo apt-get -f install -y || echo "::warning::apt -f install も失敗した（このあとの Playwright を入れる段で分かる）"
+            fi
           fi
           # apt が名前を引けないと1件ごとに待ち、時間切れまで止まる（2026-11-11 は20分で取り消し）。10分で打ち切る（ふだんは約1分、遅い日で9分）
           if ! timeout 10m npx playwright install --with-deps chromium; then

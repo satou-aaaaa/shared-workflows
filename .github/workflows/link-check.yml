@@ -5,7 +5,8 @@ name: Link check (共通部品)
 # 結果の一覧は Actions の Summary に出る。
 # 時間切れ（Timeouts）だけのときは落とさず警告にする。国内の役所・大学などのサイトは GitHub の実行機から
 # ときどき応答しないだけで、リンクは生きている（2026-11-17 bushu-tashizan・taiyokei-kurabe が日によって赤・緑。
-# incidents/2026-11-17-link-check-timeout-flaky.md）。404 などのリンク切れ（Errors）は今までどおり落とす。
+# incidents/2026-11-17-link-check-timeout-flaky.md）。相手のサーバーの不調（500〜599）も同じく警告（incidents/2026-11-27-qa-apt-keep-breaks-order.md）。
+# 404 などのリンク切れ（Errors）は今までどおり落とす。
 on:
   workflow_call:
     inputs:
@@ -47,7 +48,7 @@ jobs:
       # lychee の終わりの番号：0 は全部よし、2 はリンクの失敗あり、ほかは lychee 自身の失敗。
       # 2 のときは結果の表（lychee/out.md）の Errors と Unknown を読み、どちらも 0 で Timeouts だけなら警告で通す。
       # 表を読めないときは落とす（見逃さない側に倒す）。scripts/check-link-check-judge.sh が Lint でこの手順を試す
-      - name: リンク切れがあれば落とす（時間切れだけなら警告）
+      - name: リンク切れがあれば落とす（時間切れ・相手の不調だけなら警告）
         env:
           CODE: ${{ steps.lychee.outputs.exit_code }}
         run: |
@@ -60,10 +61,14 @@ jobs:
           for n in "$err" "$unk" "$tmo"; do
             case "$n" in ''|*[!0-9]*) echo "::error::結果の表（Errors・Unknown・Timeouts）を読めませんでした。Summary を見る"; exit 1 ;; esac
           done
-          if [ "$err" -gt 0 ] || [ "$unk" -gt 0 ]; then echo "::error::リンク切れが ${err} 件・分からないものが ${unk} 件あります（一覧は Summary）"; exit 1; fi
-          if [ "$tmo" -gt 0 ]; then
-            grep -F '[TIMEOUT]' "$out" | while IFS= read -r l; do echo "::warning title=時間切れ（リンク切れではない）::${l#\* }"; done
-            echo "時間切れ ${tmo} 件だけなので通します（相手のサイトが実行機に答えなかっただけ。続くようならリンクを確かめる）"
+          # 相手のサーバーの不調（500〜599。503 など）はリンク切れではないので、時間切れと同じく警告にする
+          # （2026-11-26 jintai-shikumi・dento-kogei が 503 で赤、同じ URL はその日のうちに開けた。incidents/2026-11-27-qa-apt-keep-breaks-order.md）
+          srv=$(grep -cE '^\* \[5[0-9][0-9]\] ' "$out" || true)
+          if [ "$unk" -gt 0 ] || [ "$err" -gt "$srv" ]; then echo "::error::リンク切れが $((err - srv)) 件・分からないものが ${unk} 件あります（一覧は Summary）"; exit 1; fi
+          if [ "$tmo" -gt 0 ] || [ "$srv" -gt 0 ]; then
+            { grep -F '[TIMEOUT]' "$out" || true; } | while IFS= read -r l; do echo "::warning title=時間切れ（リンク切れではない）::${l#\* }"; done
+            { grep -E '^\* \[5[0-9][0-9]\] ' "$out" || true; } | while IFS= read -r l; do echo "::warning title=相手のサーバーの不調（リンク切れではない）::${l#\* }"; done
+            echo "時間切れ ${tmo} 件・相手のサーバーの不調 ${srv} 件だけなので通します（続くようならリンクを確かめる）"
             exit 0
           fi
           echo "::error::lychee は失敗を返したのに、表に Errors・Unknown・Timeouts がありません（Summary を見る）"; exit 1

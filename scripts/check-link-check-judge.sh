@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Link check（.github/workflows/link-check.yml）の「リンク切れがあれば落とす」手順を、結果の表の見本で試す。
-# 時間切れだけなら通し、リンク切れ・分からないもの・読めない表・lychee 自身の失敗は落とす
+# 時間切れ・相手のサーバーの不調（5xx）だけなら通し、リンク切れ・分からないもの・読めない表・lychee 自身の失敗は落とす
 # （2026-11-17 incidents/2026-11-17-link-check-timeout-flaky.md）。手順は ==judge-begin==〜==judge-end== をそのまま使う。
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -18,9 +18,11 @@ try() { # 見本 終わりの番号 期待（0=通す 1=落とす）
 try timeout-only.md 0 0
 try timeout-only.md 2 0
 try error.md 2 1
+try server-error-only.md 2 0
+try server-error-and-404.md 2 1
 try unknown.md 2 1
 try broken-table.md 2 1
 try "" 2 1
 try timeout-only.md 1 1
-[ "$fail" = 0 ] && echo "✓ Link check の判定（時間切れだけ通す・リンク切れは落とす）"
+[ "$fail" = 0 ] && echo "✓ Link check の判定（時間切れ・相手の不調（5xx）だけ通す・リンク切れは落とす）"
 exit "$fail"
