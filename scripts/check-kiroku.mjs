@@ -1,7 +1,7 @@
 // ゲームの共通部品 kiroku（template/kiroku/kiroku.js）と、文字の大きさの切り替え（sync-template の migrateFs）を、ブラウザなしで確かめる
 // （check.sh と CI の Lint が呼ぶ。Claude は使わない）。画面の動き（見やすさの窓の「文字の大きさ・音・長く遊んだら知らせる」）は check-a11y-block.mjs が見る。
 // 見ること: 版の行・外へ通信しない・写しを2回かけても同じ・Kiroku.note を home() に1回だけ足す・はじめての人にお知らせを出さない・
-//          戻ってきた人には一度だけ出す・成績のまとめに外へ出してはいけない物を入れない・migrateFs が前の大きさを引き継ぐ形にする
+//          戻ってきた人には一度だけ出す・成績のまとめに外へ出してはいけない物を入れない・知らせの文を HTML として読まない・migrateFs が前の大きさを引き継ぐ形にする
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
@@ -43,7 +43,7 @@ const S = await import('./sync-template.mjs');
   // 部品をブラウザの代わりの小さな環境で動かす
   const run = (store, opt = {}) => {
     const shown = [];
-    const el = () => ({ setAttribute() {}, addEventListener() {}, querySelector: () => ({ addEventListener() {} }), remove() {}, set innerHTML(v) { shown.push(v); }, isConnected: true, className: '' });
+    const el = () => ({ setAttribute() {}, addEventListener() {}, querySelector: () => ({ addEventListener() {} }), remove() {}, set innerHTML(v) { shown.push(v); }, set textContent(v) { this._t = v; }, append(...c) { for (const x of c) if (x._t) shown.push(x._t); }, isConnected: true, className: '' });
     const doc = { readyState: 'complete', head: { appendChild() {} }, documentElement: {}, body: { prepend() {}, appendChild() {} }, querySelector: () => ({ textContent: 'テスト' }), querySelectorAll: () => [], getElementById: () => (opt.news ? { textContent: JSON.stringify(opt.news) } : null), createElement: el, addEventListener() {}, hidden: false, title: 't' };
     const ls = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } };
     const ctx = { window: {}, document: doc, localStorage: ls, location: { pathname: '/g1/' }, performance: { now: () => 0 }, addEventListener() {}, setInterval() {}, MutationObserver: class { observe() {} }, Date, JSON, Math, Object, Array, String };
@@ -65,6 +65,10 @@ const S = await import('./sync-template.mjs');
   const c = run({ 'news-v1': JSON.stringify({ '*': '2099-01-01' }) }, { news: [{ d: '2026-11-26', t: 'ゲームの知らせ' }] });
   c.K.note(() => ({ s: { days: { a: 1 } }, tally: { played: 1 } }));
   ok('ゲームだけの知らせ（id="game-news"）も出す・共通の知らせは見た所まで出さない', c.shown.some((h) => /ゲームの知らせ/.test(h)) && !c.shown.some((h) => /文字の大きさ/.test(h)));
+  const x = run({});
+  x.K.show('<img src=x onerror=alert(1)>');
+  ok('知らせの文は文字として入れる（innerHTML に入れない。CodeQL）', x.shown.includes('<img src=x onerror=alert(1)>') && !x.shown.some((h) => /<img/.test(h) && h !== '<img src=x onerror=alert(1)>'));
+  ok('esc は Core が無くても < " を替える', /const esc = \(t\) => String\(t == null/.test(src));
   const d = run({ 'kiroku-v1': '[1,2]', 'news-v1': 'x' });
   d.K.note(() => { throw new Error('x'); });
   ok('壊れた記録・ゲーム側の失敗でも止まらない', true);

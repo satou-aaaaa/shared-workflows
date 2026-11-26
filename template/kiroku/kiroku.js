@@ -22,7 +22,9 @@
   const read = (k) => { try { const v = JSON.parse(localStorage.getItem(k) || "{}"); return v && typeof v === "object" && !Array.isArray(v) ? v : {}; } catch (e) { return {}; } };
   const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } };
   const n0 = (v) => (window.Core ? Core.num(v) : Math.max(0, Math.floor(+v) || 0));
-  const esc = (t) => (window.Core ? Core.esc(t) : String(t));
+  // HTML に入れる文字は必ずここを通す（Core が無いページでも < " などを替える。2026-11-26 CodeQL「DOM text reinterpreted as HTML」）
+  const ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  const esc = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ESC[c]);
   const today = () => (window.Core ? Core.today() : new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10));
   // このゲームの名前（URL の最初の段。手元で開いたときは local）と題
   const id = () => (location.pathname.split("/").filter(Boolean)[0] || "local").replace(/[^\w-]/g, "");
@@ -99,8 +101,10 @@
     if (!it) return;
     bar = doc.createElement("div");
     bar.className = "kiroku-bar"; bar.setAttribute("role", "status");
-    bar.innerHTML = `<p>${esc(it[0])}</p><button type="button">わかった</button>`;
-    bar.querySelector("button").addEventListener("click", () => { try { it[1] && it[1](); } catch (e) { /* 書けない */ } next(); });
+    const p = doc.createElement("p"), btn = doc.createElement("button");
+    p.textContent = it[0]; btn.type = "button"; btn.textContent = "わかった"; // 知らせの文は文字として入れる（HTML として読まない）
+    bar.append(p, btn);
+    btn.addEventListener("click", () => { try { it[1] && it[1](); } catch (e) { /* 書けない */ } next(); });
     doc.body.prepend(bar); // 画面のいちばん上に、ほかの物に重ねずに出す（押す所を隠さない。WCAG 2.4.11）
   }
 
