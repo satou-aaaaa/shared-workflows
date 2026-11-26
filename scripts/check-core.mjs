@@ -60,6 +60,13 @@ ok(`${SRC} に HTML のコメント（<!-- -->）が無い（写しの区切り�
   ok('migrateCore：手で写した toast・untilNext・buzz・esc・num を Core.* にする（字下げは残す）', /\n  function toast\(t\) \{ Core\.toast\(t\); \}/.test(hown) && /return Core\.untilNext\(\)/.test(hown) && /const buzz = Core\.buzz;/.test(hown) && /const esc = Core\.esc;/.test(hown) && /^const num = Core\.num; \/\/ 共通部品 game-core（配列・true を数にしない #410）$/m.test(hown));
   ok('migrateCore：形のちがう toast（長さのちがうもの）は触らない', hown.includes('setTimeout(() => d.remove(), 1600); }'));
   ok('migrateCore：手で写した小部品の切り替えも、何度かけても同じ', migrateCore(h) === h);
+  // 2026-11-27 Ko-fi 応援の一文とフッターの応援先を Core.kofi・Core.KOFI にする（ことばはゲームのものを残す）
+  const kofiPage = ['<head><!-- a11y:begin -->a<!-- a11y:end -->\n</head><body><script>',
+    'const footer = () => `<footer><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi で応援</a></footer>`;',
+    'const r = `${showKofi ? `<p class="note">役に立ったら、<a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi でコーヒー1杯の応援</a>をもらえると、新しい星座とゲームづくりの励みになります（任意・遊ぶのはずっと無料）。</p>` : ""}`;',
+    '</script></body>'].join('\n');
+  const kp = migrateCore(kofiPage).replace(CORE, '');
+  ok('migrateCore：Ko-fi の一文を Core.kofi（ゲームのことばのまま）、フッターを Core.KOFI にする', kp.includes('${showKofi ? Core.kofi("役に立ったら", "新しい星座とゲームづくり") : ""}') && kp.includes('href="${Core.KOFI}"') && !/ko-fi\.com/.test(kp));
 }
 
 {
@@ -99,6 +106,7 @@ function fakeDom({ calm = false, now = Date.parse('2026-11-21T14:00:00Z') } = {}
 
 const { Core, made, vib } = fakeDom();
 ok('window.Core に版がある', Core && Core.v >= 1);
+ok('Core.kofi：もとの一文と同じ形（class="note kofi"・応援先・任意の説明）', Core.kofi("役に立ったら", "新しいゲームづくり") === '<p class="note kofi">役に立ったら、<a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi でコーヒー1杯の応援</a>をもらえると、新しいゲームづくりの励みになります（任意・遊ぶのはずっと無料）。</p>' && Core.KOFI === 'https://ko-fi.com/satouaaaaa');
 {
   // 画面の切り替えは、単体の部品 template/screens/screens.js と game-core の中身が同じ（ほかのプロジェクトでも同じ物を使う。2026-11-23）
   const part = (t) => { const m = t.match(/\/\/ screens:begin[^\n]*\n([\s\S]*?)\n\s*\/\/ screens:end/); return m ? m[1] : null; };

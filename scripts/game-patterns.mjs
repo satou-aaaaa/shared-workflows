@@ -199,5 +199,5 @@ export function coreCopies(page) {
   return ['toast', 'untilNext', 'buzz', 'esc', 'num'].filter((name) => {
     const m = own.match(new RegExp(`(?:function\\s+${name}\\s*\\(|(?:const|let)\\s+${name}\\s*=)[^\\n]*`));
     return m && !/Core\./.test(m[0]);
-  });
+  }).concat(/Ko-fi でコーヒー1杯の応援/.test(own) ? ['kofi'] : []); // Ko-fi 応援の一文は Core.kofi(lead, what) で出す（2026-11-27）
 }

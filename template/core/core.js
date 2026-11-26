@@ -1,7 +1,7 @@
 // ゲームの共通部品 game-core。ひな形: satou-aaaaa/shared-workflows の template/core/core.js。
 // ゲームでは直さない。index.html の core:begin〜core:end の印のあいだに node scripts/sync-template.mjs <ゲームのフォルダ> で写す
 // （ファイルを足さないので sw.js の SHELL は変えない）。ゲームからは window.Core で使う。
-// 共通部品の版: 6
+// 共通部品の版: 8
 //   1: 2026-11-21 ゲームごとに手で写していた小さな関数を1か所に集めた。40本で同じ役目の関数が何通りにも分かれ
 //      （お知らせの帯 11通り・振動 10通り・文字を安全にする esc 4通り・数の読み込み num 2通り）、
 //      「動きを減らす」でも振動する・お知らせが読み上げられない・num の直し（#410）が22本に届かない・esc が " を変えない、が起きていた
@@ -19,7 +19,9 @@
 //      ページの上に帯を出し、本人が「知らせる」を押したときだけ感想フォームが開く（Core.errBar）。エラーの文は保存も自動送信もしない
 //      （satou さん 2026-11-27「個人データ・個人情報をとらない」。外のサーバーへ自動で送ると IP が必ず届くため、自動の通知と集計は作らない）。
 //      MDN「Window: error event」「unhandledrejection event」・NN/g「Error-Message Guidelines」（何が起きたか・どうすればよいかを書く）
-//   6: 2026-11-27 SNS への共有（Core.share）を足した。結果のシェア（X・LINE・端末の共有・コピー）は約200本に同じ5行を手で写していたのを1か所に集め、
+//   7: 2026-11-27 Ko-fi 応援の一文（Core.kofi）と応援先（Core.KOFI）を足した。201本が同じ一文を手で写し、文言が4通り以上に分かれていた
+//      （incidents/2026-11-27-kofi-line-hand-copied.md）。出す条件（初めて・まちがい0・練習でない日だけ）はゲームの記録しだいなので、ゲームに残す
+//   8: 2026-11-27 SNS への共有（Core.share）を足した。結果のシェア（X・LINE・端末の共有・コピー）は約200本に同じ5行を手で写していたのを1か所に集め、
 //      フッターの「共有」（data-share）からゲームそのものも共有できるようにした（satou さん「全ゲームに SNS 共有」「共通化も」）。
 //      X は公式の Web Intent（docs.x.com「Web Intent」: https://x.com/intent/tweet?text=）、LINE は LINE URL スキーム
 //      （developers.line.biz「LINE URLスキームでLINEの機能を使う」: https://line.me/R/share?text=）、端末の共有は Web Share API
@@ -101,6 +103,13 @@
     b.id = "savewarn"; b.setAttribute("role", "alert"); b.textContent = SAVE_W;
     b.style.cssText = "position:sticky;top:0;z-index:9999;padding:8px 12px;background:#fff3cd;color:#000;font-size:15px;line-height:1.5;text-align:center;pointer-events:none;border-bottom:2px solid #8a6d00";
     (doc.body || doc.documentElement).prepend(b);
+  }
+
+  // ---- Ko-fi の応援（任意。押すまで外へは通信しない）----
+  // 結果の画面に出す一文。lead は「楽しめたら」「役に立ったら」など、what は「新しいゲームづくり」など（ゲームの中身に合わせて渡す）
+  const KOFI = "https://ko-fi.com/satouaaaaa";
+  function kofi(lead, what) {
+    return `<p class="note kofi">${esc(lead || "楽しめたら")}、<a href="${KOFI}" target="_blank" rel="noopener">Ko-fi でコーヒー1杯の応援</a>をもらえると、${esc(what || "新しいゲームづくり")}の励みになります（任意・遊ぶのはずっと無料）。</p>`;
   }
 
   // ---- はじめての案内（吹き出し）----
@@ -556,5 +565,5 @@
     try { window.open(u, "_blank", "noopener"); } catch (err) { /* 開けない */ }
   }, true);
 
-  window.Core = { v: 6, calm, esc, num, jstNow, today, addDays, prevDay, nextDay, md, dayNo, ymOf, ymAdd, untilNext, streak, say, toast, buzz, saveWarn, coach, feedbackUrl, feedbackInfo, bindFeedback, screens, help: helpOpen, errBar, share };
+  window.Core = { v: 8, calm, esc, num, jstNow, today, addDays, prevDay, nextDay, md, dayNo, ymOf, ymAdd, untilNext, streak, say, toast, buzz, saveWarn, coach, feedbackUrl, feedbackInfo, bindFeedback, screens, help: helpOpen, errBar, kofi, KOFI, share };
 })();
