@@ -81,6 +81,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
 | 2026-11-27 | 検査の見逃し | [ひな形の core-check が隠れた吹き出しの「やってみる」を押しに行って止まり、新作に screens/ も毎回入った](2026-11-27-core-check-hidden-coach-button.md) | 対策済み |
+| 2026-11-27 | 手順の抜け | [公開した新作17本が repos.txt に無く、週次まとめ・検査・巡回の対象から外れていた](2026-11-27-new-games-missing-from-repos-list.md) | 対策済み |
 | 2026-11-27 | 公開・CI | [全ゲームへ配る「？ 遊び方」などの写しで、8本のゲームの QA が落ちて配布が止まった](2026-11-27-help-button-pushed-content.md) | 対策済み |
 | 2026-11-27 | 検査の見逃し | [新作をひな形から始めると kiroku/・parts/ がファイルで入り、drift-check が全ゲームに esc の手写しを出した](2026-11-27-new-game-kiroku-parts-files.md) | 対策済み |
 | 2026-11-27 | 公開・CI | [写した共通部品の言葉や Ko-fi の置きかえを、古いゲームの QA が数えて配布が止まった](2026-11-27-template-words-tripped-game-qa.md) | 対策済み |
