@@ -116,6 +116,7 @@ kikenbutsu-rui game
 kikigaki-techo game
 kikikuru-yomi game
 kimari-sagashi game
+kimeta-shunkan game
 kippu-10 game
 kisetsu-tenki game
 kitai-ate game
@@ -148,6 +149,7 @@ mansion-kimari game
 meirei-narabe game
 menkyo-nenrei game
 menzei-ikura game
+mezame-omote game
 mizu-mamoru game
 moraisugi-kimari game
 mukashi-narabe game
