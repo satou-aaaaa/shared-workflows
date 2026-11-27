@@ -60,6 +60,7 @@ hataraku-kimari game
 hatsuden-kurabe game
 hikari-michi game
 hikari-susumi game
+hinan-domino game
 hiraku-tojiru game
 hitorioya-ikura game
 hoken-dore game
@@ -224,6 +225,7 @@ teko-tsuriai game
 tenbin app
 tenji-yomi game
 tenkizu-yomi game
+tenso-edawakare game
 toan-kumitate game
 todofuken-relay game
 todokede-kigen game
