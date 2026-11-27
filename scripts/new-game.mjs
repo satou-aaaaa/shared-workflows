@@ -21,7 +21,10 @@ export function templateFiles(dir = T) {
 // ファイルとしては写さないもの。store/store.js は index.html の <!-- store:begin -->〜end に sync-template.mjs で写す部品で、
 // ファイルを置くと使われない写しが残る（2026-11-17 kitte-ikura #1 で store/store.js が入った。incidents/2026-11-17-new-game-store-file.md）
 // core/core.js も同じ（index.html の <!-- core:begin -->〜end に写す部品）。2026-11-22 kikikuru-yomi #1 で core/core.js が入りかけた（incidents/2026-11-22-game-wip-non-game-topics.md）
-export const SKIP = ['store/', 'core/'];
+// kiroku/・parts/ も同じ（index.html・data.js の kiroku:begin・part:<名前>:begin の印のあいだに写す部品）。
+// 2026-11-27 life-mikata #1 で kiroku/kiroku.js・parts/*.js が入りかけた（incidents/2026-11-27-new-game-kiroku-parts-files.md）。
+// 印で写す部品を template/ に足したら、ここにも足す（check-game-wip.mjs が sync-template.mjs の印と見比べる）
+export const SKIP = ['store/', 'core/', 'kiroku/', 'parts/'];
 
 export function scaffold(to) {
   const copied = [];
