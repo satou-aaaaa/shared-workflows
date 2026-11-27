@@ -253,11 +253,13 @@ ok('Core.coach に start・stop・active がある', ['start', 'stop', 'leave', 
     'const html = readFileSync(path.join(root, "index.html"), "utf8"), gen = "";',
     'check("言い方：「必ず」と言い切らない", !/必ず/.test(html + gen));',
     'check("Ko-fi は2か所", (html.match(/ko-fi\\.com/g) || []).length === 2);',
+    '{ const k = [...html.matchAll(/ko-fi/g)].map((m) => m.index), f = (i) => html.lastIndexOf("function ", i); }',
     'const bad = html.replace(/<!-- a11y:begin[\\s\\S]*?<!-- a11y:end -->/, "");',
     'check("遊び方がある", html.includes("<!-- a11y:begin"));',
   ].join('\n');
   const once = ownQa(qa);
   ok('ownQa：何度かけても同じ', ownQa(once) === once);
+  ok('ownQa：[...html.matchAll(/ko-fi/)] のように ... の後ろの html も替える（同じ行の html を全部そろえる）', /\[\.\.\.gameOwn\(html\)\.matchAll/.test(once) && /f = \(i\) => gameOwn\(html\)\.lastIndexOf/.test(once));
   ok('ownQa：言い方・Ko-fi の check と a11y を外す行だけ gameOwn(html) にし、ほかの check の html はそのまま', /!\/必ず\/\.test\(gameOwn\(html\) \+ gen\)/.test(once) && /\(gameOwn\(html\)\.match\(\/ko-fi/.test(once) && /const bad = gameOwn\(html\);/.test(once) && /check\("遊び方がある", html\.includes/.test(once));
   const def = once.split('\n').find((l) => l.startsWith('const gameOwn = '));
   const gameOwn = new Function(`return ${def.slice('const gameOwn = '.length, -1)}`)();

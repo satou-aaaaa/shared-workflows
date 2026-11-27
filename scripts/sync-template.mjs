@@ -361,7 +361,7 @@ export const ownQa = (qa) => {
   let lines = qa.split('\n'), hit = false;
   lines = lines.map((l) => {
     let x = l.replace(/html\.replace\(\/<!-- a11y:begin\[\\s\\S\]\*\?<!-- a11y:end -->\/, ""\)/g, () => { hit = true; return 'gameOwn(html)'; });
-    if (OWN_LINE.test(x)) x = x.replace(/(?<![\w.$"'`])html(?![\w$])(?!\s*[:=](?!=))/g, (m, i, t) => (t.slice(Math.max(0, i - 8), i) === 'gameOwn(' ? m : (hit = true, 'gameOwn(html)')));
+    if (OWN_LINE.test(x)) x = x.replace(/(?<![\w$"'`])(?:(?<=\.\.\.)|(?<!\.))html(?![\w$])(?!\s*[:=](?!=))/g, (m, i, t) => (t.slice(Math.max(0, i - 8), i) === 'gameOwn(' ? m : (hit = true, 'gameOwn(html)')));
     return x;
   });
   let out = lines.join('\n');
