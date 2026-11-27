@@ -100,6 +100,7 @@ karaburi-minogashi game
 kasane-zome game
 kaseki-ate game
 kashikari-kimari game
+kawagoe-1day game
 kawagoe-bousai app
 kawagoe-sanpo app
 kazoku-kigen game
