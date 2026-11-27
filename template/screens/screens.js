@@ -100,6 +100,9 @@
       if (all().length) return;
       for (const k of Object.keys(map || {})) if (typeof map[k] === "function") views.set(k, map[k]);
       // 何度呼んでもよい（ゲームの home() の最初で呼ぶ）。# を消すのは最初の1回だけ（開き直したらホームから。途中の回は続きから出る）
+      // 「戻る」で前の画面へ戻るとき（history.back）、ブラウザが前のスクロールの位置を後から当て直さないようにする。
+      // 当て直すと、ゲームが scrollTo(0, 0) したあとでホームが途中から出る（2026-11-27 しりとり最短。incidents/2026-11-27-help-button-pushed-content.md）
+      if (!homeFn) try { history.scrollRestoration = "manual"; } catch (e) { /* 古いブラウザ */ }
       if (!homeFn) { addEventListener("popstate", onPop); if (hashName() && !foreign()) try { history.replaceState(null, "", bare()); } catch (e) { /* 使えない */ } }
       homeFn = home;
     }

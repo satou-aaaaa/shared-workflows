@@ -164,6 +164,7 @@ satou さん「色覚異常や、ディスレクシアの人でも遊べるよ�
 - 切り替え（2026-11-22）：`sync-template.mjs` の `migrateCore` が、見やすさの設定のあるゲームへ game-core を入れ、決まった古い形（num・esc・buzz・読み上げの無い toast）を `Core.*` に替え、「感想を送る」を Googleフォームにする（Template sync が全ゲームへ PR）。形のちがう関数（`core:*` が残るもの）とはじめての案内はゲームごとに手で。
 - 保存の切り替え（同日）：`migrateStore` が、古い load()（保存の写しを手で合わせる形）のうち `scripts/store-legacy.mjs` の表にある形を `GameStore.load` に替える。表に足すのは `scripts/check-store-legacy.mjs` の3000組の読み比べで GameStore と同じ合わせ方だと分かった形だけ。
 - 版5（2026-11-27）：ページの上の右に「？ 遊び方」（`#core-help`）を置き、押すとゲームの `openHow()`（無ければ `dialog#howto`・`#f-how`）を開く。ゲームでは置かない・動かさない（U13）。このページの script のエラーで、ページの上に不具合の帯（`#core-err`）を出し、本人が「不具合を知らせる」を押したときだけ感想フォームが開く。エラーの文は保存も自動送信もしない。外へ自動で送る通知・遊んだ数の集計は作らない（外のサーバーへ送ると IP が必ず届くため。satou さん 2026-11-27「個人データ・個人情報をとらない」）。
+- 版9（2026-11-27）：「？」は 44px の丸。いつも空けるのはやめ、ホームで重なるときだけ要るぶん空ける。空けると1画面目のボタンが外へ出るホームと、ほかの画面（# の付く画面）では、重なるあいだ隠す（フッターの「遊び方」は残す）。Core.screens.route は「戻る」でスクロール位置を当て直さない。手写しの行を Core.* に替える写しは、ゲームの QA が `/…/.test(html)` で見ている行を替えない（`keepQaLines`。incidents/2026-11-27-help-button-pushed-content.md）
 - 暗い画面（見やすさの設定 v10、2026-11-27）：「画面の明るさ」（自動・明るい・暗い）。自動は端末のダークモードに合わせる。ゲームの色は書き直さない（a11y.html が :root の色の変数と決め打ちの明るい地を裏返し、足りない字の濃さを足す）。色を変えたくない所は `data-a11y-keepcolor`、canvas の色は `A11y.dark()` を見てゲームが変える。qa/a11y.mjs が「暗い画面」でも字の濃さ 4.5:1 を見る（91本で通ることを確かめて配った）。web.dev「prefers-color-scheme」・Chrome「Dark mode」
 - 全ゲームへ写す前：core.js・store.js を変えたら、手元のゲーム（なければ公開リポジトリを clone）で `node scripts/sync-template.mjs <ゲーム>` をかけて `node qa/run.mjs` を回す。ゲームごとの QA は言葉や形を禁じていることがある（例：数字の 188、行末が } のコメント）。見つけた決まりは `scripts/check-core.mjs` に足す。 `template/qa/core-check.mjs` を変えたら、qa/run.mjs から checkCore を呼ぶゲーム（例 shindo-yomi）で回す（呼ばないゲームでは足した検査が動かない）。Selftest の `scripts/check-core-qa.mjs` も作り物の画面で回す（incidents/2026-11-27-core-check-never-ran.md）。
 
@@ -214,4 +215,5 @@ game-dev.md の手順 A の各番号の元の全文。本体には動作だけ�
   - home() で `Kiroku.note(() => ({ s, tally, ach }))` を呼ぶ（sync-template の migrateKiroku が足す）。フッターに「成績」が出て、同じ端末で遊んだ全ゲームの成績が同じ形で見られる。
   - 遊び方が変わる更新をしたら、index.html に `<script type="application/json" id="game-news">[{"d":"YYYY-MM-DD","t":"変わったこと1文"}]</script>` を足す（新しいものを上に）。戻ってきた人に一度だけ出る。全ゲーム共通の知らせは kiroku.js の COMMON_NEWS。
   - 外へは何も送らない。保存は端末の `a11y-v1`（設定）・`kiroku-v1`（成績のまとめ）・`news-v1`（どこまで見たか）だけ。
+- ゲームの関数や QA を書きかえる写し（sync-template の migrate〜）を足したら、書きかえる所の形（正規表現が当たる書き方）を全ゲームで数え、形ごとに1本以上を手元で写して `node qa/run.mjs` を回してからマージする（多数派の見本だけで確かめない。incidents/2026-11-27-migrate-fs-qa-old-shape.md）。
 - 出典：WCAG 1.4.2 Audio Control・1.4.4 Resize Text・4.1.3 Status Messages、Game Accessibility Guidelines、Xbox Accessibility Guideline 105、Chrome の Web Audio の自動再生の決まり、厚生労働省「情報機器作業における労働衛生管理のためのガイドライン」（一連続作業 1 時間まで）。

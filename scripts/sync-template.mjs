@@ -106,6 +106,22 @@ const KOFI_LINE = /\$\{showKofi \? `<p class="note(?: kofi)?">([^、<`]{1,12})�
 const KOFI_FOOT = '<a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi で応援</a></footer>`';
 const swapKofi = (t) => t.replace(KOFI_LINE, (m, lead, what) => `\${showKofi ? Core.kofi(${JSON.stringify(lead)}, ${JSON.stringify(what)}) : ""}`).split(KOFI_FOOT).join('<a href="${Core.KOFI}" target="_blank" rel="noopener">Ko-fi で応援</a></footer>`');
 const swapLines = (t) => CORE_LINES.reduce((x, [a, b]) => x.replace(lineOf(a), (m, sp) => sp + b), t);
+// ゲームの QA が /…/.test(html) で手写しの行（buzz など）をそのまま見ているときは、その行を Core.* に替えない（替えると QA が落ちて配布が止まる。
+// 2026-11-27 todofuken-relay の「動きを減らす」の検査。incidents/2026-11-27-help-button-pushed-content.md）
+export const keepQaLines = (old, next, qa) => {
+  if (!qa) return next;
+  const res = [...qa.matchAll(/\/((?:\\.|\[(?:\\.|[^\]\\\n])*\]|[^/\\\n[])+)\/([a-z]*)\.test\(html\)/g)]
+    .map((m) => { try { return new RegExp(m[1], m[2].replace('g', '')); } catch { return null; } }).filter(Boolean);
+  let out = next;
+  for (const re of res) {
+    if (!re.test(old) || re.test(out)) continue;
+    for (const [a, b] of CORE_LINES) {
+      if (!re.test(a)) continue;
+      for (const m of old.matchAll(lineOf(a))) { const line = m[1] + b; const i = out.indexOf(line); if (i >= 0) out = out.slice(0, i) + m[0] + out.slice(i + line.length); }
+    }
+  }
+  return out;
+};
 export function migrateCore(html) {
   if (!/<\/head>/i.test(html) || !/<script/i.test(html)) return html;
   let next = html;
@@ -452,6 +468,7 @@ export function plan(dir) {
     if (KIROKU.test(next)) next = next.replace(KIROKU, () => kirokuBlock());
     if (A11Y.test(html)) next = migrateParts(next, 'index'); // カレンダー・実績の画面（template/parts/index。1字も同じものだけ）
     if (STORE.test(next)) next = next.replace(STORE, () => storeBlock());
+    if (has('qa/run.mjs')) next = keepQaLines(html, next, read('qa/run.mjs'));
     if (A11Y.test(html) || STORE.test(html) || CORE.test(html)) want('index.html', next, '見やすさの設定・保存の共通部品・game-core');
   }
   if (has('sw.js')) {
@@ -488,8 +505,14 @@ export function staleCount(root = join(T, '..')) {
 // ゲームごとに大きさを選び直す必要があった。ホームの3つのボタンは残し、押すと共通の設定（a11y-v1 の fs）を変える。
 // 前に選んだ大きさは A11y.fsFrom(FSKEY, 既定) で引き継ぐ。CSS の html.fs1〜3 は html.a11y-fs1〜3 にする。2回かけても同じ
 // QA が html の class「fs1〜3」を見ている所を「a11y-fs1〜3」にする（migrateFs と組。otsukai-memo・shokaki-yomi）
+// 前のゲームごとの値（〇〇-fs）を入れて試す所は、共通の値（a11y-v1 の fs）を消してから（共通の値があるとそちらが勝つ。kusuri-yomi「2.5 は大きいにもどす」）。
+// a11y-read を class で直に足して試す所は A11y.set を使う（共通の設定を変えると印を付け直すので、直に足した印は消える。otsukai-memo）。2026-11-27
+const FS_CLEAR = 'localStorage.setItem("a11y-v1", JSON.stringify({ ...JSON.parse(localStorage.getItem("a11y-v1") || "{}"), fs: undefined }))';
 export function migrateFsQa(qa) {
-  return qa.replace(/classList\.contains\("fs([123])"\)/g, 'classList.contains("a11y-fs$1")').replace(/\(await (\w+)\.reload\(\), await \1\.evaluate\(\(\) => document\.documentElement\.className\)\) === "fs([123])"/g, '(await $1.reload(), await $1.evaluate(() => document.documentElement.classList.contains("a11y-fs$2")))');
+  return qa
+    .replace(/=> localStorage\.setItem\("([\w-]+-fs)", (String\(fs\)|"[^"]*")\)/g, (m, k, v) => `=> (localStorage.setItem("${k}", ${v}), ${FS_CLEAR})`)
+    .replace(/document\.documentElement\.classList\.add\("a11y-read"\)/g, 'A11y.set("read", true)')
+    .replace(/document\.documentElement\.classList\.remove\("a11y-read"\)/g, 'A11y.set("read", false)').replace(/classList\.contains\("fs([123])"\)/g, 'classList.contains("a11y-fs$1")').replace(/\(await (\w+)\.reload\(\), await \1\.evaluate\(\(\) => document\.documentElement\.className\)\) === "fs([123])"/g, '(await $1.reload(), await $1.evaluate(() => document.documentElement.classList.contains("a11y-fs$2")))');
 }
 export function migrateFs(html) {
   if (!/\nfunction fsGet\(\) \{ try \{ const v = \+localStorage\.getItem\(FSKEY\);/.test(html) && !/\nfunction fsGet\(\) \{ if \(FSNOW\)/.test(html)) return html;
