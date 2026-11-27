@@ -29,6 +29,7 @@ dema-tashikame game
 denki-kairo game
 denkidai-ikura game
 dento-kogei game
+doko-oitsuku game
 doubutsu-nakama game
 dungeon-boardgame app
 ekisei-yomi game
@@ -47,6 +48,7 @@ gem-merchant-research app
 gensen-ikura game
 genso-kigo game
 gogen-suiri game
+gokaku-line game
 gurafu-minuki game
 gyosei-kigen game
 haigusha-ikura game
@@ -76,6 +78,7 @@ jintai-shikumi game
 jishin-ikura game
 jitensha-rule game
 jobun-tobatsu game
+jogen-noru game
 jotai-henka game
 kabu-news game
 kaden-anzen game
@@ -150,6 +153,7 @@ nedan-timemachine game
 nemuri-kotsu game
 nenkin-shikumi game
 nijushi-sekki game
+nukemichi-fusagi game
 okane-kihon game
 okurigana-dotchi game
 onpu-yomi game
