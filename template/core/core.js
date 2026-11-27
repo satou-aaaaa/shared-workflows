@@ -420,6 +420,13 @@
       e.preventDefault();
       open(a.getAttribute("data-share") || null);
     });
+    // 「共有」は2字なので、フッターの字が大きいと幅が 44px に足りない（2026-11-27 古いゲームの QA で見つけた）。押す所は 44px 以上（WCAG 2.5.8・ui-rules U1）
+    if (doc.head && doc.createElement) {
+      const st = doc.createElement("style");
+      st.id = "core-share-min";
+      st.textContent = "[data-share]{min-width:44px;justify-content:center;text-align:center}";
+      doc.head.appendChild(st);
+    }
     return { url, name, tags, tagged, links, copy, send, wire, open };
   })();
 
