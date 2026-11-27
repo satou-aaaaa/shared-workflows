@@ -24,7 +24,11 @@ export function templateFiles(dir = T) {
 // kiroku/・parts/ も同じ（index.html・data.js の kiroku:begin・part:<名前>:begin の印のあいだに写す部品）。
 // 2026-11-27 life-mikata #1 で kiroku/kiroku.js・parts/*.js が入りかけた（incidents/2026-11-27-new-game-kiroku-parts-files.md）。
 // 印で写す部品を template/ に足したら、ここにも足す（check-game-wip.mjs が sync-template.mjs の印と見比べる）
-export const SKIP = ['store/', 'core/', 'kiroku/', 'parts/'];
+// screens/ は game-core の Core.screens と同じ中身の、ゲーム以外（紹介ページ・Artifact）向けの単体の部品。ゲームには写さない
+// （2026-11-27 哲学シリーズの新作で毎回写り、手で消した。incidents/2026-11-27-core-check-hidden-coach-button.md）
+export const SKIP = ['store/', 'core/', 'kiroku/', 'parts/', 'screens/'];
+// ゲームへファイルのまま写すフォルダ。template/ の一番上にフォルダを足したら、ここか SKIP のどちらかに必ず足す（check-game-wip.mjs が見る）
+export const COPY_DIRS = ['.claude/', '.gemini/', '.github/', 'a11y/', 'qa/', 'scripts/'];
 
 export function scaffold(to) {
   const copied = [];
