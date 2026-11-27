@@ -11,7 +11,7 @@
 //   - 吹き出しのボタンは 44px 以上・名前がある・読み上げにも届く
 //   - 「案内を閉じる」でも Esc でも消え、読み直しても二度と出ない（「見た」はその場で残る）
 //   - solve で最後まで進めると吹き出しが消える
-//   - （版5から）ページの上の右に「？ 遊び方」があり、押すと遊び方が開く・押す所を隠さない・44px 以上
+//   - （版5から）ページの上の右に「？ 遊び方」があり、押すと遊び方が開く・押す所を隠さない・44px 以上（版9から、重なる画面では隠れる。そのときはフッターの入口を見る）
 //   - （版5から）このページの script のエラーで不具合の帯が出て、「不具合を知らせる」は押したときだけ開く感想フォームのリンク。自動では何も送らない
 // 止まったときに、どの段で何を待っていたかが1行目に出るようにする（ゲームの QA は1行目だけを残す。2026-11-22）
 export async function checkCore(o) {
@@ -103,11 +103,14 @@ async function coreSteps({ browser, url, check, solve, first = true, widths = [3
         const a = b.getBoundingClientRect();
         // 「？」の下に、ほかの押せる所が重なっていない（ページの上に場所を空けて置く。routines/ui-rules.md U1）
         const under = [...document.querySelectorAll("a[href],button,input,select,textarea,summary,[role=button],[tabindex]")].filter((e) => e !== b && !b.contains(e) && e.getClientRects().length && !e.closest("dialog:not([open]),[hidden]")).filter((e) => { const x = e.getBoundingClientRect(); return x.width > 0 && !(x.right <= a.left || x.left >= a.right || x.bottom <= a.top || x.top >= a.bottom); }).map((e) => (e.id ? "#" + e.id : e.tagName.toLowerCase()) + "「" + (e.getAttribute("aria-label") || e.textContent || "").trim().slice(0, 12) + "」");
-        return { w: a.width, h: a.height, right: innerWidth - a.right, top: a.top + scrollY, label: b.getAttribute("aria-label"), under };
+        const off = b.classList.contains("core-help-off") || getComputedStyle(b).visibility === "hidden";
+        return { w: a.width, h: a.height, right: innerWidth - a.right, top: a.top + scrollY, label: b.getAttribute("aria-label"), under: off ? [] : under, off, alt: !!document.getElementById("f-how") || !!document.querySelector("footer a, footer button") };
       });
       check(`「？ 遊び方」がページの上の右にある・名前がある・44px 以上（${w}px）`, !!r && r.w >= 44 && r.h >= 44 && r.right <= 40 && r.top <= 12 && !!r.label, JSON.stringify(r));
-      check(`「？ 遊び方」がほかの押せる所に重ならない（${w}px）`, !!r && r.under.length === 0, r ? r.under.join("・") : "");
-      if (r && r.w > 0) {
+      check(`「？ 遊び方」がほかの押せる所に重ならない（重なる画面では隠れる。${w}px）`, !!r && r.under.length === 0, r ? r.under.join("・") : "");
+      // 場所を空けられないホーム（1画面目のボタンを押し出してしまう）では隠れる。そのときもフッターなどに遊び方の入口がある（版9）
+      if (r && r.off) check(`「？ 遊び方」が隠れるときも、フッターに遊び方の入口がある（${w}px）`, r.alt, JSON.stringify(r));
+      if (r && r.w > 0 && !r.off) {
         await p.click("#core-help"); await p.waitForTimeout(250);
         check(`「？ 遊び方」を押すと遊び方が開く（${w}px）`, await p.locator("dialog[open]").count() >= 1);
       }

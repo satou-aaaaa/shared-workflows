@@ -81,6 +81,13 @@ ok(`${SRC} に HTML のコメント（<!-- -->）が無い（写しの区切り�
   ok('migrateCore：手で写した toast・untilNext・buzz・esc・num を Core.* にする（字下げは残す）', /\n  function toast\(t\) \{ Core\.toast\(t\); \}/.test(hown) && /return Core\.untilNext\(\)/.test(hown) && /const buzz = Core\.buzz;/.test(hown) && /const esc = Core\.esc;/.test(hown) && /^const num = Core\.num; \/\/ 共通部品 game-core（配列・true を数にしない #410）$/m.test(hown));
   ok('migrateCore：形のちがう toast（長さのちがうもの）は触らない', hown.includes('setTimeout(() => d.remove(), 1600); }'));
   ok('migrateCore：手で写した小部品の切り替えも、何度かけても同じ', migrateCore(h) === h);
+  // 2026-11-27 ゲームの QA が /…/.test(html) で見ている手写しの行は替えない（todofuken-relay の buzz で配布が止まった）
+  const { keepQaLines } = await import('./sync-template.mjs');
+  const qaSees = 'check("x", /const buzz = \\(n = 12\\) => \\{ if \\(calm\\(\\)\\) return;/.test(html));';
+  const buzzOld = '<head></head><script>\nconst buzz = (n = 12) => { if (calm()) return; try { navigator.vibrate && navigator.vibrate(n); } catch (e) {} }; // 振動\n</script>';
+  const bm = migrateCore(buzzOld);
+  ok('keepQaLines：ゲームの QA が見ている手写しの行は Core.* に替えない（ほかは替える）', keepQaLines(buzzOld, bm, qaSees).includes('if (calm()) return; try') && keepQaLines(buzzOld, bm, '').includes('const buzz = Core.buzz;') && keepQaLines(buzzOld, bm, 'check("y", /esc/.test(html));') === bm);
+  ok('Core.screens.route：「戻る」でブラウザが前のスクロール位置を当て直さない（scrollRestoration）', /history\.scrollRestoration = "manual"/.test(coreBlock()));
   // 2026-11-27 Ko-fi 応援の一文とフッターの応援先を Core.kofi・Core.KOFI にする（ことばはゲームのものを残す）
   const kofiPage = ['<head><!-- a11y:begin -->a<!-- a11y:end -->\n</head><body><script>',
     'const footer = () => `<footer><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi で応援</a></footer>`;',
