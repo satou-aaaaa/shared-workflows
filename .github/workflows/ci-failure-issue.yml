@@ -212,9 +212,11 @@ jobs:
             exit 1
           fi
           while IFS= read -r wf; do
-            # PR で動いた実行は飛ばす（main の結果ではない）
-            run=$(gh run list --workflow "$wf" --branch "$DEFAULT_BRANCH" --status completed --limit 20 \
-              --json conclusion,url,headSha,event,databaseId --jq '[.[] | select(.event | startswith("pull_request") | not)][0] // empty | [.conclusion, .url, .headSha, .event, .databaseId] | @tsv' 2>/dev/null) || run=""
+            # PR で動いた実行は飛ばす（main の結果ではない）。skipped・neutral など数えない結果も飛ばす。Auto merge は main では
+            # ほとんど skipped なので、いちばん新しい1件だけを見ると、失敗を再実行して緑にしても Issue が閉じなかった
+            # （2026-11-28 wazato-hantei #4。incidents/2026-11-28-qa-cal-month-end.md）
+            run=$(gh run list --workflow "$wf" --branch "$DEFAULT_BRANCH" --status completed --limit 50 \
+              --json conclusion,url,headSha,event,databaseId --jq '[.[] | select((.event | startswith("pull_request") | not) and (.conclusion | IN("failure", "success", "timed_out", "cancelled")))][0] // empty | [.conclusion, .url, .headSha, .event, .databaseId] | @tsv' 2>/dev/null) || run=""
             if [ -z "$run" ]; then echo "${wf}: main の実行が無い"; continue; fi
             IFS=$'\t' read -r c u s e id <<<"$run"
             if [ "$c" = "cancelled" ]; then c=$(timeout_or_cancelled "$id"); fi

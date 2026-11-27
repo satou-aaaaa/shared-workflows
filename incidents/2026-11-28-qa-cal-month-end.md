@@ -24,4 +24,5 @@
 - [x] 直す: 3本の QA で、日の月と今日の月がちがえば前の月を開いてから探す（setsuden-kotsu#32・mukashi-narabe#33・pikuto-yomi#25）。wazato-hantei の Auto merge は再実行。
 - [x] 見つける: `scripts/game-patterns.mjs` の `calMonth` を足し、`scripts/drift-check.mjs` が「時計を進めたあと、前の月を開かずにカレンダーの日を探す」行を qa:cal-month として週次まとめに出す（この PR。`scripts/check-game-patterns.mjs` で形を確かめる）
 - [x] 弱める: `.github/workflows/automerge.yml` の読むだけの gh api のやり直しを5回・あいだ10〜60秒にし、時間切れを10分にした（この PR）
+- [x] 防ぐ: CI失敗の Issue の見回り（`.github/workflows/ci-failure-issue.yml`）が、skipped など数えない実行を飛ばし、いちばん新しい数える実行で開け閉めする。Auto merge は main ではほとんど skipped で、失敗を再実行して緑にしても wazato-hantei #4 が閉じなかった（この PR）
 - [ ] 防ぐ: drift-check を全ゲームで回し、qa:cal-month に出たゲームを同じ日に直す（担当: 監督の巡回、期限: 2026-11-30）
