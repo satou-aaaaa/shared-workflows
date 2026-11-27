@@ -5,7 +5,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PARTS, partBody, migrateParts } from './sync-template.mjs';
+import { PARTS, partBody, partOld, migrateParts } from './sync-template.mjs';
 
 const T = join(dirname(fileURLToPath(import.meta.url)), '..', 'template', 'parts');
 const errors = [];
@@ -48,6 +48,15 @@ for (const [kind, names] of Object.entries(PARTS)) for (const n of names) {
   const mi = migrateParts(idx, 'index');
   ok('migrateParts：index の部品（カレンダー・実績）にも印を付け、外すと元どおり', PARTS.index.every((n) => mi.includes(`// part:${n}:begin`)) && strip(mi) === idx && migrateParts(mi, 'index') === mi);
 }
+
+// 前の版（template/parts/<種類>/old/）：まだ印の無いゲームの前の版の写しにも印を付け、新しい版に替える（直したら届かなくなるのを防ぐ。2026-11-27 cal の「5問」）
+for (const [kind, names] of Object.entries(PARTS)) for (const n of names) for (const old of partOld(kind, n)) {
+  ok(`template/parts/${kind}/old/${n}.*.js が今の版とちがう（同じなら置かない）`, old !== partBody(kind, n));
+  const t = `<script>\n${old}\n</script>\n`;
+  const m = migrateParts(t, kind);
+  ok(`migrateParts：${n} の前の版の写しに印を付け、今の版に替える`, m.includes(`// part:${n}:begin`) && m.includes(partBody(kind, n)) && !m.includes(old));
+}
+ok('カレンダーの案内は問題の数を決めつけない（ゲームごとに出題数がちがう。kawagoe-1day #1 の CodeRabbit）', !/その日の\d+問/.test(partBody('index', 'cal')));
 
 if (errors.length) { for (const e of errors) console.error(`✗ ${e}`); process.exit(1); }
 console.log('✓ 部品（template/parts/）');
