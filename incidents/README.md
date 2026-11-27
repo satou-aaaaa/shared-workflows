@@ -80,6 +80,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-11-27 | 公開・CI | [全ゲームへ配る「？ 遊び方」などの写しで、8本のゲームの QA が落ちて配布が止まった](2026-11-27-help-button-pushed-content.md) | 対策済み |
 | 2026-11-27 | 検査の見逃し | [新作をひな形から始めると kiroku/・parts/ がファイルで入り、drift-check が全ゲームに esc の手写しを出した](2026-11-27-new-game-kiroku-parts-files.md) | 対策済み |
 | 2026-11-27 | 公開・CI | [写した共通部品の言葉や Ko-fi の置きかえを、古いゲームの QA が数えて配布が止まった](2026-11-27-template-words-tripped-game-qa.md) | 対策済み |
 | 2026-11-27 | 公開・CI | [見やすさの設定 v10 のコメントが、写した先のゲームの QA にかかって配布が止まった](2026-11-27-template-comment-tripped-game-qa.md) | 対策済み |

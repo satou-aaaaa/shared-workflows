@@ -106,6 +106,22 @@ const KOFI_LINE = /\$\{showKofi \? `<p class="note(?: kofi)?">([^、<`]{1,12})�
 const KOFI_FOOT = '<a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi で応援</a></footer>`';
 const swapKofi = (t) => t.replace(KOFI_LINE, (m, lead, what) => `\${showKofi ? Core.kofi(${JSON.stringify(lead)}, ${JSON.stringify(what)}) : ""}`).split(KOFI_FOOT).join('<a href="${Core.KOFI}" target="_blank" rel="noopener">Ko-fi で応援</a></footer>`');
 const swapLines = (t) => CORE_LINES.reduce((x, [a, b]) => x.replace(lineOf(a), (m, sp) => sp + b), t);
+// ゲームの QA が /…/.test(html) で手写しの行（buzz など）をそのまま見ているときは、その行を Core.* に替えない（替えると QA が落ちて配布が止まる。
+// 2026-11-27 todofuken-relay の「動きを減らす」の検査。incidents/2026-11-27-help-button-pushed-content.md）
+export const keepQaLines = (old, next, qa) => {
+  if (!qa) return next;
+  const res = [...qa.matchAll(/\/((?:\\.|\[(?:\\.|[^\]\\\n])*\]|[^/\\\n[])+)\/([a-z]*)\.test\(html\)/g)]
+    .map((m) => { try { return new RegExp(m[1], m[2].replace('g', '')); } catch { return null; } }).filter(Boolean);
+  let out = next;
+  for (const re of res) {
+    if (!re.test(old) || re.test(out)) continue;
+    for (const [a, b] of CORE_LINES) {
+      if (!re.test(a)) continue;
+      for (const m of old.matchAll(lineOf(a))) { const line = m[1] + b; const i = out.indexOf(line); if (i >= 0) out = out.slice(0, i) + m[0] + out.slice(i + line.length); }
+    }
+  }
+  return out;
+};
 export function migrateCore(html) {
   if (!/<\/head>/i.test(html) || !/<script/i.test(html)) return html;
   let next = html;
@@ -452,6 +468,7 @@ export function plan(dir) {
     if (KIROKU.test(next)) next = next.replace(KIROKU, () => kirokuBlock());
     if (A11Y.test(html)) next = migrateParts(next, 'index'); // カレンダー・実績の画面（template/parts/index。1字も同じものだけ）
     if (STORE.test(next)) next = next.replace(STORE, () => storeBlock());
+    if (has('qa/run.mjs')) next = keepQaLines(html, next, read('qa/run.mjs'));
     if (A11Y.test(html) || STORE.test(html) || CORE.test(html)) want('index.html', next, '見やすさの設定・保存の共通部品・game-core');
   }
   if (has('sw.js')) {

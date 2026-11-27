@@ -39,6 +39,22 @@ try {
     if (!good) errors.push(name);
     if (!mustFail.length && results.length < 10) { console.log(`✗ ${name}：検査の数が少ない（${results.length}。版5の検査が動いていない）`); errors.push(name); }
   }
+  // 「？」が1画面目に入っている押せる所を画面の外へ押し出さない（2026-11-27 版8 はいつも 52px 空け、部首たしざんなど4本の QA が落ちた。
+  // incidents/2026-11-27-help-button-pushed-content.md）。右上に押せる所があり、1画面目の下ぎりぎりにボタンがあるホーム
+  {
+    const tight = page().replace('<h1>作り物のゲーム</h1>', '<button type="button" id="gear" style="position:absolute;top:6px;right:6px;width:44px;height:44px">⚙</button><h1>作り物のゲーム</h1>')
+      .replace('<button type="button" id="go">今日の5問</button>', '<button type="button" id="go" style="margin-top:430px">今日の5問</button>');
+    const ctx = await browser.newContext({ viewport: { width: 360, height: 640 } });
+    await ctx.route('https://core-qa.test/', (r) => r.fulfill({ contentType: 'text/html; charset=utf-8', body: tight }));
+    const pg = await ctx.newPage(); await pg.goto('https://core-qa.test/'); await pg.waitForTimeout(400);
+    const t = await pg.evaluate(() => { const g = document.getElementById('go').getBoundingClientRect(), b = document.getElementById('core-help'); const hb = b.getBoundingClientRect(), gr = document.getElementById('gear').getBoundingClientRect();
+      const off = b.classList.contains('core-help-off'); const over = !(hb.right <= gr.left || hb.left >= gr.right || hb.bottom <= gr.top || hb.top >= gr.bottom);
+      return { goIn: g.bottom <= innerHeight, off, over }; });
+    const good = t.goIn && (t.off || !t.over);
+    console.log(`${good ? '✓' : '✗'} 「？」が1画面目のボタンを外へ押し出さず、右上の押せる所にも重ならない：${JSON.stringify(t)}`);
+    if (!good) errors.push('「？」の置き方');
+    await ctx.close();
+  }
 } finally { await browser.close(); }
 if (errors.length) { console.error(`✗ template/qa/core-check.mjs の検査がおかしい: ${errors.join('・')}`); process.exit(1); }
 console.log('✓ template/qa/core-check.mjs は、正しい画面で通り、壊した画面で落ちる');
