@@ -77,6 +77,21 @@ export function todayOnly(qa) {
   return /\.clock\.setFixedTime\(/.test(s) && /Date\.now\(\)/.test(s) && !/\bQA_(?:DATE|SHIFT_DAYS)\b/.test(s);
 }
 
+// calMonth：時計を何日か進めた QA が、カレンダーの日（.cal …[data-k=…]）を探す・押すのに、その前で前の月を開く（#prev・#pm）か
+// 月をくらべる（slice(0, 7)）所が無い行の番号（drift-check の qa:cal-month）。月末の数日だけ、進めた今日が次の月になり、
+// いちばん近い取りこぼした日が前の月のまま見つからずに落ちる（2026-11-22 rosen-hitofude、2026-11-28 setsuden-kotsu・mukashi-narabe・pikuto-yomi。
+// incidents/2026-11-28-qa-cal-month-end.md）
+export function calMonth(qa) {
+  const s = stripComments(qa), out = [];
+  if (!/\d\s*\*\s*864e5/.test(s)) return out;
+  const re = /(?:click|locator)\(\s*`[^`]*\.cal\b[^`]*data-k=/g;
+  let m;
+  while ((m = re.exec(s))) {
+    const before = s.slice(Math.max(0, m.index - 500), m.index);
+    if (!/["'`]#(?:prev|pm)\b|前の月|slice\(0,\s*7\)/.test(before)) out.push(s.slice(0, m.index).split('\n').length);
+  }
+  return out;
+}
 // waitCounted：回数で区切るくり返し（for (let k = 0; k < N; k++)）の中に、待つだけの回 { await p.waitForTimeout(…); continue; } があり、時間（Date.now()）で区切っていない所の行番号（drift-check の qa:wait-count）
 // 2026-11-11 yarikuri-shotengai #4：店主の番を待つ回まで80回に数え、遅い CI で増築できる日まで進まずに落ちた（incidents/2026-11-11-qa-loop-counts-waits.md）
 export function waitCounted(qa) {

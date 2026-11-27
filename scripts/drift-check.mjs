@@ -49,7 +49,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formProblems } from './check-issue-forms.mjs';
 import { readRepos, repoNames } from './repos.mjs';
-import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted, playerBugs, coreCopies, heightRaw, todayOnly, copyWordHits } from './game-patterns.mjs';
+import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted, playerBugs, coreCopies, heightRaw, todayOnly, calMonth, copyWordHits } from './game-patterns.mjs';
 import { bareUrls, linkFiles, checkedMd } from './link-text.mjs';
 
 const OWNER = process.env.OWNER || 'satou-aaaaa';
@@ -332,6 +332,8 @@ const results = await pool(REPOS, 4, async (r) => {
       if (heightRaw(qa)) flag('qa:height-raw', 'qa/run.mjs が押せる所の高さを丸めずに 44 とくらべている（出てくる動きの途中で 43.98… と測れ、ときどきだけ落ちる。Math.round(…height) < 44 にする。node scripts/sync-template.mjs が書きかえる。incidents/2026-11-17-qa-44px-subpixel.md）');
       const cw = copyWordHits(qa, CORE_TEXTS);
       if (cw.length) flag('qa:copy-words', `qa/run.mjs の「写し元の言葉が残っていない」検査が共通部品の文にかかる（${cw.map(([k, w]) => `${k}「${w}」`).join('・')}。共通部品を写す PR が QA で止まる。共通部品の言葉を変えるか、検査を「写し元」だけに絞る。incidents/2026-11-22-core-text-tripped-game-qa.md）`);
+      const cm = calMonth(qa);
+      if (cm.length) flag('qa:cal-month', `qa/run.mjs の ${cm.join('・')} 行目が、時計を進めたあとカレンダーの日を探すのに前の月を開いていない（月末の数日だけ、取りこぼした日が前の月になって落ちる。日の月と今日の月をくらべ、ちがえば #prev（#pm）を押してから探す。incidents/2026-11-28-qa-cal-month-end.md）`);
       if (todayOnly(qa)) flag('qa:today-only', 'qa/run.mjs が時計を今日に止めるのに、日付を変える口（QA_DATE か QA_SHIFT_DAYS）が無い（今日の問題でだけ落ちた QA を、翌日に手元で再現できない。routines/game-dev-detail.md の QA の行。incidents/2026-11-18-qa-passes-only-some-days.md）');
       if (lit) flag('qa:literal-id', `qa/run.mjs の例外を待つ検査に、問題 id を文字で書いている「${lit[0].slice(-24)}」（G.POOL などデータから選ぶ。routines/game-dev.md の QA の行）`);
     }
