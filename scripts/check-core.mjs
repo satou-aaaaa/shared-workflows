@@ -13,6 +13,14 @@ const src = readFileSync(SRC, 'utf8');
 ok(`${SRC} に「共通部品の版: N」の行がある`, /共通部品の版:\s*\d+/.test(src));
 const code = src.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
 ok(`${SRC} が外へ通信しない`, !/\bfetch\(|XMLHttpRequest|WebSocket|sendBeacon|\bimport\(|EventSource/.test(code));
+{
+  // 写す部品の行が、ゲームの QA の「一行の式の途中に // のコメントを置いていない」（/;\s*\/\/[^\n]*\}\s*$/）にかからない。
+  // 2026-11-27 a11y.html v10 のコメントが「}」で終わり、写した 50 本近くの QA が落ちて配布が止まった（incidents/2026-11-27-template-comment-tripped-game-qa.md）
+  const { readdirSync, statSync } = await import('node:fs');
+  const walk = (d) => readdirSync(d).flatMap((n) => { const f = `${d}/${n}`; return statSync(f).isDirectory() ? (n === '.github' ? [] : walk(f)) : [f]; });
+  const bad = walk('template').filter((f) => /\.(js|html|mjs)$/.test(f) && !f.includes('/qa/')).flatMap((f) => readFileSync(f, 'utf8').split('\n').map((l, i) => [f, i + 1, l]).filter(([, , l]) => /;\s*\/\/[^\n]*\}\s*$/.test(l)).map(([f, i]) => `${f}:${i}`));
+  ok(`ひな形の写す部品に「; // …}」で終わる行が無い（ゲームの QA が式の途中のコメントと見て落とす）${bad.length ? '：' + bad.join(', ') : ''}`, bad.length === 0);
+}
 ok(`${SRC} に「小江戸ゲーム部」が無い（ゲームにサークル名を出さない。satou さん 2026-11-24。共有のハッシュタグにも入れない）`, !src.includes('小江戸ゲーム部'));
 ok(`${SRC} に Math.random が無い（ゲームの QA が「乱数は練習・とことんだけ」を index.html の中の数で見ている）`, !/Math\.random/.test(code));
 ok(`${SRC} に </script> が無い（index.html に写すと途中で切れる）`, !/<\/script/i.test(src));
