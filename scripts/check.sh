@@ -46,5 +46,8 @@ node scripts/freshness.mjs --self-test
 node scripts/freshness.mjs --lint
 # Issue の重なりを見るのに検索（--search）を使わない。索引が遅れて、閉じた・作ったばかりの Issue を取りちがえる（incidents/2026-11-05-ci-time-report-missing-repos.md）
 if grep -rn 'gh issue list.*-[-]search' .github/workflows template/.github/workflows; then echo "✗ Issue の一覧で検索の索引を使わない（--json と --jq で題を見る）" >&2; exit 1; fi
+# apt の取り置きを dpkg -i で入れるときは --auto-deconfigure を付ける。名前の順に入れるので、新しい -data が入れ済みの古い本体を Breaks で断り、
+# 半端な状態で apt まで止まる（incidents/2026-11-27-qa-apt-keep-breaks-order.md）
+if grep -rnE 'sudo[[:space:]]+dpkg[[:space:]]+-i[[:space:]]' .github/workflows template/.github/workflows | grep -v -- '--auto-deconfigure'; then echo "✗ dpkg -i には --auto-deconfigure を付ける（取り置きの .deb の入れる順で止まらないように）" >&2; exit 1; fi
 bash scripts/check-setup-template.sh
 echo "✓ 確認が通った"
