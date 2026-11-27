@@ -177,7 +177,8 @@ jobs:
             fi
             [ "$(jq -r .draft <<<"$info")" = false ] || why="${why:-下書き}"
             st=$(jq -r .mergeable_state <<<"$info")
-            if [ -z "$why" ] && [ "$st" != clean ] && [ "$st" != unstable ]; then why="ぶつかり・待ち（$st）"; fi
+            # blocked（必須の検査が通っていない）は、下で検査を見てから理由を書く（QA の ❌ が「ぶつかり・待ち」に隠れていた。incidents/2026-11-27-template-comment-tripped-game-qa.md）
+            if [ -z "$why" ] && [ "$st" != clean ] && [ "$st" != unstable ] && [ "$st" != blocked ]; then why="ぶつかり・待ち（$st）"; fi
             sha=$(jq -r .head.sha <<<"$info")
             if [ -z "$why" ] && gh api "repos/$OWNER/$r/pulls/$pr/files?per_page=100" --jq '.[].filename' | grep -q '^\.github/'; then why='.github/ を変える'; fi
             if [ -z "$why" ]; then
@@ -187,7 +188,8 @@ jobs:
               qa=$(jq '[.[] | select((.name | test("(^|/ )qa$"; "i")) and .conclusion == "success")] | length' <<<"$runs")
               if [ "$pending" -gt 0 ]; then why='検査の途中'; waiting=$((waiting+1))
               elif [ -n "$bad" ]; then why="検査が落ちた（$bad）"
-              elif [ "$qa" -eq 0 ]; then why='QA の ✅ が無い'; fi
+              elif [ "$qa" -eq 0 ]; then why='QA の ✅ が無い'
+              elif [ "$st" = blocked ]; then why='ぶつかり・待ち（blocked）'; fi
             fi
             if [ -z "$why" ] && jq -e '.labels[].name | select(. == "自動マージしない")' <<<"$info" >/dev/null; then
               by=$(gh api "repos/$OWNER/$r/issues/$pr/events?per_page=100" --jq '[.[] | select(.event == "labeled" and .label.name == "自動マージしない") | .actor.login] | unique | join(",")')
