@@ -1,6 +1,6 @@
 // ゲームの作りの見分け（scripts/game-patterns.mjs）が、事故の形を見つけ、直した形・コメントに残った古い形では出さないかを確かめる（Lint）
 // depth:*（depth.js を写したのにつないでいない）・hint:cut-moves（ヒント2で消した選び肢が戻る）・hint:left-fixed（のこりの数が決まった数）・stars:role（星の表示が読まれない・色だけで分ける）・qa:url-includes（URL を includes で探して CodeQL が赤）
-import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted, playerBugs, heightRaw, roundSizes, todayOnly, copyWordHits } from './game-patterns.mjs';
+import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted, playerBugs, coreCopies, heightRaw, roundSizes, todayOnly, copyWordHits } from './game-patterns.mjs';
 
 const cases = [
   ['事故の形（1行・left.length - 1）', true, 'const cutOf = () => { if (cur.hints < 2) return []; const left = P.opts.map((_, i) => i).filter((i) => i !== P.ans && !cur.wrong.includes(i)); return left.slice(0, Math.max(0, left.length - 1)); };'],
@@ -208,4 +208,14 @@ console.log('✓ hint:cut-moves・hint:left-fixed・stars:role・qa:url-includes
   const ok3 = copyWordHits(bad, real).length === 0;
   console.log(`${ok1 && ok2 && ok3 ? '✓' : '✗'} copyWordHits：とじるを見つけ・写し元でない検査は見ず・いまの core は「とじる」を使わない`);
   if (!(ok1 && ok2 && ok3)) process.exitCode = 1;
+}
+
+{ // 共通部品の写し（kiroku・part）の中の esc などは手の写しと数えない（2026-11-27 新作6本で kiroku の const esc を数えた）
+  const kiroku = '<!-- kiroku:begin -->\n<script>const esc = (t) => String(t);</script>\n<!-- kiroku:end -->';
+  const part = '// part:cal:begin\nfunction toast(m) { return m; }\n// part:cal:end';
+  const own = 'function esc(t) { return t; }';
+  const ok1 = coreCopies(kiroku + part).length === 0;
+  const ok2 = coreCopies(kiroku + own).includes('esc');
+  console.log(`${ok1 && ok2 ? '✓' : '✗'} coreCopies：kiroku・part の写しの中は数えず、外の手の写しは見つける`);
+  if (!(ok1 && ok2)) process.exitCode = 1;
 }

@@ -80,6 +80,7 @@ Lint（`scripts/check-incidents.mjs`）が、見出し・種類・対策の形�
 
 | 日付 | 種類 | 何が起きたか | 状態 |
 | --- | --- | --- | --- |
+| 2026-11-27 | 検査の見逃し | [新作が kiroku/・parts/ をファイルで写し、drift-check が kiroku の esc を「手の写し」と数えた](2026-11-27-new-game-kiroku-parts-files.md) | 対策済み |
 | 2026-11-27 | 公開・CI | [見やすさの設定 v10 のコメントが、写した先のゲームの QA にかかって配布が止まった](2026-11-27-template-comment-tripped-game-qa.md) | 対策済み |
 | 2026-11-27 | 公開・CI | [ゲームの QA が apt の取り置きを入れる順で止まり、Link check は相手のサーバーの 503 で赤くなった](2026-11-27-qa-apt-keep-breaks-order.md) | 対策済み |
 | 2026-11-27 | 検査の見逃し | [カレンダー・実績の画面と決まった乱数を、多くのゲームが手で写して持っていた](2026-11-27-parts-hand-copied.md) | 対策済み |

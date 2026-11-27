@@ -93,6 +93,7 @@ ok(readFileSync(join(dir, 'AGENTS.md'), 'utf8') === 'もとから', 'もうあ�
 ok(r.copied.length === templateFiles().filter((f) => !SKIP.some((d) => f.startsWith(d))).length - 1, 'ひな形を全部写していない');
 ok(!existsSync(join(dir, 'core', 'core.js')), 'core/core.js をファイルで写した（index.html の印のあいだにだけ写す。incidents/2026-11-22-game-wip-non-game-topics.md）');
 ok(!existsSync(join(dir, 'store', 'store.js')), 'store/store.js をファイルで写した（index.html の印のあいだにだけ写す。incidents/2026-11-17-new-game-store-file.md）');
+ok(!existsSync(join(dir, 'kiroku')) && !existsSync(join(dir, 'parts')), 'kiroku/・parts/ をファイルで写した（index.html・data.js の印のあいだにだけ写す。incidents/2026-11-27-new-game-kiroku-parts-files.md）');
 ok(TODO.some((t) => /store:begin/.test(t) && /GameStore\.load/.test(t)), '新作の「このあと書くもの」に保存の共通部品（store の印・GameStore.load）が無い');
 for (const f of ['.github/workflows/qa.yml', 'transfer.js', 'depth.js', 'qa/depth-check.mjs', 'sw.js', 'qa/a11y.mjs', 'scripts/setup.sh']) ok(existsSync(join(dir, f)), `${f} を写していない`);
 
