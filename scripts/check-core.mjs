@@ -21,6 +21,19 @@ ok(`${SRC} が外へ通信しない`, !/\bfetch\(|XMLHttpRequest|WebSocket|sendB
   const bad = walk('template').filter((f) => /\.(js|html|mjs)$/.test(f) && !f.includes('/qa/')).flatMap((f) => readFileSync(f, 'utf8').split('\n').map((l, i) => [f, i + 1, l]).filter(([, , l]) => /;\s*\/\/[^\n]*\}\s*$/.test(l)).map(([f, i]) => `${f}:${i}`));
   ok(`ひな形の写す部品に「; // …}」で終わる行が無い（ゲームの QA が式の途中のコメントと見て落とす）${bad.length ? '：' + bad.join(', ') : ''}`, bad.length === 0);
 }
+{
+  // index.html に写す部品（core・kiroku・store・screens・a11y・parts）に、ゲームの QA が「入れない言葉」として探す言葉を書かない。
+  // 2026-11-27 core のコメントの「必ず」「新しいタブで開く」や kiroku の KEY の行（gitleaks:allow 無し）で、古いゲーム 20 本近くの QA が落ちて配布が止まった
+  // （ゲームは「言い方」「🎫・…すると開く」を、ページの outerHTML や index.html 全体で見る。incidents/2026-11-27-template-words-tripped-game-qa.md）
+  const { readdirSync, statSync } = await import('node:fs');
+  const walk = (d) => readdirSync(d).flatMap((n) => { const f = `${d}/${n}`; return statSync(f).isDirectory() ? walk(f) : [f]; });
+  const files = ['template/core', 'template/kiroku', 'template/store', 'template/screens', 'template/a11y', 'template/parts'].flatMap(walk).filter((f) => /\.(js|html)$/.test(f));
+  const NG = /で開く|すると開く|🎫|チケット|解放|必ず|絶対|確実に|もうかる|ライフ|スタミナ/;
+  const words = files.flatMap((f) => readFileSync(f, 'utf8').split('\n').map((l, i) => [f, i + 1, l]).filter(([, , l]) => NG.test(l)).map(([f, i, l]) => `${f}:${i}（${l.match(NG)[0]}）`));
+  ok(`写す部品に、ゲームの QA が探す言葉（必ず・絶対・…で開く・🎫 など）が無い${words.length ? '：' + words.join(', ') : ''}`, words.length === 0);
+  const keys = files.flatMap((f) => readFileSync(f, 'utf8').split('\n').map((l, i) => [f, i + 1, l]).filter(([, , l]) => /(?:\bKEY = |data-keys=)"[a-z0-9-]+-v\d+"/.test(l) && !/gitleaks:allow/.test(l) && !f.includes('a11y')).map(([f, i]) => `${f}:${i}`));
+  ok(`写す部品の記録の名前の行に gitleaks:allow がある（ゲームの QA と Secret scan が鍵とまちがえない）${keys.length ? '：' + keys.join(', ') : ''}`, keys.length === 0);
+}
 ok(`${SRC} に「小江戸ゲーム部」が無い（ゲームにサークル名を出さない。satou さん 2026-11-24。共有のハッシュタグにも入れない）`, !src.includes('小江戸ゲーム部'));
 ok(`${SRC} に Math.random が無い（ゲームの QA が「乱数は練習・とことんだけ」を index.html の中の数で見ている）`, !/Math\.random/.test(code));
 ok(`${SRC} に </script> が無い（index.html に写すと途中で切れる）`, !/<\/script/i.test(src));
@@ -230,6 +243,28 @@ ok('Core.coach に start・stop・active がある', ['start', 'stop', 'leave', 
   ok('共有：wire が #toX・#toLine のリンクと #copy・#share の押したときをつなぐ（自分で押して開くリンク）', b.toX.href.startsWith('https://x.com/intent/tweet?text=') && b.toX.rel === 'noopener' && b.toLine.href.startsWith('https://line.me/R/share?text=') && typeof b.copy.onclick === 'function' && typeof b.share.onclick === 'function');
   ctx.Core.share.wire('x', { querySelector: () => null });
   ok('共有：ボタンの無い画面で wire しても止まらない', true);
+}
+
+{
+  // ゲームの QA の「写し元・言い方・Ko-fi・🎫」の検査は、ひな形の写しを外したゲームの言葉だけを見る（ownQa。2026-11-27）
+  const { ownQa } = await import('./sync-template.mjs');
+  const qa = [
+    'import path from "node:path";',
+    'const html = readFileSync(path.join(root, "index.html"), "utf8"), gen = "";',
+    'check("言い方：「必ず」と言い切らない", !/必ず/.test(html + gen));',
+    'check("Ko-fi は2か所", (html.match(/ko-fi\\.com/g) || []).length === 2);',
+    'const bad = html.replace(/<!-- a11y:begin[\\s\\S]*?<!-- a11y:end -->/, "");',
+    'check("遊び方がある", html.includes("<!-- a11y:begin"));',
+  ].join('\n');
+  const once = ownQa(qa);
+  ok('ownQa：何度かけても同じ', ownQa(once) === once);
+  ok('ownQa：言い方・Ko-fi の check と a11y を外す行だけ gameOwn(html) にし、ほかの check の html はそのまま', /!\/必ず\/\.test\(gameOwn\(html\) \+ gen\)/.test(once) && /\(gameOwn\(html\)\.match\(\/ko-fi/.test(once) && /const bad = gameOwn\(html\);/.test(once) && /check\("遊び方がある", html\.includes/.test(once));
+  const def = once.split('\n').find((l) => l.startsWith('const gameOwn = '));
+  const gameOwn = new Function(`return ${def.slice('const gameOwn = '.length, -1)}`)();
+  const page = '<!-- core:begin -->必ず ko-fi.com/satouaaaaa<!-- core:end -->\n<footer><a href="${Core.KOFI}">Ko-fi</a></footer>\n${showKofi ? Core.kofi("遊んでくれてありがとう", "次のゲームづくり") : ""}';
+  const own = gameOwn(page);
+  ok('gameOwn：写しの中の言葉を外し、Core.KOFI・Core.kofi を写す前の形にもどす（Ko-fi は2か所）', !own.includes('必ず') && (own.match(/ko-fi\.com/g) || []).length === 2 && /showKofi \? `<p class="note kofi">遊んでくれてありがとう、<a href="https:\/\/ko-fi\.com\/satouaaaaa"/.test(own));
+  ok('ownQa：const html = … の無い QA は替えない', ownQa('check("言い方", !/必ず/.test(html));') === 'check("言い方", !/必ず/.test(html));');
 }
 
 if (errors.length) { for (const e of errors) console.error(`✗ ${e}`); process.exit(1); }

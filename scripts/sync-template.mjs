@@ -347,6 +347,27 @@ export function migrateShare(html) {
   return parts.join('');
 }
 // ゲームの QA が X のリンクを twitter.com の形だけで見ている所を、公式の x.com も通すようにする（Core.share は x.com/intent/tweet。docs.x.com「Web Intent」）
+// ゲームの QA の「写し元の言葉」「言い方」「Ko-fi は2か所」「🎫・チケット」は、そのゲームが書いた所だけを見る（2026-11-27）。
+// ひな形の写し（<!-- core:begin〜end --> など）の言葉や、Core.kofi・Core.KOFI に置きかえた Ko-fi の行で、古いゲーム 30 本近くの QA が落ちて配布が止まったため。
+// その check の行（と Ko-fi を数える行）の html を gameOwn(html) にし、gameOwn を const html = … の次の行に足す。何度かけても同じ。
+const OWN_LINE = /check\("(?:写し元|言い方|Ko-fi|[^"]*🎫|[^"]*チケット)|matchAll\(\/ko-fi/;
+const OWN_FN = [
+  '// ひな形の写し（<!-- 名前:begin〜end -->）はゲームの言葉ではないので外し、Core.kofi・Core.KOFI は写す前の形にもどして見る（shared-workflows の sync-template が足した）',
+  'const gameOwn = (t) => t.replace(/<!-- ([a-z0-9-]+):begin[\\s\\S]*?<!-- \\1:end -->/g, "").split("${Core.KOFI}").join("https://ko-fi.com/satouaaaaa").replace(/Core\\.kofi\\(("(?:[^"\\\\]|\\\\.)*"), ("(?:[^"\\\\]|\\\\.)*")\\)/g, (m, a, b) => "`<p class=\\"note kofi\\">" + JSON.parse(a) + "、<a href=\\"https://ko-fi.com/satouaaaaa\\" target=\\"_blank\\" rel=\\"noopener\\">Ko-fi でコーヒー1杯の応援</a>をもらえると、" + JSON.parse(b) + "の励みになります（任意・遊ぶのはずっと無料）。</p>`");',
+].join('\n');
+export const ownQa = (qa) => {
+  const at = qa.match(/^const html = readFileSync\(path\.join\(root, "index\.html"\), "utf8"\)[^\n]*\n/m);
+  if (!at) return qa;
+  let lines = qa.split('\n'), hit = false;
+  lines = lines.map((l) => {
+    let x = l.replace(/html\.replace\(\/<!-- a11y:begin\[\\s\\S\]\*\?<!-- a11y:end -->\/, ""\)/g, () => { hit = true; return 'gameOwn(html)'; });
+    if (OWN_LINE.test(x)) x = x.replace(/(?<![\w.$"'`])html(?![\w$])(?!\s*[:=](?!=))/g, (m, i, t) => (t.slice(Math.max(0, i - 8), i) === 'gameOwn(' ? m : (hit = true, 'gameOwn(html)')));
+    return x;
+  });
+  let out = lines.join('\n');
+  if (hit && !out.includes('const gameOwn = ')) out = out.replace(at[0], () => `${at[0]}${OWN_FN}\n`);
+  return out;
+};
 export const shareQa = (qa) => qa.replace(/(?<!x\|)twitter\\\.com\\\/intent\\\/tweet/g, () => '(?:x|twitter)\\.com\\/intent\\/tweet');
 
 // SNS で URL を貼ったときの絵と題（OGP）が無いゲームに足す（2026-11-27。209本は og.png つきで入っていて、1本だけ無かった）。
@@ -409,7 +430,7 @@ export function plan(dir) {
   if (has('qa/run.mjs') && has('sw.js') && !read('qa/run.mjs').includes('checkSwStall')) out.push({ path: 'qa/run.mjs', next: null, note: 'checkSwStall を呼んでいない（import { checkSwStall } from "./sw-check.mjs" と、sw.js の中身で check を1行足す）' });
   // はじめての練習（migrateFirstPlay）を足すゲームは、QA の「はじめて開くと遊び方が出る」前提の所も替える
   const firstOn = has('index.html') && A11Y.test(read('index.html')) && FIRST_PLAY.test(migrateFirstPlay(migrateStore(migrateCore(read('index.html')))));
-  if (has('qa/run.mjs')) want('qa/run.mjs', shareQa(migrateFsQa((firstOn ? migrateFirstQa : (x) => x)(roundSizes(read('qa/run.mjs'))))), firstOn ? '押せる所の 44px を丸めてくらべる・はじめての練習の形・X の公式のリンク' : '押せる所の 44px を丸めてくらべる・X の公式のリンク');
+  if (has('qa/run.mjs')) want('qa/run.mjs', ownQa(shareQa(migrateFsQa((firstOn ? migrateFirstQa : (x) => x)(roundSizes(read('qa/run.mjs')))))), firstOn ? '押せる所の 44px を丸めてくらべる・はじめての練習の形・X の公式のリンク・写しの言葉を外して見る' : '押せる所の 44px を丸めてくらべる・X の公式のリンク・写しの言葉を外して見る');
   // sw.js を写せない（独自の働きがある）ゲームには、ひな形の sw.js を前にした sw の検査も写さない。写すと QA が「FLAGS が無い」などで落ちる
   // （2026-11-17 kokki-shuto。incidents/2026-11-17-sw-migration-drops-extras.md）
   const swStuck = has('sw.js') && makeSw(read('sw.js')) === null;

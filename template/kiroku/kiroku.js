@@ -14,7 +14,7 @@
   "use strict";
   if (window.Kiroku && window.Kiroku.v) return;
   const doc = document;
-  const KEY = "kiroku-v1", NEWS = "news-v1";
+  const KEY = "kiroku-v1", NEWS = "news-v1"; // gitleaks:allow 記録の名前（鍵ではない）
   // 全ゲーム共通の知らせ（新しいものを上に。日付は日本時間の YYYY-MM-DD）
   const COMMON_NEWS = [
     { d: "2026-11-26", t: "「見やすさ」から、文字の大きさ（小・中・大）と、長く遊んだら知らせる時間を選べるようになりました。どのゲームにも同じ設定が使われます。フッターの「成績」で、遊んだゲームの成績をまとめて見られます。" },
@@ -22,7 +22,7 @@
   const read = (k) => { try { const v = JSON.parse(localStorage.getItem(k) || "{}"); return v && typeof v === "object" && !Array.isArray(v) ? v : {}; } catch (e) { return {}; } };
   const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } };
   const n0 = (v) => (window.Core ? Core.num(v) : Math.max(0, Math.floor(+v) || 0));
-  // HTML に入れる文字は必ずここを通す（Core が無いページでも < " などを替える。2026-11-26 CodeQL「DOM text reinterpreted as HTML」）
+  // HTML に入れる文字はいつもここを通す（Core が無いページでも < " などを替える。2026-11-26 CodeQL「DOM text reinterpreted as HTML」）
   const ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
   const esc = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ESC[c]);
   const today = () => (window.Core ? Core.today() : new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10));

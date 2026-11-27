@@ -17,7 +17,7 @@
 //      JS で描き替えるゲームは、画面の関数の最初で Core.screens.mark("dex")、起動時に Core.screens.route({...}, home) で「戻る」がホームへ戻る
 //   5: 2026-11-27 全ゲームで同じ場所（ページのいちばん上の右）に「？ 遊び方」を置く（Core.help）。止まるような不具合が起きたら
 //      ページの上に帯を出し、本人が「知らせる」を押したときだけ感想フォームが開く（Core.errBar）。エラーの文は保存も自動送信もしない
-//      （satou さん 2026-11-27「個人データ・個人情報をとらない」。外のサーバーへ自動で送ると IP が必ず届くため、自動の通知と集計は作らない）。
+//      （satou さん 2026-11-27「個人データ・個人情報をとらない」。外のサーバーへ自動で送ると IP がいつも届くため、自動の通知と集計は作らない）。
 //      MDN「Window: error event」「unhandledrejection event」・NN/g「Error-Message Guidelines」（何が起きたか・どうすればよいかを書く）
 //   7: 2026-11-27 Ko-fi 応援の一文（Core.kofi）と応援先（Core.KOFI）を足した。201本が同じ一文を手で写し、文言が4通り以上に分かれていた
 //      （incidents/2026-11-27-kofi-line-hand-copied.md）。出す条件（初めて・まちがい0・練習でない日だけ）はゲームの記録しだいなので、ゲームに残す
@@ -26,7 +26,7 @@
 //      X は公式の Web Intent（docs.x.com「Web Intent」: https://x.com/intent/tweet?text=）、LINE は LINE URL スキーム
 //      （developers.line.biz「LINE URLスキームでLINEの機能を使う」: https://line.me/R/share?text=）、端末の共有は Web Share API
 //      （MDN「Navigator: share()」: 押したその場でだけ呼ぶ・やめたら AbortError）。共有する文は公開の URL（? と # を外す）とゲームの名前・結果だけ
-//      （遊ぶ人の名前・引き継ぎの #hk=・記録の中身は入れない）。どれも押した人が自分で開くリンクで、外へ勝手に送らない
+//      （遊ぶ人の名前・引き継ぎの #hk=・記録の中身は入れない）。どれも押した人が自分で選んで進むリンクで、外へ勝手に送らない
 // 決まり: 外へ通信しない。ゲームの関数の名前（toast・buzz など）は上書きしない（Core.toast などで呼ぶ）。
 (function () {
   "use strict";
@@ -555,7 +555,7 @@
   if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", () => setTimeout(help, 0)); else setTimeout(help, 0);
 
   // bindFeedback を呼ばないゲーム（形のちがうゲームに sync-template が「感想・質問を送る」を足した所）でも、data-feedback を押せばフォームへ。
-  // a でないもの（button）は新しいタブで開く
+  // a でないもの（button）は新しいタブに出す
   if (doc.addEventListener) doc.addEventListener("click", (e) => {
     const a = e.target && e.target.closest ? e.target.closest("[data-feedback]") : null;
     if (!a || (fbBound && a.tagName === "A")) return; // a は bindFeedback が作る（ゲームの付属情報が入る）
