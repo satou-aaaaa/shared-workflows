@@ -64,7 +64,7 @@ jobs:
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ${{ fromJSON(inputs.runner) }}
-    timeout-minutes: 5
+    timeout-minutes: 10   # gh api のやり直し（最長で約4分）が入っても切れないように
     # 枝ごとに分ける。全 PR で1つの枠だと、待機中の実行は1件しか残らず、別 PR のイベントで Secret scan 後の再評価が置き換わる
     # （QA と Secret scan のどちらからも起きるようにしたため、起きやすくなった。2026-11-01 CodeRabbit の指摘）
     concurrency:
@@ -85,13 +85,16 @@ jobs:
           WF_NAME: ${{ github.event.workflow_run.name }}
         run: |
           # 読むだけの gh api（-X の無いもの）は、GitHub の一時的な失敗（502・空の返事で「unexpected end of JSON input」）なら
-          # 間をあけて3回までやり直す。書く操作（-X POST・PUT）はやり直さない（2026-11-23 kenko-minuki #26。incidents/2026-11-23-ci-flakes-timing.md）
+          # 間をあけて5回までやり直す。書く操作（-X POST・PUT）はやり直さない（2026-11-23 kenko-minuki #26。incidents/2026-11-23-ci-flakes-timing.md）
+          # 3回・あいだ15秒では、機械から api.github.com へつながらない（dial tcp … i/o timeout）のが2分ほど続くと尽きた
+          # （2026-11-28 wazato-hantei。incidents/2026-11-28-qa-cal-month-end.md）。あいだは 10・20・40・60 秒（合わせて約2分＋待ち）
           gh() {
             if [ "${1:-}" != api ] || printf '%s\n' "$@" | grep -qx -- '-X'; then command gh "$@"; return; fi
             local i out
-            for i in 1 2 3; do
+            for i in 1 2 3 4 5; do
               if out=$(command gh "$@"); then printf '%s' "$out"; [ -z "$out" ] || echo; return 0; fi
-              [ "$i" = 3 ] || { echo "::notice::gh api が失敗したので $((i * 5)) 秒後にやり直します（$i 回目）" >&2; sleep $((i * 5)); }
+              local w; w=$(( i < 4 ? 10 * (1 << (i - 1)) : 60 ))
+              [ "$i" = 5 ] || { echo "::notice::gh api が失敗したので $w 秒後にやり直します（$i 回目）" >&2; sleep "$w"; }
             done
             return 1
           }

@@ -1,6 +1,6 @@
 // ゲームの作りの見分け（scripts/game-patterns.mjs）が、事故の形を見つけ、直した形・コメントに残った古い形では出さないかを確かめる（Lint）
 // depth:*（depth.js を写したのにつないでいない）・hint:cut-moves（ヒント2で消した選び肢が戻る）・hint:left-fixed（のこりの数が決まった数）・stars:role（星の表示が読まれない・色だけで分ける）・qa:url-includes（URL を includes で探して CodeQL が赤）
-import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted, playerBugs, heightRaw, roundSizes, todayOnly, copyWordHits, coreCopies } from './game-patterns.mjs';
+import { cutMoves, starsBare, leftFixed, urlIncludes, depthGaps, waitCounted, playerBugs, heightRaw, roundSizes, todayOnly, calMonth, copyWordHits, coreCopies } from './game-patterns.mjs';
 
 const cases = [
   ['事故の形（1行・left.length - 1）', true, 'const cutOf = () => { if (cur.hints < 2) return []; const left = P.opts.map((_, i) => i).filter((i) => i !== P.ans && !cur.wrong.includes(i)); return left.slice(0, Math.max(0, left.length - 1)); };'],
@@ -215,4 +215,20 @@ console.log('✓ hint:cut-moves・hint:left-fixed・stars:role・qa:url-includes
   const ok1 = coreCopies(k).length === 0, ok2 = coreCopies(k + '\n<script>function buzz(n) {}</script>').join() === 'buzz';
   console.log(`${ok1 && ok2 ? '✓' : '✗'} coreCopies：印のあいだ（core・kiroku）は見ず、印の外の手写しは見つける`);
   if (!(ok1 && ok2)) process.exitCode = 1;
+}
+// calMonth：時計を進めたあと、カレンダーの日を前の月を開かずに探す所を見つけ、前の月を開く・月をくらべる形では出さない（incidents/2026-11-28-qa-cal-month-end.md）
+{
+  const shift = 'await p.evaluate(() => { const RD = Date, off = 3 * 864e5; window.Date = class extends RD {}; });\n';
+  const cases = [
+    ['前の月を開かずに押す（事故の形）', [2], shift + 'await p.click(`.cal button[data-k="${dk}"]`);'],
+    ['月をくらべて #pm を押してから探す', [], shift + 'if (dk.slice(0, 7) !== k.slice(0, 7)) await p.click("#pm");\nawait p.click(`.cal button[data-k="${dk}"]`);'],
+    ['#prev を押してから探す', [], shift + 'await q.click("#prev");\nawait q.click(`.cal .miss[data-k="${d}"]`);'],
+    ['時計を進めない QA は見ない', [], 'await p.click(`.cal button[data-k="${dk}"]`);'],
+    ['コメントの中の #prev は数えない', [3], shift + '// #prev を押す\nawait p.click(`.cal button[data-k="${dk}"]`);'],
+  ];
+  for (const [name, want, src] of cases) {
+    const got = calMonth(src), ok = JSON.stringify(got) === JSON.stringify(want);
+    console.log(`${ok ? '✓' : '✗'} calMonth：${name}（${JSON.stringify(want)}）`);
+    if (!ok) process.exitCode = 1;
+  }
 }
