@@ -38,6 +38,9 @@ const S = await import('./sync-template.mjs');
   ok('migrateFs：fsGet・fsSet は共通の設定を使う', m.includes('function fsGet() { return A11y.fs(); }') && m.includes('function fsSet(v) { A11y.set("fs", v); }') && !m.includes('localStorage.setItem(FSKEY'));
   ok('migrateFs：2回かけても同じ', S.migrateFs(m) === m);
   ok('migrateFsQa：QA が見る html の class を a11y-fs1〜3 にする', S.migrateFsQa('x.classList.contains("fs3") && (await pf.reload(), await pf.evaluate(() => document.documentElement.className)) === "fs3"') === 'x.classList.contains("a11y-fs3") && (await pf.reload(), await pf.evaluate(() => document.documentElement.classList.contains("a11y-fs3")))');
+  { const q = 'await p.evaluate(() => localStorage.setItem("k-fs", "2.5"));\nawait q.evaluate((fs) => localStorage.setItem("k-fs", String(fs)), fs);\nawait pg.evaluate(() => document.documentElement.classList.add("a11y-read"));';
+    const m = S.migrateFsQa(q);
+    ok('migrateFsQa：前の値を入れて試す所は共通の値（fs）を消す・a11y-read は A11y.set で', (m.match(/fs: undefined/g) || []).length === 2 && m.includes('A11y.set("read", true)') && S.migrateFsQa(m) === m); }
   ok('migrateFs：文字の大きさを持たないゲームは変えない', S.migrateFs('<script>x</script>') === '<script>x</script>');
 }
 {

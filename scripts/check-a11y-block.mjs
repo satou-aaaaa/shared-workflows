@@ -95,6 +95,8 @@ try {
     });
     ok('3. 前のゲームごとの大きさ（3）を引き継ぎ、ゲームの html.a11y-fs3 の大きさを使う', r.v === 3 && r.a === '23px');
     ok('3. 前の大きさが無ければゲームの既定の値を使う', r.d === 1 && r.b === '17px');
+    const r2 = await page.evaluate(() => { localStorage.setItem('g-fs', '2.5'); return A11y.fsFrom('g-fs', 2); });
+    ok('3. 前の大きさが 1・2・3 以外（2.5 など）なら既定の値を使う（v11。kusuri-yomi）', r2 === 2);
     await ctx.close();
   }
   {

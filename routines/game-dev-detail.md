@@ -214,4 +214,5 @@ game-dev.md の手順 A の各番号の元の全文。本体には動作だけ�
   - home() で `Kiroku.note(() => ({ s, tally, ach }))` を呼ぶ（sync-template の migrateKiroku が足す）。フッターに「成績」が出て、同じ端末で遊んだ全ゲームの成績が同じ形で見られる。
   - 遊び方が変わる更新をしたら、index.html に `<script type="application/json" id="game-news">[{"d":"YYYY-MM-DD","t":"変わったこと1文"}]</script>` を足す（新しいものを上に）。戻ってきた人に一度だけ出る。全ゲーム共通の知らせは kiroku.js の COMMON_NEWS。
   - 外へは何も送らない。保存は端末の `a11y-v1`（設定）・`kiroku-v1`（成績のまとめ）・`news-v1`（どこまで見たか）だけ。
+- ゲームの関数や QA を書きかえる写し（sync-template の migrate〜）を足したら、書きかえる所の形（正規表現が当たる書き方）を全ゲームで数え、形ごとに1本以上を手元で写して `node qa/run.mjs` を回してからマージする（多数派の見本だけで確かめない。incidents/2026-11-27-migrate-fs-qa-old-shape.md）。
 - 出典：WCAG 1.4.2 Audio Control・1.4.4 Resize Text・4.1.3 Status Messages、Game Accessibility Guidelines、Xbox Accessibility Guideline 105、Chrome の Web Audio の自動再生の決まり、厚生労働省「情報機器作業における労働衛生管理のためのガイドライン」（一連続作業 1 時間まで）。
