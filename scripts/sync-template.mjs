@@ -505,8 +505,14 @@ export function staleCount(root = join(T, '..')) {
 // ゲームごとに大きさを選び直す必要があった。ホームの3つのボタンは残し、押すと共通の設定（a11y-v1 の fs）を変える。
 // 前に選んだ大きさは A11y.fsFrom(FSKEY, 既定) で引き継ぐ。CSS の html.fs1〜3 は html.a11y-fs1〜3 にする。2回かけても同じ
 // QA が html の class「fs1〜3」を見ている所を「a11y-fs1〜3」にする（migrateFs と組。otsukai-memo・shokaki-yomi）
+// 前のゲームごとの値（〇〇-fs）を入れて試す所は、共通の値（a11y-v1 の fs）を消してから（共通の値があるとそちらが勝つ。kusuri-yomi「2.5 は大きいにもどす」）。
+// a11y-read を class で直に足して試す所は A11y.set を使う（共通の設定を変えると印を付け直すので、直に足した印は消える。otsukai-memo）。2026-11-27
+const FS_CLEAR = 'localStorage.setItem("a11y-v1", JSON.stringify({ ...JSON.parse(localStorage.getItem("a11y-v1") || "{}"), fs: undefined }))';
 export function migrateFsQa(qa) {
-  return qa.replace(/classList\.contains\("fs([123])"\)/g, 'classList.contains("a11y-fs$1")').replace(/\(await (\w+)\.reload\(\), await \1\.evaluate\(\(\) => document\.documentElement\.className\)\) === "fs([123])"/g, '(await $1.reload(), await $1.evaluate(() => document.documentElement.classList.contains("a11y-fs$2")))');
+  return qa
+    .replace(/=> localStorage\.setItem\("([\w-]+-fs)", (String\(fs\)|"[^"]*")\)/g, (m, k, v) => `=> (localStorage.setItem("${k}", ${v}), ${FS_CLEAR})`)
+    .replace(/document\.documentElement\.classList\.add\("a11y-read"\)/g, 'A11y.set("read", true)')
+    .replace(/document\.documentElement\.classList\.remove\("a11y-read"\)/g, 'A11y.set("read", false)').replace(/classList\.contains\("fs([123])"\)/g, 'classList.contains("a11y-fs$1")').replace(/\(await (\w+)\.reload\(\), await \1\.evaluate\(\(\) => document\.documentElement\.className\)\) === "fs([123])"/g, '(await $1.reload(), await $1.evaluate(() => document.documentElement.classList.contains("a11y-fs$2")))');
 }
 export function migrateFs(html) {
   if (!/\nfunction fsGet\(\) \{ try \{ const v = \+localStorage\.getItem\(FSKEY\);/.test(html) && !/\nfunction fsGet\(\) \{ if \(FSNOW\)/.test(html)) return html;
