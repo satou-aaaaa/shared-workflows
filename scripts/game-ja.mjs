@@ -59,6 +59,13 @@ function longest(s) {
   return Math.max(0, ...plain(s).split(/[。！？!?\n]/).map((x) => x.replace(/（[^）]*）|「[^」]*」/g, "").length));
 }
 
+// 正解の字。ans が選び肢の番号のゲーム（悪質商法みやぶりなど）も字にする。
+// 2026-11-27 まで番号のゲームは選び肢どうしの決まりが当たらず、--dump にも ◎ が出なかった
+function ansText(P) {
+  if (typeof P.ans === "string") return P.ans;
+  return Number.isInteger(P.ans) && Array.isArray(P.opts) && typeof P.opts[P.ans] === "string" ? P.opts[P.ans] : null;
+}
+
 // 選び肢どうしの決まり
 function optFindings(P) {
   const out = [];
@@ -69,19 +76,22 @@ function optFindings(P) {
     if (i === j || n[i].length < 2) continue;
     if (n[i] === n[j] && i < j) out.push(["opt:same", "error", "表示が同じ選び肢が2つ", `${opts[i]} / ${opts[j]}`]);
   }
-  if (typeof P.ans === "string" && opts.includes(P.ans)) {
-    const a = norm(P.ans);
+  const ans = ansText(P);
+  // 番号のゲームはまだ全部を読み終えていないので、△ にとどめる（✗ にすると各ゲームの CI が一度に落ちる。読み合わせで直してから ✗ にする）
+  const notExLv = typeof P.ans === "string" ? "error" : "warn";
+  if (ans !== null && opts.includes(ans)) {
+    const a = norm(ans);
     for (const o of opts) {
       const n = norm(o);
       // 正解が「取り消せる」で、ほかが「1年たてば取り消せる」：条件つきの言い方は正解と両立して、2つ正しく読める
-      if (o !== P.ans && a.length >= 2 && n.endsWith(a) && /(なら|れば|えば|たら|ても|まで|までは|までなら|ば)$/.test(n.slice(0, -a.length)))
-        out.push(["opt:not-exclusive", "error", "正解に条件を足しただけの選び肢（正解と両立して2つ正しく読める）", `◎${P.ans} / ${o}`]);
+      if (o !== ans && a.length >= 2 && n.endsWith(a) && /(なら|れば|えば|たら|ても|まで|までは|までなら|ば)$/.test(n.slice(0, -a.length)))
+        out.push(["opt:not-exclusive", notExLv, "正解に条件を足しただけの選び肢（正解と両立して2つ正しく読める）", `◎${ans} / ${o}`]);
     }
   }
-  if (typeof P.ans === "string" && opts.includes(P.ans) && opts.length >= 3) {
-    const L = (s) => plain(s).length, a = L(P.ans), others = opts.filter((o) => o !== P.ans).map(L);
+  if (ans !== null && opts.includes(ans) && opts.length >= 3) {
+    const L = (s) => plain(s).length, a = L(ans), others = opts.filter((o) => o !== ans).map(L);
     const max = Math.max(...others);
-    if (a >= 12 && a > max * 1.6) out.push(["opt:long-ans", "warn", "正解だけがとび抜けて長い（長さで当たる）", `${P.ans}（${a}字。ほかは${max}字まで）`]);
+    if (a >= 12 && a > max * 1.6) out.push(["opt:long-ans", "warn", "正解だけがとび抜けて長い（長さで当たる）", `${ans}（${a}字。ほかは${max}字まで）`]);
   }
   return out;
 }
@@ -209,7 +219,7 @@ const GOOD = [
   "みなと町で「どしゃ降り」のような雨。", "「バケツをひっくり返したように降る」ような雨。", "処分があったことを知った日の翌日から3か月",
   "目立つために、ほかの動画を使う。", "3月3日（月）まで", "「三箇月以上住所を有する者」（公職選挙法）", "止まって安全を確かめてから進める。",
 ];
-const OPT_BAD = [{ opts: ["取り消せる", "取り消せない", "1年たてば取り消せる"], ans: "取り消せる" }, { opts: ["健康保険", "健康保険", "年金"], ans: "健康保険" }];
+const OPT_BAD = [{ opts: ["取り消せる", "取り消せない", "1年たてば取り消せる"], ans: "取り消せる" }, { opts: ["健康保険", "健康保険", "年金"], ans: "健康保険" }, { opts: ["取り消せない", "取り消せる", "8日以内なら取り消せる"], ans: 1 }];
 const OPT_GOOD = [{ opts: ["取り消せる", "取り消せない", "店が決める", "半分だけ取り消せる"], ans: "取り消せる" }];
 function selfTest() {
   const fails = [];
@@ -244,7 +254,10 @@ function dump(dir) {
     let P; try { P = G.make(t); } catch { continue; }
     if (!P) continue;
     const opts = Array.isArray(P.opts) ? P.opts.map((o) => (typeof o === "string" ? o : JSON.stringify(o))) : [];
-    console.log(`\n## ${P.kind ?? t}\nQ: ${plain(P.q ?? P.question ?? "")}\n${opts.map((o) => (o === P.ans ? "◎ " : "・ ") + o).join("\n")}`);
+    // 話（場面の文）も出す。問い（q）が決まった字のゲームでは、話の終わりが別の問いになっていると答えが2通りに読める（2026-11-27 悪質商法みやぶり j18）
+    const story = ["s", "story", "scene"].map((k) => P[k]).find((x) => typeof x === "string");
+    const ans = ansText(P);
+    console.log(`\n## ${P.kind ?? t}${story ? `\n話: ${plain(story)}` : ""}\nQ: ${plain(P.q ?? P.question ?? "")}\n${opts.map((o) => (o === ans ? "◎ " : "・ ") + o).join("\n")}`);
     for (const k of ["look", "key", "why", "gwhy"]) if (typeof P[k] === "string") console.log(`${k}: ${plain(P[k])}`);
   }
 }

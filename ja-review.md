@@ -4,12 +4,12 @@
 
 | ゲーム | 読んだ日 | PR・メモ |
 | --- | --- | --- |
-| akushitsu-miyaburi |  |  |
-| amida-haitatsu |  |  |
-| atsusa-shisu |  |  |
+| akushitsu-miyaburi | 2026-11-27 | akushitsu-miyaburi#26（週1・11/27） |
+| amida-haitatsu | 2026-11-27 | 直す所なし（週1・11/27） |
+| atsusa-shisu | 2026-11-27 | atsusa-shisu#21（週1・11/27） |
 | baibai-kimari | 2026-11-21 | baibai-kimari#2（第2弾） |
-| batsu-doko |  |  |
-| bento-zume |  |  |
+| batsu-doko | 2026-11-27 | batsu-doko#50（週1・11/27） |
+| bento-zume | 2026-11-27 | bento-zume#46（週1・11/27） |
 | bousai-handan | 2026-11-21 | bousai-handan#12（第2弾） |
 | bunshi-tsukuri |  |  |
 | bushu-tashizan |  |  |
