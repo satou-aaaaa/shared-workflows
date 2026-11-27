@@ -22,7 +22,7 @@
 //   incidents/2026-11-17-template-sync-from-stale-copy.md）。--check では見ない。見られない（git・ネットが無い）ときは知らせて続ける。
 //   わざと古いひな形で写すときだけ SYNC_ALLOW_STALE=1。
 // きっかけ: 2026-11-07 sw.js が28本で28通りになり、同じ直しを1本ずつ手で入れていた（incidents/2026-11-07-template-copies-drift.md）。
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -422,14 +422,23 @@ export function migrateOgp(html, has = () => true) {
 export const PARTS = { index: ['cal', 'lateDays', 'playedDays', 'achView', 'nextAch', 'achGot'], data: ['rng', 'seedOf', 'shuffle', 'pickN', 'ri'] };
 const partRe = (name) => new RegExp(`([ \\t]*)// part:${name}:begin[^\\n]*\\n[\\s\\S]*?// part:${name}:end`);
 export const partBody = (kind, name) => tpl(`parts/${kind}/${name}.js`).replace(/\n+$/, '');
+// 前の版の中身（template/parts/<種類>/old/<名前>.<N>.js）。部品を直したあとも、まだ印の無いゲームの前の版の写しに印を付けて新しい版に替える
+// （直すと1字も同じでなくなり、印の無いゲームに届かなくなるため。2026-11-27 cal の「5問」。incidents/2026-11-27-transfer-midswap-tab.md）
+export const partOld = (kind, name) => {
+  const dir = join(T, 'parts', kind, 'old');
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir).filter((f) => f.startsWith(`${name}.`) && f.endsWith('.js')).sort().map((f) => readFileSync(join(dir, f), 'utf8').replace(/\n+$/, ''));
+};
 const partBlock = (kind, name, ind) => `${ind}// part:${name}:begin（shared-workflows の template/parts/${kind}/${name}.js の写し。ここでは直さない。node scripts/sync-template.mjs で写す）\n${ind}${partBody(kind, name)}\n${ind}// part:${name}:end`;
 export function migrateParts(text, kind) {
   let next = text;
   for (const name of PARTS[kind] || []) {
     const re = partRe(name);
     if (re.test(next)) { next = next.replace(re, (m, ind) => partBlock(kind, name, ind)); continue; }
-    const body = partBody(kind, name), i = next.indexOf(body);
-    if (i < 0 || next.indexOf(body, i + 1) >= 0) continue; // 無い・2つある
+    const body = [partBody(kind, name), ...partOld(kind, name)].find((x) => next.indexOf(x) >= 0);
+    if (!body) continue;
+    const i = next.indexOf(body);
+    if (next.indexOf(body, i + 1) >= 0) continue; // 2つある
     const ls = next.lastIndexOf('\n', i - 1) + 1, ind = next.slice(ls, i), end = i + body.length;
     if (!/^[ \t]*$/.test(ind) || !(end === next.length || next[end] === '\n')) continue; // 行の途中（ほかの式の中）は触らない
     next = next.slice(0, ls) + partBlock(kind, name, ind) + next.slice(end);

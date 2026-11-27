@@ -2,6 +2,8 @@
 // 見ること: 版の行がある・外へ通信する書き方が無い・書き出したコードを読み戻せる・写しまちがい/別のゲーム/知らないキー/新しい版を弾く・
 //          読み直したときの入れ替えで前の記録を控えに残す・ほかのゲームのキーに触らない。
 //          版13：番号を進めてから控えを読む・途中で止まったときの印・保存に失敗したタブを自動で読み直さない・保存と入れ替えの重なりを知らせる。
+//          版15：番号を書き換えの前と後の2回進める（途中で開いたタブの保存を止める）・戻す前のいまの記録を hk-next: に書く・
+//                書き込みの失敗をあらゆる組み合わせで起こしても、前からあった記録がどこかに残る。
 // 画面（QR・確認の箱・控えに戻す）は各ゲームの qa/run.mjs が transfer-check.mjs で確かめる。
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
@@ -297,7 +299,7 @@ function bootTab({ local, session = store(), game = 'kippu-10', keys = 'kippu-v1
   // 番号を進めてから控えを読む：番号を書いた直後に別のタブが保存した記録（A2）を、控えに残す
   const l = store({ 'kippu-v1': '{"a":1}' });
   const rs = l.setItem;
-  l.setItem = (k, v) => { rs(k, v); if (k === 'hk-sync:kippu-10') rs('kippu-v1', '{"a":2}'); };
+  l.setItem = (k, v) => { rs(k, v); if (k === 'hk-sync:kippu-10' && /\.w$/.test(v)) rs('kippu-v1', '{"a":2}'); }; // 書き換えの前の番号（.w。版15）のときだけ
   boot({ game: 'kippu-10', keys: 'kippu-v1', local: l, session: store({ 'hk-pending:kippu-10': JSON.stringify({ d: { 'kippu-v1': rec }, undo: false }) }) });
   ok('入れ替えの番号を進めたあとに読んだ記録を控えにする（そのあいだに別のタブが保存した分を消さない）', l.getItem('kippu-v1') === rec && JSON.parse(l.getItem('hk-backup:kippu-10') || '{}').d?.['kippu-v1'] === '{"a":2}');
 }
@@ -385,6 +387,120 @@ function bootTab({ local, session = store(), game = 'kippu-10', keys = 'kippu-v1
       const text = band && band.firstChild && band.firstChild.nodeValue;
       ok('印を書けないときは読み直さず、帯で「混ざったかもしれない」と知らせる', t6.reloads.n === 0 && /混ざった/.test(text || ''));
     } finally { t6.restore(); }
+  }
+}
+
+// 版15（kawagoe-1day #1 の CodeRabbit。incidents/2026-11-27-transfer-midswap-tab.md）
+{
+  // 番号は書き換えの前（.w）と後（.d）の2回進める。書き換えの途中で開いたタブ（.w の番号と古い記録）は、終わったあと保存を書かずに読み直す
+  const L = new SpyStorage({ 'kippu-v1': '{"old":1}', 'hk-sync:kippu-10': '1000.a' });
+  let mid = null;
+  L.before = (k, v) => { if (k === 'hk-sync:kippu-10' && /\.w$/.test(v)) mid = v; };
+  boot({ game: 'kippu-10', keys: 'kippu-v1', local: L, session: store({ 'hk-pending:kippu-10': JSON.stringify({ d: { 'kippu-v1': rec }, undo: false }) }) });
+  L.before = null;
+  const fin = L.getItem('hk-sync:kippu-10');
+  ok('入れ替えの番号を、書き換えの前（.w）と書き換え終わったあと（.d・同じ長さ）の2回進める', !!mid && L.getItem('kippu-v1') === rec && fin === mid.slice(0, -2) + '.d' && fin.length === mid.length);
+  const L2 = new SpyStorage({ 'kippu-v1': '{"old":1}', 'hk-sync:kippu-10': mid });
+  const t = bootTab({ local: L2 });
+  try {
+    L2.m.set('hk-sync:kippu-10', fin); L2.m.set('kippu-v1', rec);
+    L2.setItem('kippu-v1', '{"old":1}');
+    ok('書き換えの途中で開いたタブは、書き換え終わったあと古い記録を保存できない（読み直す）', L2.getItem('kippu-v1') === rec && t.reloads.n === 1);
+  } finally { t.restore(); }
+  // 入れ替えに失敗して記録が変わらなかったときは、2回目（.d）を書かず、番号を元に戻す
+  const L3 = store({ 'kippu-v1': '{"old":1}', 'hk-sync:kippu-10': '1000.a' });
+  const rs3 = L3.setItem;
+  L3.setItem = (k, v) => { if (k === 'kippu-v1' && v === rec) throw new Error('QuotaExceededError'); return rs3(k, v); }; // 元には戻せる
+  boot({ game: 'kippu-10', keys: 'kippu-v1', local: L3, session: store({ 'hk-pending:kippu-10': JSON.stringify({ d: { 'kippu-v1': rec }, undo: false }) }) });
+  ok('入れ替えに失敗したら番号を元に戻す（.d にしない）', L3.getItem('hk-sync:kippu-10') === '1000.a' && L3.getItem('kippu-v1') === '{"old":1}');
+}
+{
+  // 止まったあとに遊んだ記録（C）は、元の記録（A）へ戻す前に hk-next: に書く。控えを書けず、C にも戻せなくても C が残る
+  const A = { 'kippu-v1': '{"a":1}', 'kippu-x': '{"ax":1}' }, B = { 'kippu-v1': '{"b":1}', 'kippu-x': '{"bx":1}' }, C = { 'kippu-v1': '{"c":1}', 'kippu-x': '{"cx":1}' };
+  const mk = () => {
+    const l = store({ ...A, 'hk-backup:kippu-10': JSON.stringify({ at: '2026-11-01T00:00:00Z', d: B }) });
+    const rs = l.setItem; const st = { on: true, n: 0, failBackup: true, failNext: false, okRec: 3 };
+    l.setItem = (k, v) => {
+      if (st.on && k === 'hk-backup:kippu-10' && st.failBackup) throw new Error('QuotaExceededError');
+      if (st.on && k === 'hk-next:kippu-10' && st.failNext) throw new Error('QuotaExceededError');
+      if (st.on && !k.startsWith('hk-') && ++st.n >= st.okRec + 1) throw new Error('QuotaExceededError');
+      return rs(k, v);
+    };
+    // 1回目：B へ戻す途中で止まる（PREV に A・止まったときの印が残る）
+    boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x', local: l, session: store({ 'hk-pending:kippu-10': JSON.stringify({ d: B, undo: true }) }) });
+    st.on = false; l.setItem('kippu-v1', C['kippu-v1']); l.setItem('kippu-x', C['kippu-x']); // そのあと遊んで C になる
+    return { l, st };
+  };
+  {
+    const { l, st } = mk();
+    st.on = true; st.n = 0; st.okRec = 2; // A へは書けるが、控えを書けず、C へ書き戻すのも止まる
+    const ss = store({ 'hk-pending:kippu-10': JSON.stringify({ d: A, undo: true }) });
+    boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x', local: l, session: ss });
+    const nx = JSON.parse(l.getItem('hk-next:kippu-10') || 'null');
+    ok('戻す前のいまの記録（止まったあとに遊んだ分）を hk-next: に書き、控えも書き戻しも失敗したときに残す', !!nx && JSON.stringify(nx.d) === JSON.stringify(C) && done(ss)?.u === true);
+    const at = (k) => Date.parse((JSON.parse(l.getItem(k) || 'null') || {}).at) || 0;
+    ok('readBackup が hk-next: も見る・残った hk-next: がいちばん新しい控え（「控えに戻す」で C に戻せる）', /readKey\(NEXT\)/.test(src.slice(src.indexOf('function readBackup'), src.indexOf('function syncNo'))) && at('hk-next:kippu-10') >= at('hk-prev:kippu-10') && at('hk-next:kippu-10') >= at('hk-backup:kippu-10'));
+  }
+  {
+    const { l, st } = mk();
+    st.on = true; st.n = 0; st.okRec = 99; st.failBackup = false; st.failNext = true; // hk-next: を書けない
+    const ss = store({ 'hk-pending:kippu-10': JSON.stringify({ d: A, undo: true }) });
+    boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x', local: l, session: ss });
+    ok('いまの記録を hk-next: に書けなければ戻さない（記録は元のまま）', l.getItem('kippu-v1') === C['kippu-v1'] && l.getItem('kippu-x') === C['kippu-x'] && /元のまま/.test(done(ss)?.m || ''));
+  }
+  {
+    const { l, st } = mk();
+    st.on = true; st.n = 0; st.okRec = 99; st.failBackup = false; // うまくいくとき
+    boot({ game: 'kippu-10', keys: 'kippu-v1,kippu-x', local: l, session: store({ 'hk-pending:kippu-10': JSON.stringify({ d: A, undo: true }) }) });
+    ok('うまく戻せたら、いまの記録を控えにして hk-next:・hk-prev: を片づける', l.getItem('kippu-v1') === A['kippu-v1'] && JSON.parse(l.getItem('hk-backup:kippu-10')).d['kippu-v1'] === C['kippu-v1'] && l.getItem('hk-next:kippu-10') === null && l.getItem('hk-prev:kippu-10') === null);
+  }
+}
+
+// 版15：書き込みの失敗をあらゆる組み合わせで起こし、前からあった記録が、記録か控え（hk-backup:・hk-prev:・hk-next:）のどこかに残るかを見る。
+// 1つずつ思いついた順を足す検査では、止まり方の組み合わせ（控えも書けず元にも戻せない、など）を見落としてきた（版10〜15。incidents/2026-11-27-transfer-midswap-tab.md）
+{
+  const script = new vm.Script(src);
+  const run = (init, job, mask) => {
+    const m = new Map(Object.entries(init)); let n = 0;
+    const local = { get length() { return m.size; }, key: (i) => [...m.keys()][i] ?? null, getItem: (k) => (m.has(k) ? m.get(k) : null),
+      setItem: (k, v) => { const i = n++; if (i < 9 && (mask >> i) & 1) throw new Error('QuotaExceededError'); m.set(k, String(v)); }, removeItem: (k) => m.delete(k) };
+    const sm = new Map([['hk-pending:g', JSON.stringify(job)]]);
+    const ctx = { console: { error() {} }, Promise, Date, JSON, Error, Math, String, Object, Array, Number, TextEncoder, TextDecoder, Uint8Array, localStorage: local,
+      sessionStorage: { getItem: (k) => sm.get(k) ?? null, setItem: (k, v) => sm.set(k, v), removeItem: (k) => sm.delete(k) },
+      location: { href: 'https://example.test/', hash: '', pathname: '/', search: '', replace() {}, reload() {} }, history: { replaceState() {} },
+      document: { currentScript: { dataset: { game: 'g', keys: 'r1,r2' } }, readyState: 'loading', addEventListener() {} }, addEventListener() {} };
+    ctx.window = ctx; vm.createContext(ctx); script.runInContext(ctx);
+    return m;
+  };
+  const J = (o) => JSON.stringify(Object.keys(o).sort().map((k) => [k, o[k]]));
+  const kept = (m, R) => {
+    const snap = {}; for (const [k, v] of m) if (!k.startsWith('hk-')) snap[k] = v;
+    if (J(snap) === J(R)) return true;
+    return ['hk-backup:g', 'hk-prev:g', 'hk-next:g'].some((k) => { try { const b = JSON.parse(m.get(k)); return !!b && J(b.d) === J(R); } catch { return false; } });
+  };
+  const A = { r1: 'a1', r2: 'a2' }, B = { r1: 'b1', r2: 'b2' }, C = { r1: 'c1', r2: 'c2' }, X = { r1: 'x1', r2: 'x2' };
+  const at = (d) => `2026-11-0${d}T00:00:00Z`, box = (d, R) => JSON.stringify({ at: at(d), d: R });
+  const held = { ...C, 'hk-prev:g': box(2, A), 'hk-prevfp:g': 'zz', 'hk-backup:g': box(1, B) }; // 戻す途中で止まった（A が残る）あと、遊んで C になった
+  const left = { ...held, 'hk-next:g': box(3, X) }; // さらに hk-next: も残った
+  // must：入れ替えのあとも、どこかに残っていなければならない記録（取り込んだ記録はコードが手元にあり、上書きされる古い控えは1つだけの決まり）
+  const cases = [
+    ['取り込む', { ...C, 'hk-backup:g': box(1, B) }, { d: X, undo: false }, [C]],
+    ['控えに戻す', { ...C, 'hk-backup:g': box(1, B) }, { d: B, undo: true }, [C, B]],
+    ['止まったあとに遊んで、残った記録へ戻す', held, { d: A, undo: true }, [C, A]],
+    ['止まったあとに遊んで、控えへ戻す', { ...held, 'hk-prev:g': box(1, A), 'hk-backup:g': box(2, B) }, { d: B, undo: true }, [C, B]],
+    ['止まったときの印が無いまま、残った記録へ戻す', { ...C, 'hk-prev:g': box(2, A), 'hk-backup:g': box(1, B) }, { d: A, undo: true }, [C, A, B]],
+    ['hk-next: が残ったまま、それへ戻す', left, { d: X, undo: true }, [C, X]],
+    ['hk-next: が残ったまま、控えへ戻す', left, { d: B, undo: true }, [C, X, B]],
+    ['hk-next: が残ったまま、取り込む', left, { d: B, undo: false }, [C, X]],
+  ];
+  for (const [name, init, job, must] of cases) {
+    const lost = [];
+    for (let mask = 0; mask < 1 << 9 && lost.length < 3; mask++) {
+      const m = run(init, job, mask);
+      const gone = must.filter((R) => !kept(m, R)).map((R) => R.r1[0].toUpperCase());
+      if (gone.length) lost.push(`${mask.toString(2).padStart(9, '0').split('').reverse().join('')}→${gone.join('')}`);
+    }
+    ok(`書き込みがどう失敗しても前の記録が残る（${name}${lost.length ? `。失敗の並び→消えた記録: ${lost.join(' ')}` : ''}）`, !lost.length);
   }
 }
 
