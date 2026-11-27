@@ -202,6 +202,7 @@ game-dev.md の手順 A の各番号の元の全文。本体には動作だけ�
    - [project-practices.md](project-practices.md) の「ゲーム」の表に1行
    - 中身に事実・出典があり、巡回で特に照らすことがあれば [repo-patrol.md](repo-patrol.md) の「ゲームで特に照らすこと」に1行（無ければ足さない）
    Lint（`node scripts/check-repo-lists.mjs`）が、並び・ゲームの表の抜け・ほかのファイルに書いた一覧を見る。
+   何本かまとめて作るときも、公開した日のうちに出す（全部そろうまで溜めない。公開済みの分を1本の PR にまとめてよい）。足し忘れは翌朝の Common check が Issue「一覧に無い公開リポジトリ」に出す（2026-11-27 公開済みの17本が溜まっていた。incidents/2026-11-27-new-games-missing-from-repos-list.md）。
 9. 公開を知らせたら、同じターンで次の候補（「題材:」Issue の候補の列の番号順。作りかけが2本あれば始めない：game-factory.md）の手順1に入る。satou さんの返事を待たない（2026-11-07「止めずに、進め続けてください」）。レビュー待ちなどで止まるときは、再開の予約（send_later など。ほかの AI は [tool-map.md](tool-map.md)）を入れてからターンを終える。予約なしで終えない（incidents/2026-11-07-new-game-stopped-after-publish.md）。
 
 ## 文字の大きさ・音・成績・お知らせ・長く遊んだら知らせる（satou さん 2026-11-26）

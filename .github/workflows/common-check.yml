@@ -1,7 +1,8 @@
 name: Common check
 
-# 全リポジトリ（repos.txt の game・app）を毎日見て、2つを Issue にまとめる（Claude は使わない）。
-#   1. 共通部品の抜け：drift-check のうち「部品そのものが無い」行だけ（呼んでいない共通部品・無いファイル・一覧に無い公開リポジトリ・見やすさ・引き継ぎ）
+# 全リポジトリ（repos.txt の game・app）を毎日見て、3つを Issue にまとめる（Claude は使わない）。
+#   0. 一覧の足し忘れ：公開しているのに repos.txt に無いリポジトリ（Issue「一覧に無い公開リポジトリ」）
+#   1. 共通部品の抜け：drift-check のうち「部品そのものが無い」行だけ（呼んでいない共通部品・無いファイル・見やすさ・引き継ぎ）
 #   2. 画面の決まりの違反：各リポジトリのホームを scripts/ui-check.mjs で測る（routines/ui-rules.md の U1〜U4）
 # 直し方は routines/ui-rules.md と routines/onboarding.md。ずれてよい理由があれば scripts/drift-allow.json・各リポジトリの qa/ui-check.json の allow に理由を書く。
 # きっかけ: 2026-11-23 新しく作ったアプリ（たべたメモ・川越の2本など）に共通の CI 部品が無く、kawagoe-bousai は一覧にも無かった。
@@ -45,7 +46,14 @@ jobs:
               node scripts/drift-check.mjs || echo "（確かめられなかった）"
             echo '```'
           } > "$RUNNER_TEMP/parts.md"
-          cat "$RUNNER_TEMP/parts.md" >> "$GITHUB_STEP_SUMMARY"
+          # 一覧の足し忘れは別の Issue にする（部品の抜けの100行の下に埋もれ、新作17本が1日見落とされた。incidents/2026-11-27-new-games-missing-from-repos-list.md）
+          {
+            echo "毎日の点検（自動）。公開しているのに repos.txt に無いリポジトリ。新作なら routines/game-dev.md A 手順8 の PR（repos.txt・project-practices.md・freshness.md）を出す。見ないなら ignore と理由。"
+            echo
+            grep 'repos\.txt に無い公開リポジトリ' "$RUNNER_TEMP/parts.md" || true
+          } > "$RUNNER_TEMP/list.md"
+          sed -i '/repos\.txt に無い公開リポジトリ/d' "$RUNNER_TEMP/parts.md"
+          cat "$RUNNER_TEMP/list.md" "$RUNNER_TEMP/parts.md" >> "$GITHUB_STEP_SUMMARY"
       - name: 画面の決まりを見る
         run: |
           set -uo pipefail
@@ -86,6 +94,8 @@ jobs:
           }
           gh label create 共通の点検 --color 5319E7 --description "Common check が毎日まとめる（自動）" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
           if grep -q '^\[' "$RUNNER_TEMP/parts.md"; then p=1; else p=0; fi
+          if grep -q '^\[' "$RUNNER_TEMP/list.md"; then l=1; else l=0; fi
           if grep -q '^## ' "$RUNNER_TEMP/ui.md"; then u=1; else u=0; fi
+          post "一覧に無い公開リポジトリ" "$RUNNER_TEMP/list.md" "$l"
           post "共通部品の抜け" "$RUNNER_TEMP/parts.md" "$p"
           post "画面の決まりの違反" "$RUNNER_TEMP/ui.md" "$u"
