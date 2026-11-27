@@ -14,6 +14,9 @@
 //   - （版5から）ページの上の右に「？ 遊び方」があり、押すと遊び方が開く・押す所を隠さない・44px 以上（版9から、重なる画面では隠れる。そのときはフッターの入口を見る）
 //   - （版5から）このページの script のエラーで不具合の帯が出て、「不具合を知らせる」は押したときだけ開く感想フォームのリンク。自動では何も送らない
 // 止まったときに、どの段で何を待っていたかが1行目に出るようにする（ゲームの QA は1行目だけを残す。2026-11-22）
+// 「やってみる」ボタン。吹き出しが隠れているあいだ（wait の段で答えを待つ間）はボタンだけ hidden が付かないので、吹き出しが見えている時だけ数える。
+// 吹き出しの中だけを見ると、隠れたボタンを30秒押しに行って止まった（2026-11-27 tamatama-atari・onaji-fune。incidents/2026-11-27-core-check-hidden-coach-button.md）
+const GO = "#core-coach:not([hidden]) .core-coach-go:not([hidden])";
 export async function checkCore(o) {
   const st = { at: "はじめ" };
   try { return await coreSteps(o, st); } catch (e) { throw new Error(`[${st.at}] ${String(e.message).split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 6).join(" / ")}`); }
@@ -53,7 +56,7 @@ async function coreSteps({ browser, url, check, solve, first = true, widths = [3
       for (let n = 0; n < 6 && await o.p.locator("#core-coach").count(); n++) {
         await o.p.waitForTimeout(900);
         if (await overlap(o.p)) bad.push(`${w}px の${n + 1}つ目`);
-        const go = o.p.locator("#core-coach .core-coach-go:not([hidden])");
+        const go = o.p.locator(GO);
         if (await go.count()) await go.click(); else break;
       }
       await o.ctx.close();
@@ -136,7 +139,7 @@ async function coreSteps({ browser, url, check, solve, first = true, widths = [3
   if (solve) {
     mark("練習の1問を最後まで");
     const { ctx, p, errs } = await open(widths[0]);
-    const go = p.locator("#core-coach .core-coach-go:not([hidden])");
+    const go = p.locator(GO);
     for (let n = 0; n < 3 && await go.count(); n++) { await go.click(); await p.waitForTimeout(100); }
     mark("練習の1問を解く（ゲームの solve）");
     await solve(p);
@@ -151,7 +154,7 @@ async function coreSteps({ browser, url, check, solve, first = true, widths = [3
       // Playwright はその要素が押せるようになるのを30秒待って止まる（2026-11-22 震度よみが GitHub の上でだけ止まった）。押せる所を指すまで待つ
       const ready = await p.waitForFunction(() => { const t = document.querySelector(".core-coach-on"); return !t || !(t.disabled || t.getAttribute("aria-disabled") === "true"); }, null, { timeout: 3000 }).then(() => true, () => false);
       if (!ready) { stuck.push(`${n + 1}つ目：${await p.evaluate(() => { const t = document.querySelector(".core-coach-on"); return t ? (t.id ? "#" + t.id : t.tagName.toLowerCase()) + "「" + (t.getAttribute("aria-label") || t.textContent || "").trim().slice(0, 20) + "」" : ""; })}`); break; }
-      const g = p.locator("#core-coach .core-coach-go:not([hidden])");
+      const g = p.locator(GO);
       if (await g.count()) { await g.click(); } else { const t = p.locator(".core-coach-on").first(); if (!await t.count()) break; await t.click(); }
       await p.waitForTimeout(250);
     }

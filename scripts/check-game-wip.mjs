@@ -3,7 +3,7 @@ import { mkdtempSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { collect, plan, repoOf, branchOf, threadOf, kindOf, isNonGame, WIP_LIMIT } from './game-wip.mjs';
-import { scaffold, templateFiles, TODO, SKIP } from './new-game.mjs';
+import { scaffold, templateFiles, TODO, SKIP, COPY_DIRS } from './new-game.mjs';
 
 const errors = [];
 const ok = (cond, msg) => { if (!cond) errors.push(msg); };
@@ -97,6 +97,12 @@ ok(!existsSync(join(dir, 'kiroku')) && !existsSync(join(dir, 'parts')), 'kiroku/
 { const sync = readFileSync(new URL('./sync-template.mjs', import.meta.url), 'utf8'), tops = new Set(templateFiles().map((f) => f.replaceAll('\\', '/').split('/')[0]));
   const inline = [...new Set([...sync.matchAll(/<!-- ([a-z0-9]+):begin/g)].map((m) => m[1]))].filter((n) => n !== 'a11y' && tops.has(n)).concat(/template\/parts\//.test(sync) ? ['parts'] : []);
   ok(inline.every((n) => SKIP.includes(n + '/')), `印で写す部品（${inline.join('・')}）が new-game.mjs の SKIP に無い（ファイルでも写り、使われない写しが残る）`); }
+ok(!existsSync(join(dir, 'screens')), 'screens/ をファイルで写した（ゲームは Core.screens を使う。incidents/2026-11-27-core-check-hidden-coach-button.md）');
+{ const dirs = [...new Set(templateFiles().map((f) => f.replaceAll('\\', '/')).filter((f) => f.includes('/')).map((f) => f.split('/')[0] + '/'))];
+  const loose = dirs.filter((d) => !SKIP.includes(d) && !COPY_DIRS.includes(d));
+  ok(loose.length === 0, `template/ のフォルダ（${loose.join('・')}）が new-game.mjs の SKIP にも COPY_DIRS にも無い（ゲームに写すか決めていない）`); }
+{ const cc = readFileSync(new URL('../template/qa/core-check.mjs', import.meta.url), 'utf8');
+  ok(!/#core-coach \.core-coach-go/.test(cc), 'core-check.mjs が隠れた吹き出しの中の「やってみる」を数える（#core-coach:not([hidden]) で絞る。incidents/2026-11-27-core-check-hidden-coach-button.md）'); }
 ok(TODO.some((t) => /store:begin/.test(t) && /GameStore\.load/.test(t)), '新作の「このあと書くもの」に保存の共通部品（store の印・GameStore.load）が無い');
 for (const f of ['.github/workflows/qa.yml', 'transfer.js', 'depth.js', 'qa/depth-check.mjs', 'sw.js', 'qa/a11y.mjs', 'scripts/setup.sh']) ok(existsSync(join(dir, f)), `${f} を写していない`);
 
