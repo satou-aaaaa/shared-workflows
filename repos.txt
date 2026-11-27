@@ -129,6 +129,7 @@ kyukyusha-yobu game
 kyuyo-meisai game
 last-tell app
 last-tell-godot private
+life-mikata game
 local-kanban app
 login-mamori game
 machi-michijun game
