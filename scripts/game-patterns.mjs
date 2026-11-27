@@ -195,7 +195,8 @@ export function copyWordHits(qa, texts) {
 // 写しを持つと、直しが一部のゲームにしか届かず形が分かれる（2026-11-27 数えると toast 17通り・buzz 13通り・num 16通り。sync-template の CORE_LINES が決まった形を替える）。
 // ここに出るのは、形がちがって自動で替えられなかったゲーム。そのゲームの PR で Core.* に替える
 export function coreCopies(page) {
-  const own = page.replace(/<!-- core:begin[\s\S]*?<!-- core:end -->/, '');
+  // ひな形から写す印のあいだ（core・kiroku・store・a11y）は見ない。kiroku にも esc があり、core だけ外すと全ゲームが出た（incidents/2026-11-27-new-game-kiroku-parts-files.md）
+  const own = page.replace(/<!-- ([a-z0-9]+):begin[\s\S]*?<!-- \1:end -->/g, '');
   return ['toast', 'untilNext', 'buzz', 'esc', 'num'].filter((name) => {
     const m = own.match(new RegExp(`(?:function\\s+${name}\\s*\\(|(?:const|let)\\s+${name}\\s*=)[^\\n]*`));
     return m && !/Core\./.test(m[0]);
