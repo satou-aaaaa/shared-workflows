@@ -158,6 +158,7 @@ nedan-timemachine game
 nemuri-kotsu game
 nenkin-shikumi game
 nijushi-sekki game
+nou-damasu game
 nukemichi-fusagi game
 okane-kihon game
 okurigana-dotchi game
@@ -179,6 +180,7 @@ saibanin-shikumi game
 saibansho-doko game
 saibo-tsukuri game
 sandbox app
+sawatta-katachi game
 sdgs-mokuhyo game
 seiho-ikura game
 seinen-nenrei game
