@@ -38,6 +38,7 @@ node scripts/game-fun.mjs --self-test
 node scripts/check-link-text.mjs
 bash scripts/check-link-check-judge.sh
 bash scripts/check-post-deploy-judge.sh
+bash scripts/check-site-watch-pages.sh
 node scripts/check-budgets.mjs
 node scripts/fit-body.mjs
 node scripts/check-game-wip.mjs
