@@ -38,7 +38,7 @@
 | --- | --- | --- | --- | --- |
 | akashi-lang（AI 向けの言語 Akashi） | 言語設計（AI 向け） | akashi-lang `AGENTS.md`・`docs/SPEC.md` | 型・名前つき引数・副作用・約束の検査、直し方つきのエラー（JSON）、全部のエラー番号の見本とテスト | 同じ課題を Akashi と Python で AI に書かせ、1回で通る割合と直すまでの回数を比べる |
 | last-tell（LAST TELL） | ゲーム開発 | last-tell `CLAUDE.md`・`README.md`、スキル last-tell-release-check・last-tell-proposal-demo | 自動対戦（毎日）・画面の QA・テスターの報告欄（Issues） | 体験目標を短く書き、毎日の改善提案と自動対戦の結果をそれに照らす。テスターの声を「症状」で集計する |
-| last-tell-godot（LAST TELL Godot 版） | ゲーム開発 | last-tell-godot `AGENTS.md`・`README.md` | qa.yml（Web 版との照合・画面・重さ、Linux と Windows） | Web 版と同じ結果になることを自動の照合で確かめてから入れる |
+| last-tell-godot（LAST TELL Godot 版） | ゲーム開発 | last-tell-godot `AGENTS.md`・`README.md` | qa.yml（Web 版との照合・画面・重さ、Linux と Windows）・繰り返し指摘の表（2回以上出た指摘は qa の検査を必須に。#184）・ブラウザ版の元は web/（#217） | Web 版と同じ結果になることを自動の照合で確かめてから入れる |
 | naitei-no-michi（内定への道） | ゲーム開発（ノベル） | naitei-no-michi `CLAUDE.md` | 全エンディングに届くかの自動プレイ（QA） | 体験目標（どんな気持ちで終わってほしいか）を書く。遊んだ人の感想の受け口を作るか決める |
 | dungeon-boardgame（ダンジョンボドゲ） | ゲーム開発（ボードゲーム） | [dungeon-issue.md](dungeon-issue.md) | satou さんの Issue に自動で対応 | 体験目標と、試遊のたびに見る点を書く |
 | tabeta-memo（たべたメモ：食事の記録と栄養） | 健康・生活ツール | tabeta-memo `AGENTS.md`・`README.md` | 公式データ（成分表・食事摂取基準）を変換スクリプトと検査で写し間違いなく使う・責めない言い方の検査・記録は端末の中だけ | satou さんが毎日使い、入力で詰まった所（探しにくい食品・量）を Issue にする |
@@ -302,3 +302,4 @@
 | 2026-10-18 | 全部（初回） | 上の出典 | この台帳を作り、土曜の見直しに F を追加 |
 | 2026-10-31 | last-tell | 10/17〜10/30 のマージ（v0.98.3〜v0.98.12 の演出・QA の揺れ止め・CI 失敗の見回り）、CLAUDE.md・AGENTS.md | 変更なし。2週ほぼ演出と検査の直しで、体験目標はまだ書かれていない。目標の中身は satou さんの判断なので「次に試すこと」に残す（次回は last-tell-godot） |
 | 2026-11-14 | last-tell-godot | 読めず（非公開で、見直しの会話の作業場に無い） | 変更なし。次回も last-tell-godot から（見直しの回で add_repo して読む） |
+| 2026-11-28 | last-tell-godot | 11/14〜11/27 のマージ約40本（3D の人・ディーラーの手順・CI の速さ #200・繰り返し指摘の表 #184・ブラウザ版の元を web/ へ #217）、CLAUDE.md→AGENTS.md | 表の「今の検査」に繰り返し指摘の表と web/ を足した。テスターの声を症状で数える要点は #184 で入っている。体験目標はまだ無く、中身は satou さんの判断なので「次に試すこと」に残す。分野の出典の新着は今回見ていない（次回は naitei-no-michi） |
