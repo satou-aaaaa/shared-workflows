@@ -22,15 +22,35 @@ jobs:
           PATHS: ${{ inputs.paths }}
         run: |
           set -euo pipefail
+          # ==pages-begin==
+          # 公開URLを Pages の設定から取る。404 だけが「Pages が切れている」。ほかの失敗（5xx・時間切れ・API の揺れ）は
+          # 3回まで試し、それでも読めなければ github.io の決まった形の URL で見る（incidents/2026-11-28-site-watch-api-blip-as-pages-off.md）。
           # gh api は 404 でもエラーの本文を標準出力に出すので、|| true で受けると本文が URL になる（incidents/2026-11-01-pages-404-body-as-url.md）
-          base=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .html_url 2>/dev/null) || base=""
-          case "$base" in https://*) ;; *) base="" ;; esac
+          base=""; err=""
+          for i in 1 2 3; do
+            if out=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .html_url 2>"$RUNNER_TEMP/pages-err"); then
+              case "$out" in https://*) base=$out; break ;; esac
+              err="html_url が URL でない: $out"
+            else
+              err=$(cat "$RUNNER_TEMP/pages-err")
+              case "$err" in *"HTTP 404"*) break ;; esac
+            fi
+            [ "$i" = 3 ] || sleep "${PAGES_RETRY_DELAY:-20}"
+          done
           if [ -z "$base" ]; then
-            # 前は緑で終えていたので、Pages を入れ忘れたリポジトリが 404 のまま気づかれなかった（incidents/2026-11-04-pages-never-enabled.md）
-            echo "::error title=Pages が有効になっていません::settings/pages → Deploy from a branch → main / (root)（公開しないリポジトリなら site-watch.yml を外す）"
-            echo "Pages が有効になっていません（公開しないリポジトリなら site-watch.yml を外す）" >> "$GITHUB_STEP_SUMMARY"
-            exit 1
+            case "$err" in
+              *"HTTP 404"*)
+                # 前は緑で終えていたので、Pages を入れ忘れたリポジトリが 404 のまま気づかれなかった（incidents/2026-11-04-pages-never-enabled.md）
+                echo "::error title=Pages が有効になっていません::settings/pages → Deploy from a branch → main / (root)（公開しないリポジトリなら site-watch.yml を外す）"
+                echo "Pages が有効になっていません（公開しないリポジトリなら site-watch.yml を外す）" >> "$GITHUB_STEP_SUMMARY"
+                exit 1 ;;
+            esac
+            owner=${GITHUB_REPOSITORY%%/*}; repo=${GITHUB_REPOSITORY#*/}
+            owner=$(printf '%s' "$owner" | tr '[:upper:]' '[:lower:]')
+            base="https://${owner}.github.io/${repo}/"
+            echo "::warning title=Pages の設定を読めませんでした（一時的な揺れの見込み）::${err:-（理由なし）}。決まった形の URL ${base} で見ます"
           fi
+          # ==pages-end==
           base="${base%/}/"
           echo "公開URL: $base" | tee -a "$GITHUB_STEP_SUMMARY"
           bad=0
