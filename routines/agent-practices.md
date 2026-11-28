@@ -41,3 +41,4 @@
 | 2026-10-31 | Claude Code changelog 2.1.304〜2.1.311（10/19〜10/26）・Anthropic engineering（10/18 より後の新着なし） | 変更なし（直し中心。要約まわりで古い MEMORY.md・CLAUDE.md を読む不具合が 2.1.311 で直った。決まりを置き換える新機能は無し） |
 | 2026-11-07 | Claude Code changelog 2.1.319 まで・Anthropic engineering | 変更なし（直し中心。`permissions.denyInsteadOfPrompting`（確認待ちで止めず断って続ける）は手元の端末向けで、クラウドの定期実行には当たらない） |
 | 2026-11-14 | Claude Code changelog 2.1.323 まで・Anthropic engineering（11/7 より後の新着なし） | 変更なし（直し中心。定期実行が別の会話の `/clear` 後に動かないことがある不具合の直し、背景のエージェントの報告を余分に送る不具合の直しなど。決まりを置き換える新機能は無し） |
+| 2026-11-28 | Claude Code changelog 2.1.332 まで（11/21 は道具が無く飛ばした分も含む） | 変更なし（直し中心。MCP サーバーから来るスキル（beta）と、スキルの中のシェルを止められる `PreSkillShellCommand` フックが入った。今の決まりを置き換えるものは無し） |
