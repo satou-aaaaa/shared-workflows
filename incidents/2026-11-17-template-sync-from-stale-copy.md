@@ -19,4 +19,4 @@
 ## 対策
 - [x] 防ぐ: `scripts/sync-template.mjs` が写す前に origin/main を取り、手元のひな形が古ければ止める（終わりのコード 3。わざとなら SYNC_ALLOW_STALE=1。--check では見ない）（この PR）
 - [x] 防ぐ: 全ゲームへの配布は `.github/workflows/template-sync.yml`（main の最新から写す）に一本化し、新作のスレッドの手の配布は止めた（2026-11-17）
-- [ ] 直す: 残り約65本へ Template sync で最新のひな形を写す（鍵 TEMPLATE_SYNC_TOKEN が読めるようになり次第。担当: 一括で直すスレッド、期限: 2026-11-24）
+- [x] 直す: 残りのゲームへは Template sync が配った（11/27 の配布で200本超。2026-11-27-core-helpers-left-in-games.md）。配り残しは週次まとめの「ひな形からのずれ」が毎週出す（11/28 土曜の見直しで閉じた）
