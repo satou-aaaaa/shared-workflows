@@ -19,4 +19,4 @@
 ## 対策
 - [x] 直す: 手順書を shared-workflows の `routines/sandbox-issue-pr.md` に移し、catalog.md・bootstrap/routines.md を直した（この PR）
 - [x] 防ぐ: 移した手順書の手順1で、sandbox を add_repo（access push）で自分で足す。プロジェクトのリポジトリの並びに左右されない（`routines/sandbox-issue-pr.md` 手順1）
-- [ ] 見つける: ルーティンのプロンプトを新しい文に替える（画面の操作。担当: satou さん、期限: 2026-11-08）
+- [x] 見つける: ルーティンのプロンプトを新しい文に替える（ルーティンを作り直して替えた。2026-11-14 satou さんの依頼で AI が実施。新しい手順は `routines/sandbox-issue-pr.md` を読み、sandbox は自分で add_repo する。「新規Issueの提案」は sandbox を自分でクローンするので差し替え不要）
