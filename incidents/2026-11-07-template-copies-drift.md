@@ -20,4 +20,4 @@
 - [x] 直す: `template/sw.js` を作り、ゲームごとに書く所を `// game:begin`〜`// game:end` に分けた。#219 の setup.sh・transfer.js・qa/*.mjs・a11y の指摘を直し、版を上げた（setup.sh 版10・transfer.js 版10・a11y v6・sw.js 版1。この PR）
 - [x] 防ぐ: 写す道具 `scripts/sync-template.mjs`（ゲームの枠・npm_dir・next は残す。`--check` でちがいだけ出す）。`routines/game-dev.md` の PWA に「sw.js はひな形を写す」を書いた（この PR）
 - [x] 見つける: `scripts/drift-check.mjs` の `sw:template`・`sw:qa` が、ひな形とちがう sw.js・qa/sw-check.mjs を週次まとめに出す。`scripts/check-sw-check.mjs`（Lint）が、写す道具が枠を残すこと・二度写しても変わらないことを見る（この PR）
-- [ ] 直す: 各ゲームへ sync-template で写す PR を1本ずつ出す（担当: 全ゲームの共通部分をまとめるスレッド、期限: 2026-11-14）
+- [x] 直す: 各ゲームへ1本ずつ PR を出す形はやめ、Template sync（`scripts/sync-template.mjs`）がひな形を全ゲームへ配る形にした（11/27 に200本超へ配った。2026-11-27-core-helpers-left-in-games.md）。配り残しは週次まとめの「ひな形からのずれ」が毎週出す（11/28 土曜の見直しで閉じた）

@@ -24,4 +24,4 @@
 - [x] 直す: ひな形を版 2 にした。依存は毎回 `npm ci`、ブラウザが見つからない・`CHROMIUM_PATH` が動かせないときは止める、呼んだシェルで要る操作（`nvm use`・`export CHROMIUM_PATH=…`・`. .venv/bin/activate`）があれば ✓ の代わりに「△」と打つ操作を出す（この PR、`template/scripts/setup.sh`）
 - [x] 防ぐ: `scripts/check-setup-template.sh` が、作り物の環境でひな形を6通り動かす（ふつう・壊れた node_modules・ブラウザ無し・動かない CHROMIUM_PATH・CLAUDE_ENV_FILE 無し・nvm で入れ直し）。Lint と `scripts/check.sh` から呼ぶ。直す前のひな形では6つとも落ちることを確かめた（この PR）
 - [x] 見つける: ひな形に「ひな形の版」の行を置き、`scripts/drift-check.mjs` が版の古い写しを週次まとめの「ひな形からのずれ」に出す（この PR）
-- [ ] 直す: 写しを版 2 にする。usotsuki-roppo・wagamama-burger・local-kanban・batsu-doko はこのスレッドで直す。ほかのリポジトリは週次まとめの「ひな形からのずれ」に出たものから直す（担当: 共通の準備スクリプトの不具合を直す、期限: 2026-11-17）
+- [x] 直す: 写しは Template sync（`scripts/sync-template.mjs` がひな形の setup.sh を写す）で最新の版になる形にした。手で版を上げるのはやめ、残りは週次まとめの「ひな形からのずれ」が出す（11/28 土曜の見直しで閉じた）

@@ -24,4 +24,4 @@
 - [x] 防ぐ: 足す場所を「名前の ABC 順の位置」にした（repos.txt・project-practices.md の「ゲーム」の表・repo-patrol.md）。並行の PR はちがう行に入るので、となり合う名前でなければぶつからない。手順は game-dev.md A の手順8と onboarding.md 手順3（この PR）
 - [x] 防ぐ: `scripts/check-repo-lists.mjs`（Lint・check.sh）が、repos.txt の形と並び、ほかのファイルに名前を6つ以上並べた行、repos.txt の game と project-practices.md の「ゲーム」の表の食い違い・並びを落とす（この PR）
 - [x] 見つける: `scripts/drift-check.mjs` が、公開リポジトリなのに repos.txt に無いもの（新作の足し忘れ）を週次まとめの「ひな形からのずれ」に出す（この PR）
-- [ ] 弱める: incidents/README.md の「一覧」も新しい順で先頭に足すので、同じ日の記録の PR どうしがぶつかる。一覧をファイルから作る形にするか決める（担当: ルーティンとスキルの定期見直し、期限: 2026-11-14）
+- [x] 弱める: 入れないと決めた（11/28 土曜の見直し）。一覧のぶつかりは同じ日に記録が重なったときだけで、routines/pr.md のコンフリクトの直し方で数分で直せる。一覧をファイルから作る形にすると Lint と週次まとめの読み方まで変わり、手間に見合わない
